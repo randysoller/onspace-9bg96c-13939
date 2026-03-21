@@ -41,11 +41,6 @@ export default function Tuner() {
 
   // Generate frequency bars (showing pitch deviation)
   const generateBars = () => {
-    // Don't render any bars if no frequency detected
-    if (!detectedFrequency) {
-      return null;
-    }
-    
     const bars = [];
     const totalBars = 50;
     const centerBar = 25;
@@ -65,14 +60,14 @@ export default function Tuner() {
         color = 'bg-red-500';
       }
       
-      // Light up the bar if it's at the current cent position
-      const isActive = Math.abs(i - centPosition) <= 1;
+      // Light up the bar if it's at the current cent position (only when frequency is detected)
+      const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
       bars.push(
         <div
           key={i}
           className={`w-1 h-8 ${color} transition-opacity duration-100 ${
-            isActive ? 'opacity-100' : 'opacity-30'
+            isActive ? 'opacity-100' : 'opacity-0'
           }`}
         />
       );
@@ -167,8 +162,8 @@ export default function Tuner() {
             )}
           </div>
 
-          {/* Frequency Bars */}
-          <div className="flex items-center justify-center gap-0.5 mb-4">
+          {/* Frequency Bars - Always visible with fixed height */}
+          <div className="flex items-center justify-center gap-0.5 mb-4" style={{ minHeight: '32px' }}>
             {generateBars()}
           </div>
 

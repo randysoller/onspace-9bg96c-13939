@@ -1,10 +1,10 @@
-import { X, Play, Pause, Volume2 } from 'lucide-react';
+import { Music, X, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useMetronomeAudio } from '@/hooks/useMetronomeAudio';
 
-export function MetronomeModal() {
+export default function MetronomeModal() {
   const { isOpen, closeMetronome } = useMetronomeUIStore();
   const {
     isPlaying,

@@ -1,15 +1,33 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, Mic, Radio } from 'lucide-react';
+import { Music, Home, Library, Edit } from 'lucide-react';
+
+// Custom Metronome Icon (old-time pyramid metronome)
+const MetronomeIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4l-8 14h16L12 4z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v10" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 18h8" />
+  </svg>
+);
+
+// Custom Tuning Fork Icon
+const TuningForkIcon = ({ className }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v8a3 3 0 006 0V3" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 11v10" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 21h4" />
+  </svg>
+);
 
 export const Header = () => {
   const location = useLocation();
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/metronome', label: 'Metronome', icon: Radio },
+    { path: '/metronome', label: 'Metronome', icon: MetronomeIcon },
+    { path: '/tuner', label: 'Tuner', icon: TuningForkIcon },
     { path: '/library', label: 'Library', icon: Library },
     { path: '/editor', label: 'Editor', icon: Edit },
-    { path: '/tuner', label: 'Tuner', icon: Mic },
   ];
 
   return (

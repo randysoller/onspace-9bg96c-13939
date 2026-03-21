@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, Mic } from 'lucide-react';
+import { Radio, Home, Library, Edit, Mic } from 'lucide-react';
 
 export const MobileTabBar = () => {
   const location = useLocation();
 
   const tabs = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/practice', label: 'Practice', icon: Music },
+    { path: '/metronome', label: 'Metronome', icon: Radio },
     { path: '/library', label: 'Library', icon: Library },
     { path: '/editor', label: 'Editor', icon: Edit },
     { path: '/tuner', label: 'Tuner', icon: Mic },

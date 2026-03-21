@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Music, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
@@ -16,8 +16,32 @@ export default function Tuner() {
 
   const { isListening, currentPitch, startListening, stopListening, permissionDenied } = usePitchDetection({
     sensitivity,
-    autoStart: true,
+    autoStart: false, // Changed to false - will manually start on user interaction
   });
+
+  // Desktop fix: Start listening on component mount with user interaction fallback
+  useEffect(() => {
+    // Try to start immediately
+    startListening();
+    
+    // If that fails due to autoplay policies, add click listener
+    const handleUserInteraction = () => {
+      if (!isListening) {
+        startListening();
+      }
+      // Remove listener after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, [startListening, isListening]);
 
   const detectedFrequency = currentPitch?.frequency || null;
   const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;

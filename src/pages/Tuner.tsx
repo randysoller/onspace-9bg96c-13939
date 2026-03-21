@@ -168,10 +168,10 @@ export default function Tuner() {
           </div>
 
           {/* Cents Indicator */}
-          <div className="flex items-center justify-between text-sm text-white mb-4">
+          <div className="flex items-center justify-between text-base text-white mb-4 -mt-4">
             <span className="flex items-center gap-1">
               Flat
-              <span className="text-lg">♭</span>
+              <span className="text-xl">♭</span>
             </span>
             <span className={`font-bold transition-colors ${
               Math.abs(cents) < 5 ? 'text-emerald-500' : 
@@ -181,7 +181,7 @@ export default function Tuner() {
             </span>
             <span className="flex items-center gap-1">
               Sharp
-              <span className="text-lg">♯</span>
+              <span className="text-xl">♯</span>
             </span>
           </div>
 

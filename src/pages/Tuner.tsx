@@ -14,25 +14,10 @@ export default function Tuner() {
   const { tuning, setTuning } = useTunerStore();
   const [selectedString, setSelectedString] = useState<number | null>(null);
 
-  const { isListening, currentPitch, startListening, stopListening, permissionDenied, audioLevel } = usePitchDetection({
+  const { isListening, currentPitch, permissionDenied, audioLevel } = usePitchDetection({
     sensitivity,
-    autoStart: false, // Changed to false - will manually start on user interaction
+    autoStart: true,
   });
-
-  // Desktop fix: Start listening on component mount
-  useEffect(() => {
-    console.log('🎸 Tuner mounted, starting microphone...');
-    
-    // Small delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      startListening();
-    }, 100);
-    
-    return () => {
-      clearTimeout(timer);
-      stopListening();
-    };
-  }, []);
 
   const detectedFrequency = currentPitch?.frequency || null;
   const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;
@@ -176,14 +161,14 @@ export default function Tuner() {
               </div>
             )}
             
-            {!permissionDenied && isListening && audioLevel === 0 && (
+            {!permissionDenied && audioLevel === 0 && (
               <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/30 rounded-lg">
                 <div className="text-sm font-bold text-amber-500">No audio detected</div>
                 <div className="text-xs text-amber-400 mt-1">Play a note on your guitar</div>
               </div>
             )}
             
-            {!permissionDenied && isListening && audioLevel > 0 && !detectedFrequency && (
+            {!permissionDenied && audioLevel > 0 && !detectedFrequency && (
               <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
                 <div className="text-sm font-bold text-blue-500">Listening... (Level: {audioLevel}%)</div>
                 <div className="text-xs text-blue-400 mt-1">Play louder or adjust sensitivity</div>
@@ -253,36 +238,6 @@ export default function Tuner() {
               </button>
             ))}
           </div>
-        </div>
-        
-        {/* Status and Manual Start Button */}
-        <div className="flex flex-col items-center gap-3 mt-4">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${
-            isListening
-              ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30'
-              : 'bg-zinc-800 text-zinc-500 border border-zinc-700'
-          }`}>
-            <Mic className={`w-3 h-3 ${isListening ? 'animate-pulse' : ''}`} />
-            {isListening ? `Listening... (Audio: ${audioLevel}%)` : 'Ready'}
-          </div>
-          
-          {!isListening && !permissionDenied && (
-            <button
-              onClick={startListening}
-              className="px-6 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold rounded-lg transition-colors"
-            >
-              Start Tuner
-            </button>
-          )}
-          
-          {isListening && (
-            <button
-              onClick={stopListening}
-              className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-white font-bold rounded-lg transition-colors"
-            >
-              Stop Tuner
-            </button>
-          )}
         </div>
       </div>
     </div>

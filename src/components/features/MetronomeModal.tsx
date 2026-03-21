@@ -171,7 +171,7 @@ export default function MetronomeModal() {
               onClick={closeMetronome}
               className="p-1 hover:bg-zinc-900 rounded transition-colors"
             >
-              <X className="w-7 h-7 text-zinc-400" />
+              <X className="w-9 h-9 text-zinc-400" />
             </button>
             
             <div className="flex items-center gap-2">

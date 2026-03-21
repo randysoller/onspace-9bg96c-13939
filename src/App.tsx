@@ -8,7 +8,6 @@ import ProgressionPractice from '@/pages/ProgressionPractice';
 import ChordLibrary from '@/pages/ChordLibrary';
 import ChordEditor from '@/pages/ChordEditor';
 import Tuner from '@/pages/Tuner';
-import Metronome from '@/pages/Metronome';
 import NotFound from '@/pages/NotFound';
 
 function App() {
@@ -24,7 +23,6 @@ function App() {
           <Route path="/library" element={<ChordLibrary />} />
           <Route path="/editor" element={<ChordEditor />} />
           <Route path="/tuner" element={<Tuner />} />
-          <Route path="/metronome" element={<Metronome />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

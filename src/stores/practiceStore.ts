@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import { ChordRoot } from '@/types/chord';
+import { ChordRoot, ChordData } from '@/types/chord';
+
+interface PracticeFilters {
+  types?: string[];
+  keys?: ChordRoot[];
+  category?: string;
+}
 
 interface PracticeSettings {
   selectedRoots: ChordRoot[];
@@ -14,7 +20,7 @@ interface PracticeSettings {
 interface PracticeStore extends PracticeSettings {
   isPracticing: boolean;
   currentChordIndex: number;
-  practiceChords: any[];
+  practiceChords: ChordData[];
   
   setSelectedRoots: (roots: ChordRoot[]) => void;
   setSelectedCategories: (categories: string[]) => void;
@@ -28,8 +34,8 @@ interface PracticeStore extends PracticeSettings {
   stopPractice: () => void;
   nextChord: () => void;
   previousChord: () => void;
-  setPracticeChords: (chords: any[]) => void;
-  setFilters: (filters: any) => void;
+  setPracticeChords: (chords: ChordData[]) => void;
+  setFilters: (filters: PracticeFilters) => void;
 }
 
 export const usePracticeStore = create<PracticeStore>((set) => ({

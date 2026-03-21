@@ -99,6 +99,7 @@ export function usePitchDetection({
   const [isListening, setIsListening] = useState(false);
   const [currentPitch, setCurrentPitch] = useState<PitchDetectionResult | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -120,11 +121,17 @@ export function usePitchDetection({
     // Calculate signal amplitude
     const maxAmplitude = Math.max(...buffer.map(Math.abs));
     
-    // FIXED: More permissive noise gate for desktop microphones
-    // Lower sensitivity value = higher threshold, more noise filtering
-    const noiseGate = Math.max(0.005, 0.03 - (sensitivity * 0.003));
+    // Update audio level for visual feedback (0-100)
+    setAudioLevel(Math.min(100, Math.round(maxAmplitude * 200)));
+    
+    // CRITICAL FIX: Much lower noise gate for desktop detection
+    // Many desktop mics have lower input levels than mobile
+    const noiseGate = Math.max(0.001, 0.01 - (sensitivity * 0.0015));
+    
+    console.log('🎤 Audio level:', maxAmplitude.toFixed(4), 'Threshold:', noiseGate.toFixed(4));
     
     if (maxAmplitude < noiseGate) {
+      setCurrentPitch(null);
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
       return;
     }
@@ -132,7 +139,11 @@ export function usePitchDetection({
     // Detect pitch
     const frequency = detectPitch(buffer, audioContextRef.current.sampleRate);
     
-    // FIXED: Wider frequency range for guitar (82Hz E2 to 1319Hz E6)
+    if (frequency) {
+      console.log('🎵 Detected frequency:', frequency.toFixed(2), 'Hz');
+    }
+    
+    // FIXED: Wider frequency range for guitar (60Hz to 1400Hz)
     if (frequency && frequency > 60 && frequency < 1400) {
       const noteInfo = getNoteInfo(frequency);
       const result: PitchDetectionResult = {
@@ -141,6 +152,8 @@ export function usePitchDetection({
         cents: noteInfo.cents,
         octave: noteInfo.octave,
       };
+      
+      console.log('✅ Note detected:', result.noteName + result.octave, 'Cents:', result.cents);
       
       setCurrentPitch(result);
       
@@ -174,24 +187,45 @@ export function usePitchDetection({
 
   const startListening = useCallback(async () => {
     try {
+      console.log('🎤 Requesting microphone access...');
+      
+      // Stop any existing streams first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
           noiseSuppression: false,
           autoGainControl: false,
+          // Request higher sample rate for better accuracy
+          sampleRate: { ideal: 48000 },
         },
       });
+      
+      console.log('✅ Microphone access granted');
+      console.log('🎤 Audio tracks:', stream.getAudioTracks().map(t => ({
+        label: t.label,
+        enabled: t.enabled,
+        muted: t.muted,
+        readyState: t.readyState,
+      })));
 
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
+      console.log('🔊 AudioContext state:', audioContext.state);
+      
       // CRITICAL FIX: Resume AudioContext if suspended (common on desktop Chrome/Firefox)
       if (audioContext.state === 'suspended') {
+        console.log('⏸️ AudioContext suspended, resuming...');
         await audioContext.resume();
+        console.log('▶️ AudioContext resumed:', audioContext.state);
       }
       
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.8;
+      analyser.smoothingTimeConstant = 0.3; // Lower smoothing for faster response
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
@@ -206,13 +240,17 @@ export function usePitchDetection({
         sampleRate: audioContext.sampleRate,
         state: audioContext.state,
         fftSize: analyser.fftSize,
+        smoothing: analyser.smoothingTimeConstant,
       });
       
       // Start analysis loop
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-    } catch (error) {
-      console.error('❌ Microphone access denied:', error);
+    } catch (error: any) {
+      console.error('❌ Microphone access error:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
       setPermissionDenied(true);
+      setIsListening(false);
     }
   }, [analyzeAudio]);
 
@@ -229,6 +267,7 @@ export function usePitchDetection({
     isListening,
     currentPitch,
     permissionDenied,
+    audioLevel,
     startListening,
     stopListening,
   };

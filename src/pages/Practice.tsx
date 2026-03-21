@@ -115,6 +115,10 @@ export default function Practice() {
     if (user) {
       try {
         const { practiceApi } = await import('@/lib/api/practice');
+        const { chordMasteryApi } = await import('@/lib/api/chordMastery');
+        const { streaksApi } = await import('@/lib/api/streaks');
+        const { achievementsApi } = await import('@/lib/api/achievements');
+        const { goalsApi } = await import('@/lib/api/goals');
         
         const startTime = new Date(Date.now() - summary.totalDurationMs);
         const endTime = new Date();
@@ -145,6 +149,16 @@ export default function Practice() {
           await practiceApi.createEntries(entries);
         }
 
+        // Update chord mastery for each chord
+        for (const attempt of summary.attempts) {
+          await chordMasteryApi.updateChordMastery(
+            user.id,
+            attempt.chordSymbol,
+            attempt.result === 'correct',
+            attempt.timeMs
+          );
+        }
+
         // Update user stats
         const stats = await practiceApi.getUserStats(user.id);
         const newTotalSessions = stats.total_sessions + 1;
@@ -159,6 +173,29 @@ export default function Practice() {
           total_chords_practiced: newTotalChords,
           average_accuracy: newAvgAccuracy,
         });
+
+        // Update streak
+        await streaksApi.updateStreak(user.id);
+
+        // Check and award achievements
+        const newAchievements = await achievementsApi.checkAndAwardAchievements(user.id);
+        if (newAchievements.length > 0) {
+          console.log('New achievements unlocked:', newAchievements);
+        }
+
+        // Update active goals
+        const goals = await goalsApi.getUserGoals(user.id);
+        for (const goal of goals.filter(g => !g.completed)) {
+          if (goal.target_type === 'chords') {
+            await goalsApi.updateGoalProgress(goal.id, summary.totalCorrect + summary.totalSkipped);
+          } else if (goal.target_type === 'sessions') {
+            await goalsApi.updateGoalProgress(goal.id, 1);
+          } else if (goal.target_type === 'accuracy' && summary.accuracyRate >= goal.target_value) {
+            await goalsApi.updateGoalProgress(goal.id, goal.target_value - goal.current_value);
+          } else if (goal.target_type === 'minutes') {
+            await goalsApi.updateGoalProgress(goal.id, Math.floor(summary.totalDurationMs / 60000));
+          }
+        }
       } catch (err) {
         console.error('Failed to save session to database:', err);
       }

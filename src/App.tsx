@@ -10,6 +10,11 @@ import ChordEditor from '@/pages/ChordEditor';
 import Tuner from '@/pages/Tuner';
 import Auth from '@/pages/Auth';
 import PracticeHistory from '@/pages/PracticeHistory';
+import Leaderboard from '@/pages/Leaderboard';
+import Achievements from '@/pages/Achievements';
+import Goals from '@/pages/Goals';
+import SongLibrary from '@/pages/SongLibrary';
+import Analytics from '@/pages/Analytics';
 import NotFound from '@/pages/NotFound';
 
 function App() {
@@ -27,6 +32,11 @@ function App() {
           <Route path="/editor" element={<ChordEditor />} />
           <Route path="/tuner" element={<Tuner />} />
           <Route path="/history" element={<PracticeHistory />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/goals" element={<Goals />} />
+          <Route path="/songs" element={<SongLibrary />} />
+          <Route path="/analytics" element={<Analytics />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

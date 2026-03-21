@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3 } from 'lucide-react';
+import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3, Trophy, Target, Music2, TrendingUp } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -42,6 +42,15 @@ export const Header = () => {
     { path: '/tuner', label: 'Tuner', icon: TuningForkIcon },
     { path: '/library', label: 'Library', icon: Library },
     { path: '/editor', label: 'Editor', icon: Edit },
+  ];
+
+  const userMenuItems = [
+    { path: '/songs', label: 'Songs', icon: Music2 },
+    { path: '/analytics', label: 'Analytics', icon: TrendingUp },
+    { path: '/goals', label: 'Goals', icon: Target },
+    { path: '/achievements', label: 'Achievements', icon: Trophy },
+    { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
+    { path: '/history', label: 'History', icon: BarChart3 },
   ];
 
   return (
@@ -87,19 +96,29 @@ export const Header = () => {
               <span className="font-medium">Metronome</span>
             </button>
 
-            {/* History (only if logged in) */}
+            {/* User Menu Items (only if logged in) */}
             {user && (
-              <Link
-                to="/history"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                  location.pathname === '/history'
-                    ? 'bg-amber-500/20 text-amber-500'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <BarChart3 className="w-5 h-5" />
-                <span className="font-medium">History</span>
-              </Link>
+              <>
+                {userMenuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.path;
+                  
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
+                        isActive
+                          ? 'bg-amber-500/20 text-amber-500'
+                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </>
             )}
 
             {/* Auth Buttons */}

@@ -160,10 +160,10 @@ export default function ChordDetailModal({
                       return (
                         <g key={`dot-${stringIdx}`}>
                           <path
-                            d={`M ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 - 10} 
-                                L ${20 + stringIdx * 24 + 10} ${20 + (fret - 0.5) * 35} 
-                                L ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 + 10} 
-                                L ${20 + stringIdx * 24 - 10} ${20 + (fret - 0.5) * 35} Z`}
+                            d={`M ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 - 16} 
+                                L ${20 + stringIdx * 24 + 16} ${20 + (fret - 0.5) * 35} 
+                                L ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 + 16} 
+                                L ${20 + stringIdx * 24 - 16} ${20 + (fret - 0.5) * 35} Z`}
                             fill="currentColor"
                             className="text-cyan-500"
                           />
@@ -173,7 +173,7 @@ export default function ChordDetailModal({
                               y={20 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
-                              className="text-zinc-950 text-sm font-black"
+                              className="text-white text-sm font-black"
                             >
                               {fingerNum}
                             </text>
@@ -197,7 +197,7 @@ export default function ChordDetailModal({
                               y={20 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
-                              className="text-zinc-950 text-sm font-black"
+                              className="text-white text-sm font-black"
                             >
                               {fingerNum}
                             </text>

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X, Music, Mic, Target, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useChordDetection } from '@/hooks/useChordDetection';
+import { usePitchDetection } from '@/hooks/usePitchDetection';
 import { useReferenceTone } from '@/hooks/useReferenceTone';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 
@@ -9,24 +9,22 @@ export default function Tuner() {
   const navigate = useNavigate();
   const { sensitivity, setSensitivity } = useDetectionSettingsStore();
   const { playTone, stopTone } = useReferenceTone();
-  const [detectedNote, setDetectedNote] = useState<string | null>(null);
-  const [detectedFrequency, setDetectedFrequency] = useState<number | null>(441.5);
-  const [cents, setCents] = useState<number>(7);
-  const [isListening, setIsListening] = useState(false);
   const [selectedString, setSelectedString] = useState<number | null>(null);
 
-  const { startListening, stopListening, isListening: micActive } = useChordDetection({
+  const { isListening, currentPitch, startListening, stopListening } = usePitchDetection({
     sensitivity,
-    autoStart: isListening,
+    autoStart: false,
   });
+
+  const detectedFrequency = currentPitch?.frequency || null;
+  const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;
+  const cents = currentPitch?.cents || 0;
 
   const toggleListening = () => {
     if (isListening) {
       stopListening();
-      setIsListening(false);
     } else {
       startListening();
-      setIsListening(true);
     }
   };
 

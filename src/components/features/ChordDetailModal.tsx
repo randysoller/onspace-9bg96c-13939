@@ -160,10 +160,10 @@ export default function ChordDetailModal({
                       return (
                         <g key={`dot-${stringIdx}`}>
                           <path
-                            d={`M ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 - 16} 
-                                L ${20 + stringIdx * 24 + 16} ${20 + (fret - 0.5) * 35} 
-                                L ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 + 16} 
-                                L ${20 + stringIdx * 24 - 16} ${20 + (fret - 0.5) * 35} Z`}
+                            d={`M ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 - 15} 
+                                L ${20 + stringIdx * 24 + 15} ${20 + (fret - 0.5) * 35} 
+                                L ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 + 15} 
+                                L ${20 + stringIdx * 24 - 15} ${20 + (fret - 0.5) * 35} Z`}
                             fill="currentColor"
                             className="text-cyan-500"
                           />
@@ -173,7 +173,7 @@ export default function ChordDetailModal({
                               y={20 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
-                              className="text-white text-sm font-black"
+                              className="text-white text-[15px] font-black"
                             >
                               {fingerNum}
                             </text>
@@ -187,7 +187,7 @@ export default function ChordDetailModal({
                           <circle
                             cx={20 + stringIdx * 24}
                             cy={20 + (fret - 0.5) * 35}
-                            r="10"
+                            r="11"
                             fill="currentColor"
                             className="text-amber-500"
                           />
@@ -197,7 +197,7 @@ export default function ChordDetailModal({
                               y={20 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
-                              className="text-white text-sm font-black"
+                              className="text-white text-[15px] font-black"
                             >
                               {fingerNum}
                             </text>

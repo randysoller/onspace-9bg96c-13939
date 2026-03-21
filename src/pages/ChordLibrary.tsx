@@ -122,10 +122,10 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   return (
                     <g key={`dot-${stringIdx}`}>
                       <path
-                        d={`M ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 - 14} 
-                            L ${10 + stringIdx * 16 + 14} ${15 + (fret - 0.5) * 25} 
-                            L ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 + 14} 
-                            L ${10 + stringIdx * 16 - 14} ${15 + (fret - 0.5) * 25} Z`}
+                        d={`M ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 - 13} 
+                            L ${10 + stringIdx * 16 + 13} ${15 + (fret - 0.5) * 25} 
+                            L ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 + 13} 
+                            L ${10 + stringIdx * 16 - 13} ${15 + (fret - 0.5) * 25} Z`}
                         fill="currentColor"
                         className="text-cyan-500"
                       />
@@ -135,7 +135,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                           y={15 + (fret - 0.5) * 25 + 1}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          className="text-white text-[10px] font-black"
+                          className="text-white text-[11px] font-black"
                         >
                           {fingerNum}
                         </text>
@@ -149,7 +149,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                       <circle
                         cx={10 + stringIdx * 16}
                         cy={15 + (fret - 0.5) * 25}
-                        r="7"
+                        r="8"
                         fill="currentColor"
                         className="text-amber-500"
                       />
@@ -159,7 +159,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                           y={15 + (fret - 0.5) * 25 + 1}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          className="text-white text-[10px] font-black"
+                          className="text-white text-[11px] font-black"
                         >
                           {fingerNum}
                         </text>

@@ -24,34 +24,31 @@ export const MobileTabBar = () => {
   const location = useLocation();
   const { toggleMetronome } = useMetronomeUIStore();
 
-  const tabs = [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/tuner', label: 'Tuner', icon: TuningForkIcon },
-    { path: '/library', label: 'Library', icon: Library },
-    { path: '/editor', label: 'Editor', icon: Edit },
-  ];
-
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-amber-500/20 z-50">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-amber-500/20 z-[60]">
       <div className="flex items-center justify-around h-16">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = location.pathname === tab.path;
+        {/* Home */}
+        <Link
+          to="/"
+          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+            location.pathname === '/' ? 'text-amber-500' : 'text-zinc-400'
+          }`}
+        >
+          <Home className="w-6 h-6 mb-1" />
+          <span className="text-xs font-medium">Home</span>
+        </Link>
 
-          return (
-            <Link
-              key={tab.path}
-              to={tab.path}
-              className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
-                isActive ? 'text-amber-500' : 'text-zinc-400'
-              }`}
-            >
-              <Icon className="w-6 h-6 mb-1" />
-              <span className="text-xs font-medium">{tab.label}</span>
-            </Link>
-          );
-        })}
-        
+        {/* Tuner */}
+        <Link
+          to="/tuner"
+          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+            location.pathname === '/tuner' ? 'text-amber-500' : 'text-zinc-400'
+          }`}
+        >
+          <TuningForkIcon className="w-6 h-6 mb-1" />
+          <span className="text-xs font-medium">Tuner</span>
+        </Link>
+
         {/* Metronome Button (Modal Trigger) */}
         <button
           onClick={toggleMetronome}
@@ -60,6 +57,28 @@ export const MobileTabBar = () => {
           <MetronomeIcon className="w-6 h-6 mb-1" />
           <span className="text-xs font-medium">Metronome</span>
         </button>
+
+        {/* Library */}
+        <Link
+          to="/library"
+          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+            location.pathname === '/library' ? 'text-amber-500' : 'text-zinc-400'
+          }`}
+        >
+          <Library className="w-6 h-6 mb-1" />
+          <span className="text-xs font-medium">Library</span>
+        </Link>
+
+        {/* Editor */}
+        <Link
+          to="/editor"
+          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+            location.pathname === '/editor' ? 'text-amber-500' : 'text-zinc-400'
+          }`}
+        >
+          <Edit className="w-6 h-6 mb-1" />
+          <span className="text-xs font-medium">Editor</span>
+        </Link>
       </div>
     </div>
   );

@@ -21,50 +21,63 @@ export const useReferenceTone = () => {
 
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
-    const volume = tunerVolume * 0.25;
+    const volume = tunerVolume * 0.65; // Louder default volume
 
     // Guitar-like tone synthesis using multiple harmonics
-    // Fundamental + harmonics at decreasing amplitudes
+    // Authentic guitar harmonic series with natural amplitude distribution
     const harmonics = [
-      { freq: frequency, amp: 1.0 },        // Fundamental
-      { freq: frequency * 2, amp: 0.4 },    // 2nd harmonic (octave)
-      { freq: frequency * 3, amp: 0.25 },   // 3rd harmonic (perfect fifth)
-      { freq: frequency * 4, amp: 0.15 },   // 4th harmonic (two octaves)
-      { freq: frequency * 5, amp: 0.1 },    // 5th harmonic (major third)
-      { freq: frequency * 6, amp: 0.05 },   // 6th harmonic
+      { freq: frequency, amp: 1.0, type: 'triangle' as OscillatorType },      // Fundamental (warm)
+      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType },  // 2nd harmonic (octave)
+      { freq: frequency * 3, amp: 0.3, type: 'sine' as OscillatorType },      // 3rd harmonic (perfect fifth)
+      { freq: frequency * 4, amp: 0.2, type: 'sine' as OscillatorType },      // 4th harmonic
+      { freq: frequency * 5, amp: 0.15, type: 'sine' as OscillatorType },     // 5th harmonic (brightness)
+      { freq: frequency * 6, amp: 0.1, type: 'sine' as OscillatorType },      // 6th harmonic
+      { freq: frequency * 7, amp: 0.05, type: 'sine' as OscillatorType },     // 7th harmonic (shimmer)
     ];
 
-    harmonics.forEach(({ freq, amp }) => {
+    harmonics.forEach(({ freq, amp, type }) => {
       const oscillator = ctx.createOscillator();
       const gainNode = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
 
-      // Use triangle wave for warmer, more guitar-like tone
-      oscillator.type = 'triangle';
+      // Mix of waveforms for authentic guitar timbre
+      oscillator.type = type;
       oscillator.frequency.setValueAtTime(freq, now);
 
-      // ADSR Envelope for guitar-like pluck
-      // Attack: Quick pluck (10ms)
-      gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(volume * amp, now + 0.01);
-      
-      // Decay: Natural string decay (2 seconds)
-      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.3, now + 0.3);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+      // Low-pass filter for natural tone shaping
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(3000 + (freq * 0.5), now); // Adaptive brightness
+      filter.Q.setValueAtTime(0.7, now);
 
-      oscillator.connect(gainNode);
+      // Authentic guitar ADSR envelope
+      // Attack: Sharp pluck (5ms)
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume * amp * 1.2, now + 0.005);
+      
+      // Decay: Quick initial drop (150ms)
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.4, now + 0.15);
+      
+      // Sustain: Slower natural decay (3 seconds total)
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.15, now + 1.0);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+
+      oscillator.connect(filter);
+      filter.connect(gainNode);
       gainNode.connect(ctx.destination);
 
       oscillator.start(now);
-      oscillator.stop(now + 2.0);
+      oscillator.stop(now + 3.0);
 
       activeNodesRef.current.push({ osc: oscillator, gain: gainNode });
     });
 
-    // Add subtle noise for pluck attack (initial pick sound)
-    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
+    // Add realistic pick attack noise (string scrape + pick collision)
+    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
     const data = noiseBuffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) {
-      data[i] = (Math.random() * 2 - 1) * 0.1; // Low-amplitude noise
+      // Exponentially decaying noise for realistic pick sound
+      const decay = Math.exp(-i / (ctx.sampleRate * 0.01));
+      data[i] = (Math.random() * 2 - 1) * 0.2 * decay;
     }
 
     const noiseSource = ctx.createBufferSource();
@@ -73,18 +86,18 @@ export const useReferenceTone = () => {
 
     noiseSource.buffer = noiseBuffer;
     noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.setValueAtTime(frequency * 4, now); // High-frequency click
-    noiseFilter.Q.setValueAtTime(5, now);
+    noiseFilter.frequency.setValueAtTime(frequency * 3, now); // Pick frequency range
+    noiseFilter.Q.setValueAtTime(2, now); // Moderate resonance
 
-    noiseGain.gain.setValueAtTime(volume * 0.5, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    noiseGain.gain.setValueAtTime(volume * 0.6, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
 
     noiseSource.connect(noiseFilter);
     noiseFilter.connect(noiseGain);
     noiseGain.connect(ctx.destination);
 
     noiseSource.start(now);
-    noiseSource.stop(now + 0.05);
+    noiseSource.stop(now + 0.03);
   };
 
   const stopTone = () => {

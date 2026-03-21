@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { MobileTabBar } from './MobileTabBar';
+import MetronomeModal from '@/components/features/MetronomeModal';
 
 export const AppLayout = () => {
   return (
@@ -10,6 +11,7 @@ export const AppLayout = () => {
         <Outlet />
       </main>
       <MobileTabBar />
+      <MetronomeModal />
     </div>
   );
 };

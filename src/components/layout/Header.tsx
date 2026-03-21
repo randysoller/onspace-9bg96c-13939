@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Music, Home, Library, Edit } from 'lucide-react';
+import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 
 // Custom Metronome Icon (old-time pyramid metronome)
 const MetronomeIcon = ({ className }: { className?: string }) => (
@@ -22,9 +23,10 @@ const TuningForkIcon = ({ className }: { className?: string }) => (
 export const Header = () => {
   const location = useLocation();
 
+  const { toggleMetronome } = useMetronomeUIStore();
+
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/metronome', label: 'Metronome', icon: MetronomeIcon },
     { path: '/tuner', label: 'Tuner', icon: TuningForkIcon },
     { path: '/library', label: 'Library', icon: Library },
     { path: '/editor', label: 'Editor', icon: Edit },
@@ -63,6 +65,15 @@ export const Header = () => {
                 </Link>
               );
             })}
+            
+            {/* Metronome Button (Modal Trigger) */}
+            <button
+              onClick={toggleMetronome}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-zinc-400 hover:text-white hover:bg-white/5"
+            >
+              <MetronomeIcon className="w-5 h-5" />
+              <span className="font-medium">Metronome</span>
+            </button>
           </nav>
         </div>
       </div>

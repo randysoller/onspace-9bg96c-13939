@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePracticeStore } from '@/stores/practiceStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
+import { AdvancedDetectionPanel } from '@/components/features/AdvancedDetectionPanel';
+import { BeatSyncPanel } from '@/components/features/BeatSyncPanel';
 import { 
   ArrowLeft, 
   Sliders, 
@@ -11,9 +13,7 @@ import {
   ChevronRight, 
   SkipBack, 
   RotateCcw, 
-  BarChart3,
-  ChevronDown,
-  Settings
+  BarChart3
 } from 'lucide-react';
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
@@ -27,8 +27,6 @@ export default function Practice() {
   const [diagramsOn, setDiagramsOn] = useState(true);
   const [micSensitivity, setMicSensitivity] = useState(6);
   const [volume, setVolume] = useState(75);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [beatSyncOpen, setBeatSyncOpen] = useState(false);
 
   const currentChord = practiceChords[currentChordIndex];
 
@@ -163,42 +161,9 @@ export default function Practice() {
       </div>
 
       {/* Collapsible Panels */}
-      <div className="border-b border-zinc-800">
-        {/* Advanced Detection */}
-        <button
-          onClick={() => setAdvancedOpen(!advancedOpen)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-900/30 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Settings className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Advanced Detection</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-xs font-semibold rounded border border-amber-500/30 transition-colors">
-              <Settings className="w-3 h-3 inline mr-1" />
-              Calibrate
-            </button>
-            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </button>
-
-        {/* Beat Sync */}
-        <button
-          onClick={() => setBeatSyncOpen(!beatSyncOpen)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-900/30 transition-colors border-t border-zinc-800"
-        >
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Beat Sync</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-bold rounded transition-colors">
-              <ChevronRight className="w-3 h-3 inline mr-1" />
-              Start
-            </button>
-            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${beatSyncOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </button>
+      <div className="border-b border-zinc-800 px-4 py-4 space-y-3">
+        <AdvancedDetectionPanel />
+        <BeatSyncPanel />
       </div>
 
       {/* Main Chord Display */}

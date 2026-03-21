@@ -113,6 +113,32 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               return null;
             })}
 
+            {/* Barres (drawn first so they appear behind) */}
+            {chord.barres?.map((barreFret, barreIdx) => {
+              const stringsOnBarre = chord.frets
+                .map((f, idx) => (f === barreFret ? idx : -1))
+                .filter(idx => idx !== -1);
+              
+              if (stringsOnBarre.length < 2) return null;
+              
+              const minString = Math.min(...stringsOnBarre);
+              const maxString = Math.max(...stringsOnBarre);
+
+              return (
+                <line
+                  key={`barre-${barreIdx}`}
+                  x1={10 + minString * 16}
+                  y1={15 + (barreFret - 0.5) * 25}
+                  x2={10 + maxString * 16}
+                  y2={15 + (barreFret - 0.5) * 25}
+                  stroke="currentColor"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  className="text-amber-500"
+                />
+              );
+            })}
+
             {/* Finger dots */}
             {chord.frets.map((fret, stringIdx) => {
               if (fret > 0) {
@@ -171,32 +197,6 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                 }
               }
               return null;
-            })}
-
-            {/* Barres */}
-            {chord.barres?.map((barreFret, barreIdx) => {
-              const stringsOnBarre = chord.frets
-                .map((f, idx) => (f === barreFret ? idx : -1))
-                .filter(idx => idx !== -1);
-              
-              if (stringsOnBarre.length < 2) return null;
-              
-              const minString = Math.min(...stringsOnBarre);
-              const maxString = Math.max(...stringsOnBarre);
-
-              return (
-                <line
-                  key={`barre-${barreIdx}`}
-                  x1={10 + minString * 16}
-                  y1={15 + (barreFret - 0.5) * 25}
-                  x2={10 + maxString * 16}
-                  y2={15 + (barreFret - 0.5) * 25}
-                  stroke="currentColor"
-                  strokeWidth="7"
-                  strokeLinecap="round"
-                  className="text-amber-500"
-                />
-              );
             })}
           </svg>
         </div>

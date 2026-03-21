@@ -28,7 +28,7 @@ interface DetectionSettingsState {
 export const useDetectionSettingsStore = create<DetectionSettingsState>()(
   persist(
     (set) => ({
-      sensitivity: 6,
+      sensitivity: 7,
       advancedEnabled: false,
       advancedValues: DEFAULTS,
       setSensitivity: (v) => set({ sensitivity: v }),

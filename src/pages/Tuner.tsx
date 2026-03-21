@@ -168,15 +168,21 @@ export default function Tuner() {
           </div>
 
           {/* Cents Indicator */}
-          <div className="flex items-center justify-between text-xs text-zinc-500 mb-4">
-            <span>♭ Flat</span>
+          <div className="flex items-center justify-between text-sm text-white mb-4">
+            <span className="flex items-center gap-1">
+              Flat
+              <span className="text-lg">♭</span>
+            </span>
             <span className={`font-bold transition-colors ${
               Math.abs(cents) < 5 ? 'text-emerald-500' : 
               Math.abs(cents) < 15 ? 'text-yellow-500' : 'text-red-500'
             }`}>
               {cents > 0 ? '+' : ''}{cents} cents
             </span>
-            <span>Sharp ♯</span>
+            <span className="flex items-center gap-1">
+              Sharp
+              <span className="text-lg">♯</span>
+            </span>
           </div>
 
           {/* Mic Sensitivity */}

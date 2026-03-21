@@ -20,9 +20,12 @@ export default function Index() {
         {/* Practice Mode Cards */}
         <div className="space-y-6">
           {/* Chords Card */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 hover:border-emerald-500/40 transition-all group">
+          <button
+            onClick={() => navigate('/chord-setup')}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-emerald-500 rounded-xl p-6 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+          >
             <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-14 h-14 bg-emerald-500 rounded-lg flex items-center justify-center">
+              <div className="flex-shrink-0 w-14 h-14 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <Grid3x3 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
@@ -33,19 +36,19 @@ export default function Index() {
               </div>
             </div>
             
-            <button
-              onClick={() => navigate('/chord-setup')}
-              className="flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 font-semibold text-sm transition-colors group-hover:gap-2"
-            >
+            <div className="flex items-center gap-1.5 text-emerald-500 group-hover:text-emerald-400 font-semibold text-sm transition-all group-hover:gap-2">
               Start
               <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+            </div>
+          </button>
 
           {/* Chord Progressions Card */}
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 hover:border-purple-500/40 transition-all group">
+          <button
+            onClick={() => navigate('/progression-setup')}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-purple-500 rounded-xl p-6 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+          >
             <div className="flex items-start gap-4 mb-4">
-              <div className="flex-shrink-0 w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center">
+              <div className="flex-shrink-0 w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
                 <Music2 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
@@ -56,14 +59,11 @@ export default function Index() {
               </div>
             </div>
             
-            <button
-              onClick={() => navigate('/progression-setup')}
-              className="flex items-center gap-1.5 text-purple-500 hover:text-purple-400 font-semibold text-sm transition-colors group-hover:gap-2"
-            >
+            <div className="flex items-center gap-1.5 text-purple-500 group-hover:text-purple-400 font-semibold text-sm transition-all group-hover:gap-2">
               Start
               <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>

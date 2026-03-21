@@ -63,10 +63,15 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
+      // Middle bar is taller (h-12 vs h-8) and thicker (w-2 vs w-1)
+      const isMiddleBar = i === centerBar;
+      const barHeight = isMiddleBar ? 'h-12' : 'h-8';
+      const barWidth = isMiddleBar ? 'w-2' : 'w-1';
+      
       bars.push(
         <div
           key={i}
-          className={`w-1 h-8 ${color} transition-opacity duration-100 ${
+          className={`${barWidth} ${barHeight} ${color} transition-opacity duration-100 ${
             isActive ? 'opacity-100' : 'opacity-30'
           }`}
         />

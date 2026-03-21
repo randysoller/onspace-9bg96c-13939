@@ -1,0 +1,104 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+export interface HistoryAttempt {
+  chordSymbol: string;
+  chordName: string;
+  result: 'correct' | 'skipped';
+  timeMs: number;
+}
+
+export interface ConfusionEntry {
+  expected: string;
+  detected: string;
+  count: number;
+}
+
+export interface PracticeSession {
+  id: string;
+  date: number;
+  mode: 'single' | 'progression';
+  totalCorrect: number;
+  totalSkipped: number;
+  accuracyRate: number;
+  avgResponseTimeMs: number;
+  fastestTimeMs: number;
+  totalDurationMs: number;
+  attempts: HistoryAttempt[];
+  chords: string[];
+}
+
+export interface CalibrationProfile {
+  id: string;
+  name: string;
+  createdAt: number;
+  noiseGate: number;
+  harmonicBoost: number;
+  fluxTolerance: number;
+  noiseFloorRms: number;
+  signalRms: number;
+}
+
+interface PracticeHistoryState {
+  sessions: PracticeSession[];
+  calibrationProfiles: CalibrationProfile[];
+  confusionMatrix: ConfusionEntry[];
+  addSession: (session: Omit<PracticeSession, 'id'>) => void;
+  clearHistory: () => void;
+  addCalibrationProfile: (profile: Omit<CalibrationProfile, 'id'>) => void;
+  deleteCalibrationProfile: (id: string) => void;
+  recordConfusion: (expected: string, detected: string) => void;
+  clearConfusionMatrix: () => void;
+}
+
+export const usePracticeHistoryStore = create<PracticeHistoryState>()(
+  persist(
+    (set) => ({
+      sessions: [],
+      calibrationProfiles: [],
+      confusionMatrix: [],
+      addSession: (session) =>
+        set((state) => ({
+          sessions: [
+            { ...session, id: `session-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+            ...state.sessions,
+          ].slice(0, 200),
+        })),
+      clearHistory: () => set({ sessions: [] }),
+      addCalibrationProfile: (profile) =>
+        set((state) => ({
+          calibrationProfiles: [
+            ...state.calibrationProfiles,
+            { ...profile, id: `cal-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` },
+          ],
+        })),
+      deleteCalibrationProfile: (id) =>
+        set((state) => ({
+          calibrationProfiles: state.calibrationProfiles.filter((p) => p.id !== id),
+        })),
+      recordConfusion: (expected, detected) =>
+        set((state) => {
+          const existing = state.confusionMatrix.find(
+            (e) => e.expected === expected && e.detected === detected
+          );
+          if (existing) {
+            return {
+              confusionMatrix: state.confusionMatrix.map((e) =>
+                e.expected === expected && e.detected === detected
+                  ? { ...e, count: e.count + 1 }
+                  : e
+              ),
+            };
+          }
+          return {
+            confusionMatrix: [...state.confusionMatrix, { expected, detected, count: 1 }],
+          };
+        }),
+      clearConfusionMatrix: () => set({ confusionMatrix: [] }),
+    }),
+    {
+      name: 'fretmaster-practice-history',
+      version: 2,
+    }
+  )
+);

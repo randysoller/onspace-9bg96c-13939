@@ -118,17 +118,28 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                 const fingerNum = chord.fingers?.[stringIdx];
 
                 if (isRoot) {
-                  // Root note - blue diamond
+                  // Root note - blue diamond (larger, with finger number)
                   return (
                     <g key={`dot-${stringIdx}`}>
                       <path
-                        d={`M ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 - 6} 
-                            L ${10 + stringIdx * 16 + 6} ${15 + (fret - 0.5) * 25} 
-                            L ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 + 6} 
-                            L ${10 + stringIdx * 16 - 6} ${15 + (fret - 0.5) * 25} Z`}
+                        d={`M ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 - 8} 
+                            L ${10 + stringIdx * 16 + 8} ${15 + (fret - 0.5) * 25} 
+                            L ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 + 8} 
+                            L ${10 + stringIdx * 16 - 8} ${15 + (fret - 0.5) * 25} Z`}
                         fill="currentColor"
                         className="text-cyan-500"
                       />
+                      {fingerNum && fingerNum > 0 && (
+                        <text
+                          x={10 + stringIdx * 16}
+                          y={15 + (fret - 0.5) * 25 + 1}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-zinc-950 text-[10px] font-black"
+                        >
+                          {fingerNum}
+                        </text>
+                      )}
                     </g>
                   );
                 } else {

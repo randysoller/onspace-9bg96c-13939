@@ -1,31 +1,100 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, ChevronRight, RotateCcw, Play } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, Volume2, SkipForward, ChevronRight } from 'lucide-react';
 
-const PROGRESSION = [
-  { numeral: 'I', name: 'C', fullName: 'C Major' },
-  { numeral: 'IV', name: 'F', fullName: 'F Major' },
-  { numeral: 'V', name: 'G', fullName: 'G Major' },
-  { numeral: 'I', name: 'C', fullName: 'C Major' },
-];
+const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
+
+// Mock progression data - in real app this would come from store
+const mockProgression = {
+  key: 'C',
+  scale: 'Major Scale',
+  chords: [
+    {
+      root: 'C',
+      type: 'major',
+      category: 'Major',
+      frets: [-1, 3, 2, 0, 1, 0],
+      fingers: [0, 3, 2, 0, 1, 0],
+      rootString: 4
+    },
+    {
+      root: 'F',
+      type: 'major',
+      category: 'Major',
+      frets: [-1, -1, 3, 2, 1, 1],
+      fingers: [0, 0, 3, 2, 1, 1],
+      rootString: 3
+    },
+    {
+      root: 'G',
+      type: 'major',
+      category: 'Major',
+      frets: [3, 2, 0, 0, 0, 3],
+      fingers: [2, 1, 0, 0, 0, 3],
+      rootString: 0
+    },
+    {
+      root: 'C',
+      type: 'major',
+      category: 'Major',
+      frets: [-1, 3, 2, 0, 1, 0],
+      fingers: [0, 3, 2, 0, 1, 0],
+      rootString: 4
+    }
+  ],
+  romanNumerals: ['I', 'IV', 'V', 'I']
+};
 
 export default function ProgressionPractice() {
   const navigate = useNavigate();
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
-  
-  const currentChord = PROGRESSION[currentChordIndex];
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(75);
+  const [showDiagram, setShowDiagram] = useState(true);
+
+  const currentChord = mockProgression.chords[currentChordIndex];
+  const currentRoman = mockProgression.romanNumerals[currentChordIndex];
+  const rootStringIndex = currentChord.rootString !== undefined ? currentChord.rootString : -1;
 
   const handleNext = () => {
-    setCurrentChordIndex((prev) => (prev + 1) % PROGRESSION.length);
+    if (currentChordIndex < mockProgression.chords.length - 1) {
+      setCurrentChordIndex(currentChordIndex + 1);
+      setProgress(0);
+    } else {
+      setCurrentChordIndex(0);
+      setProgress(0);
+    }
   };
 
   const handleReset = () => {
     setCurrentChordIndex(0);
+    setProgress(0);
+    setIsPlaying(false);
   };
+
+  const togglePlay = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  useEffect(() => {
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            handleNext();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 40);
+      return () => clearInterval(interval);
+    }
+  }, [isPlaying, currentChordIndex]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      {/* Top Bar */}
+      {/* Header */}
       <div className="border-b border-zinc-800 bg-black px-4 py-3">
         <div className="flex items-center justify-between">
           <button
@@ -36,63 +105,260 @@ export default function ProgressionPractice() {
             <span className="text-sm">Back</span>
           </button>
 
-          <div className="text-sm text-zinc-500">
-            <span className="text-emerald-500 font-semibold">● Listening</span> — play the chord
+          <div className="text-center">
+            <div className="text-xs text-zinc-500 uppercase tracking-wide">Progression Practice</div>
+            <div className="text-sm font-bold text-amber-500">{mockProgression.key} {mockProgression.scale}</div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Volume2 className="w-4 h-4 text-zinc-400" />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+            />
           </div>
         </div>
       </div>
 
-      {/* Progression Display */}
-      <div className="border-b border-zinc-800 bg-zinc-900/30 px-4 py-6">
-        <div className="flex items-center justify-center gap-4">
-          {PROGRESSION.map((chord, idx) => (
-            <div
-              key={idx}
-              className={`relative px-6 py-3 rounded-lg border-2 transition-all ${
-                idx === currentChordIndex
-                  ? 'bg-amber-500 border-amber-500 text-zinc-950 scale-110'
-                  : idx < currentChordIndex
-                  ? 'bg-zinc-800 border-emerald-500 text-zinc-300'
-                  : 'bg-zinc-900 border-zinc-700 text-zinc-500'
-              }`}
-            >
-              <div className="text-xs font-semibold mb-1 text-center">{chord.numeral}</div>
-              <div className="text-2xl font-black text-center">{chord.name}</div>
-              
-              {idx < currentChordIndex && (
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-4 text-sm text-zinc-500">
-          Chord {currentChordIndex + 1} of {PROGRESSION.length}
+      {/* Progression Overview */}
+      <div className="border-b border-zinc-800 bg-zinc-900/30 px-4 py-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center gap-2">
+            {mockProgression.chords.map((chord, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentChordIndex(idx)}
+                  className={`relative px-6 py-3 rounded-lg border-2 transition-all ${
+                    idx === currentChordIndex
+                      ? 'bg-amber-500 border-amber-500 text-zinc-950 font-bold scale-110'
+                      : 'bg-zinc-900 border-zinc-700 text-white hover:border-amber-500/50'
+                  }`}
+                >
+                  <div className="text-xs opacity-70 mb-1">{mockProgression.romanNumerals[idx]}</div>
+                  <div className="text-lg font-bold">
+                    {chord.root}
+                    {chord.type !== 'major' ? chord.type : ''}
+                  </div>
+                  {idx === currentChordIndex && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-amber-500 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-300 transition-all duration-100"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  )}
+                </button>
+                {idx < mockProgression.chords.length - 1 && (
+                  <ChevronRight className="w-4 h-4 text-zinc-600" />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Main Display */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-280px)] py-12">
+      {/* Main Chord Display */}
+      <div className="flex items-center justify-center min-h-[calc(100vh-350px)] py-12">
         <div className="text-center">
-          <div className="text-9xl font-black text-white mb-4">
-            {currentChord.name}
+          {/* Roman Numeral & Chord Name */}
+          <div className="mb-8">
+            <div className="text-6xl font-black text-amber-500 mb-2">
+              {currentRoman}
+            </div>
+            <div className="text-9xl font-black text-white mb-3">
+              {currentChord.root}
+              {currentChord.type !== 'major' ? currentChord.type : ''}
+            </div>
+            <div className="text-xl text-zinc-500">
+              {currentChord.root} {currentChord.category}
+            </div>
+            <div className="mt-4 text-sm text-zinc-600">
+              Chord {currentChordIndex + 1} of {mockProgression.chords.length}
+            </div>
           </div>
-          <div className="text-2xl text-zinc-500 mb-2">
-            {currentChord.fullName}
-          </div>
-          <div className="text-lg text-zinc-600">
-            {currentChord.numeral} in C Major
-          </div>
+
+          {/* Chord Diagram & Tablature */}
+          {showDiagram && (
+            <div className="flex items-center justify-center gap-8">
+              {/* Chord Diagram */}
+              <div className="relative">
+                <svg width="260" height="320" viewBox="0 0 260 320" className="select-none">
+                  {/* Muted/Open strings at top */}
+                  {currentChord.frets.map((fret, idx) => {
+                    if (fret === -1) {
+                      return (
+                        <g key={`muted-${idx}`}>
+                          <line
+                            x1={70 + idx * 32 - 5}
+                            y1={36}
+                            x2={70 + idx * 32 + 5}
+                            y2={46}
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-zinc-500"
+                          />
+                          <line
+                            x1={70 + idx * 32 + 5}
+                            y1={36}
+                            x2={70 + idx * 32 - 5}
+                            y2={46}
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-zinc-500"
+                          />
+                        </g>
+                      );
+                    } else if (fret === 0) {
+                      return (
+                        <circle
+                          key={`open-${idx}`}
+                          cx={70 + idx * 32}
+                          cy={41}
+                          r="7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          className="text-emerald-500"
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* Nut */}
+                  <rect x="54" y="65" width="160" height="4" fill="currentColor" className="text-zinc-200" />
+
+                  {/* Frets */}
+                  {[1, 2, 3, 4].map((fret) => (
+                    <line
+                      key={`fret-${fret}`}
+                      x1="54"
+                      y1={65 + fret * 55}
+                      x2="214"
+                      y2={65 + fret * 55}
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className="text-zinc-200"
+                    />
+                  ))}
+
+                  {/* Strings */}
+                  {[0, 1, 2, 3, 4, 5].map((string) => (
+                    <line
+                      key={`string-${string}`}
+                      x1={70 + string * 32}
+                      y1="65"
+                      x2={70 + string * 32}
+                      y2="285"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      className="text-zinc-200"
+                    />
+                  ))}
+
+                  {/* Finger positions */}
+                  {currentChord.frets.map((fret, stringIdx) => {
+                    if (fret > 0) {
+                      const isRoot = stringIdx === rootStringIndex;
+                      const fingerNum = currentChord.fingers?.[stringIdx];
+
+                      if (isRoot) {
+                        return (
+                          <g key={`dot-${stringIdx}`}>
+                            <path
+                              d={`M ${70 + stringIdx * 32} ${65 + (fret - 0.5) * 55 - 14} 
+                                  L ${70 + stringIdx * 32 + 14} ${65 + (fret - 0.5) * 55} 
+                                  L ${70 + stringIdx * 32} ${65 + (fret - 0.5) * 55 + 14} 
+                                  L ${70 + stringIdx * 32 - 14} ${65 + (fret - 0.5) * 55} Z`}
+                              fill="currentColor"
+                              className="text-cyan-500"
+                            />
+                            {fingerNum && fingerNum > 0 && (
+                              <text
+                                x={70 + stringIdx * 32}
+                                y={65 + (fret - 0.5) * 55 + 1}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="text-white text-base font-black"
+                              >
+                                {fingerNum}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      } else {
+                        return (
+                          <g key={`dot-${stringIdx}`}>
+                            <circle
+                              cx={70 + stringIdx * 32}
+                              cy={65 + (fret - 0.5) * 55}
+                              r="15"
+                              fill="currentColor"
+                              className="text-amber-500"
+                            />
+                            {fingerNum && fingerNum > 0 && (
+                              <text
+                                x={70 + stringIdx * 32}
+                                y={65 + (fret - 0.5) * 55 + 1}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="text-white text-base font-black"
+                              >
+                                {fingerNum}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      }
+                    }
+                    return null;
+                  })}
+                </svg>
+              </div>
+
+              {/* Tablature */}
+              <div className="bg-white rounded-xl px-5 py-4 shadow-2xl">
+                {currentChord.frets.map((fret, idx) => (
+                  <div key={idx} className="flex gap-3 items-center py-1.5">
+                    <span className="text-zinc-800 font-bold w-3 text-sm">{STRINGS[idx]}</span>
+                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-900 font-bold w-4 text-center text-base">
+                      {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
+                    </span>
+                    <span className="text-zinc-400">—</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Next Chord Preview */}
+          {currentChordIndex < mockProgression.chords.length - 1 && (
+            <div className="mt-12 text-center">
+              <div className="text-xs text-zinc-600 uppercase tracking-wide mb-2">Next Chord</div>
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+                <div className="text-sm text-amber-500 font-bold">
+                  {mockProgression.romanNumerals[currentChordIndex + 1]}
+                </div>
+                <div className="text-2xl font-bold">
+                  {mockProgression.chords[currentChordIndex + 1].root}
+                  {mockProgression.chords[currentChordIndex + 1].type !== 'major' 
+                    ? mockProgression.chords[currentChordIndex + 1].type 
+                    : ''}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Bottom Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
-        <div className="flex items-center justify-center gap-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-5">
+        <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
           <button
             onClick={handleReset}
             className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
@@ -101,18 +367,27 @@ export default function ProgressionPractice() {
           </button>
 
           <button
-            className="flex-1 max-w-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-500 font-bold py-4 px-8 rounded-lg flex items-center justify-center gap-2 transition-all"
+            onClick={togglePlay}
+            className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-4 px-10 rounded-lg transition-all shadow-lg shadow-emerald-500/20"
           >
-            <Volume2 className="w-5 h-5" />
-            Play Chord
+            {isPlaying ? (
+              <>
+                <Pause className="w-6 h-6" fill="currentColor" />
+                Pause
+              </>
+            ) : (
+              <>
+                <Play className="w-6 h-6" fill="currentColor" />
+                Play Progression
+              </>
+            )}
           </button>
 
           <button
             onClick={handleNext}
-            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold py-4 px-8 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+            className="p-3 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
           >
-            Next
-            <ChevronRight className="w-5 h-5" />
+            <SkipForward className="w-5 h-5 text-zinc-950" />
           </button>
         </div>
       </div>

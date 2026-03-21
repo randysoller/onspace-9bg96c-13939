@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Pause, RotateCcw, Volume2, SkipForward, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, Volume2, SkipForward, ChevronRight, Save } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { progressionPracticeApi } from '@/lib/api/progressionPractice';
+import { toast } from 'sonner';
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
@@ -47,21 +50,37 @@ const mockProgression = {
 
 export default function ProgressionPractice() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(75);
   const [showDiagram, setShowDiagram] = useState(true);
+  const [sessionStartTime] = useState(new Date());
+  const [completedCycles, setCompletedCycles] = useState(0);
+  const [chordHistory, setChordHistory] = useState<{ chord: string; position: number; roman: string; timestamp: Date }[]>([]);
 
   const currentChord = mockProgression.chords[currentChordIndex];
   const currentRoman = mockProgression.romanNumerals[currentChordIndex];
   const rootStringIndex = currentChord.rootString !== undefined ? currentChord.rootString : -1;
 
   const handleNext = () => {
+    // Track this chord in history
+    const chord = mockProgression.chords[currentChordIndex];
+    const roman = mockProgression.romanNumerals[currentChordIndex];
+    setChordHistory(prev => [...prev, {
+      chord: `${chord.root}${chord.type !== 'major' ? chord.type : ''}`,
+      position: currentChordIndex + 1,
+      roman,
+      timestamp: new Date(),
+    }]);
+
     if (currentChordIndex < mockProgression.chords.length - 1) {
       setCurrentChordIndex(currentChordIndex + 1);
       setProgress(0);
     } else {
+      // Completed a full cycle
+      setCompletedCycles(prev => prev + 1);
       setCurrentChordIndex(0);
       setProgress(0);
     }
@@ -71,6 +90,52 @@ export default function ProgressionPractice() {
     setCurrentChordIndex(0);
     setProgress(0);
     setIsPlaying(false);
+    setChordHistory([]);
+  };
+
+  const handleSaveAndExit = async () => {
+    if (!user) {
+      toast.error('Please sign in to save your progress');
+      navigate('/');
+      return;
+    }
+
+    try {
+      const endTime = new Date();
+      const durationSeconds = Math.floor((endTime.getTime() - sessionStartTime.getTime()) / 1000);
+
+      // Create progression session
+      const session = await progressionPracticeApi.createSession({
+        user_id: user.id,
+        progression_name: `${mockProgression.romanNumerals.join('-')} in ${mockProgression.key}`,
+        key: mockProgression.key,
+        scale: mockProgression.scale,
+        total_chords: mockProgression.chords.length,
+        completed_cycles: completedCycles,
+        duration_seconds: durationSeconds,
+        started_at: sessionStartTime.toISOString(),
+        ended_at: endTime.toISOString(),
+      });
+
+      // Create progression entries if any chords were played
+      if (chordHistory.length > 0) {
+        await progressionPracticeApi.createEntries(
+          chordHistory.map(h => ({
+            session_id: session.id,
+            chord_name: h.chord,
+            chord_position: h.position,
+            roman_numeral: h.roman,
+          }))
+        );
+      }
+
+      toast.success(`Progression session saved! ${completedCycles} cycle${completedCycles !== 1 ? 's' : ''} completed`);
+      navigate('/');
+    } catch (err) {
+      console.error('Failed to save progression session:', err);
+      toast.error('Failed to save session');
+      navigate('/');
+    }
   };
 
   const togglePlay = () => {
@@ -358,37 +423,60 @@ export default function ProgressionPractice() {
 
       {/* Bottom Controls */}
       <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-center gap-2">
-          <button
-            onClick={handleReset}
-            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
-          >
-            <RotateCcw className="w-4 h-4 text-zinc-400" />
-          </button>
+        <div className="max-w-4xl mx-auto">
+          {/* Stats Summary */}
+          <div className="flex items-center justify-center gap-6 mb-3 text-xs text-zinc-500">
+            <div>
+              <span className="text-amber-500 font-bold">{completedCycles}</span> cycle{completedCycles !== 1 ? 's' : ''} completed
+            </div>
+            <div>
+              <span className="text-cyan-500 font-bold">{chordHistory.length}</span> chord{chordHistory.length !== 1 ? 's' : ''} played
+            </div>
+          </div>
 
-          <button
-            onClick={togglePlay}
-            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-emerald-500/20"
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="w-4 h-4" fill="currentColor" />
-                <span className="text-sm">Pause</span>
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" fill="currentColor" />
-                <span className="text-sm">Play</span>
-              </>
+          {/* Control Buttons */}
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={handleReset}
+              className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            >
+              <RotateCcw className="w-4 h-4 text-zinc-400" />
+            </button>
+
+            <button
+              onClick={togglePlay}
+              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-emerald-500/20"
+            >
+              {isPlaying ? (
+                <>
+                  <Pause className="w-4 h-4" fill="currentColor" />
+                  <span className="text-sm">Pause</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-4 h-4" fill="currentColor" />
+                  <span className="text-sm">Play</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleNext}
+              className="p-2.5 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
+            >
+              <SkipForward className="w-4 h-4 text-zinc-950" />
+            </button>
+
+            {user && (
+              <button
+                onClick={handleSaveAndExit}
+                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-lg transition-colors ml-2"
+              >
+                <Save className="w-4 h-4" />
+                <span className="text-sm">Save & Exit</span>
+              </button>
             )}
-          </button>
-
-          <button
-            onClick={handleNext}
-            className="p-2.5 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
-          >
-            <SkipForward className="w-4 h-4 text-zinc-950" />
-          </button>
+          </div>
         </div>
       </div>
     </div>

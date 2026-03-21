@@ -10,9 +10,9 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
-      <div className="container mx-auto px-4 py-16 max-w-2xl">
+      <div className="container mx-auto px-4 py-10 max-w-2xl">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">
             What Do You Want to
           </h1>
@@ -26,9 +26,9 @@ export default function Index() {
           {/* Chords Card */}
           <button
             onClick={() => navigate('/chord-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-emerald-500 rounded-xl p-6 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-emerald-500 rounded-xl p-4 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group cursor-pointer active:scale-[0.99]"
           >
-            <div className="flex items-start gap-4 mb-4">
+            <div className="flex items-start gap-4 mb-2">
               <div className="flex-shrink-0 w-14 h-14 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
                 <Grid3x3 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
@@ -49,9 +49,9 @@ export default function Index() {
           {/* Chord Progressions Card */}
           <button
             onClick={() => navigate('/progression-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-purple-500 rounded-xl p-6 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-purple-500 rounded-xl p-4 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all group cursor-pointer active:scale-[0.99]"
           >
-            <div className="flex items-start gap-4 mb-4">
+            <div className="flex items-start gap-4 mb-2">
               <div className="flex-shrink-0 w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
                 <Music2 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
@@ -72,9 +72,9 @@ export default function Index() {
           {/* Scales Card */}
           <button
             onClick={() => navigate('/scale-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-cyan-500 rounded-xl p-6 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-cyan-500 rounded-xl p-4 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-all group cursor-pointer active:scale-[0.99]"
           >
-            <div className="flex items-start gap-4 mb-4">
+            <div className="flex items-start gap-4 mb-2">
               <div className="flex-shrink-0 w-14 h-14 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
                 <Scale className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>

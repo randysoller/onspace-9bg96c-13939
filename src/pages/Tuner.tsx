@@ -67,7 +67,7 @@ export default function Tuner() {
         <div
           key={i}
           className={`w-1 h-8 ${color} transition-opacity duration-100 ${
-            isActive ? 'opacity-100' : 'opacity-0'
+            isActive ? 'opacity-100' : 'opacity-30'
           }`}
         />
       );
@@ -148,8 +148,8 @@ export default function Tuner() {
               {/* Note Name - always rendered with fixed height */}
               <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
                 getNoteColor()
-              }`} style={{ minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {noteNameOnly}
+              }`} style={{ minHeight: '120px', minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {noteNameOnly || '\u00A0'}
               </div>
             </div>
             

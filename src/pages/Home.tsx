@@ -1,130 +1,141 @@
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Music, Library, Edit, Mic, Play, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bookmark, Music2, Shapes, Layers, Play } from 'lucide-react';
+import { CHORD_DATABASE } from '@/constants/chords';
+import { usePracticeStore } from '@/stores/practiceStore';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { setPracticeChords } = usePracticeStore();
+  
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [selectedShapes, setSelectedShapes] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string | null>(null);
 
-  const features = [
-    {
-      icon: Play,
-      title: 'Practice Mode',
-      description: 'Train chord changes with customizable timing and visual feedback',
-      action: () => navigate('/practice'),
-      color: 'text-amber-500',
-    },
-    {
-      icon: Library,
-      title: 'Chord Library',
-      description: 'Explore 400+ chord variations across all keys',
-      action: () => navigate('/library'),
-      color: 'text-blue-500',
-    },
-    {
-      icon: Edit,
-      title: 'Custom Chords',
-      description: 'Create and save your own chord diagrams',
-      action: () => navigate('/editor'),
-      color: 'text-emerald-500',
-    },
-    {
-      icon: Mic,
-      title: 'Guitar Tuner',
-      description: 'Accurate chromatic tuner with multiple tuning presets',
-      action: () => navigate('/tuner'),
-      color: 'text-purple-500',
-    },
-  ];
+  // Filter chords based on selections
+  const filteredChords = useMemo(() => {
+    return CHORD_DATABASE.filter(chord => {
+      if (selectedKey && selectedKey !== 'All' && chord.root !== selectedKey) return false;
+      if (selectedShapes && selectedShapes !== 'All Shapes') {
+        // Add shape filtering logic here if needed
+      }
+      if (selectedTypes && selectedTypes !== 'All Types') {
+        if (selectedTypes === 'Major' && chord.type !== 'major') return false;
+        if (selectedTypes === 'Minor' && chord.type !== 'minor') return false;
+        // Add more type filters as needed
+      }
+      return true;
+    });
+  }, [selectedKey, selectedShapes, selectedTypes]);
+
+  const handleStartPractice = () => {
+    setPracticeChords(filteredChords);
+    navigate('/practice');
+  };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <div className="text-center mb-16">
-        <div className="flex justify-center mb-6">
-          <div className="relative">
-            <Music className="w-24 h-24 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
-            <div className="absolute inset-0 bg-amber-500/20 blur-3xl rounded-full" />
+    <div className="min-h-screen bg-black text-white pb-24">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl md:text-6xl font-black mb-3">
+            Master Every Chord.
+          </h1>
+          <h2 className="text-5xl md:text-6xl font-black text-amber-500 mb-6">
+            One Fret at a Time.
+          </h2>
+          <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
+            Challenge yourself with timed chord reveals. Pick a category, set your timer, and test how well you know your fretboard.
+          </p>
+        </div>
+
+        {/* Filter Section */}
+        <div className="space-y-4 mb-8">
+          {/* Preset Dropdown */}
+          <button className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3.5 flex items-center justify-between hover:bg-zinc-900 transition-colors">
+            <div className="flex items-center gap-2.5">
+              <Bookmark className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm font-medium text-zinc-300 uppercase tracking-wide">EASY START - Presets</span>
+              <span className="bg-zinc-800 text-zinc-500 text-xs font-bold px-2 py-0.5 rounded">
+                0
+              </span>
+            </div>
+            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Filter Row */}
+          <div className="grid grid-cols-3 gap-3">
+            {/* Chords in a Key */}
+            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
+              <Music2 className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm text-zinc-300 flex-1 text-left">Chords in a Key</span>
+              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* All Shapes */}
+            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
+              <Shapes className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm text-zinc-300 flex-1 text-left">All Shapes</span>
+              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* All Types */}
+            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
+              <Layers className="w-4 h-4 text-zinc-500" />
+              <span className="text-sm text-zinc-300 flex-1 text-left">All Types</span>
+              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
           </div>
         </div>
-        
-        <h1 className="text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-amber-500 via-amber-300 to-amber-500 bg-clip-text text-transparent">
-          FretMaster
-        </h1>
-        
-        <p className="text-xl md:text-2xl text-zinc-400 mb-8 max-w-2xl mx-auto">
-          Master guitar chords with intelligent practice tools, comprehensive library, and real-time feedback
-        </p>
 
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Button
-            size="lg"
-            onClick={() => navigate('/practice')}
-            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-semibold px-8 py-6 text-lg shadow-lg shadow-amber-500/30"
+        {/* Chords Available Count */}
+        <div className="mb-6">
+          <span className="text-amber-500 font-bold text-sm">{filteredChords.length}</span>
+          <span className="text-zinc-500 text-sm"> chords available</span>
+        </div>
+
+        {/* Ready to Practice Panel */}
+        <div className="bg-zinc-900/50 border-2 border-amber-500/30 rounded-lg p-6">
+          <div className="flex items-center gap-2.5 mb-6">
+            <Play className="w-5 h-5 text-amber-500" />
+            <h2 className="text-xl font-bold uppercase tracking-wide">Ready to Practice</h2>
+          </div>
+
+          <div className="space-y-3 mb-6">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Category</span>
+              <span className="text-white font-medium">All Chords</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Type</span>
+              <span className="text-white font-medium">All Types</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Key</span>
+              <span className="text-white font-medium">All</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Available chords</span>
+              <span className="text-amber-500 font-bold text-lg">{filteredChords.length}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartPractice}
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-amber-500/20"
           >
-            <Play className="w-5 h-5 mr-2" />
-            Start Practicing
-          </Button>
-          
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate('/library')}
-            className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 px-8 py-6 text-lg"
-          >
-            <BookOpen className="w-5 h-5 mr-2" />
-            Browse Chords
-          </Button>
-        </div>
-      </div>
-
-      {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-        {features.map((feature, index) => {
-          const Icon = feature.icon;
-          return (
-            <Card
-              key={index}
-              className="bg-zinc-900/50 border-zinc-800 hover:border-amber-500/30 transition-all cursor-pointer group"
-              onClick={feature.action}
-            >
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg bg-zinc-800/50 group-hover:bg-zinc-800 transition-colors`}>
-                    <Icon className={`w-6 h-6 ${feature.color}`} />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-xl mb-2 text-white group-hover:text-amber-500 transition-colors">
-                      {feature.title}
-                    </CardTitle>
-                    <CardDescription className="text-zinc-400">
-                      {feature.description}
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-16">
-        <div className="text-center p-6 bg-zinc-900/30 rounded-lg border border-zinc-800">
-          <div className="text-3xl font-bold text-amber-500 mb-1">400+</div>
-          <div className="text-sm text-zinc-400">Chord Variations</div>
-        </div>
-        <div className="text-center p-6 bg-zinc-900/30 rounded-lg border border-zinc-800">
-          <div className="text-3xl font-bold text-blue-500 mb-1">12</div>
-          <div className="text-sm text-zinc-400">Root Notes</div>
-        </div>
-        <div className="text-center p-6 bg-zinc-900/30 rounded-lg border border-zinc-800">
-          <div className="text-3xl font-bold text-emerald-500 mb-1">6</div>
-          <div className="text-sm text-zinc-400">Tuning Presets</div>
-        </div>
-        <div className="text-center p-6 bg-zinc-900/30 rounded-lg border border-zinc-800">
-          <div className="text-3xl font-bold text-purple-500 mb-1">∞</div>
-          <div className="text-sm text-zinc-400">Practice Hours</div>
+            <Play className="w-5 h-5" fill="currentColor" />
+            START PRACTICE
+          </button>
         </div>
       </div>
     </div>

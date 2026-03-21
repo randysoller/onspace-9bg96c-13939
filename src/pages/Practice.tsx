@@ -1,184 +1,418 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePracticeStore } from '@/stores/practiceStore';
-import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
-import { ChordDiagram } from '@/components/features/ChordDiagram';
-import { Button } from '@/components/ui/button';
-import { Play, Pause, SkipForward, X, Volume2, VolumeX } from 'lucide-react';
-import { CHORD_DATABASE } from '@/constants/chords';
+import { 
+  ArrowLeft, 
+  Sliders, 
+  Mic, 
+  Volume2, 
+  Eye, 
+  ChevronRight, 
+  SkipBack, 
+  RotateCcw, 
+  BarChart3,
+  ChevronDown,
+  Settings
+} from 'lucide-react';
+
+const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
 export default function Practice() {
   const navigate = useNavigate();
-  const {
-    practiceChords,
-    currentChordIndex,
-    isPracticing,
-    interval,
-    playSound,
-    showDiagrams,
-    metronomeEnabled,
-    startPractice,
-    stopPractice,
-    nextChord,
-    setPracticeChords,
-    selectedRoots,
-    selectedCategories,
-    selectedTypes,
-  } = usePracticeStore();
-
+  const { practiceChords, currentChordIndex, showDiagrams, nextChord } = usePracticeStore();
   const { playChord } = useChordAudio();
-  const [timeRemaining, setTimeRemaining] = useState(interval);
-
-  useEffect(() => {
-    // Filter chords based on selection
-    const filtered = CHORD_DATABASE.filter((chord) => {
-      const rootMatch = selectedRoots.length === 0 || selectedRoots.includes(chord.root as any);
-      const categoryMatch = selectedCategories.length === 0 || selectedCategories.includes(chord.category);
-      const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(chord.type);
-      return rootMatch && categoryMatch && typeMatch;
-    });
-
-    // Shuffle chords
-    const shuffled = [...filtered].sort(() => Math.random() - 0.5);
-    setPracticeChords(shuffled);
-  }, [selectedRoots, selectedCategories, selectedTypes, setPracticeChords]);
-
-  useEffect(() => {
-    if (!isPracticing) return;
-
-    setTimeRemaining(interval);
-    const timer = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 1) {
-          nextChord();
-          if (playSound && practiceChords[currentChordIndex]) {
-            playChord(practiceChords[currentChordIndex]);
-          }
-          return interval;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isPracticing, currentChordIndex, interval, nextChord, playSound, playChord, practiceChords]);
+  
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [diagramsOn, setDiagramsOn] = useState(true);
+  const [micSensitivity, setMicSensitivity] = useState(6);
+  const [volume, setVolume] = useState(75);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [beatSyncOpen, setBeatSyncOpen] = useState(false);
 
   const currentChord = practiceChords[currentChordIndex];
 
-  const handleTogglePractice = () => {
-    if (isPracticing) {
-      stopPractice();
-    } else {
-      if (practiceChords.length === 0) {
-        alert('No chords selected. Please adjust your filters.');
-        return;
-      }
-      startPractice();
-      if (playSound && currentChord) {
-        playChord(currentChord);
-      }
-    }
-  };
-
   const handleNext = () => {
+    setIsRevealed(false);
     nextChord();
-    setTimeRemaining(interval);
-    if (playSound && practiceChords[currentChordIndex]) {
-      playChord(practiceChords[currentChordIndex]);
+  };
+
+  const handleReveal = () => {
+    setIsRevealed(true);
+    if (currentChord) {
+      playChord(currentChord);
     }
   };
 
-  if (practiceChords.length === 0) {
+  if (!currentChord) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-2xl font-bold text-white mb-4">No Chords Selected</h2>
-          <p className="text-zinc-400 mb-6">
-            Please go back to the setup page and select chords to practice.
-          </p>
-          <Button onClick={() => navigate('/')}>
-            Back to Setup
-          </Button>
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">No chords to practice</h2>
+          <button
+            onClick={() => navigate('/')}
+            className="text-amber-500 hover:text-amber-400"
+          >
+            Go back to setup
+          </button>
         </div>
       </div>
     );
   }
 
+  const rootStringIndex = currentChord.rootString !== undefined ? currentChord.rootString : -1;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-amber-500">Practice Session</h1>
-          <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-            <X className="w-6 h-6" />
-          </Button>
-        </div>
+    <div className="min-h-screen bg-zinc-950 text-white">
+      {/* Top Control Bar */}
+      <div className="border-b border-zinc-800 bg-black px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm">Back</span>
+          </button>
 
-        {/* Progress */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-sm text-zinc-400 mb-2">
-            <span>Chord {currentChordIndex + 1} of {practiceChords.length}</span>
-            <span>{timeRemaining}s remaining</span>
-          </div>
-          <div className="w-full bg-zinc-800 rounded-full h-2">
-            <div
-              className="bg-amber-500 h-2 rounded-full transition-all duration-1000"
-              style={{ width: `${((interval - timeRemaining) / interval) * 100}%` }}
-            />
+          {/* Right Controls */}
+          <div className="flex items-center gap-4">
+            {/* Filter Pills */}
+            <div className="flex items-center gap-2">
+              <button className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs text-zinc-300 transition-colors">
+                All Chords
+              </button>
+              <button className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs text-zinc-300 transition-colors">
+                All Types
+              </button>
+            </div>
+
+            {/* Chord Diagram Toggle */}
+            <button
+              onClick={() => setDiagramsOn(!diagramsOn)}
+              className={`px-3 py-1.5 rounded flex items-center gap-2 text-xs font-semibold transition-all ${
+                diagramsOn 
+                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40' 
+                  : 'bg-zinc-800 text-zinc-400'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Chord Diagram {diagramsOn ? 'On' : 'Off'}
+              <div className={`w-8 h-4 rounded-full relative transition-colors ${
+                diagramsOn ? 'bg-emerald-500' : 'bg-zinc-600'
+              }`}>
+                <div className={`absolute w-3 h-3 bg-white rounded-full top-0.5 transition-transform ${
+                  diagramsOn ? 'translate-x-4' : 'translate-x-0.5'
+                }`} />
+              </div>
+            </button>
+
+            {/* Mic Icon */}
+            <button className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors">
+              <Mic className="w-4 h-4 text-emerald-500" />
+            </button>
+
+            {/* Volume Slider */}
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-4 h-4 text-zinc-400" />
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                className="w-24 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              />
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Current Chord */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 mb-8">
-          {currentChord && (
-            <div className="flex flex-col items-center">
-              <h2 className="text-4xl font-bold text-white mb-2">
-                {currentChord.root}
-                <span className="text-2xl text-zinc-400 ml-2">{currentChord.type}</span>
-              </h2>
-              <p className="text-zinc-500 mb-8">{currentChord.category}</p>
-              
-              {showDiagrams && (
-                <ChordDiagram chord={currentChord} size="lg" showName={false} />
-              )}
+      {/* Status Bar */}
+      <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 text-emerald-500 text-sm">
+              <div className="flex gap-0.5">
+                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
+                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
+              </div>
+              <span className="font-medium">Listening — play the chord</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <Sliders className="w-4 h-4 text-zinc-500" />
+              <span className="text-xs text-zinc-500 uppercase tracking-wide">Mic Sensitivity</span>
+              <input
+                type="range"
+                min="1"
+                max="10"
+                value={micSensitivity}
+                onChange={(e) => setMicSensitivity(Number(e.target.value))}
+                className="w-32 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              />
+              <span className="text-amber-500 font-bold text-sm">{micSensitivity}</span>
+              <span className="text-zinc-600 text-xs">Balanced</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Collapsible Panels */}
+      <div className="border-b border-zinc-800">
+        {/* Advanced Detection */}
+        <button
+          onClick={() => setAdvancedOpen(!advancedOpen)}
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-900/30 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Settings className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Advanced Detection</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 text-xs font-semibold rounded border border-amber-500/30 transition-colors">
+              <Settings className="w-3 h-3 inline mr-1" />
+              Calibrate
+            </button>
+            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {/* Beat Sync */}
+        <button
+          onClick={() => setBeatSyncOpen(!beatSyncOpen)}
+          className="w-full px-4 py-3 flex items-center justify-between hover:bg-zinc-900/30 transition-colors border-t border-zinc-800"
+        >
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4 text-zinc-400" />
+            <span className="text-sm font-semibold uppercase tracking-wide text-zinc-300">Beat Sync</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-bold rounded transition-colors">
+              <ChevronRight className="w-3 h-3 inline mr-1" />
+              Start
+            </button>
+            <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${beatSyncOpen ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+      </div>
+
+      {/* Main Chord Display */}
+      <div className="flex items-center justify-center min-h-[calc(100vh-300px)] py-12">
+        <div className="text-center">
+          {/* Chord Name */}
+          <div className="mb-8">
+            <div className="text-8xl font-black text-white mb-2">
+              {currentChord.root}{currentChord.type !== 'major' ? currentChord.type : ''}
+            </div>
+            <div className="text-lg text-zinc-500">
+              {currentChord.root} {currentChord.category}
+            </div>
+          </div>
+
+          {/* Chord Diagram & Tablature */}
+          {diagramsOn && isRevealed && (
+            <div className="flex items-center justify-center gap-6">
+              {/* Chord Diagram */}
+              <div className="relative">
+                <svg width="240" height="300" viewBox="0 0 240 300" className="select-none">
+                  {/* Base Fret Indicator (2fr) */}
+                  <text x="10" y="70" className="text-xs fill-zinc-500">2fr</text>
+
+                  {/* Muted strings at top */}
+                  {currentChord.frets.map((fret, idx) => {
+                    if (fret === -1) {
+                      return (
+                        <g key={`muted-${idx}`}>
+                          <line
+                            x1={60 + idx * 30 - 4}
+                            y1={36}
+                            x2={60 + idx * 30 + 4}
+                            y2={44}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="text-zinc-500"
+                          />
+                          <line
+                            x1={60 + idx * 30 + 4}
+                            y1={36}
+                            x2={60 + idx * 30 - 4}
+                            y2={44}
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="text-zinc-500"
+                          />
+                        </g>
+                      );
+                    } else if (fret === 0) {
+                      return (
+                        <circle
+                          key={`open-${idx}`}
+                          cx={60 + idx * 30}
+                          cy={40}
+                          r="6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="text-zinc-400"
+                        />
+                      );
+                    }
+                    return null;
+                  })}
+
+                  {/* Nut */}
+                  <rect x="45" y="60" width="150" height="4" fill="currentColor" className="text-zinc-200" />
+
+                  {/* Frets */}
+                  {[1, 2, 3, 4].map((fret) => (
+                    <line
+                      key={`fret-${fret}`}
+                      x1="45"
+                      y1={60 + fret * 50}
+                      x2="195"
+                      y2={60 + fret * 50}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-zinc-200"
+                    />
+                  ))}
+
+                  {/* Strings */}
+                  {[0, 1, 2, 3, 4, 5].map((string) => (
+                    <line
+                      key={`string-${string}`}
+                      x1={60 + string * 30}
+                      y1="60"
+                      x2={60 + string * 30}
+                      y2="260"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="text-zinc-200"
+                    />
+                  ))}
+
+                  {/* Finger dots */}
+                  {currentChord.frets.map((fret, stringIdx) => {
+                    if (fret > 0) {
+                      const isRoot = stringIdx === rootStringIndex;
+                      const fingerNum = currentChord.fingers?.[stringIdx];
+
+                      if (isRoot) {
+                        return (
+                          <g key={`dot-${stringIdx}`}>
+                            <path
+                              d={`M ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 - 13} 
+                                  L ${60 + stringIdx * 30 + 13} ${60 + (fret - 0.5) * 50} 
+                                  L ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 + 13} 
+                                  L ${60 + stringIdx * 30 - 13} ${60 + (fret - 0.5) * 50} Z`}
+                              fill="currentColor"
+                              className="text-cyan-500"
+                            />
+                            {fingerNum && fingerNum > 0 && (
+                              <text
+                                x={60 + stringIdx * 30}
+                                y={60 + (fret - 0.5) * 50 + 1}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="text-white text-base font-black"
+                              >
+                                {fingerNum}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      } else {
+                        return (
+                          <g key={`dot-${stringIdx}`}>
+                            <circle
+                              cx={60 + stringIdx * 30}
+                              cy={60 + (fret - 0.5) * 50}
+                              r="14"
+                              fill="currentColor"
+                              className="text-amber-500"
+                            />
+                            {fingerNum && fingerNum > 0 && (
+                              <text
+                                x={60 + stringIdx * 30}
+                                y={60 + (fret - 0.5) * 50 + 1}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                className="text-white text-base font-black"
+                              >
+                                {fingerNum}
+                              </text>
+                            )}
+                          </g>
+                        );
+                      }
+                    }
+                    return null;
+                  })}
+                </svg>
+              </div>
+
+              {/* Tablature */}
+              <div className="bg-white rounded-lg px-4 py-3 text-sm font-mono shadow-xl">
+                {currentChord.frets.map((fret, idx) => (
+                  <div key={idx} className="flex gap-2.5 items-center py-1">
+                    <span className="text-zinc-800 font-bold w-3">{STRINGS[idx]}</span>
+                    <span className="text-zinc-400">—</span>
+                    <span className="text-zinc-900 font-bold w-3 text-center">
+                      {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
+                    </span>
+                    <span className="text-zinc-400">—</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!isRevealed && diagramsOn && (
+            <div className="text-zinc-600 text-sm">
+              <div className="mb-2">🙈</div>
+              Diagram hidden<br />
+              Hit reveal to display diagram
             </div>
           )}
         </div>
+      </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            size="lg"
-            onClick={handleTogglePractice}
-            className="bg-amber-500 hover:bg-amber-600 text-white px-8"
+      {/* Bottom Controls */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
+        <div className="flex items-center justify-center gap-3">
+          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+            <SkipBack className="w-5 h-5 text-zinc-400" />
+          </button>
+          
+          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+            <RotateCcw className="w-5 h-5 text-zinc-400" />
+          </button>
+          
+          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+            <BarChart3 className="w-5 h-5 text-zinc-400" />
+          </button>
+
+          <button
+            onClick={handleReveal}
+            disabled={isRevealed}
+            className="flex-1 max-w-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-500 font-bold py-4 px-8 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isPracticing ? (
-              <>
-                <Pause className="w-5 h-5 mr-2" />
-                Pause
-              </>
-            ) : (
-              <>
-                <Play className="w-5 h-5 mr-2" />
-                Start
-              </>
-            )}
-          </Button>
+            <Eye className="w-5 h-5" />
+            Reveal
+          </button>
 
-          <Button size="lg" variant="outline" onClick={handleNext}>
-            <SkipForward className="w-5 h-5 mr-2" />
+          <button
+            onClick={handleNext}
+            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold py-4 px-8 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+          >
             Next
-          </Button>
-
-          <Button size="lg" variant="ghost">
-            {playSound ? (
-              <Volume2 className="w-5 h-5" />
-            ) : (
-              <VolumeX className="w-5 h-5" />
-            )}
-          </Button>
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </div>

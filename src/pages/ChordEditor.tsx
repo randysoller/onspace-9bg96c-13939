@@ -1,129 +1,672 @@
 import { useState } from 'react';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { CustomChordData } from '@/types/customChord';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { FileText, Edit3, Save, Trash2, XCircle } from 'lucide-react';
+
+interface DotMarker {
+  string: number; // 0-5 (E to e)
+  fret: number; // 0-5
+  finger: number; // 1-4
+  color: string;
+  shape: 'circle' | 'diamond';
+  label?: string;
+}
+
+const COLORS = [
+  { name: 'Orange', value: '#f59e0b', class: 'bg-amber-500' },
+  { name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
+  { name: 'Green', value: '#10b981', class: 'bg-emerald-500' },
+  { name: 'Emerald', value: '#14b8a6', class: 'bg-teal-500' },
+  { name: 'Purple', value: '#a855f7', class: 'bg-purple-500' },
+  { name: 'Orange-Red', value: '#f97316', class: 'bg-orange-500' },
+  { name: 'Pink', value: '#ec4899', class: 'bg-pink-500' },
+  { name: 'Teal', value: '#14b8a6', class: 'bg-teal-400' },
+  { name: 'Yellow', value: '#eab308', class: 'bg-yellow-500' },
+  { name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
+  { name: 'White', value: '#ffffff', class: 'bg-white' },
+  { name: 'Gray', value: '#64748b', class: 'bg-slate-500' },
+];
+
+const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'e'];
+const CATEGORIES = ['Open Chords', 'Barre Chords', 'Power Chords', 'Jazz Chords', 'Custom'];
+const TYPES = ['Major', 'Minor', '7th', 'Major 7th', 'Minor 7th', 'Diminished', 'Augmented', 'Sus2', 'Sus4'];
 
 export default function ChordEditor() {
-  const { customChords, addCustomChord, deleteCustomChord } = useCustomChordStore();
-  const [chordName, setChordName] = useState('');
-  const [chordRoot, setChordRoot] = useState('C');
-  const [chordType, setChordType] = useState('major');
+  const { addCustomChord, deleteCustomChord } = useCustomChordStore();
+  
+  // Fretboard state
+  const [baseFret, setBaseFret] = useState(1);
+  const [visibleFrets, setVisibleFrets] = useState(5);
+  const [markers, setMarkers] = useState<DotMarker[]>([
+    { string: 2, fret: 1, finger: 2, color: '#f59e0b', shape: 'circle' },
+    { string: 1, fret: 2, finger: 1, color: '#06b6d4', shape: 'diamond' },
+    { string: 4, fret: 3, finger: 3, color: '#64748b', shape: 'circle' },
+  ]);
+  
+  // Chord info
+  const [chordName, setChordName] = useState('C Major');
+  const [symbol, setSymbol] = useState('C');
+  const [category, setCategory] = useState('Open Chords');
+  const [type, setType] = useState('Major');
+  
+  // Dot appearance
+  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [selectedShape, setSelectedShape] = useState<'circle' | 'diamond'>('circle');
+  const [selectedFinger, setSelectedFinger] = useState(1);
+  const [customLabel, setCustomLabel] = useState('');
+  
+  // Open strings state (true = open, false = muted, null = not set)
+  const [openStrings, setOpenStrings] = useState<(boolean | null)[]>([null, null, null, null, null, null]);
 
-  const handleCreateChord = () => {
-    if (!chordName.trim()) {
-      alert('Please enter a chord name');
-      return;
+  const handleFretClick = (string: number, fret: number) => {
+    // Check if there's already a marker here
+    const existingIndex = markers.findIndex(m => m.string === string && m.fret === fret);
+    
+    if (existingIndex !== -1) {
+      // Remove existing marker
+      setMarkers(markers.filter((_, i) => i !== existingIndex));
+    } else {
+      // Add new marker
+      setMarkers([...markers, {
+        string,
+        fret,
+        finger: selectedFinger,
+        color: selectedColor.value,
+        shape: selectedShape,
+        label: customLabel || undefined,
+      }]);
     }
+  };
 
+  const handleStringHeaderClick = (string: number) => {
+    const current = openStrings[string];
+    const newState = [...openStrings];
+    
+    if (current === null) {
+      newState[string] = true; // Set to open
+    } else if (current === true) {
+      newState[string] = false; // Set to muted
+    } else {
+      newState[string] = null; // Clear
+    }
+    
+    setOpenStrings(newState);
+  };
+
+  const handleClear = () => {
+    setMarkers([]);
+    setOpenStrings([null, null, null, null, null, null]);
+  };
+
+  const handleUpdateChord = () => {
     const newChord: CustomChordData = {
       id: Date.now().toString(),
       name: chordName,
-      root: chordRoot,
-      type: chordType,
-      markers: [],
+      root: symbol.charAt(0).toUpperCase(),
+      type,
+      markers: markers.map(m => ({ string: m.string, fret: m.fret, finger: m.finger })),
       barres: [],
-      baseFret: 1,
+      baseFret,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
     addCustomChord(newChord);
+    alert('Chord saved to library!');
+  };
+
+  const handleStartNew = () => {
+    setMarkers([]);
+    setOpenStrings([null, null, null, null, null, null]);
     setChordName('');
-    alert('Custom chord created!');
+    setSymbol('');
+    setBaseFret(1);
+    setVisibleFrets(5);
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-amber-500 mb-8">Chord Editor</h1>
+    <div className="min-h-screen bg-zinc-950 text-white">
+      <div className="container mx-auto px-4 py-8 max-w-2xl">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-1">Chord Editor</h1>
+          <p className="text-sm text-zinc-500">
+            Editing: <span className="text-amber-500">{symbol || 'C'}</span> — drag dots to reposition, tap to change fingers
+          </p>
+        </div>
 
-      {/* Create New Chord */}
-      <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-8">
-        <h2 className="text-2xl font-semibold text-white mb-4">Create New Chord</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div>
-            <label className="text-sm text-zinc-400 mb-2 block">Chord Name</label>
-            <Input
-              placeholder="e.g., My Custom Chord"
-              value={chordName}
-              onChange={(e) => setChordName(e.target.value)}
-              className="bg-zinc-900 border-zinc-700 text-white"
-            />
+        {/* FRETBOARD Section */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold uppercase text-zinc-400 tracking-wide">Fretboard</h2>
+            <button
+              onClick={handleClear}
+              className="text-xs text-zinc-500 hover:text-amber-500 transition-colors flex items-center gap-1"
+            >
+              <XCircle className="w-3 h-3" />
+              Clear
+            </button>
           </div>
-          
-          <div>
-            <label className="text-sm text-zinc-400 mb-2 block">Root</label>
-            <Input
-              placeholder="C"
-              value={chordRoot}
-              onChange={(e) => setChordRoot(e.target.value)}
-              className="bg-zinc-900 border-zinc-700 text-white"
-            />
-          </div>
-          
-          <div>
-            <label className="text-sm text-zinc-400 mb-2 block">Type</label>
-            <Input
-              placeholder="major"
-              value={chordType}
-              onChange={(e) => setChordType(e.target.value)}
-              className="bg-zinc-900 border-zinc-700 text-white"
-            />
+
+          <p className="text-xs text-zinc-600 mb-4">
+            Tap fret to place dot. Tap dot to change finger, delete, or start barre. Drag dot to move. Double-click barre to remove.
+          </p>
+
+          {/* Fretboard SVG */}
+          <div className="flex justify-center">
+            <svg width="320" height="400" viewBox="0 0 320 400" className="select-none">
+              {/* String labels at top */}
+              {STRING_NAMES.map((name, idx) => (
+                <g key={`string-label-${idx}`}>
+                  <text
+                    x={40 + idx * 45}
+                    y={25}
+                    textAnchor="middle"
+                    className="text-xs fill-zinc-500 font-semibold"
+                  >
+                    {name}
+                  </text>
+                  
+                  {/* Open/Muted indicator */}
+                  <g
+                    onClick={() => handleStringHeaderClick(idx)}
+                    className="cursor-pointer"
+                  >
+                    {openStrings[idx] === true && (
+                      <circle
+                        cx={40 + idx * 45}
+                        cy={40}
+                        r="6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-zinc-400 hover:text-amber-500"
+                      />
+                    )}
+                    {openStrings[idx] === false && (
+                      <text
+                        x={40 + idx * 45}
+                        y={44}
+                        textAnchor="middle"
+                        className="text-sm fill-zinc-400 font-bold hover:fill-amber-500"
+                      >
+                        ✕
+                      </text>
+                    )}
+                    {openStrings[idx] === null && (
+                      <circle
+                        cx={40 + idx * 45}
+                        cy={40}
+                        r="6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                        className="text-zinc-700 hover:text-zinc-500"
+                      />
+                    )}
+                  </g>
+                </g>
+              ))}
+
+              {/* Fret number labels (1 2 3 4 T - Barre) */}
+              <g>
+                {[1, 2, 3, 4, 'T', '-', 'Barre'].map((label, idx) => {
+                  const x = 40 + idx * 35;
+                  const isSelected = selectedFinger === idx + 1 && typeof label === 'number';
+                  
+                  return (
+                    <g key={`fret-label-${idx}`}>
+                      {idx < 5 && typeof label === 'number' && (
+                        <rect
+                          x={x - 15}
+                          y={55}
+                          width={30}
+                          height={24}
+                          rx={6}
+                          fill={isSelected ? '#f59e0b' : 'transparent'}
+                          className="cursor-pointer"
+                          onClick={() => setSelectedFinger(label as number)}
+                        />
+                      )}
+                      <text
+                        x={x}
+                        y={72}
+                        textAnchor="middle"
+                        className={`text-xs font-semibold cursor-pointer ${
+                          isSelected ? 'fill-zinc-950' : idx === 6 ? 'fill-amber-500' : 'fill-zinc-500'
+                        }`}
+                        onClick={() => typeof label === 'number' && setSelectedFinger(label)}
+                      >
+                        {label}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+
+              {/* Nut (thick top line) */}
+              <rect x="15" y="88" width="270" height="4" fill="currentColor" className="text-zinc-200" />
+
+              {/* Fret lines */}
+              {Array.from({ length: visibleFrets }).map((_, fretIdx) => (
+                <line
+                  key={`fret-${fretIdx}`}
+                  x1="15"
+                  y1={92 + (fretIdx + 1) * 55}
+                  x2="285"
+                  y2={92 + (fretIdx + 1) * 55}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-zinc-200"
+                />
+              ))}
+
+              {/* String lines */}
+              {STRING_NAMES.map((_, stringIdx) => (
+                <line
+                  key={`string-${stringIdx}`}
+                  x1={40 + stringIdx * 45}
+                  y1="88"
+                  x2={40 + stringIdx * 45}
+                  y2={92 + visibleFrets * 55}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-zinc-200"
+                />
+              ))}
+
+              {/* Fret number labels on right */}
+              {Array.from({ length: visibleFrets }).map((_, fretIdx) => (
+                <text
+                  key={`fret-num-${fretIdx}`}
+                  x="300"
+                  y={92 + (fretIdx + 0.5) * 55 + 5}
+                  className="text-xs fill-zinc-600"
+                >
+                  {baseFret + fretIdx}
+                </text>
+              ))}
+
+              {/* Interactive fret areas */}
+              {STRING_NAMES.map((_, stringIdx) =>
+                Array.from({ length: visibleFrets }).map((_, fretIdx) => (
+                  <rect
+                    key={`hit-${stringIdx}-${fretIdx}`}
+                    x={40 + stringIdx * 45 - 20}
+                    y={92 + fretIdx * 55}
+                    width={40}
+                    height={55}
+                    fill="transparent"
+                    className="cursor-pointer hover:fill-white/5"
+                    onClick={() => handleFretClick(stringIdx, fretIdx + 1)}
+                  />
+                ))
+              )}
+
+              {/* Markers */}
+              {markers.map((marker, idx) => {
+                const x = 40 + marker.string * 45;
+                const y = 92 + (marker.fret - 0.5) * 55;
+
+                return (
+                  <g key={`marker-${idx}`} className="cursor-pointer">
+                    {marker.shape === 'circle' ? (
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="14"
+                        fill={marker.color}
+                        onClick={() => handleFretClick(marker.string, marker.fret)}
+                      />
+                    ) : (
+                      <path
+                        d={`M ${x} ${y - 14} L ${x + 14} ${y} L ${x} ${y + 14} L ${x - 14} ${y} Z`}
+                        fill={marker.color}
+                        onClick={() => handleFretClick(marker.string, marker.fret)}
+                      />
+                    )}
+                    
+                    {marker.label ? (
+                      <text
+                        x={x}
+                        y={y + 1}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="text-xs font-black pointer-events-none"
+                        fill={marker.color === '#ffffff' ? '#000000' : '#ffffff'}
+                      >
+                        {marker.label}
+                      </text>
+                    ) : (
+                      <text
+                        x={x}
+                        y={y + 1}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="text-sm font-black pointer-events-none"
+                        fill={marker.color === '#ffffff' ? '#000000' : marker.shape === 'diamond' ? '#ffffff' : '#1a1a1a'}
+                      >
+                        {marker.finger}
+                      </text>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
           </div>
         </div>
 
-        <Button
-          onClick={handleCreateChord}
-          className="bg-amber-500 hover:bg-amber-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Chord
-        </Button>
-      </div>
-
-      {/* Custom Chords List */}
-      <div>
-        <h2 className="text-2xl font-semibold text-white mb-4">Your Custom Chords</h2>
-        
-        {customChords.length === 0 ? (
-          <div className="text-center py-12 text-zinc-400 bg-zinc-900/30 rounded-lg border border-zinc-800">
-            No custom chords yet. Create one above!
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {customChords.map((chord) => (
-              <div
-                key={chord.id}
-                className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4"
-              >
-                <h3 className="text-lg font-semibold text-white mb-2">{chord.name}</h3>
-                <p className="text-sm text-zinc-400 mb-4">
-                  {chord.root} {chord.type}
-                </p>
-                
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => deleteCustomChord(chord.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+        {/* FRET SETTINGS */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+          <h2 className="text-sm font-semibold uppercase text-zinc-400 tracking-wide mb-4">Fret Settings</h2>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <label className="text-xs text-zinc-500 mb-2 block">Base Fret</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setBaseFret(Math.max(1, baseFret - 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-400 transition-colors"
+                >
+                  −
+                </button>
+                <div className="flex-1 text-center text-2xl font-bold">{baseFret}</div>
+                <button
+                  onClick={() => setBaseFret(baseFret + 1)}
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-400 transition-colors"
+                >
+                  +
+                </button>
               </div>
-            ))}
+            </div>
+
+            <div>
+              <label className="text-xs text-zinc-500 mb-2 block">Visible Frets</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setVisibleFrets(Math.max(3, visibleFrets - 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-400 transition-colors"
+                >
+                  −
+                </button>
+                <div className="flex-1 text-center text-2xl font-bold">{visibleFrets}</div>
+                <button
+                  onClick={() => setVisibleFrets(Math.min(7, visibleFrets + 1))}
+                  className="w-10 h-10 flex items-center justify-center bg-zinc-800 hover:bg-zinc-700 rounded border border-zinc-700 text-zinc-400 transition-colors"
+                >
+                  +
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* CHORD INFO */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <FileText className="w-4 h-4 text-zinc-400" />
+            <h2 className="text-sm font-semibold uppercase text-zinc-400 tracking-wide">Chord Info</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-zinc-500 mb-1.5 block">Chord Name *</label>
+              <input
+                type="text"
+                value={chordName}
+                onChange={(e) => setChordName(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                placeholder="C Major"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs text-zinc-500 mb-1.5 block">Symbol *</label>
+              <input
+                type="text"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                placeholder="C"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-zinc-500 mb-1.5 block">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                >
+                  {CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs text-zinc-500 mb-1.5 block">Type</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white focus:outline-none focus:border-amber-500"
+                >
+                  {TYPES.map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DOT APPEARANCE */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Edit3 className="w-4 h-4 text-zinc-400" />
+            <h2 className="text-sm font-semibold uppercase text-zinc-400 tracking-wide">Dot Appearance</h2>
+          </div>
+          
+          <p className="text-xs text-zinc-600 mb-4">
+            Configure the color, shape, and label for the next dot you place.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-zinc-500 mb-2 block uppercase tracking-wide">Dot Color</label>
+              <div className="flex flex-wrap gap-2">
+                {COLORS.map((color) => (
+                  <button
+                    key={color.name}
+                    onClick={() => setSelectedColor(color)}
+                    className={`w-10 h-10 rounded ${color.class} ${
+                      selectedColor.name === color.name
+                        ? 'ring-2 ring-offset-2 ring-offset-zinc-900 ring-amber-500'
+                        : ''
+                    } transition-all hover:scale-110`}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs text-zinc-500 mb-2 block uppercase tracking-wide">Dot Shape</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedShape('circle')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded border transition-all ${
+                    selectedShape === 'circle'
+                      ? 'bg-amber-500 border-amber-500 text-zinc-950 font-semibold'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                  }`}
+                >
+                  <div className="w-4 h-4 rounded-full bg-current opacity-40" />
+                  Circle
+                </button>
+
+                <button
+                  onClick={() => setSelectedShape('diamond')}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded border transition-all ${
+                    selectedShape === 'diamond'
+                      ? 'bg-amber-500 border-amber-500 text-zinc-950 font-semibold'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                  }`}
+                >
+                  <div className="w-3 h-3 rotate-45 bg-current opacity-40" />
+                  Diamond
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CUSTOM FRET LABEL */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-6">
+          <label className="text-xs text-zinc-500 mb-1.5 block uppercase tracking-wide">
+            Custom Fret Label <span className="text-zinc-700">(Override finger #)</span>
+          </label>
+          <input
+            type="text"
+            value={customLabel}
+            onChange={(e) => setCustomLabel(e.target.value)}
+            className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+            placeholder="e.g. 1/2"
+          />
+        </div>
+
+        {/* ACTION BUTTONS */}
+        <div className="space-y-3 mb-6">
+          <button
+            onClick={handleUpdateChord}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          >
+            <Save className="w-5 h-5" />
+            Update Chord
+          </button>
+
+          <button
+            onClick={handleStartNew}
+            className="w-full bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-white font-medium py-3 rounded-lg transition-colors border border-zinc-800"
+          >
+            + Cancel — Start New
+          </button>
+
+          <button
+            onClick={() => {}}
+            className="w-full bg-transparent hover:bg-red-950/30 text-red-500 font-medium py-3 rounded-lg transition-colors border border-zinc-800 hover:border-red-900 flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete from Library
+          </button>
+        </div>
+
+        {/* LIVE PREVIEW */}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6">
+          <h2 className="text-sm font-semibold uppercase text-zinc-400 tracking-wide mb-4">Live Preview</h2>
+          
+          <div className="text-center">
+            <div className="text-5xl font-black text-amber-500 mb-1">{symbol || 'C'}</div>
+            <div className="text-sm text-zinc-500 mb-6">{chordName || 'C Major'}</div>
+
+            {/* Preview Diagram */}
+            <div className="flex justify-center">
+              <svg width="180" height="220" viewBox="0 0 180 220">
+                {/* Nut */}
+                <rect x="30" y="20" width="120" height="4" fill="currentColor" className="text-zinc-200" />
+
+                {/* Frets */}
+                {[1, 2, 3, 4].map((fret) => (
+                  <line
+                    key={`preview-fret-${fret}`}
+                    x1="30"
+                    y1={20 + fret * 45}
+                    x2="150"
+                    y2={20 + fret * 45}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-zinc-200"
+                  />
+                ))}
+
+                {/* Strings */}
+                {[0, 1, 2, 3, 4, 5].map((string) => (
+                  <line
+                    key={`preview-string-${string}`}
+                    x1={30 + string * 24}
+                    y1="20"
+                    x2={30 + string * 24}
+                    y2="200"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-zinc-200"
+                  />
+                ))}
+
+                {/* Open/Muted markers */}
+                {openStrings.map((state, idx) => {
+                  if (state === true) {
+                    return (
+                      <circle
+                        key={`preview-open-${idx}`}
+                        cx={30 + idx * 24}
+                        cy={10}
+                        r="5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="text-zinc-400"
+                      />
+                    );
+                  } else if (state === false) {
+                    return (
+                      <text
+                        key={`preview-muted-${idx}`}
+                        x={30 + idx * 24}
+                        y={13}
+                        textAnchor="middle"
+                        className="text-xs fill-zinc-400 font-bold"
+                      >
+                        ✕
+                      </text>
+                    );
+                  }
+                  return null;
+                })}
+
+                {/* Markers */}
+                {markers.map((marker, idx) => {
+                  const x = 30 + marker.string * 24;
+                  const y = 20 + (marker.fret - 0.5) * 45;
+
+                  return (
+                    <g key={`preview-marker-${idx}`}>
+                      {marker.shape === 'circle' ? (
+                        <circle cx={x} cy={y} r="10" fill={marker.color} />
+                      ) : (
+                        <path
+                          d={`M ${x} ${y - 10} L ${x + 10} ${y} L ${x} ${y + 10} L ${x - 10} ${y} Z`}
+                          fill={marker.color}
+                        />
+                      )}
+                      <text
+                        x={x}
+                        y={y + 1}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="text-xs font-black"
+                        fill={marker.color === '#ffffff' ? '#000000' : '#ffffff'}
+                      >
+                        {marker.label || marker.finger}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

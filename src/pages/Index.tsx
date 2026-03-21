@@ -1,8 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { Grid3x3, Music2, ChevronRight } from 'lucide-react';
+import { useBackendSync } from '@/hooks/useBackendSync';
 
 export default function Index() {
   const navigate = useNavigate();
+  
+  // Sync user data from backend when authenticated
+  useBackendSync();
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">

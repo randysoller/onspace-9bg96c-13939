@@ -8,12 +8,15 @@ import ProgressionPractice from '@/pages/ProgressionPractice';
 import ChordLibrary from '@/pages/ChordLibrary';
 import ChordEditor from '@/pages/ChordEditor';
 import Tuner from '@/pages/Tuner';
+import Auth from '@/pages/Auth';
+import PracticeHistory from '@/pages/PracticeHistory';
 import NotFound from '@/pages/NotFound';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/auth" element={<Auth />} />
         <Route element={<AppLayout />}>
           <Route path="/" element={<Index />} />
           <Route path="/chord-setup" element={<ChordSetup />} />
@@ -23,6 +26,7 @@ function App() {
           <Route path="/library" element={<ChordLibrary />} />
           <Route path="/editor" element={<ChordEditor />} />
           <Route path="/tuner" element={<Tuner />} />
+          <Route path="/history" element={<PracticeHistory />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

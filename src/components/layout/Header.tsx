@@ -1,6 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit } from 'lucide-react';
+import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3 } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
+import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/lib/api/auth';
 
 // Custom Metronome Icon (old-time pyramid metronome)
 const MetronomeIcon = ({ className }: { className?: string }) => (
@@ -22,8 +24,18 @@ const TuningForkIcon = ({ className }: { className?: string }) => (
 
 export const Header = () => {
   const location = useLocation();
+  const { user } = useAuthStore();
 
   const { toggleMetronome } = useMetronomeUIStore();
+
+  const handleSignOut = async () => {
+    try {
+      await authApi.signOut();
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
+  };
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -74,6 +86,45 @@ export const Header = () => {
               <MetronomeIcon className="w-5 h-5" />
               <span className="font-medium">Metronome</span>
             </button>
+
+            {/* History (only if logged in) */}
+            {user && (
+              <Link
+                to="/history"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+                  location.pathname === '/history'
+                    ? 'bg-amber-500/20 text-amber-500'
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="font-medium">History</span>
+              </Link>
+            )}
+
+            {/* Auth Buttons */}
+            {user ? (
+              <div className="flex items-center gap-3 ml-4 pl-4 border-l border-zinc-800">
+                <div className="text-sm text-zinc-400">
+                  {user.username}
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-zinc-400 hover:text-white hover:bg-white/5"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span className="font-medium">Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-zinc-400 hover:text-white hover:bg-white/5 ml-4 pl-4 border-l border-zinc-800"
+              >
+                <LogIn className="w-5 h-5" />
+                <span className="font-medium">Sign In</span>
+              </Link>
+            )}
           </nav>
         </div>
       </div>

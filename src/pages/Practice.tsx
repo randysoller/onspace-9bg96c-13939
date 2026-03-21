@@ -4,6 +4,7 @@ import { usePracticeStore } from '@/stores/practiceStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { usePracticeHistoryStore } from '@/stores/practiceHistoryStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { useChordDetection } from '@/hooks/useChordDetection';
 import { useSessionStats } from '@/hooks/useSessionStats';
@@ -90,10 +91,12 @@ export default function Practice() {
     }
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = async () => {
     stopListening();
     endSession();
     const summary = getSummary();
+    
+    // Save to local store
     addSession({
       date: Date.now(),
       mode: 'single',
@@ -106,6 +109,60 @@ export default function Practice() {
       attempts: summary.attempts,
       chords: practiceChords.map(c => `${c.root}${c.type !== 'major' ? c.type : ''}`),
     });
+
+    // Save to Supabase if logged in
+    const { user } = useAuthStore.getState();
+    if (user) {
+      try {
+        const { practiceApi } = await import('@/lib/api/practice');
+        
+        const startTime = new Date(Date.now() - summary.totalDurationMs);
+        const endTime = new Date();
+
+        // Create session in database
+        const session = await practiceApi.createSession({
+          user_id: user.id,
+          started_at: startTime.toISOString(),
+          ended_at: endTime.toISOString(),
+          total_chords: summary.totalCorrect + summary.totalSkipped,
+          correct_chords: summary.totalCorrect,
+          accuracy: summary.accuracyRate,
+          duration_seconds: Math.floor(summary.totalDurationMs / 1000),
+          practice_mode: 'single',
+        });
+
+        // Create entries for each attempt
+        const entries = summary.attempts.map(attempt => ({
+          session_id: session.id,
+          chord_name: attempt.chordSymbol,
+          was_correct: attempt.result === 'correct',
+          time_to_detect_ms: attempt.timeMs,
+          detected_notes: [],
+          expected_notes: [],
+        }));
+
+        if (entries.length > 0) {
+          await practiceApi.createEntries(entries);
+        }
+
+        // Update user stats
+        const stats = await practiceApi.getUserStats(user.id);
+        const newTotalSessions = stats.total_sessions + 1;
+        const newTotalChords = stats.total_chords_practiced + (summary.totalCorrect + summary.totalSkipped);
+        const newAvgAccuracy = (
+          (stats.average_accuracy * stats.total_sessions + summary.accuracyRate) /
+          newTotalSessions
+        );
+
+        await practiceApi.updateUserStats(user.id, {
+          total_sessions: newTotalSessions,
+          total_chords_practiced: newTotalChords,
+          average_accuracy: newAvgAccuracy,
+        });
+      } catch (err) {
+        console.error('Failed to save session to database:', err);
+      }
+    }
   };
 
   const toggleMic = () => {

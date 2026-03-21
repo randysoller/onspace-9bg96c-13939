@@ -16,8 +16,6 @@ export default function MetronomeModal() {
   const nextBeatTimeRef = useRef<number>(0);
   const intervalRef = useRef<number | null>(null);
 
-  if (!isOpen) return null;
-
   const tempoLabels: { [key: number]: string } = {
     40: 'Grave',
     60: 'Largo',
@@ -153,6 +151,8 @@ export default function MetronomeModal() {
       setCurrentBeat(1);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <>

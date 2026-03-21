@@ -153,29 +153,13 @@ export default function Tuner() {
               </div>
             </div>
             
-            {/* Status Messages - Fixed height container to prevent layout shift */}
-            <div className="mt-4 min-h-[76px]">
-              {permissionDenied && (
-                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                  <div className="text-sm font-bold text-red-500">Microphone access denied</div>
-                  <div className="text-xs text-red-400 mt-1">Please allow microphone access in your browser settings</div>
-                </div>
-              )}
-              
-              {!permissionDenied && audioLevel === 0 && (
-                <div className="p-3 bg-amber-500/20 border border-amber-500/30 rounded-lg">
-                  <div className="text-sm font-bold text-amber-500">No audio detected</div>
-                  <div className="text-xs text-amber-400 mt-1">Play a note on your guitar</div>
-                </div>
-              )}
-              
-              {!permissionDenied && audioLevel > 0 && !detectedFrequency && (
-                <div className="p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                  <div className="text-sm font-bold text-blue-500">Listening... (Level: {audioLevel}%)</div>
-                  <div className="text-xs text-blue-400 mt-1">Play louder or adjust sensitivity</div>
-                </div>
-              )}
-            </div>
+            {/* Only show permission error */}
+            {permissionDenied && (
+              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                <div className="text-sm font-bold text-red-500">Microphone access denied</div>
+                <div className="text-xs text-red-400 mt-1">Please allow microphone access in your browser settings</div>
+              </div>
+            )}
           </div>
 
           {/* Frequency Bars */}

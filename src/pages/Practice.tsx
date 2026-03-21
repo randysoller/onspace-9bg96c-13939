@@ -492,44 +492,44 @@ export default function Practice() {
 
       {/* Bottom Controls */}
       <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2">
           <button 
             onClick={handlePrevious}
             disabled={currentChordIndex === 0}
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <SkipBack className="w-5 h-5 text-zinc-400" />
+            <SkipBack className="w-4 h-4 text-zinc-400" />
           </button>
           
           <button 
             onClick={() => navigate('/')}
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
           >
-            <RotateCcw className="w-5 h-5 text-zinc-400" />
+            <RotateCcw className="w-4 h-4 text-zinc-400" />
           </button>
           
           <button 
             onClick={handleEndSession}
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
           >
-            <BarChart3 className="w-5 h-5 text-zinc-400" />
+            <BarChart3 className="w-4 h-4 text-zinc-400" />
           </button>
 
           <button
             onClick={handleReveal}
             disabled={isRevealed}
-            className="flex-1 max-w-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-500 font-bold py-4 px-8 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-amber-500 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Eye className="w-5 h-5" />
-            Reveal
+            <Eye className="w-4 h-4" />
+            <span className="text-sm">Reveal</span>
           </button>
 
           <button
             onClick={handleNext}
-            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold py-4 px-8 rounded-lg flex items-center gap-2 transition-all shadow-lg shadow-amber-500/20"
+            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold py-3 px-4 rounded-lg flex items-center gap-1.5 transition-all shadow-lg shadow-amber-500/20"
           >
-            Next
-            <ChevronRight className="w-5 h-5" />
+            <span className="text-sm">Next</span>
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>

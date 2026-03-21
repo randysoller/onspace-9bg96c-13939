@@ -357,37 +357,37 @@ export default function ProgressionPractice() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-5">
-        <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
+      <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
+        <div className="max-w-4xl mx-auto flex items-center justify-center gap-2">
           <button
             onClick={handleReset}
-            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
           >
-            <RotateCcw className="w-5 h-5 text-zinc-400" />
+            <RotateCcw className="w-4 h-4 text-zinc-400" />
           </button>
 
           <button
             onClick={togglePlay}
-            className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-4 px-10 rounded-lg transition-all shadow-lg shadow-emerald-500/20"
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-emerald-500/20"
           >
             {isPlaying ? (
               <>
-                <Pause className="w-6 h-6" fill="currentColor" />
-                Pause
+                <Pause className="w-4 h-4" fill="currentColor" />
+                <span className="text-sm">Pause</span>
               </>
             ) : (
               <>
-                <Play className="w-6 h-6" fill="currentColor" />
-                Play Progression
+                <Play className="w-4 h-4" fill="currentColor" />
+                <span className="text-sm">Play</span>
               </>
             )}
           </button>
 
           <button
             onClick={handleNext}
-            className="p-3 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
+            className="p-2.5 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
           >
-            <SkipForward className="w-5 h-5 text-zinc-950" />
+            <SkipForward className="w-4 h-4 text-zinc-950" />
           </button>
         </div>
       </div>

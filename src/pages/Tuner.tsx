@@ -33,10 +33,10 @@ export default function Tuner() {
   const handleStringClick = (stringData: typeof strings[0]) => {
     setSelectedString(stringData.number);
     playTone(stringData.freq);
+    // Let the tone play its full 3-second duration naturally
     setTimeout(() => {
-      stopTone();
       setSelectedString(null);
-    }, 2000);
+    }, 3000);
   };
 
   // Generate frequency bars (showing pitch deviation)
@@ -67,7 +67,7 @@ export default function Tuner() {
         <div
           key={i}
           className={`w-1 h-8 ${color} transition-opacity duration-100 ${
-            isActive ? 'opacity-100' : 'opacity-30'
+            isActive ? 'opacity-100' : !detectedFrequency ? 'opacity-0' : 'opacity-30'
           }`}
         />
       );

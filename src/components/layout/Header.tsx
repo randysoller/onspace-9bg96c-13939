@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3, Trophy, Target, Music2, TrendingUp } from 'lucide-react';
+import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3, Trophy, Target, Music2, TrendingUp, Settings as SettingsIcon, BookOpen, Zap } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -45,12 +45,15 @@ export const Header = () => {
   ];
 
   const userMenuItems = [
+    { path: '/lessons', label: 'Lessons', icon: BookOpen },
+    { path: '/challenges', label: 'Challenges', icon: Zap },
     { path: '/songs', label: 'Songs', icon: Music2 },
     { path: '/analytics', label: 'Analytics', icon: TrendingUp },
     { path: '/goals', label: 'Goals', icon: Target },
     { path: '/achievements', label: 'Achievements', icon: Trophy },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/history', label: 'History', icon: BarChart3 },
+    { path: '/settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   return (

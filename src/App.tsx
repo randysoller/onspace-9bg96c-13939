@@ -15,6 +15,9 @@ import Achievements from '@/pages/Achievements';
 import Goals from '@/pages/Goals';
 import SongLibrary from '@/pages/SongLibrary';
 import Analytics from '@/pages/Analytics';
+import Settings from '@/pages/Settings';
+import Lessons from '@/pages/Lessons';
+import Challenges from '@/pages/Challenges';
 import NotFound from '@/pages/NotFound';
 
 function App() {
@@ -37,6 +40,9 @@ function App() {
           <Route path="/goals" element={<Goals />} />
           <Route path="/songs" element={<SongLibrary />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/lessons" element={<Lessons />} />
+          <Route path="/challenges" element={<Challenges />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

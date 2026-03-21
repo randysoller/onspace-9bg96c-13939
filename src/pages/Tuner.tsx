@@ -63,10 +63,10 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Middle bar is taller (h-18 vs h-12) and thicker (w-3 vs w-1.5) - 50% larger
+      // Middle bar is 25% taller (60px vs 48px) and 8px thick
       const isMiddleBar = i === centerBar;
-      const barHeight = isMiddleBar ? 'h-18' : 'h-12';
-      const barWidth = isMiddleBar ? 'w-3' : 'w-1.5';
+      const barHeight = isMiddleBar ? 'h-[60px]' : 'h-12';
+      const barWidth = isMiddleBar ? 'w-2' : 'w-1.5';
       
       bars.push(
         <div

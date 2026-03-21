@@ -491,7 +491,7 @@ export default function Practice() {
       )}
 
       {/* Bottom Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
+      <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
         <div className="flex items-center justify-center gap-3">
           <button 
             onClick={handlePrevious}

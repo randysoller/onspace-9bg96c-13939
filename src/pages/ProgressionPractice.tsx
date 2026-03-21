@@ -357,7 +357,7 @@ export default function ProgressionPractice() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-5">
+      <div className="fixed bottom-20 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-5">
         <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
           <button
             onClick={handleReset}

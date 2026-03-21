@@ -8,6 +8,7 @@ export interface ChordData {
   capo?: boolean;
   baseFret?: number;
   midi?: number[];
+  rootString?: number; // Index of the string (0-5) that plays the root note
 }
 
 export interface ChordType {

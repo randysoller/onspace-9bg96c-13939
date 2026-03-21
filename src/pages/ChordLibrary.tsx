@@ -15,7 +15,7 @@ interface ChordCardProps {
 
 function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProps) {
   // Determine root string index (for the blue diamond)
-  const rootStringIndex = STRINGS.findIndex(s => s.toLowerCase() === chord.root.toLowerCase()) || 1;
+  const rootStringIndex = chord.rootString !== undefined ? chord.rootString : -1;
 
   return (
     <div 

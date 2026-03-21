@@ -23,31 +23,55 @@ export const useReferenceTone = () => {
     const now = ctx.currentTime;
     const volume = tunerVolume * 0.65; // Louder default volume
 
-    // Guitar-like tone synthesis using multiple harmonics
+    // Create stereo merger for width
+    const merger = ctx.createChannelMerger(2);
+    merger.connect(ctx.destination);
+
+    // Guitar-like tone synthesis using multiple harmonics with stereo spread
     // Authentic guitar harmonic series with natural amplitude distribution
     const harmonics = [
-      { freq: frequency, amp: 1.0, type: 'triangle' as OscillatorType },      // Fundamental (warm)
-      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType },  // 2nd harmonic (octave)
-      { freq: frequency * 3, amp: 0.3, type: 'sine' as OscillatorType },      // 3rd harmonic (perfect fifth)
-      { freq: frequency * 4, amp: 0.2, type: 'sine' as OscillatorType },      // 4th harmonic
-      { freq: frequency * 5, amp: 0.15, type: 'sine' as OscillatorType },     // 5th harmonic (brightness)
-      { freq: frequency * 6, amp: 0.1, type: 'sine' as OscillatorType },      // 6th harmonic
-      { freq: frequency * 7, amp: 0.05, type: 'sine' as OscillatorType },     // 7th harmonic (shimmer)
+      { freq: frequency, amp: 1.0, type: 'triangle' as OscillatorType, pan: 0, detune: 0 },           // Fundamental (centered)
+      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: -0.15, detune: -3 }, // 2nd harmonic (slight left)
+      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: 0.15, detune: 3 },   // 2nd harmonic (slight right, detuned for chorus)
+      { freq: frequency * 3, amp: 0.3, type: 'sine' as OscillatorType, pan: 0.2, detune: 0 },        // 3rd harmonic (right)
+      { freq: frequency * 4, amp: 0.2, type: 'sine' as OscillatorType, pan: -0.2, detune: 0 },       // 4th harmonic (left)
+      { freq: frequency * 5, amp: 0.15, type: 'sine' as OscillatorType, pan: 0.25, detune: 0 },      // 5th harmonic (right)
+      { freq: frequency * 6, amp: 0.1, type: 'sine' as OscillatorType, pan: -0.25, detune: 0 },      // 6th harmonic (left)
+      { freq: frequency * 7, amp: 0.05, type: 'sine' as OscillatorType, pan: 0, detune: 0 },         // 7th harmonic (shimmer, centered)
     ];
 
-    harmonics.forEach(({ freq, amp, type }) => {
+    harmonics.forEach(({ freq, amp, type, pan, detune }) => {
       const oscillator = ctx.createOscillator();
       const gainNode = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
+      const lowPassFilter = ctx.createBiquadFilter();
+      const midCutFilter = ctx.createBiquadFilter();
+      const highShelfFilter = ctx.createBiquadFilter();
+      const panNode = ctx.createStereoPanner();
 
       // Mix of waveforms for authentic guitar timbre
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(freq, now);
+      oscillator.detune.setValueAtTime(detune, now); // Slight detuning for chorus effect
 
-      // Low-pass filter for natural tone shaping
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(3000 + (freq * 0.5), now); // Adaptive brightness
-      filter.Q.setValueAtTime(0.7, now);
+      // Multi-stage EQ for guitar tone
+      // 1. Low-pass filter for warmth and natural rolloff
+      lowPassFilter.type = 'lowpass';
+      lowPassFilter.frequency.setValueAtTime(3500 + (freq * 0.3), now);
+      lowPassFilter.Q.setValueAtTime(0.5, now);
+
+      // 2. Mid-cut filter to reduce boxy/harsh mids (800-1500Hz)
+      midCutFilter.type = 'peaking';
+      midCutFilter.frequency.setValueAtTime(1200, now);
+      midCutFilter.Q.setValueAtTime(1.5, now);
+      midCutFilter.gain.setValueAtTime(-6, now); // Cut mids by 6dB
+
+      // 3. High-shelf for air and sparkle
+      highShelfFilter.type = 'highshelf';
+      highShelfFilter.frequency.setValueAtTime(4000, now);
+      highShelfFilter.gain.setValueAtTime(2, now); // Slight boost for clarity
+
+      // Stereo panning for width
+      panNode.pan.setValueAtTime(pan, now);
 
       // Authentic guitar ADSR envelope
       // Attack: Sharp pluck (5ms)
@@ -61,9 +85,13 @@ export const useReferenceTone = () => {
       gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.15, now + 1.0);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
 
-      oscillator.connect(filter);
-      filter.connect(gainNode);
-      gainNode.connect(ctx.destination);
+      // Signal chain: oscillator → low-pass → mid-cut → high-shelf → gain → pan → stereo output
+      oscillator.connect(lowPassFilter);
+      lowPassFilter.connect(midCutFilter);
+      midCutFilter.connect(highShelfFilter);
+      highShelfFilter.connect(gainNode);
+      gainNode.connect(panNode);
+      panNode.connect(merger);
 
       oscillator.start(now);
       oscillator.stop(now + 3.0);
@@ -71,33 +99,63 @@ export const useReferenceTone = () => {
       activeNodesRef.current.push({ osc: oscillator, gain: gainNode });
     });
 
-    // Add realistic pick attack noise (string scrape + pick collision)
-    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
-    const data = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < data.length; i++) {
-      // Exponentially decaying noise for realistic pick sound
+    // Add realistic pick attack noise (string scrape + pick collision) with stereo width
+    const noiseBufferL = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+    const noiseBufferR = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+    const dataL = noiseBufferL.getChannelData(0);
+    const dataR = noiseBufferR.getChannelData(0);
+    
+    for (let i = 0; i < dataL.length; i++) {
       const decay = Math.exp(-i / (ctx.sampleRate * 0.01));
-      data[i] = (Math.random() * 2 - 1) * 0.2 * decay;
+      dataL[i] = (Math.random() * 2 - 1) * 0.15 * decay;
+      dataR[i] = (Math.random() * 2 - 1) * 0.15 * decay; // Different random values for stereo width
     }
 
-    const noiseSource = ctx.createBufferSource();
-    const noiseGain = ctx.createGain();
-    const noiseFilter = ctx.createBiquadFilter();
+    // Left channel noise
+    const noiseSourceL = ctx.createBufferSource();
+    const noiseGainL = ctx.createGain();
+    const noiseFilterL = ctx.createBiquadFilter();
+    const noisePanL = ctx.createStereoPanner();
 
-    noiseSource.buffer = noiseBuffer;
-    noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.setValueAtTime(frequency * 3, now); // Pick frequency range
-    noiseFilter.Q.setValueAtTime(2, now); // Moderate resonance
+    noiseSourceL.buffer = noiseBufferL;
+    noiseFilterL.type = 'bandpass';
+    noiseFilterL.frequency.setValueAtTime(frequency * 3, now);
+    noiseFilterL.Q.setValueAtTime(2, now);
+    noisePanL.pan.setValueAtTime(-0.3, now);
 
-    noiseGain.gain.setValueAtTime(volume * 0.6, now);
-    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    noiseGainL.gain.setValueAtTime(volume * 0.5, now);
+    noiseGainL.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
 
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(ctx.destination);
+    noiseSourceL.connect(noiseFilterL);
+    noiseFilterL.connect(noiseGainL);
+    noiseGainL.connect(noisePanL);
+    noisePanL.connect(merger);
 
-    noiseSource.start(now);
-    noiseSource.stop(now + 0.03);
+    noiseSourceL.start(now);
+    noiseSourceL.stop(now + 0.03);
+
+    // Right channel noise
+    const noiseSourceR = ctx.createBufferSource();
+    const noiseGainR = ctx.createGain();
+    const noiseFilterR = ctx.createBiquadFilter();
+    const noisePanR = ctx.createStereoPanner();
+
+    noiseSourceR.buffer = noiseBufferR;
+    noiseFilterR.type = 'bandpass';
+    noiseFilterR.frequency.setValueAtTime(frequency * 3.2, now); // Slightly different frequency for width
+    noiseFilterR.Q.setValueAtTime(2, now);
+    noisePanR.pan.setValueAtTime(0.3, now);
+
+    noiseGainR.gain.setValueAtTime(volume * 0.5, now);
+    noiseGainR.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+    noiseSourceR.connect(noiseFilterR);
+    noiseFilterR.connect(noiseGainR);
+    noiseGainR.connect(noisePanR);
+    noisePanR.connect(merger);
+
+    noiseSourceR.start(now);
+    noiseSourceR.stop(now + 0.03);
   };
 
   const stopTone = () => {

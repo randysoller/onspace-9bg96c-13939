@@ -41,6 +41,11 @@ export default function Tuner() {
 
   // Generate frequency bars (showing pitch deviation)
   const generateBars = () => {
+    // Don't render any bars if no frequency detected
+    if (!detectedFrequency) {
+      return null;
+    }
+    
     const bars = [];
     const totalBars = 50;
     const centerBar = 25;
@@ -61,13 +66,13 @@ export default function Tuner() {
       }
       
       // Light up the bar if it's at the current cent position
-      const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
+      const isActive = Math.abs(i - centPosition) <= 1;
       
       bars.push(
         <div
           key={i}
           className={`w-1 h-8 ${color} transition-opacity duration-100 ${
-            isActive ? 'opacity-100' : !detectedFrequency ? 'opacity-0' : 'opacity-30'
+            isActive ? 'opacity-100' : 'opacity-30'
           }`}
         />
       );

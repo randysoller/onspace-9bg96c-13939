@@ -45,8 +45,8 @@ export default function Metronome() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-lg">
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 pb-24">
+      <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-lg my-auto">
         {/* Header */}
         <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
           <button
@@ -65,7 +65,7 @@ export default function Metronome() {
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 space-y-8">
+        <div className="px-6 py-6 space-y-6">
           {/* Tempo */}
           <div>
             <div className="flex items-center justify-between mb-4">

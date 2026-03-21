@@ -4,7 +4,7 @@ import { Bookmark, Music2, Shapes, Layers, Play } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { usePracticeStore } from '@/stores/practiceStore';
 
-export default function Home() {
+export default function ChordSetup() {
   const navigate = useNavigate();
   const { setPracticeChords } = usePracticeStore();
   

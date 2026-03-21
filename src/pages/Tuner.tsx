@@ -93,8 +93,8 @@ export default function Tuner() {
   // Check if note is in tune (within ±5 cents)
   const isInTune = detectedFrequency && Math.abs(cents) <= 5;
   
-  // Extract just the note name without octave
-  const noteNameOnly = detectedNote ? detectedNote.replace(/[0-9]/g, '') : '—';
+  // Extract just the note name without octave (empty string if no detection)
+  const noteNameOnly = detectedNote ? detectedNote.replace(/[0-9]/g, '') : '';
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
@@ -142,18 +142,18 @@ export default function Tuner() {
 
         {/* Pitch Detection Display */}
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-4">
-          {/* Note Name Display with Circle */}
+          {/* Note Name Display with Circle - Fixed height to prevent layout shift */}
           <div className="text-center mb-6 relative">
-            <div className="relative inline-flex items-center justify-center">
+            <div className="relative inline-flex items-center justify-center bg-black rounded-2xl px-12 py-8" style={{ minHeight: '180px', minWidth: '200px' }}>
               {/* Circle indicator when in tune */}
               {isInTune && (
                 <div className="absolute inset-0 -m-8 border-4 border-emerald-500 rounded-full animate-pulse" />
               )}
               
-              {/* Note Name */}
+              {/* Note Name - always rendered with fixed height */}
               <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
                 getNoteColor()
-              }`}>
+              }`} style={{ minHeight: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {noteNameOnly}
               </div>
             </div>

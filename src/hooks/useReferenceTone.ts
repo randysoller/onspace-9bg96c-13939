@@ -44,6 +44,7 @@ export const useReferenceTone = () => {
       const oscillator = ctx.createOscillator();
       const gainNode = ctx.createGain();
       const lowPassFilter = ctx.createBiquadFilter();
+      const lowMidBoostFilter = ctx.createBiquadFilter();
       const midCutFilter = ctx.createBiquadFilter();
       const highShelfFilter = ctx.createBiquadFilter();
       const panNode = ctx.createStereoPanner();
@@ -59,13 +60,19 @@ export const useReferenceTone = () => {
       lowPassFilter.frequency.setValueAtTime(3500 + (freq * 0.3), now);
       lowPassFilter.Q.setValueAtTime(0.5, now);
 
-      // 2. Mid-cut filter to reduce boxy/harsh mids (800-1500Hz)
-      midCutFilter.type = 'peaking';
-      midCutFilter.frequency.setValueAtTime(1200, now);
-      midCutFilter.Q.setValueAtTime(1.5, now);
-      midCutFilter.gain.setValueAtTime(-6, now); // Cut mids by 6dB
+      // 2. Low-mid boost for body and warmth (300-600Hz)
+      lowMidBoostFilter.type = 'peaking';
+      lowMidBoostFilter.frequency.setValueAtTime(450, now);
+      lowMidBoostFilter.Q.setValueAtTime(1.2, now);
+      lowMidBoostFilter.gain.setValueAtTime(4, now); // Boost low mids by 4dB
 
-      // 3. High-shelf for air and sparkle
+      // 3. Upper-mid cut to reduce harsh frequencies (1500Hz)
+      midCutFilter.type = 'peaking';
+      midCutFilter.frequency.setValueAtTime(1500, now);
+      midCutFilter.Q.setValueAtTime(1.5, now);
+      midCutFilter.gain.setValueAtTime(-5, now); // Cut upper mids by 5dB
+
+      // 4. High-shelf for air and sparkle
       highShelfFilter.type = 'highshelf';
       highShelfFilter.frequency.setValueAtTime(4000, now);
       highShelfFilter.gain.setValueAtTime(2, now); // Slight boost for clarity
@@ -85,9 +92,10 @@ export const useReferenceTone = () => {
       gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.15, now + 1.0);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
 
-      // Signal chain: oscillator → low-pass → mid-cut → high-shelf → gain → pan → stereo output
+      // Signal chain: oscillator → low-pass → low-mid boost → upper-mid cut → high-shelf → gain → pan → stereo output
       oscillator.connect(lowPassFilter);
-      lowPassFilter.connect(midCutFilter);
+      lowPassFilter.connect(lowMidBoostFilter);
+      lowMidBoostFilter.connect(midCutFilter);
       midCutFilter.connect(highShelfFilter);
       highShelfFilter.connect(gainNode);
       gainNode.connect(panNode);

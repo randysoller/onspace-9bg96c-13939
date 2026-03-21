@@ -63,10 +63,10 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Middle bar is taller (h-12 vs h-8) and thicker (w-2 vs w-1)
+      // Middle bar is taller (h-18 vs h-12) and thicker (w-3 vs w-1.5) - 50% larger
       const isMiddleBar = i === centerBar;
-      const barHeight = isMiddleBar ? 'h-12' : 'h-8';
-      const barWidth = isMiddleBar ? 'w-2' : 'w-1';
+      const barHeight = isMiddleBar ? 'h-18' : 'h-12';
+      const barWidth = isMiddleBar ? 'w-3' : 'w-1.5';
       
       bars.push(
         <div
@@ -147,7 +147,7 @@ export default function Tuner() {
             <div className="relative inline-flex items-center justify-center bg-black rounded-2xl px-12 py-8" style={{ minHeight: '180px', minWidth: '200px' }}>
               {/* Circle indicator when in tune */}
               {isInTune && (
-                <div className="absolute inset-0 -m-8 border-4 border-emerald-500 rounded-full animate-pulse" />
+                <div className="absolute inset-4 border-4 border-emerald-500 rounded-full animate-pulse" />
               )}
               
               {/* Note Name - always rendered with fixed height */}
@@ -168,7 +168,7 @@ export default function Tuner() {
           </div>
 
           {/* Frequency Bars - Always visible with fixed height */}
-          <div className="flex items-center justify-center gap-0.5 mb-4" style={{ minHeight: '32px' }}>
+          <div className="flex items-center justify-center gap-0.5 mb-4" style={{ minHeight: '48px' }}>
             {generateBars()}
           </div>
 

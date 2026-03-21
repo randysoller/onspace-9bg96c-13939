@@ -153,27 +153,29 @@ export default function Tuner() {
               </div>
             </div>
             
-            {/* Status Messages */}
-            {permissionDenied && (
-              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                <div className="text-sm font-bold text-red-500">Microphone access denied</div>
-                <div className="text-xs text-red-400 mt-1">Please allow microphone access in your browser settings</div>
-              </div>
-            )}
-            
-            {!permissionDenied && audioLevel === 0 && (
-              <div className="mt-4 p-3 bg-amber-500/20 border border-amber-500/30 rounded-lg">
-                <div className="text-sm font-bold text-amber-500">No audio detected</div>
-                <div className="text-xs text-amber-400 mt-1">Play a note on your guitar</div>
-              </div>
-            )}
-            
-            {!permissionDenied && audioLevel > 0 && !detectedFrequency && (
-              <div className="mt-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
-                <div className="text-sm font-bold text-blue-500">Listening... (Level: {audioLevel}%)</div>
-                <div className="text-xs text-blue-400 mt-1">Play louder or adjust sensitivity</div>
-              </div>
-            )}
+            {/* Status Messages - Fixed height container to prevent layout shift */}
+            <div className="mt-4 min-h-[76px]">
+              {permissionDenied && (
+                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+                  <div className="text-sm font-bold text-red-500">Microphone access denied</div>
+                  <div className="text-xs text-red-400 mt-1">Please allow microphone access in your browser settings</div>
+                </div>
+              )}
+              
+              {!permissionDenied && audioLevel === 0 && (
+                <div className="p-3 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+                  <div className="text-sm font-bold text-amber-500">No audio detected</div>
+                  <div className="text-xs text-amber-400 mt-1">Play a note on your guitar</div>
+                </div>
+              )}
+              
+              {!permissionDenied && audioLevel > 0 && !detectedFrequency && (
+                <div className="p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                  <div className="text-sm font-bold text-blue-500">Listening... (Level: {audioLevel}%)</div>
+                  <div className="text-xs text-blue-400 mt-1">Play louder or adjust sensitivity</div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Frequency Bars */}
@@ -196,8 +198,8 @@ export default function Tuner() {
           {/* Mic Sensitivity */}
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Mic className="w-3 h-3 text-zinc-500" />
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Sensitivity</span>
+              <Mic className="w-6 h-6 text-amber-500" />
+              <span className="text-sm font-bold uppercase tracking-wider text-white">Sensitivity</span>
               <span className="ml-auto text-sm font-bold text-white">{sensitivity}</span>
             </div>
             

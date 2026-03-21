@@ -55,7 +55,7 @@ export default function ChordDetailModal({
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-3">
                 <div className="text-5xl font-black text-white">
-                  {chord.root}
+                  {chord.root}{chord.type === 'major' ? '' : chord.type === 'minor' ? 'm' : chord.type === 'm7' ? 'm7' : chord.type === 'maj7' ? 'maj7' : chord.type}
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex gap-2">
@@ -76,7 +76,7 @@ export default function ChordDetailModal({
               </button>
             </div>
             <div className="text-zinc-400 text-sm">
-              {chord.root} {chord.type}
+              {chord.root} {chord.type === 'major' ? 'Major' : chord.type === 'minor' ? 'Minor' : chord.type === '7' ? 'Dominant 7th' : chord.type === 'maj7' ? 'Major 7th' : chord.type === 'm7' ? 'Minor 7th' : chord.type === 'sus4' ? 'Suspended 4th' : chord.type === 'sus2' ? 'Suspended 2nd' : chord.type}
             </div>
           </div>
 

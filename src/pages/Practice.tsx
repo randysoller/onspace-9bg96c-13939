@@ -275,10 +275,10 @@ export default function Practice() {
           {/* Chord Name */}
           <div className="mb-8">
             <div className="text-8xl font-black text-white mb-2">
-              {currentChord.root}{currentChord.type !== 'major' ? currentChord.type : ''}
+              {currentChord.root}{currentChord.type === 'major' ? '' : currentChord.type === 'minor' ? 'm' : currentChord.type === 'm7' ? 'm7' : currentChord.type === 'maj7' ? 'maj7' : currentChord.type}
             </div>
             <div className="text-lg text-zinc-500">
-              {currentChord.root} {currentChord.category}
+              {currentChord.root} {currentChord.type === 'major' ? 'Major' : currentChord.type === 'minor' ? 'Minor' : currentChord.type === '7' ? 'Dominant 7th' : currentChord.type === 'maj7' ? 'Major 7th' : currentChord.type === 'm7' ? 'Minor 7th' : currentChord.type === 'sus4' ? 'Suspended 4th' : currentChord.type === 'sus2' ? 'Suspended 2nd' : currentChord.type}
             </div>
           </div>
 

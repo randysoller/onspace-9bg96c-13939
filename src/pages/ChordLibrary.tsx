@@ -215,7 +215,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
         {/* Chord Info */}
         <div className="flex-1 min-w-0 py-2">
           <div className="text-3xl font-black text-white mb-0.5">
-            {chord.root}
+            {chord.root}{chord.type === 'major' ? '' : chord.type === 'minor' ? 'm' : chord.type === 'm7' ? 'm7' : chord.type === 'maj7' ? 'maj7' : chord.type}
           </div>
           <div className="text-xs text-zinc-600 mb-1">Open Chords</div>
           <div className="text-sm text-zinc-400">

@@ -45,6 +45,10 @@ export default function Tuner() {
     const totalBars = 50;
     const centerBar = 25;
     
+    // Calculate which bar should be lit based on cents offset
+    // Map cents (-50 to +50) to bar position (0 to 50)
+    const centPosition = Math.round((cents / 100) * totalBars + centerBar);
+    
     for (let i = 0; i < totalBars; i++) {
       const distance = Math.abs(i - centerBar);
       let color = 'bg-emerald-500';
@@ -56,16 +60,36 @@ export default function Tuner() {
         color = 'bg-red-500';
       }
       
+      // Light up the bar if it's at the current cent position
+      const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
+      
       bars.push(
         <div
           key={i}
-          className={`w-1 h-8 ${color} opacity-30`}
+          className={`w-1 h-8 ${color} transition-opacity duration-100 ${
+            isActive ? 'opacity-100' : 'opacity-30'
+          }`}
         />
       );
     }
     
     return bars;
   };
+
+  // Get note color based on tuning accuracy
+  const getNoteColor = () => {
+    if (!detectedFrequency) return 'text-zinc-700';
+    const absCents = Math.abs(cents);
+    if (absCents <= 5) return 'text-emerald-500';
+    if (absCents <= 15) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  // Check if note is in tune (within ±5 cents)
+  const isInTune = detectedFrequency && Math.abs(cents) <= 5;
+  
+  // Extract just the note name without octave
+  const noteNameOnly = detectedNote ? detectedNote.replace(/[0-9]/g, '') : '—';
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
@@ -112,24 +136,30 @@ export default function Tuner() {
         </div>
 
         {/* Pitch Detection Display */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 mb-4">
-          {/* Frequency Display */}
-          <div className="text-center mb-4">
-            <div className={`text-4xl md:text-5xl font-black mb-1 transition-colors ${
-              detectedFrequency ? 'text-white' : 'text-zinc-700'
-            }`}>
-              {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '— Hz'}
+        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-4">
+          {/* Note Name Display with Circle */}
+          <div className="text-center mb-6 relative">
+            <div className="relative inline-flex items-center justify-center">
+              {/* Circle indicator when in tune */}
+              {isInTune && (
+                <div className="absolute inset-0 -m-8 border-4 border-emerald-500 rounded-full animate-pulse" />
+              )}
+              
+              {/* Note Name */}
+              <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
+                getNoteColor()
+              }`}>
+                {noteNameOnly}
+              </div>
             </div>
-            {detectedNote && (
-              <div className="text-xl font-bold text-amber-500">{detectedNote}</div>
-            )}
+            
             {permissionDenied && (
-              <div className="text-sm text-red-500 mt-2">Microphone access denied</div>
+              <div className="text-sm text-red-500 mt-4">Microphone access denied</div>
             )}
           </div>
 
           {/* Frequency Bars */}
-          <div className="flex items-center justify-center gap-0.5 mb-6">
+          <div className="flex items-center justify-center gap-0.5 mb-4">
             {generateBars()}
           </div>
 

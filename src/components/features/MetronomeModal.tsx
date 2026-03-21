@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Music, Volume2, VolumeX, Play, Pause } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 
@@ -11,6 +11,10 @@ export default function MetronomeModal() {
   const [volume, setVolume] = useState(75);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(1);
+  
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const nextBeatTimeRef = useRef<number>(0);
+  const intervalRef = useRef<number | null>(null);
 
   if (!isOpen) return null;
 
@@ -42,8 +46,112 @@ export default function MetronomeModal() {
     setTempo(Math.max(40, Math.min(240, newTempo)));
   };
 
+  // Initialize audio context
+  useEffect(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    }
+    return () => {
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
+    };
+  }, []);
+
+  // Play click sound based on sound selection
+  const playClick = (isAccent: boolean) => {
+    if (!audioContextRef.current) return;
+    
+    const ctx = audioContextRef.current;
+    const now = ctx.currentTime;
+    const vol = (volume / 100) * 0.3;
+    
+    if (sound === 'Voice Count') {
+      // For voice count, we'd use speech synthesis (simplified here)
+      return;
+    }
+    
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    // Different sounds based on selection
+    if (sound === 'Click') {
+      oscillator.frequency.setValueAtTime(isAccent ? 1200 : 800, now);
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(vol, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    } else if (sound === 'Wood Block') {
+      oscillator.frequency.setValueAtTime(isAccent ? 800 : 600, now);
+      oscillator.type = 'triangle';
+      gainNode.gain.setValueAtTime(vol * 1.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    } else if (sound === 'Hi-Hat') {
+      oscillator.frequency.setValueAtTime(isAccent ? 3000 : 2000, now);
+      oscillator.type = 'square';
+      gainNode.gain.setValueAtTime(vol * 0.5, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.03);
+    } else if (sound === 'Sidestick') {
+      oscillator.frequency.setValueAtTime(isAccent ? 1500 : 1000, now);
+      oscillator.type = 'sawtooth';
+      gainNode.gain.setValueAtTime(vol, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+    } else {
+      // Default click
+      oscillator.frequency.setValueAtTime(isAccent ? 1000 : 800, now);
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(vol, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+    }
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    oscillator.start(now);
+    oscillator.stop(now + 0.1);
+  };
+
+  // Metronome timing engine
+  useEffect(() => {
+    if (!isPlaying) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+    
+    const beatsPerMeasure = parseInt(timeSignature.split('/')[0]);
+    const intervalMs = (60 / tempo) * 1000;
+    
+    let beatCount = 1;
+    
+    // Play first beat immediately
+    playClick(true);
+    setCurrentBeat(1);
+    
+    intervalRef.current = window.setInterval(() => {
+      beatCount++;
+      if (beatCount > beatsPerMeasure) {
+        beatCount = 1;
+      }
+      
+      const isAccent = beatCount === 1;
+      playClick(isAccent);
+      setCurrentBeat(beatCount);
+    }, intervalMs);
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isPlaying, tempo, timeSignature, sound, volume]);
+
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
+    if (!isPlaying) {
+      setCurrentBeat(1);
+    }
   };
 
   return (

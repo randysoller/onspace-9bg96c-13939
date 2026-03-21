@@ -25,7 +25,17 @@ export const MobileTabBar = () => {
   const { toggleMetronome } = useMetronomeUIStore();
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-amber-500/20 z-[60]" style={{ position: 'fixed' }}>
+    <div 
+      className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-amber-500/20 z-[60]" 
+      style={{ 
+        position: 'fixed',
+        transform: 'translateZ(0)',
+        WebkitTransform: 'translateZ(0)',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+        WebkitBackfaceVisibility: 'hidden'
+      }}
+    >
       <div className="flex items-center justify-around h-16">
         {/* Home */}
         <Link

@@ -6,19 +6,21 @@ import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useTunerStore } from '@/stores/tunerStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { settingsApi } from '@/lib/api/settings';
-import { ArrowLeft, Save, Volume2, Music, Mic, Target } from 'lucide-react';
+import { ArrowLeft, Save, Volume2, Sliders, Music } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   
-  const { chordVolume, referenceToneVolume, setChordVolume, setReferenceToneVolume } = useAudioStore();
-  const { bpm, sound, timeSignature, volume, setBpm, setSound, setTimeSignature, setVolume } = useMetronomeStore();
-  const { calibration, autoListen, setCalibration, setAutoListen } = useTunerStore();
-  const { sensitivity, noiseGate, setSensitivity, setNoiseGate } = useDetectionSettingsStore();
-  
+  const audioStore = useAudioStore();
+  const metronomeStore = useMetronomeStore();
+  const tunerStore = useTunerStore();
+  const detectionStore = useDetectionSettingsStore();
+
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -33,25 +35,25 @@ export default function Settings() {
     try {
       await settingsApi.syncSettings(user.id, {
         user_id: user.id,
-        metronome_bpm: bpm,
-        metronome_sound: sound,
-        metronome_time_signature: timeSignature,
-        metronome_volume: Math.round(volume * 100),
-        tuner_calibration: calibration,
-        tuner_auto_listen: autoListen,
-        detection_sensitivity: sensitivity,
-        detection_noise_gate: Math.round(noiseGate * 100),
-        chord_volume: Math.round(chordVolume * 100),
-        reference_tone_volume: Math.round(referenceToneVolume * 100),
+        metronome_bpm: metronomeStore.bpm,
+        metronome_sound: metronomeStore.sound,
+        metronome_time_signature: metronomeStore.timeSignature,
+        metronome_volume: Math.round(metronomeStore.volume * 100),
+        tuner_calibration: tunerStore.calibration,
+        tuner_auto_listen: tunerStore.autoListen,
+        detection_sensitivity: detectionStore.sensitivity,
+        detection_noise_gate: Math.round(detectionStore.noiseGate * 100),
+        chord_volume: Math.round(audioStore.chordVolume * 100),
+        reference_tone_volume: Math.round(audioStore.referenceToneVolume * 100),
         show_diagrams: true,
         auto_advance: false,
         skill_level: 'beginner',
       });
 
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      toast.success('Settings saved successfully');
     } catch (err) {
       console.error('Failed to save settings:', err);
+      toast.error('Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -70,14 +72,7 @@ export default function Settings() {
             <span className="text-sm">Back</span>
           </button>
           <h1 className="text-xl font-bold">Settings</h1>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold rounded-lg transition-colors disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            {saved ? 'Saved!' : saving ? 'Saving...' : 'Save'}
-          </button>
+          <div className="w-20" />
         </div>
       </div>
 
@@ -86,34 +81,38 @@ export default function Settings() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
             <Volume2 className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold">Audio Settings</h2>
+            <h2 className="text-lg font-bold">Audio</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Chord Volume</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={chordVolume * 100}
-                onChange={(e) => setChordVolume(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              <label className="text-sm text-zinc-400 mb-2 block">Chord Volume</label>
+              <Slider
+                value={[audioStore.chordVolume * 100]}
+                onValueChange={([value]) => audioStore.setChordVolume(value / 100)}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
               />
-              <div className="text-xs text-zinc-500 mt-1">{Math.round(chordVolume * 100)}%</div>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {Math.round(audioStore.chordVolume * 100)}%
+              </span>
             </div>
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Reference Tone Volume</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={referenceToneVolume * 100}
-                onChange={(e) => setReferenceToneVolume(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              <label className="text-sm text-zinc-400 mb-2 block">Reference Tone Volume</label>
+              <Slider
+                value={[audioStore.referenceToneVolume * 100]}
+                onValueChange={([value]) => audioStore.setReferenceToneVolume(value / 100)}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
               />
-              <div className="text-xs text-zinc-500 mt-1">{Math.round(referenceToneVolume * 100)}%</div>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {Math.round(audioStore.referenceToneVolume * 100)}%
+              </span>
             </div>
           </div>
         </div>
@@ -122,63 +121,57 @@ export default function Settings() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
             <Music className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold">Metronome Settings</h2>
+            <h2 className="text-lg font-bold">Metronome</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Default BPM</label>
-              <input
-                type="number"
-                min="40"
-                max="240"
-                value={bpm}
-                onChange={(e) => setBpm(Number(e.target.value))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+              <label className="text-sm text-zinc-400 mb-2 block">BPM</label>
+              <Slider
+                value={[metronomeStore.bpm]}
+                onValueChange={([value]) => metronomeStore.setBpm(value)}
+                min={40}
+                max={240}
+                step={1}
+                className="w-full"
               />
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {metronomeStore.bpm} BPM
+              </span>
             </div>
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Sound</label>
-              <select
-                value={sound}
-                onChange={(e) => setSound(e.target.value as any)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+              <label className="text-sm text-zinc-400 mb-2 block">Sound</label>
+              <Select
+                value={metronomeStore.sound}
+                onValueChange={(value: any) => metronomeStore.setSound(value)}
               >
-                <option value="click">Click</option>
-                <option value="wood">Wood Block</option>
-                <option value="hihat">Hi-Hat</option>
-                <option value="sidestick">Sidestick</option>
-                <option value="voice">Voice Count</option>
-              </select>
+                <SelectTrigger className="w-full bg-zinc-800 border-zinc-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="click">Click</SelectItem>
+                  <SelectItem value="beep">Beep</SelectItem>
+                  <SelectItem value="wood">Wood</SelectItem>
+                  <SelectItem value="clave">Clave</SelectItem>
+                  <SelectItem value="cowbell">Cowbell</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Time Signature</label>
-              <select
-                value={timeSignature}
-                onChange={(e) => setTimeSignature(e.target.value as any)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
-              >
-                <option value="4/4">4/4</option>
-                <option value="3/4">3/4</option>
-                <option value="6/8">6/8</option>
-                <option value="2/4">2/4</option>
-                <option value="5/4">5/4</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm text-zinc-400 mb-2">Volume</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={volume * 100}
-                onChange={(e) => setVolume(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              <label className="text-sm text-zinc-400 mb-2 block">Volume</label>
+              <Slider
+                value={[metronomeStore.volume * 100]}
+                onValueChange={([value]) => metronomeStore.setVolume(value / 100)}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
               />
-              <div className="text-xs text-zinc-500 mt-1">{Math.round(volume * 100)}%</div>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {Math.round(metronomeStore.volume * 100)}%
+              </span>
             </div>
           </div>
         </div>
@@ -186,37 +179,24 @@ export default function Settings() {
         {/* Tuner Settings */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Target className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold">Tuner Settings</h2>
+            <Sliders className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold">Tuner</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Calibration (A4 = Hz)</label>
-              <input
-                type="number"
-                min="430"
-                max="450"
-                value={calibration}
-                onChange={(e) => setCalibration(Number(e.target.value))}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white"
+              <label className="text-sm text-zinc-400 mb-2 block">Calibration (A4 Hz)</label>
+              <Slider
+                value={[tunerStore.calibration]}
+                onValueChange={([value]) => tunerStore.setCalibration(value)}
+                min={430}
+                max={450}
+                step={1}
+                className="w-full"
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-sm text-zinc-400">Auto Listen</label>
-              <button
-                onClick={() => setAutoListen(!autoListen)}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  autoListen ? 'bg-emerald-500' : 'bg-zinc-700'
-                }`}
-              >
-                <div
-                  className={`absolute w-5 h-5 bg-white rounded-full top-0.5 transition-transform ${
-                    autoListen ? 'translate-x-6' : 'translate-x-0.5'
-                  }`}
-                />
-              </button>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {tunerStore.calibration} Hz
+              </span>
             </div>
           </div>
         </div>
@@ -224,38 +204,56 @@ export default function Settings() {
         {/* Detection Settings */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-4">
-            <Mic className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-bold">Detection Settings</h2>
+            <Sliders className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold">Detection</h2>
           </div>
           
           <div className="space-y-4">
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Sensitivity</label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={sensitivity}
-                onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              <label className="text-sm text-zinc-400 mb-2 block">Sensitivity</label>
+              <Slider
+                value={[detectionStore.sensitivity]}
+                onValueChange={([value]) => detectionStore.setSensitivity(value)}
+                min={1}
+                max={10}
+                step={1}
+                className="w-full"
               />
-              <div className="text-xs text-zinc-500 mt-1">Level {sensitivity}</div>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                Level {detectionStore.sensitivity}
+              </span>
             </div>
 
             <div>
-              <label className="block text-sm text-zinc-400 mb-2">Noise Gate</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={noiseGate * 100}
-                onChange={(e) => setNoiseGate(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              <label className="text-sm text-zinc-400 mb-2 block">Noise Gate</label>
+              <Slider
+                value={[detectionStore.noiseGate * 100]}
+                onValueChange={([value]) => detectionStore.setNoiseGate(value / 100)}
+                min={0}
+                max={100}
+                step={1}
+                className="w-full"
               />
-              <div className="text-xs text-zinc-500 mt-1">{Math.round(noiseGate * 100)}%</div>
+              <span className="text-xs text-zinc-500 mt-1 block">
+                {Math.round(detectionStore.noiseGate * 100)}%
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Save Button */}
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+        >
+          <Save className="w-5 h-5" />
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
+
+        <p className="text-xs text-zinc-500 text-center">
+          Settings are automatically synced across all your devices
+        </p>
       </div>
     </div>
   );

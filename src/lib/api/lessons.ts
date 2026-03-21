@@ -27,30 +27,25 @@ export interface UserLesson {
 }
 
 export const lessonsApi = {
-  async getAllLessons(skillLevel?: string) {
-    let query = supabase
+  async getAllLessons() {
+    const { data, error } = await supabase
       .from('lessons')
       .select('*')
       .order('order_index', { ascending: true });
     
-    if (skillLevel) {
-      query = query.eq('skill_level', skillLevel);
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
     return data as Lesson[];
   },
 
-  async getLesson(lessonId: string) {
+  async getLessonsBySkillLevel(skillLevel: string) {
     const { data, error } = await supabase
       .from('lessons')
       .select('*')
-      .eq('id', lessonId)
-      .single();
+      .eq('skill_level', skillLevel)
+      .order('order_index', { ascending: true });
     
     if (error) throw error;
-    return data as Lesson;
+    return data as Lesson[];
   },
 
   async getUserLessons(userId: string) {
@@ -67,28 +62,10 @@ export const lessonsApi = {
     return data as UserLesson[];
   },
 
-  async getUserLesson(userId: string, lessonId: string) {
-    const { data, error } = await supabase
-      .from('user_lessons')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('lesson_id', lessonId)
-      .single();
-    
-    if (error && error.code !== 'PGRST116') throw error;
-    return data as UserLesson | null;
-  },
-
   async startLesson(userId: string, lessonId: string) {
-    const existing = await this.getUserLesson(userId, lessonId);
-    
-    if (existing) {
-      return this.updateLessonProgress(userId, lessonId, 'in_progress', 0);
-    }
-
     const { data, error } = await supabase
       .from('user_lessons')
-      .insert({
+      .upsert({
         user_id: userId,
         lesson_id: lessonId,
         status: 'in_progress',
@@ -101,18 +78,16 @@ export const lessonsApi = {
     return data as UserLesson;
   },
 
-  async updateLessonProgress(
-    userId: string,
-    lessonId: string,
-    status: 'not_started' | 'in_progress' | 'completed',
-    progressPercent: number
-  ) {
+  async updateProgress(userId: string, lessonId: string, progressPercent: number) {
+    const status = progressPercent >= 100 ? 'completed' : 'in_progress';
+    const completed_at = progressPercent >= 100 ? new Date().toISOString() : null;
+
     const { data, error } = await supabase
       .from('user_lessons')
       .update({
-        status,
         progress_percent: progressPercent,
-        completed_at: status === 'completed' ? new Date().toISOString() : null,
+        status,
+        completed_at,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
@@ -122,17 +97,5 @@ export const lessonsApi = {
     
     if (error) throw error;
     return data as UserLesson;
-  },
-
-  async getRecommendedLessons(userId: string, skillLevel: 'beginner' | 'intermediate' | 'advanced') {
-    const userLessons = await this.getUserLessons(userId);
-    const completedIds = new Set(
-      userLessons.filter(ul => ul.status === 'completed').map(ul => ul.lesson_id)
-    );
-
-    const allLessons = await this.getAllLessons(skillLevel);
-    
-    // Filter to lessons not yet completed
-    return allLessons.filter(l => !completedIds.has(l.id));
   },
 };

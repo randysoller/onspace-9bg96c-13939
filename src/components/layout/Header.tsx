@@ -3,6 +3,7 @@ import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3, Trophy, Target, M
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
+import { NotificationCenter } from '@/components/layout/NotificationCenter';
 
 // Custom Metronome Icon (old-time pyramid metronome)
 const MetronomeIcon = ({ className }: { className?: string }) => (
@@ -127,6 +128,7 @@ export const Header = () => {
             {/* Auth Buttons */}
             {user ? (
               <div className="flex items-center gap-3 ml-4 pl-4 border-l border-zinc-800">
+                <NotificationCenter />
                 <div className="text-sm text-zinc-400">
                   {user.username}
                 </div>

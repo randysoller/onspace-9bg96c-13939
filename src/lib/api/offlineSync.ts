@@ -1,6 +1,9 @@
 import { supabase } from '@/lib/supabase';
+import { practiceApi } from './practice';
+import { chordMasteryApi } from './chordMastery';
+import { goalsApi } from './goals';
 
-export interface OfflineSyncQueueItem {
+export interface OfflineSyncItem {
   id: string;
   user_id: string;
   data_type: string;
@@ -25,7 +28,7 @@ export const offlineSyncApi = {
       .single();
     
     if (error) throw error;
-    return data as OfflineSyncQueueItem;
+    return data as OfflineSyncItem;
   },
 
   async getUnsyncedItems(userId: string) {
@@ -37,91 +40,70 @@ export const offlineSyncApi = {
       .order('created_at', { ascending: true });
     
     if (error) throw error;
-    return data as OfflineSyncQueueItem[];
-  },
-
-  async markSynced(itemId: string) {
-    const { error } = await supabase
-      .from('offline_sync_queue')
-      .update({
-        synced: true,
-        synced_at: new Date().toISOString(),
-      })
-      .eq('id', itemId);
-    
-    if (error) throw error;
-  },
-
-  async incrementAttempts(itemId: string) {
-    const { data: item } = await supabase
-      .from('offline_sync_queue')
-      .select('sync_attempts')
-      .eq('id', itemId)
-      .single();
-
-    if (!item) return;
-
-    const { error } = await supabase
-      .from('offline_sync_queue')
-      .update({
-        sync_attempts: item.sync_attempts + 1,
-        last_sync_attempt: new Date().toISOString(),
-      })
-      .eq('id', itemId);
-    
-    if (error) throw error;
-  },
-
-  async deleteItem(itemId: string) {
-    const { error } = await supabase
-      .from('offline_sync_queue')
-      .delete()
-      .eq('id', itemId);
-    
-    if (error) throw error;
+    return data as OfflineSyncItem[];
   },
 
   async processSyncQueue(userId: string) {
     const items = await this.getUnsyncedItems(userId);
-    
+
     for (const item of items) {
       try {
-        // Process based on data_type
-        switch (item.data_type) {
-          case 'practice_session':
-            const { practiceApi } = await import('./practice');
-            await practiceApi.createSession(item.payload);
-            break;
-          case 'chord_mastery':
-            const { chordMasteryApi } = await import('./chordMastery');
-            await chordMasteryApi.updateChordMastery(
-              item.payload.user_id,
-              item.payload.chord_name,
-              item.payload.was_correct,
-              item.payload.time_ms
-            );
-            break;
-          case 'goal_progress':
-            const { goalsApi } = await import('./goals');
-            await goalsApi.updateGoalProgress(
-              item.payload.goal_id,
-              item.payload.increment
-            );
-            break;
-          default:
-            console.warn('Unknown data type:', item.data_type);
-        }
-
-        await this.markSynced(item.id);
-      } catch (err) {
-        console.error('Failed to sync item:', item.id, err);
-        await this.incrementAttempts(item.id);
+        await this.syncItem(item);
         
-        // Delete if too many failed attempts
-        if (item.sync_attempts >= 5) {
-          await this.deleteItem(item.id);
-        }
+        // Mark as synced
+        await supabase
+          .from('offline_sync_queue')
+          .update({
+            synced: true,
+            synced_at: new Date().toISOString(),
+          })
+          .eq('id', item.id);
+      } catch (err) {
+        console.error(`Failed to sync item ${item.id}:`, err);
+        
+        // Increment sync attempts
+        await supabase
+          .from('offline_sync_queue')
+          .update({
+            sync_attempts: item.sync_attempts + 1,
+            last_sync_attempt: new Date().toISOString(),
+          })
+          .eq('id', item.id);
       }
     }
+  },
+
+  async syncItem(item: OfflineSyncItem) {
+    switch (item.data_type) {
+      case 'practice_session':
+        await practiceApi.saveSession(item.payload);
+        break;
+      
+      case 'chord_mastery':
+        await chordMasteryApi.updateChordMastery(
+          item.user_id,
+          item.payload.chord_name,
+          item.payload.was_correct,
+          item.payload.detection_time_ms
+        );
+        break;
+      
+      case 'goal_progress':
+        await goalsApi.updateGoalProgress(item.payload.goal_id, item.payload.progress);
+        break;
+      
+      default:
+        console.warn(`Unknown data type: ${item.data_type}`);
+    }
+  },
+
+  async clearSyncedItems(userId: string) {
+    const { error } = await supabase
+      .from('offline_sync_queue')
+      .delete()
+      .eq('user_id', userId)
+      .eq('synced', true);
+    
+    if (error) throw error;
   },
 };

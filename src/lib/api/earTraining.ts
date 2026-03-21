@@ -38,26 +38,32 @@ export const earTrainingApi = {
     return data as EarTrainingSession[];
   },
 
-  async getExerciseStats(userId: string, exerciseType: string) {
-    const { data, error } = await supabase
+  async getSessionStats(userId: string, exerciseType?: string) {
+    let query = supabase
       .from('ear_training_sessions')
       .select('*')
-      .eq('user_id', userId)
-      .eq('exercise_type', exerciseType);
-    
+      .eq('user_id', userId);
+
+    if (exerciseType) {
+      query = query.eq('exercise_type', exerciseType);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
-    
+
     const sessions = data as EarTrainingSession[];
     if (sessions.length === 0) return null;
 
     const totalSessions = sessions.length;
     const avgAccuracy = sessions.reduce((sum, s) => sum + s.accuracy, 0) / totalSessions;
-    const avgResponseTime = sessions.reduce((sum, s) => sum + (s.avg_response_time_ms || 0), 0) / totalSessions;
+    const totalQuestions = sessions.reduce((sum, s) => sum + s.total_questions, 0);
+    const totalCorrect = sessions.reduce((sum, s) => sum + s.correct_answers, 0);
 
     return {
       totalSessions,
       avgAccuracy,
-      avgResponseTime,
+      totalQuestions,
+      totalCorrect,
       lastPracticed: sessions[0].started_at,
     };
   },

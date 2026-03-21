@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { lessonsApi, Lesson, UserLesson } from '@/lib/api/lessons';
-import { ArrowLeft, BookOpen, CheckCircle2, Lock, Play } from 'lucide-react';
+import { ArrowLeft, BookOpen, Clock, Play, CheckCircle2, Lock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Lessons() {
   const navigate = useNavigate();
@@ -10,18 +11,24 @@ export default function Lessons() {
   
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [userLessons, setUserLessons] = useState<UserLesson[]>([]);
-  const [skillLevel, setSkillLevel] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
     loadLessons();
-  }, [skillLevel, user]);
+  }, [user]);
 
   const loadLessons = async () => {
+    if (!user) return;
+
     try {
       const [allLessons, userProgress] = await Promise.all([
-        lessonsApi.getAllLessons(skillLevel || undefined),
-        user ? lessonsApi.getUserLessons(user.id) : Promise.resolve([]),
+        lessonsApi.getAllLessons(),
+        lessonsApi.getUserLessons(user.id),
       ]);
 
       setLessons(allLessons);
@@ -33,15 +40,12 @@ export default function Lessons() {
     }
   };
 
-  const getUserLessonData = (lessonId: string) => {
+  const getUserLessonStatus = (lessonId: string) => {
     return userLessons.find(ul => ul.lesson_id === lessonId);
   };
 
   const handleStartLesson = async (lessonId: string) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) return;
 
     try {
       await lessonsApi.startLesson(user.id, lessonId);
@@ -51,32 +55,60 @@ export default function Lessons() {
     }
   };
 
-  const getDifficultyColor = (level: string) => {
-    switch (level) {
-      case 'beginner':
-        return 'text-emerald-500 bg-emerald-500/20 border-emerald-500/40';
-      case 'intermediate':
-        return 'text-amber-500 bg-amber-500/20 border-amber-500/40';
-      case 'advanced':
-        return 'text-red-500 bg-red-500/20 border-red-500/40';
-      default:
-        return 'text-zinc-500 bg-zinc-800 border-zinc-700';
-    }
-  };
+  const renderLesson = (lesson: Lesson) => {
+    const userProgress = getUserLessonStatus(lesson.id);
+    const isCompleted = userProgress?.status === 'completed';
+    const isInProgress = userProgress?.status === 'in_progress';
 
-  const getLessonTypeIcon = (type: string) => {
-    switch (type) {
-      case 'chords':
-        return '🎸';
-      case 'scales':
-        return '🎵';
-      case 'theory':
-        return '📚';
-      case 'technique':
-        return '💪';
-      default:
-        return '📖';
-    }
+    return (
+      <div
+        key={lesson.id}
+        className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden"
+      >
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-white mb-1">{lesson.title}</h3>
+              <p className="text-sm text-zinc-400">{lesson.description}</p>
+            </div>
+            {isCompleted && (
+              <CheckCircle2 className="w-6 h-6 text-emerald-500 flex-shrink-0 ml-3" />
+            )}
+          </div>
+
+          <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {lesson.estimated_time_minutes} min
+            </span>
+            <span className="capitalize">{lesson.lesson_type}</span>
+          </div>
+
+          {isInProgress && userProgress && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between text-xs mb-1">
+                <span className="text-zinc-500">Progress</span>
+                <span className="text-amber-500 font-bold">{userProgress.progress_percent}%</span>
+              </div>
+              <div className="relative w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="absolute inset-y-0 left-0 bg-amber-500 transition-all"
+                  style={{ width: `${userProgress.progress_percent}%` }}
+                />
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={() => handleStartLesson(lesson.id)}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          >
+            <Play className="w-4 h-4" />
+            {isCompleted ? 'Review Lesson' : isInProgress ? 'Continue' : 'Start Lesson'}
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -104,123 +136,37 @@ export default function Lessons() {
         </div>
       </div>
 
-      {/* Skill Level Filter */}
-      <div className="px-4 py-4 border-b border-zinc-800">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setSkillLevel('')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              skillLevel === ''
-                ? 'bg-amber-500 text-zinc-950'
-                : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-            }`}
-          >
-            All Levels
-          </button>
-          {['beginner', 'intermediate', 'advanced'].map((level) => (
-            <button
-              key={level}
-              onClick={() => setSkillLevel(level)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                skillLevel === level
-                  ? 'bg-amber-500 text-zinc-950'
-                  : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-              }`}
-            >
-              {level}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="px-4 py-6">
+        <Tabs defaultValue="beginner" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-zinc-900 mb-6">
+            <TabsTrigger value="beginner">Beginner</TabsTrigger>
+            <TabsTrigger value="intermediate">Intermediate</TabsTrigger>
+            <TabsTrigger value="advanced">Advanced</TabsTrigger>
+          </TabsList>
 
-      {/* Lessons List */}
-      <div className="px-4 py-4 space-y-3">
-        {lessons.map((lesson) => {
-          const userData = getUserLessonData(lesson.id);
-          const isCompleted = userData?.status === 'completed';
-          const isInProgress = userData?.status === 'in_progress';
-          
-          return (
-            <div
-              key={lesson.id}
-              className={`border rounded-xl p-4 ${
-                isCompleted
-                  ? 'bg-emerald-500/10 border-emerald-500/40'
-                  : 'bg-zinc-900 border-zinc-800'
-              }`}
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center text-2xl">
-                  {getLessonTypeIcon(lesson.lesson_type)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-bold text-white">{lesson.title}</h3>
-                      {lesson.description && (
-                        <p className="text-sm text-zinc-400 mt-1">{lesson.description}</p>
-                      )}
-                    </div>
-                    {isCompleted && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
-                  </div>
+          <TabsContent value="beginner" className="space-y-4">
+            {lessons
+              .filter(l => l.skill_level === 'beginner')
+              .map(renderLesson)}
+          </TabsContent>
 
-                  <div className="flex items-center gap-2 mb-3">
-                    <span
-                      className={`px-3 py-1 rounded text-xs font-bold border capitalize ${getDifficultyColor(
-                        lesson.skill_level
-                      )}`}
-                    >
-                      {lesson.skill_level}
-                    </span>
-                    <span className="px-3 py-1 bg-zinc-800 rounded text-xs text-zinc-400 capitalize">
-                      {lesson.lesson_type}
-                    </span>
-                    {lesson.estimated_time_minutes && (
-                      <span className="px-3 py-1 bg-zinc-800 rounded text-xs text-zinc-400">
-                        {lesson.estimated_time_minutes} min
-                      </span>
-                    )}
-                  </div>
+          <TabsContent value="intermediate" className="space-y-4">
+            {lessons
+              .filter(l => l.skill_level === 'intermediate')
+              .map(renderLesson)}
+          </TabsContent>
 
-                  {userData && userData.status === 'in_progress' && (
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
-                        <span>Progress</span>
-                        <span>{userData.progress_percent}%</span>
-                      </div>
-                      <div className="relative w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                        <div
-                          className="absolute inset-y-0 left-0 bg-purple-500 transition-all"
-                          style={{ width: `${userData.progress_percent}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => handleStartLesson(lesson.id)}
-                    className={`w-full font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                      isCompleted
-                        ? 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-500 border border-emerald-500/40'
-                        : isInProgress
-                        ? 'bg-purple-500 hover:bg-purple-600 text-white'
-                        : 'bg-amber-500 hover:bg-amber-600 text-zinc-950'
-                    }`}
-                  >
-                    <Play className="w-4 h-4" />
-                    {isCompleted ? 'Review' : isInProgress ? 'Continue' : 'Start Lesson'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+          <TabsContent value="advanced" className="space-y-4">
+            {lessons
+              .filter(l => l.skill_level === 'advanced')
+              .map(renderLesson)}
+          </TabsContent>
+        </Tabs>
 
         {lessons.length === 0 && (
           <div className="text-center py-12 text-zinc-500">
             <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No lessons found</p>
-            <p className="text-sm mt-1">Check back later for new content!</p>
+            <p>No lessons available yet</p>
           </div>
         )}
       </div>

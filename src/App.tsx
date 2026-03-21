@@ -18,6 +18,8 @@ import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
 import Lessons from '@/pages/Lessons';
 import Challenges from '@/pages/Challenges';
+import ScaleSetup from '@/pages/ScaleSetup';
+import ScalePractice from '@/pages/ScalePractice';
 import NotFound from '@/pages/NotFound';
 
 function App() {
@@ -43,6 +45,8 @@ function App() {
           <Route path="/settings" element={<Settings />} />
           <Route path="/lessons" element={<Lessons />} />
           <Route path="/challenges" element={<Challenges />} />
+          <Route path="/scale-setup" element={<ScaleSetup />} />
+          <Route path="/scale-practice" element={<ScalePractice />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

@@ -1,14 +1,38 @@
 import { create } from 'zustand';
 
-export type TuningPreset = 'standard' | 'dropD' | 'openG' | 'dadgad' | 'halfStep' | 'fullStep';
+export type TuningPreset = 'standard' | 'halfStep' | 'dropD' | 'openD' | 'openG' | 'dadgad';
 
-export const TUNING_PRESETS: Record<TuningPreset, { name: string; notes: string[] }> = {
-  standard: { name: 'Standard (E A D G B E)', notes: ['E', 'A', 'D', 'G', 'B', 'E'] },
-  dropD: { name: 'Drop D (D A D G B E)', notes: ['D', 'A', 'D', 'G', 'B', 'E'] },
-  openG: { name: 'Open G (D G D G B D)', notes: ['D', 'G', 'D', 'G', 'B', 'D'] },
-  dadgad: { name: 'DADGAD', notes: ['D', 'A', 'D', 'G', 'A', 'D'] },
-  halfStep: { name: 'Half Step Down', notes: ['Eb', 'Ab', 'Db', 'Gb', 'Bb', 'Eb'] },
-  fullStep: { name: 'Full Step Down', notes: ['D', 'G', 'C', 'F', 'A', 'D'] },
+export const TUNING_PRESETS: Record<TuningPreset, { name: string; notes: string[]; freqs: number[] }> = {
+  standard: { 
+    name: 'Standard', 
+    notes: ['E', 'A', 'D', 'G', 'B', 'E'],
+    freqs: [82.41, 110.00, 146.83, 196.00, 246.94, 329.63]
+  },
+  halfStep: { 
+    name: 'Half Step Down', 
+    notes: ['Eb', 'Ab', 'Db', 'Gb', 'Bb', 'Eb'],
+    freqs: [77.78, 103.83, 138.59, 185.00, 233.08, 311.13]
+  },
+  dropD: { 
+    name: 'Drop D', 
+    notes: ['D', 'A', 'D', 'G', 'B', 'E'],
+    freqs: [73.42, 110.00, 146.83, 196.00, 246.94, 329.63]
+  },
+  openD: { 
+    name: 'Open D', 
+    notes: ['D', 'A', 'D', 'F#', 'A', 'D'],
+    freqs: [73.42, 110.00, 146.83, 185.00, 220.00, 293.66]
+  },
+  openG: { 
+    name: 'Open G', 
+    notes: ['D', 'G', 'D', 'G', 'B', 'D'],
+    freqs: [73.42, 98.00, 146.83, 196.00, 246.94, 293.66]
+  },
+  dadgad: { 
+    name: 'DADGAD', 
+    notes: ['D', 'A', 'D', 'G', 'A', 'D'],
+    freqs: [73.42, 110.00, 146.83, 196.00, 220.00, 293.66]
+  },
 };
 
 interface TunerStore {

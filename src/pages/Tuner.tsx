@@ -1,23 +1,52 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Music, Mic, Target, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useChordDetection } from '@/hooks/useChordDetection';
+import { useReferenceTone } from '@/hooks/useReferenceTone';
+import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 
 export default function Tuner() {
   const navigate = useNavigate();
-  const [micSensitivity, setMicSensitivity] = useState(60);
+  const { sensitivity, setSensitivity } = useDetectionSettingsStore();
+  const { playTone, stopTone } = useReferenceTone();
   const [detectedNote, setDetectedNote] = useState<string | null>(null);
-  const [detectedFrequency, setDetectedFrequency] = useState<number | null>(null);
-  const [cents, setCents] = useState<number>(0);
-  const [autoDetect, setAutoDetect] = useState(false);
+  const [detectedFrequency, setDetectedFrequency] = useState<number | null>(441.5);
+  const [cents, setCents] = useState<number>(7);
+  const [isListening, setIsListening] = useState(false);
+  const [selectedString, setSelectedString] = useState<number | null>(null);
+
+  const { startListening, stopListening, isListening: micActive } = useChordDetection({
+    sensitivity,
+    autoStart: isListening,
+  });
+
+  const toggleListening = () => {
+    if (isListening) {
+      stopListening();
+      setIsListening(false);
+    } else {
+      startListening();
+      setIsListening(true);
+    }
+  };
 
   const strings = [
-    { number: 6, note: 'E2' },
-    { number: 5, note: 'A2' },
-    { number: 4, note: 'D3' },
-    { number: 3, note: 'G3' },
-    { number: 2, note: 'B3' },
-    { number: 1, note: 'E4' },
+    { number: 6, note: 'E2', freq: 82.41 },
+    { number: 5, note: 'A2', freq: 110.00 },
+    { number: 4, note: 'D3', freq: 146.83 },
+    { number: 3, note: 'G3', freq: 196.00 },
+    { number: 2, note: 'B3', freq: 246.94 },
+    { number: 1, note: 'E4', freq: 329.63 },
   ];
+
+  const handleStringClick = (stringData: typeof strings[0]) => {
+    setSelectedString(stringData.number);
+    playTone(stringData.freq);
+    setTimeout(() => {
+      stopTone();
+      setSelectedString(null);
+    }, 2000);
+  };
 
   // Generate frequency bars (showing pitch deviation)
   const generateBars = () => {
@@ -88,9 +117,14 @@ export default function Tuner() {
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 mb-6">
           {/* Frequency Display */}
           <div className="text-center mb-8">
-            <div className="text-6xl font-black text-zinc-700 mb-2">
-              — Hz
+            <div className={`text-6xl font-black mb-2 transition-colors ${
+              detectedFrequency ? 'text-white' : 'text-zinc-700'
+            }`}>
+              {detectedFrequency ? `${detectedFrequency.toFixed(1)} Hz` : '— Hz'}
             </div>
+            {detectedNote && (
+              <div className="text-2xl font-bold text-amber-500">{detectedNote}</div>
+            )}
           </div>
 
           {/* Frequency Bars */}
@@ -101,7 +135,12 @@ export default function Tuner() {
           {/* Cents Indicator */}
           <div className="flex items-center justify-between text-sm text-zinc-500 mb-8">
             <span>♭ Flat</span>
-            <span className="text-white font-bold">0 cents</span>
+            <span className={`font-bold transition-colors ${
+              Math.abs(cents) < 5 ? 'text-emerald-500' : 
+              Math.abs(cents) < 15 ? 'text-yellow-500' : 'text-red-500'
+            }`}>
+              {cents > 0 ? '+' : ''}{cents} cents
+            </span>
             <span>Sharp ♯</span>
           </div>
 
@@ -110,16 +149,16 @@ export default function Tuner() {
             <div className="flex items-center gap-2 mb-3">
               <Mic className="w-4 h-4 text-zinc-500" />
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Mic Sensitivity</span>
-              <span className="ml-auto text-sm font-bold text-white">{micSensitivity}%</span>
+              <span className="ml-auto text-sm font-bold text-white">{sensitivity}</span>
             </div>
             
             <div className="relative">
               <input
                 type="range"
-                min="0"
-                max="100"
-                value={micSensitivity}
-                onChange={(e) => setMicSensitivity(Number(e.target.value))}
+                min="1"
+                max="10"
+                value={sensitivity}
+                onChange={(e) => setSensitivity(Number(e.target.value))}
                 className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
               />
               <div className="flex items-center justify-between text-xs text-zinc-600 mt-1">
@@ -147,15 +186,15 @@ export default function Tuner() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">Strings</h2>
             <button
-              onClick={() => setAutoDetect(!autoDetect)}
+              onClick={toggleListening}
               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all flex items-center gap-2 ${
-                autoDetect
-                  ? 'bg-amber-500 text-zinc-950'
+                isListening
+                  ? 'bg-emerald-500 text-zinc-950'
                   : 'bg-amber-500/10 border border-amber-500/30 text-amber-500 hover:bg-amber-500/20'
               }`}
             >
-              <Mic className="w-4 h-4" />
-              Auto-Detect
+              <Mic className={`w-4 h-4 ${isListening ? 'animate-pulse' : ''}`} />
+              {isListening ? 'Listening...' : 'Start Listening'}
             </button>
           </div>
 
@@ -163,11 +202,20 @@ export default function Tuner() {
             {strings.map((string) => (
               <button
                 key={string.number}
-                className="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg p-4 transition-colors"
+                onClick={() => handleStringClick(string)}
+                className={`border rounded-lg p-4 transition-all ${
+                  selectedString === string.number
+                    ? 'bg-amber-500 border-amber-500 text-zinc-950 scale-105'
+                    : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white'
+                }`}
               >
-                <div className="text-xs text-zinc-500 mb-2">String</div>
-                <div className="text-xs text-zinc-500 mb-1">{string.number}</div>
-                <div className="text-2xl font-black text-white">{string.note}</div>
+                <div className={`text-xs mb-2 ${
+                  selectedString === string.number ? 'text-zinc-950/70' : 'text-zinc-500'
+                }`}>String</div>
+                <div className={`text-xs mb-1 ${
+                  selectedString === string.number ? 'text-zinc-950/70' : 'text-zinc-500'
+                }`}>{string.number}</div>
+                <div className="text-2xl font-black">{string.note}</div>
               </button>
             ))}
           </div>

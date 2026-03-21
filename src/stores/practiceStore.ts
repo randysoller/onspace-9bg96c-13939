@@ -27,7 +27,9 @@ interface PracticeStore extends PracticeSettings {
   startPractice: () => void;
   stopPractice: () => void;
   nextChord: () => void;
+  previousChord: () => void;
   setPracticeChords: (chords: any[]) => void;
+  setFilters: (filters: any) => void;
 }
 
 export const usePracticeStore = create<PracticeStore>((set) => ({
@@ -55,5 +57,13 @@ export const usePracticeStore = create<PracticeStore>((set) => ({
   nextChord: () => set((state) => ({ 
     currentChordIndex: (state.currentChordIndex + 1) % state.practiceChords.length 
   })),
+  previousChord: () => set((state) => ({
+    currentChordIndex: state.currentChordIndex === 0 ? state.practiceChords.length - 1 : state.currentChordIndex - 1
+  })),
   setPracticeChords: (chords) => set({ practiceChords: chords }),
+  setFilters: (filters) => set({ 
+    selectedTypes: filters.types || [],
+    selectedRoots: filters.keys || [],
+    selectedCategories: filters.category ? [filters.category] : [] 
+  }),
 }));

@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePracticeStore } from '@/stores/practiceStore';
+import { useAudioStore } from '@/stores/audioStore';
+import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
+import { usePracticeHistoryStore } from '@/stores/practiceHistoryStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
+import { useChordDetection } from '@/hooks/useChordDetection';
+import { useSessionStats } from '@/hooks/useSessionStats';
 import { AdvancedDetectionPanel } from '@/components/features/AdvancedDetectionPanel';
 import { BeatSyncPanel } from '@/components/features/BeatSyncPanel';
 import { 
@@ -13,32 +18,101 @@ import {
   ChevronRight, 
   SkipBack, 
   RotateCcw, 
-  BarChart3
+  BarChart3,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
 export default function Practice() {
   const navigate = useNavigate();
-  const { practiceChords, currentChordIndex, showDiagrams, nextChord } = usePracticeStore();
+  const { practiceChords, currentChordIndex, showDiagrams, nextChord, previousChord } = usePracticeStore();
+  const { chordVolume, setChordVolume } = useAudioStore();
+  const { sensitivity, setSensitivity, advancedEnabled, advancedValues } = useDetectionSettingsStore();
+  const { addSession } = usePracticeHistoryStore();
   const { playChord } = useChordAudio();
+  const { startSession, recordAttempt, resetChordTimer, endSession, getSummary, showSummary, dismissSummary } = useSessionStats();
   
   const [isRevealed, setIsRevealed] = useState(false);
   const [diagramsOn, setDiagramsOn] = useState(true);
-  const [micSensitivity, setMicSensitivity] = useState(6);
-  const [volume, setVolume] = useState(75);
+  const [sessionActive, setSessionActive] = useState(false);
 
   const currentChord = practiceChords[currentChordIndex];
 
+  const { isListening, result, startListening, stopListening } = useChordDetection({
+    targetChord: currentChord,
+    sensitivity,
+    autoStart: false,
+    advancedSettings: advancedEnabled ? advancedValues : null,
+    onCorrect: () => {
+      setIsRevealed(true);
+      if (sessionActive && currentChord) {
+        recordAttempt(
+          `${currentChord.root}${currentChord.type !== 'major' ? currentChord.type : ''}`,
+          `${currentChord.root} ${currentChord.category}`,
+          'correct'
+        );
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (!sessionActive) {
+      startSession();
+      setSessionActive(true);
+    }
+  }, []);
+
   const handleNext = () => {
+    if (sessionActive && currentChord && !isRevealed) {
+      recordAttempt(
+        `${currentChord.root}${currentChord.type !== 'major' ? currentChord.type : ''}`,
+        `${currentChord.root} ${currentChord.category}`,
+        'skipped'
+      );
+    }
     setIsRevealed(false);
+    resetChordTimer();
     nextChord();
+  };
+
+  const handlePrevious = () => {
+    setIsRevealed(false);
+    resetChordTimer();
+    previousChord();
   };
 
   const handleReveal = () => {
     setIsRevealed(true);
     if (currentChord) {
       playChord(currentChord);
+    }
+  };
+
+  const handleEndSession = () => {
+    stopListening();
+    endSession();
+    const summary = getSummary();
+    addSession({
+      date: Date.now(),
+      mode: 'single',
+      totalCorrect: summary.totalCorrect,
+      totalSkipped: summary.totalSkipped,
+      accuracyRate: summary.accuracyRate,
+      avgResponseTimeMs: summary.avgResponseTimeMs,
+      fastestTimeMs: summary.fastestTimeMs,
+      totalDurationMs: summary.totalDurationMs,
+      attempts: summary.attempts,
+      chords: practiceChords.map(c => `${c.root}${c.type !== 'major' ? c.type : ''}`),
+    });
+  };
+
+  const toggleMic = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
     }
   };
 
@@ -107,8 +181,17 @@ export default function Practice() {
             </button>
 
             {/* Mic Icon */}
-            <button className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded transition-colors">
-              <Mic className="w-4 h-4 text-emerald-500" />
+            <button 
+              onClick={toggleMic}
+              className={`p-2 rounded transition-colors ${
+                isListening 
+                  ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500' 
+                  : 'bg-zinc-800 hover:bg-zinc-700'
+              }`}
+            >
+              <Mic className={`w-4 h-4 ${
+                isListening ? 'text-emerald-500 animate-pulse' : 'text-zinc-400'
+              }`} />
             </button>
 
             {/* Volume Slider */}
@@ -118,8 +201,8 @@ export default function Practice() {
                 type="range"
                 min="0"
                 max="100"
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
+                value={chordVolume * 100}
+                onChange={(e) => setChordVolume(Number(e.target.value) / 100)}
                 className="w-24 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
               />
             </div>
@@ -131,14 +214,34 @@ export default function Practice() {
       <div className="bg-zinc-900/50 border-b border-zinc-800 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-emerald-500 text-sm">
-              <div className="flex gap-0.5">
-                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
-                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
-                <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
+            {isListening && !result && (
+              <div className="flex items-center gap-2 text-emerald-500 text-sm">
+                <div className="flex gap-0.5">
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
+                </div>
+                <span className="font-medium">Listening — play the chord</span>
               </div>
-              <span className="font-medium">Listening — play the chord</span>
-            </div>
+            )}
+            {result === 'correct' && (
+              <div className="flex items-center gap-2 text-emerald-500 text-sm">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="font-bold">Correct!</span>
+              </div>
+            )}
+            {result === 'wrong' && (
+              <div className="flex items-center gap-2 text-red-500 text-sm">
+                <XCircle className="w-4 h-4" />
+                <span className="font-bold">Try again</span>
+              </div>
+            )}
+            {!isListening && !result && (
+              <div className="flex items-center gap-2 text-zinc-500 text-sm">
+                <Mic className="w-4 h-4" />
+                <span className="font-medium">Mic off — click mic to enable</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-6">
@@ -149,11 +252,11 @@ export default function Practice() {
                 type="range"
                 min="1"
                 max="10"
-                value={micSensitivity}
-                onChange={(e) => setMicSensitivity(Number(e.target.value))}
+                value={sensitivity}
+                onChange={(e) => setSensitivity(Number(e.target.value))}
                 className="w-32 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
               />
-              <span className="text-amber-500 font-bold text-sm">{micSensitivity}</span>
+              <span className="text-amber-500 font-bold text-sm">{sensitivity}</span>
               <span className="text-zinc-600 text-xs">Balanced</span>
             </div>
           </div>
@@ -347,18 +450,68 @@ export default function Practice() {
         </div>
       </div>
 
+      {/* Stats Summary Modal */}
+      {showSummary && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 max-w-md w-full">
+            <h2 className="text-2xl font-bold text-white mb-4">Session Summary</h2>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Accuracy</span>
+                <span className="text-2xl font-bold text-emerald-500">{getSummary().accuracyRate.toFixed(1)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Correct</span>
+                <span className="text-lg font-bold text-white">{getSummary().totalCorrect}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Skipped</span>
+                <span className="text-lg font-bold text-zinc-500">{getSummary().totalSkipped}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Avg Response</span>
+                <span className="text-lg font-bold text-amber-500">{(getSummary().avgResponseTimeMs / 1000).toFixed(1)}s</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400">Total Time</span>
+                <span className="text-lg font-bold text-white">{(getSummary().totalDurationMs / 1000 / 60).toFixed(1)}m</span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                dismissSummary();
+                navigate('/');
+              }}
+              className="w-full mt-6 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Bottom Controls */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 px-4 py-4">
         <div className="flex items-center justify-center gap-3">
-          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+          <button 
+            onClick={handlePrevious}
+            disabled={currentChordIndex === 0}
+            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <SkipBack className="w-5 h-5 text-zinc-400" />
           </button>
           
-          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+          <button 
+            onClick={() => navigate('/')}
+            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+          >
             <RotateCcw className="w-5 h-5 text-zinc-400" />
           </button>
           
-          <button className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
+          <button 
+            onClick={handleEndSession}
+            className="p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+          >
             <BarChart3 className="w-5 h-5 text-zinc-400" />
           </button>
 

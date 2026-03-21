@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move } from 'lucide-react';
+import { Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move, Volume2 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { ChordData } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
+import { useChordAudio } from '@/hooks/useChordAudio';
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
@@ -14,6 +15,7 @@ interface ChordCardProps {
 }
 
 function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProps) {
+  const { playChord } = useChordAudio();
   // Determine root string index (for the blue diamond)
   const rootStringIndex = chord.rootString !== undefined ? chord.rootString : -1;
 
@@ -198,6 +200,17 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
             })}
           </svg>
         </div>
+
+        {/* Play Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            playChord(chord);
+          }}
+          className="flex-shrink-0 p-2 bg-zinc-800 hover:bg-amber-500 text-zinc-400 hover:text-zinc-950 rounded-lg transition-all group"
+        >
+          <Volume2 className="w-4 h-4" />
+        </button>
 
         {/* Chord Info */}
         <div className="flex-1 min-w-0 py-2">

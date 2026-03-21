@@ -10,17 +10,20 @@ export interface ChordPreset {
 
 interface PresetState {
   presets: ChordPreset[];
+  activePreset: string | null;
   addPreset: (name: string, chordIds: string[]) => string;
   removePreset: (id: string) => void;
   renamePreset: (id: string, name: string) => void;
   reorderPreset: (fromIndex: number, toIndex: number) => void;
   getPreset: (id: string) => ChordPreset | undefined;
+  setActivePreset: (id: string | null) => void;
 }
 
 export const usePresetStore = create<PresetState>()(
   persist(
     (set, get) => ({
       presets: [],
+      activePreset: null,
 
       addPreset: (name, chordIds) => {
         const id = `preset-${Date.now()}`;
@@ -49,6 +52,8 @@ export const usePresetStore = create<PresetState>()(
         }),
 
       getPreset: (id) => get().presets.find((p) => p.id === id),
+      
+      setActivePreset: (id) => set({ activePreset: id }),
     }),
     {
       name: 'fretmaster-presets',

@@ -26,14 +26,19 @@ export const MobileTabBar = () => {
 
   return (
     <div 
-      className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-lg border-t border-amber-500/20 z-[60]" 
+      className="md:hidden bg-black/90 backdrop-blur-lg border-t border-amber-500/20" 
       style={{ 
         position: 'fixed',
-        transform: 'translateZ(0)',
-        WebkitTransform: 'translateZ(0)',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
         willChange: 'transform',
         backfaceVisibility: 'hidden',
-        WebkitBackfaceVisibility: 'hidden'
+        WebkitBackfaceVisibility: 'hidden',
+        isolation: 'isolate'
       }}
     >
       <div className="flex items-center justify-around h-16">

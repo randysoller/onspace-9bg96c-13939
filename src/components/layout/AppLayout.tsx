@@ -5,9 +5,9 @@ import MetronomeModal from '@/components/features/MetronomeModal';
 
 export const AppLayout = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white overflow-x-hidden" style={{ position: 'relative' }}>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white">
       <Header />
-      <main className="pt-16 pb-20 md:pb-8" style={{ minHeight: '100vh', position: 'relative' }}>
+      <main className="pt-16 pb-20 md:pb-8">
         <Outlet />
       </main>
       <MobileTabBar />

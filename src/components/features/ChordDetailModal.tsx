@@ -55,10 +55,10 @@ export default function ChordDetailModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 py-12">
-        <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200 max-h-full overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200 max-h-[calc(100vh-2rem)] overflow-y-auto flex flex-col">
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-zinc-800/50">
+          <div className="p-4 pb-3 border-b border-zinc-800/50 flex-shrink-0">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-3">
                 <div className="text-5xl font-black text-white">
@@ -88,7 +88,7 @@ export default function ChordDetailModal({
           </div>
 
           {/* Diagram Section */}
-          <div className="p-6 flex gap-4">
+          <div className="p-4 flex gap-4 flex-shrink-0">
             {/* Chord Diagram */}
             <div className="flex-1">
               <svg width="160" height="210" viewBox="0 0 160 210" className="select-none">
@@ -278,7 +278,7 @@ export default function ChordDetailModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="px-6 pb-4 flex items-center gap-3">
+          <div className="px-4 pb-3 flex items-center gap-3 flex-shrink-0">
             <button
               onClick={onPlay}
               className="flex-1 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
@@ -300,7 +300,7 @@ export default function ChordDetailModal({
 
           {/* Pagination */}
           {totalChords > 0 && (
-            <div className="px-6 pb-3">
+            <div className="px-4 pb-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <button
                   onClick={onPrevious}
@@ -328,13 +328,13 @@ export default function ChordDetailModal({
           )}
 
           {/* Finger Positions */}
-          <div className="px-6 pb-6">
-            <div className="flex items-center gap-2 mb-3 text-zinc-500 text-xs font-semibold uppercase tracking-wide">
+          <div className="px-4 pb-4 flex-1 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-2 text-zinc-500 text-xs font-semibold uppercase tracking-wide sticky top-0 bg-zinc-950 py-2 z-10">
               <Hand className="w-4 h-4" />
               Finger Positions
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 pb-2">
               {stringStates.map((state, idx) => {
                 const stringName = STRINGS[idx];
                 const stringNumber = 6 - idx;
@@ -343,7 +343,7 @@ export default function ChordDetailModal({
                 return (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-2 border-b border-zinc-800/50 last:border-0"
+                    className="flex items-center justify-between py-1.5 border-b border-zinc-800/50 last:border-0"
                   >
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-400 text-sm font-medium w-12">

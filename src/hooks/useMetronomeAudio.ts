@@ -210,8 +210,13 @@ export const useMetronomeAudio = () => {
             predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
           }
           
-          // NO per-number adjustments - keep timing consistent for straight beat alignment
-          const totalLatency = audioLatency + predictedSpeechLatency;
+          // Mobile-specific adjustment for number 4: trigger 20ms earlier
+          let perNumberAdjustment = 0;
+          if (isMobile && beatNumber === 4) {
+            perNumberAdjustment = -0.020; // 20ms earlier on mobile
+          }
+          
+          const totalLatency = audioLatency + predictedSpeechLatency + perNumberAdjustment;
           
           // Advanced scheduling: calculate precise trigger time
           // We want speech to START at audioContext.currentTime (the beat)

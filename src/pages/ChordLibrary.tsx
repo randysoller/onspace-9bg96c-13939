@@ -252,7 +252,7 @@ export default function ChordLibrary() {
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false); // FIX #4: Show/hide preset menu
   const [newPresetName, setNewPresetName] = useState(''); // FIX #4: New preset name
-  const { userPresets, createPreset } = usePresetStore(); // FIX #4: Access preset store
+  const { presets: userPresets, addPreset } = usePresetStore(); // FIX #4: Access preset store
 
   // Filter chords based on search and category
   const filteredChords = CHORD_DATABASE.filter((chord) => {
@@ -330,13 +330,7 @@ export default function ChordLibrary() {
         return `${chord.root}${chord.type === 'major' ? '' : chord.type}`;
       });
 
-      await createPreset({
-        name: newPresetName,
-        chords: chordNames,
-        filters: {
-          categories: selectedCategories,
-        },
-      });
+      await addPreset(newPresetName, chordIndices.map(String));
 
       toast.success(`Preset "${newPresetName}" created with ${selectedChords.size} chords`);
       setNewPresetName('');
@@ -352,13 +346,13 @@ export default function ChordLibrary() {
   const handleLoadPreset = (presetName: string) => {
     const preset = userPresets.find(p => p.name === presetName);
     if (preset) {
-      // Find chord indices matching preset chords
+      // Convert stored chord IDs back to indices
       const indices = new Set<number>();
-      preset.chords?.forEach(chordName => {
-        const index = CHORD_DATABASE.findIndex(c => 
-          `${c.root}${c.type === 'major' ? '' : c.type}` === chordName
-        );
-        if (index !== -1) indices.add(index);
+      preset.chordIds.forEach(idStr => {
+        const idx = parseInt(idStr, 10);
+        if (!isNaN(idx) && idx >= 0 && idx < CHORD_DATABASE.length) {
+          indices.add(idx);
+        }
       });
       
       setSelectedChords(indices);
@@ -430,7 +424,7 @@ export default function ChordLibrary() {
               </div>
 
               {/* Saved Presets */}
-              {userPresets.length > 0 && (
+              {userPresets && userPresets.length > 0 && (
                 <div className="p-2">
                   <div className="text-xs font-bold text-zinc-400 uppercase tracking-wide px-2 py-1">Your Presets</div>
                   {userPresets.map((preset) => (
@@ -441,14 +435,14 @@ export default function ChordLibrary() {
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-white font-medium">{preset.name}</span>
-                        <span className="text-xs text-zinc-500">{preset.chords?.length || 0} chords</span>
+                        <span className="text-xs text-zinc-500">{preset.chordIds?.length || 0} chords</span>
                       </div>
                     </button>
                   ))}
                 </div>
               )}
 
-              {userPresets.length === 0 && (
+              {(!userPresets || userPresets.length === 0) && (
                 <div className="p-4 text-center">
                   <p className="text-sm text-zinc-500">No saved presets yet</p>
                   <p className="text-xs text-zinc-600 mt-1">Select chords and create your first preset above</p>

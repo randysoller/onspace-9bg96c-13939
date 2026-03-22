@@ -23,7 +23,7 @@ export const useMetronomeAudio = () => {
   const voiceUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
   // Mobile detection for platform-specific latency estimates
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const initialLatencyEstimate = isMobile ? 0.050 : 0.090; // 50ms mobile, 90ms desktop
+  const initialLatencyEstimate = isMobile ? 0.070 : 0.090; // 70ms mobile, 90ms desktop
   const speechLatencyOffsetRef = useRef<number>(initialLatencyEstimate);
   const latencyHistoryRef = useRef<number[]>([]); // Track last 10 measurements for predictive modeling
   const lastSpeechStartTimeRef = useRef<number>(0);
@@ -201,7 +201,8 @@ export const useMetronomeAudio = () => {
           // 2. Empirically measured speech synthesis latency (adaptive with predictive modeling)
           const audioLatency = (context.baseLatency || 0) + (context.outputLatency || 0);
           
-          // Predictive compensation: use median of recent measurements if available
+          // Use consistent latency for all numbers to avoid "swung" feel
+          // Median of recent measurements provides stable, consistent timing
           let predictedSpeechLatency = speechLatencyOffsetRef.current;
           if (latencyHistoryRef.current.length >= 3) {
             const sortedHistory = [...latencyHistoryRef.current].sort((a, b) => a - b);
@@ -209,18 +210,8 @@ export const useMetronomeAudio = () => {
             predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
           }
           
-          // Per-number latency adjustment based on word length and syllables:
-          // Shorter words process faster and need less latency compensation
-          // "One" (1 syllable, very short) - needs 30% less compensation
-          // "Four" (1 syllable, short) - needs 15% less compensation  
-          // Longer numbers like "seven" (2 syllables) or "eleven" (3 syllables) use full compensation
-          const getNumberAdjustment = (num: number): number => {
-            if (num === 1) return 0.70;  // "One" - very short
-            if (num === 4) return 0.85;  // "Four" - short
-            return 1.0;                   // All other numbers
-          };
-          const numberAdjustment = getNumberAdjustment(beatNumber);
-          const totalLatency = audioLatency + (predictedSpeechLatency * numberAdjustment);
+          // NO per-number adjustments - keep timing consistent for straight beat alignment
+          const totalLatency = audioLatency + predictedSpeechLatency;
           
           // Advanced scheduling: calculate precise trigger time
           // We want speech to START at audioContext.currentTime (the beat)
@@ -232,7 +223,7 @@ export const useMetronomeAudio = () => {
           
           // Log during calibration or every 8th beat
           if (!isVoiceCalibratedRef.current || beatNumber % 8 === 1) {
-            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Adjust: ${(numberAdjustment * 100).toFixed(0)}% | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms | ${isMobile ? '📱' : '💻'}`);
+            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms | ${isMobile ? '📱' : '💻'}`);
           }
           
           // Use high-precision setTimeout for scheduling

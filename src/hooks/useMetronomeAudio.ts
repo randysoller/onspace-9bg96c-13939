@@ -43,7 +43,7 @@ export const useMetronomeAudio = () => {
         console.log('🎤 Initializing meSpeak.js...');
         try {
           // Load English voice (config is included by default in meSpeak.js 2.0+)
-          window.meSpeak.loadVoice('https://unpkg.com/mespeak@2.0.2/voices/en/en-us.json', async (success, message) => {
+          window.meSpeak.loadVoice('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/en/en-us.json', async (success, message) => {
             console.log('🎤 Voice load callback - Success:', success, 'Message:', message);
             
             if (success) {

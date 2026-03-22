@@ -156,71 +156,59 @@ export const useMetronomeAudio = () => {
       }
 
       case 'hiHat': {
-        // Realistic closed hi-hat with complex metallic spectrum
-        const duration = isAccent ? 0.15 : 0.09;
+        // Realistic closed hi-hat with "shh" noise character
+        const duration = isAccent ? 0.12 : 0.08;
         const bufferSize = context.sampleRate * duration;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
         const dataR = buffer.getChannelData(1);
 
-        // Generate complex metallic noise spectrum
+        // Generate noise-dominated "shh" sound with subtle metallic shimmer
         for (let i = 0; i < bufferSize; i++) {
           const t = i / context.sampleRate;
-          const attack = Math.exp(-i / (context.sampleRate * 0.003)); // Sharp attack
-          const sustain = Math.exp(-i / (context.sampleRate * (isAccent ? 0.04 : 0.025))); // Body decay
+          const attack = Math.exp(-i / (context.sampleRate * 0.002)); // Very sharp attack
+          const sustain = Math.exp(-i / (context.sampleRate * (isAccent ? 0.028 : 0.018))); // Quick decay
           const noise = Math.random() * 2 - 1;
           
-          // Multiple inharmonic metal frequencies
-          const freq1 = 7800;
-          const freq2 = 9500;
-          const freq3 = 11200;
-          const freq4 = 13500;
-          const freq5 = 15800;
+          // Subtle high-frequency metallic shimmer (reduced amplitude)
+          const freq1 = 8500;
+          const freq2 = 11000;
+          const freq3 = 14500;
           
-          const metal1 = Math.sin(t * freq1 * 6.28) * 0.25;
-          const metal2 = Math.sin(t * freq2 * 6.28) * 0.20;
-          const metal3 = Math.sin(t * freq3 * 6.28) * 0.15;
-          const metal4 = Math.sin(t * freq4 * 6.28) * 0.12;
-          const metal5 = Math.sin(t * freq5 * 6.28) * 0.08;
+          const shimmer1 = Math.sin(t * freq1 * 6.28) * 0.08;
+          const shimmer2 = Math.sin(t * freq2 * 6.28) * 0.06;
+          const shimmer3 = Math.sin(t * freq3 * 6.28) * 0.04;
           
-          // Sharp attack noise + sustained metallic ring
-          const signal = (noise * 0.6 * attack) + ((metal1 + metal2 + metal3 + metal4 + metal5) * sustain);
+          // Noise-dominated with subtle shimmer
+          const signal = (noise * 0.85 * attack) + ((shimmer1 + shimmer2 + shimmer3) * sustain * 0.4);
           
           dataL[i] = signal;
-          dataR[i] = signal * 0.92 + (Math.random() * 2 - 1) * 0.08 * sustain; // Stereo shimmer
+          dataR[i] = signal * 0.88 + (Math.random() * 2 - 1) * 0.12 * sustain; // Wide stereo noise
         }
 
         const bufferSource = context.createBufferSource();
         const highpass = context.createBiquadFilter();
-        const peaking1 = context.createBiquadFilter();
-        const peaking2 = context.createBiquadFilter();
+        const highShelf = context.createBiquadFilter();
         const gainNode = context.createGain();
 
         bufferSource.buffer = buffer;
         
-        // High-pass to remove lows
+        // High-pass to emphasize high frequencies
         highpass.type = 'highpass';
-        highpass.frequency.setValueAtTime(6500, now);
-        highpass.Q.setValueAtTime(0.7, now);
+        highpass.frequency.setValueAtTime(7000, now);
+        highpass.Q.setValueAtTime(0.5, now);
         
-        // Enhance sizzle frequencies
-        peaking1.type = 'peaking';
-        peaking1.frequency.setValueAtTime(9500, now);
-        peaking1.Q.setValueAtTime(2.5, now);
-        peaking1.gain.setValueAtTime(8, now);
-        
-        peaking2.type = 'peaking';
-        peaking2.frequency.setValueAtTime(13000, now);
-        peaking2.Q.setValueAtTime(1.8, now);
-        peaking2.gain.setValueAtTime(5, now);
+        // Boost ultra-high frequencies for more "shh"
+        highShelf.type = 'highshelf';
+        highShelf.frequency.setValueAtTime(10000, now);
+        highShelf.gain.setValueAtTime(6, now);
 
         bufferSource.connect(highpass);
-        highpass.connect(peaking1);
-        peaking1.connect(peaking2);
-        peaking2.connect(gainNode);
+        highpass.connect(highShelf);
+        highShelf.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 0.72, now);
+        gainNode.gain.setValueAtTime(volume * 0.68, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         bufferSource.start(now);

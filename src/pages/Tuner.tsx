@@ -157,17 +157,24 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Middle bar is 25% taller (75px vs 60px) and 10px thick (2 points thicker than 8px)
+      // Flying saucer shape: tallest in middle (75px), tapering to ends (20px)
+      // Create smooth curve using quadratic function
+      const normalizedDistance = distance / centerBar; // 0 at center, 1 at edges
+      const heightMultiplier = 1 - (normalizedDistance * normalizedDistance * 0.73); // Quadratic falloff
+      const maxHeight = 75; // Tallest bar height
+      const minHeight = 20; // Shortest bar height at edges
+      const barHeightPx = Math.round(minHeight + (maxHeight - minHeight) * heightMultiplier);
+      
       const isMiddleBar = i === centerBar;
-      const barHeight = isMiddleBar ? 'h-[75px]' : 'h-12';
       const barWidth = isMiddleBar ? 'w-2.5' : 'w-1.5';
       
       bars.push(
         <div
           key={i}
-          className={`${barWidth} ${barHeight} ${color} transition-opacity duration-100 ${
+          className={`${barWidth} ${color} transition-opacity duration-100 ${
             isActive ? 'opacity-100' : 'opacity-30'
           }`}
+          style={{ height: `${barHeightPx}px` }}
         />
       );
     }

@@ -209,7 +209,11 @@ export const useMetronomeAudio = () => {
             predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
           }
           
-          const totalLatency = audioLatency + predictedSpeechLatency;
+          // Per-number latency adjustment:
+          // "One" is a shorter word (1 syllable) and processes faster
+          // Longer numbers like "seven" (2 syllables) or "eleven" (3 syllables) need more compensation
+          const numberAdjustment = beatNumber === 1 ? 0.70 : 1.0; // "One" needs 30% less latency compensation
+          const totalLatency = audioLatency + (predictedSpeechLatency * numberAdjustment);
           
           // Advanced scheduling: calculate precise trigger time
           // We want speech to START at audioContext.currentTime (the beat)
@@ -221,7 +225,7 @@ export const useMetronomeAudio = () => {
           
           // Log during calibration or every 8th beat
           if (!isVoiceCalibratedRef.current || beatNumber % 8 === 1) {
-            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms | ${isMobile ? '📱' : '💻'}`);
+            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Adjust: ${(numberAdjustment * 100).toFixed(0)}% | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms | ${isMobile ? '📱' : '💻'}`);
           }
           
           // Use high-precision setTimeout for scheduling

@@ -41,7 +41,12 @@ export default function MetronomeModal() {
   };
 
   const quickTempos = [40, 60, 80, 100, 120, 140, 180];
-  const timeSignatures = [2, 3, 4, 6];
+  const timeSignatures = [
+    { beats: 2, display: '2/4' },
+    { beats: 3, display: '3/4' },
+    { beats: 4, display: '4/4' },
+    { beats: 12, display: '12/8' },
+  ];
   const sounds: Array<{ value: typeof soundType; label: string }> = [
     { value: 'click', label: 'Click' },
     { value: 'woodBlock', label: 'Wood Block' },
@@ -80,7 +85,7 @@ export default function MetronomeModal() {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-6 space-y-6">
+          <div className="px-6 py-4 space-y-4">
             {/* Tempo */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -140,20 +145,20 @@ export default function MetronomeModal() {
             {/* Time Signature */}
             <div>
               <div className="mb-3">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Beats Per Measure</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">Time Signature</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {timeSignatures.map((beats) => (
+                {timeSignatures.map((sig) => (
                   <button
-                    key={beats}
-                    onClick={() => setBeatsPerMeasure(beats)}
+                    key={sig.beats}
+                    onClick={() => setBeatsPerMeasure(sig.beats)}
                     className={`py-2.5 rounded font-bold transition-all ${
-                      beatsPerMeasure === beats
+                      beatsPerMeasure === sig.beats
                         ? 'bg-amber-500 text-zinc-950'
                         : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
                     }`}
                   >
-                    {beats}/4
+                    {sig.display}
                   </button>
                 ))}
               </div>
@@ -223,7 +228,9 @@ export default function MetronomeModal() {
             {/* Accent First Beat */}
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Accent First Beat</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">
+                  Accent {beatsPerMeasure === 12 ? '(1, 4, 7, 10)' : 'First Beat'}
+                </span>
                 <button
                   onClick={() => setAccentFirstBeat(!accentFirstBeat)}
                   className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
@@ -237,9 +244,36 @@ export default function MetronomeModal() {
               </div>
             </div>
 
+            {/* Beat Indicators */}
+            {isPlaying && (
+              <div className="flex items-center justify-center gap-2 py-2">
+                {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
+                  const isCurrentBeat = beat === currentBeat + 1;
+                  const isAccentBeat = beatsPerMeasure === 12 
+                    ? [1, 4, 7, 10].includes(beat)
+                    : beat === 1;
+                  
+                  return (
+                    <div
+                      key={beat}
+                      className={`min-w-[28px] h-8 rounded flex items-center justify-center font-bold text-sm transition-all ${
+                        isCurrentBeat
+                          ? isAccentBeat && accentFirstBeat
+                            ? 'bg-amber-500 text-zinc-950 scale-110'
+                            : 'bg-emerald-500 text-zinc-950 scale-110'
+                          : 'bg-zinc-800 text-zinc-500'
+                      }`}
+                    >
+                      {beat}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Volume */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
                 <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
               </div>
@@ -261,7 +295,7 @@ export default function MetronomeModal() {
             </div>
 
             {/* Play/Stop Button */}
-            <div>
+            <div className="pb-2">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className={`w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
@@ -282,22 +316,6 @@ export default function MetronomeModal() {
                   </>
                 )}
               </button>
-
-              {/* Beat Indicators */}
-              {isPlaying && (
-                <div className="flex items-center justify-center gap-3 mt-4">
-                  {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => (
-                    <div
-                      key={beat}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        beat === currentBeat + 1
-                          ? 'bg-emerald-500 scale-150'
-                          : 'bg-zinc-700'
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

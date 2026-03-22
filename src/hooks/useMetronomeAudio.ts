@@ -283,13 +283,19 @@ export const useMetronomeAudio = () => {
       nextBeatTimeRef.current = now + interval;
     }
 
-    // First beat of the measure gets accent
-    const isAccent = accentFirstBeat && currentBeat === 0;
+    // Accent logic based on time signature:
+    // - 12/8: accent on beats 1, 4, 7, 10 (0-indexed: 0, 3, 6, 9)
+    // - All others: accent on beat 1 (0-indexed: 0)
+    const isAccent = accentFirstBeat && (
+      beatsPerMeasure === 12 
+        ? currentBeat % 3 === 0  // Every 3rd beat starting from 0
+        : currentBeat === 0      // Only first beat
+    );
     playClick(isAccent);
     
     // Increment beat for next time
     incrementBeat();
-  }, [bpm, currentBeat, accentFirstBeat, subdivision, playClick, incrementBeat]);
+  }, [bpm, beatsPerMeasure, currentBeat, accentFirstBeat, subdivision, playClick, incrementBeat]);
 
   useEffect(() => {
     if (isPlaying) {

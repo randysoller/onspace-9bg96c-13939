@@ -23,6 +23,9 @@ export default function Tuner() {
   const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;
   const cents = currentPitch?.cents || 0;
 
+  // Check if note is in tune (within ±5 cents) - Must be declared before useEffect hooks that use it
+  const isInTune = detectedFrequency && Math.abs(cents) <= 5;
+
   // Hold note display to prevent flashing when pitch dies out
   const [displayedNote, setDisplayedNote] = useState<string>('');
   const noteHoldTimeoutRef = useRef<number | null>(null);
@@ -178,9 +181,6 @@ export default function Tuner() {
     if (absCents <= 15) return 'text-yellow-500';
     return 'text-red-500';
   };
-
-  // Check if note is in tune (within ±5 cents)
-  const isInTune = detectedFrequency && Math.abs(cents) <= 5;
   
   // Extract just the note name without octave (use held note for display)
   const noteNameOnly = displayedNote ? displayedNote.replace(/[0-9]/g, '') : '';

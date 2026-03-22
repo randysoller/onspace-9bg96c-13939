@@ -51,18 +51,18 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
 
         {/* Chord Diagram */}
         <div className="flex-shrink-0">
-          <svg width="100" height="130" viewBox="0 0 100 130" className="select-none">
+          <svg width="100" height="135" viewBox="0 0 100 135" className="select-none">
             {/* Nut (thick top line) */}
-            <rect x="10" y="15" width="80" height="3" fill="currentColor" className="text-zinc-600" />
+            <rect x="10" y="20" width="80" height="3" fill="currentColor" className="text-zinc-600" />
 
             {/* Fret lines */}
             {[1, 2, 3, 4].map((fret) => (
               <line
                 key={`fret-${fret}`}
                 x1="10"
-                y1={15 + fret * 25}
+                y1={20 + fret * 25}
                 x2="90"
-                y2={15 + fret * 25}
+                y2={20 + fret * 25}
                 stroke="currentColor"
                 strokeWidth="1.5"
                 className="text-zinc-600"
@@ -74,9 +74,9 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               <line
                 key={`string-${string}`}
                 x1={10 + string * 16}
-                y1="15"
+                y1="20"
                 x2={10 + string * 16}
-                y2="115"
+                y2="120"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 className="text-zinc-600"
@@ -91,7 +91,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   <text
                     key={`marker-${idx}`}
                     x={10 + idx * 16}
-                    y="10"
+                    y="12"
                     textAnchor="middle"
                     className="text-zinc-500 text-[8px] font-bold"
                   >
@@ -99,13 +99,13 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   </text>
                 );
               } else if (fret === 0) {
-                // Open - circle (90% of orange dot size: 8 * 0.9 = 7.2)
+                // Open - circle (10% smaller: 7.2 * 0.9 = 6.48)
                 return (
                   <circle
                     key={`marker-${idx}`}
                     cx={10 + idx * 16}
-                    cy={7}
-                    r="7.2"
+                    cy={12}
+                    r="6.48"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.5"
@@ -131,9 +131,9 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                 <line
                   key={`barre-${barreIdx}`}
                   x1={10 + minString * 16}
-                  y1={15 + (barreFret - 0.5) * 25}
+                  y1={20 + (barreFret - 0.5) * 25}
                   x2={10 + maxString * 16}
-                  y2={15 + (barreFret - 0.5) * 25}
+                  y2={20 + (barreFret - 0.5) * 25}
                   stroke="currentColor"
                   strokeWidth="7"
                   strokeLinecap="round"
@@ -153,17 +153,17 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   return (
                     <g key={`dot-${stringIdx}`}>
                       <path
-                        d={`M ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 - 13} 
-                            L ${10 + stringIdx * 16 + 13} ${15 + (fret - 0.5) * 25} 
-                            L ${10 + stringIdx * 16} ${15 + (fret - 0.5) * 25 + 13} 
-                            L ${10 + stringIdx * 16 - 13} ${15 + (fret - 0.5) * 25} Z`}
+                        d={`M ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 - 13} 
+                            L ${10 + stringIdx * 16 + 13} ${20 + (fret - 0.5) * 25} 
+                            L ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 + 13} 
+                            L ${10 + stringIdx * 16 - 13} ${20 + (fret - 0.5) * 25} Z`}
                         fill="currentColor"
                         className="text-cyan-500"
                       />
                       {fingerNum && fingerNum > 0 && (
                         <text
                           x={10 + stringIdx * 16}
-                          y={15 + (fret - 0.5) * 25 + 1}
+                          y={20 + (fret - 0.5) * 25 + 1}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-white text-[11px] font-black"
@@ -179,7 +179,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                     <g key={`dot-${stringIdx}`}>
                       <circle
                         cx={10 + stringIdx * 16}
-                        cy={15 + (fret - 0.5) * 25}
+                        cy={20 + (fret - 0.5) * 25}
                         r="8"
                         fill="currentColor"
                         className="text-amber-500"
@@ -187,7 +187,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                       {fingerNum && fingerNum > 0 && (
                         <text
                           x={10 + stringIdx * 16}
-                          y={15 + (fret - 0.5) * 25 + 1}
+                          y={20 + (fret - 0.5) * 25 + 1}
                           textAnchor="middle"
                           dominantBaseline="middle"
                           className="text-white text-[11px] font-black"

@@ -91,18 +91,18 @@ export default function ChordDetailModal({
           <div className="p-6 flex gap-4">
             {/* Chord Diagram */}
             <div className="flex-1">
-              <svg width="160" height="200" viewBox="0 0 160 200" className="select-none">
+              <svg width="160" height="210" viewBox="0 0 160 210" className="select-none">
                 {/* Nut (thick top line) */}
-                <rect x="20" y="20" width="120" height="4" fill="currentColor" className="text-zinc-600" />
+                <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
 
                 {/* Fret lines */}
                 {[1, 2, 3, 4].map((fret) => (
                   <line
                     key={`fret-${fret}`}
                     x1="20"
-                    y1={20 + fret * 35}
+                    y1={28 + fret * 35}
                     x2="140"
-                    y2={20 + fret * 35}
+                    y2={28 + fret * 35}
                     stroke="currentColor"
                     strokeWidth="2"
                     className="text-zinc-600"
@@ -114,9 +114,9 @@ export default function ChordDetailModal({
                   <line
                     key={`string-${string}`}
                     x1={20 + string * 24}
-                    y1="20"
+                    y1="28"
                     x2={20 + string * 24}
-                    y2="160"
+                    y2="168"
                     stroke="currentColor"
                     strokeWidth="2"
                     className="text-zinc-600"
@@ -131,7 +131,7 @@ export default function ChordDetailModal({
                       <text
                         key={`marker-${idx}`}
                         x={20 + idx * 24}
-                        y="12"
+                        y="18"
                         textAnchor="middle"
                         className="text-zinc-500 text-xs font-bold"
                       >
@@ -139,13 +139,13 @@ export default function ChordDetailModal({
                       </text>
                     );
                   } else if (fret === 0) {
-                    // Open - circle (90% of orange dot size: 11 * 0.9 = 9.9)
+                    // Open - circle (10% smaller: 9.9 * 0.9 = 8.91)
                     return (
                       <circle
                         key={`marker-${idx}`}
                         cx={20 + idx * 24}
-                        cy={8}
-                        r="9.9"
+                        cy={18}
+                        r="8.91"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
@@ -171,9 +171,9 @@ export default function ChordDetailModal({
                     <line
                       key={`barre-${barreIdx}`}
                       x1={20 + minString * 24}
-                      y1={20 + (barreFret - 0.5) * 35}
+                      y1={28 + (barreFret - 0.5) * 35}
                       x2={20 + maxString * 24}
-                      y2={20 + (barreFret - 0.5) * 35}
+                      y2={28 + (barreFret - 0.5) * 35}
                       stroke="currentColor"
                       strokeWidth="10"
                       strokeLinecap="round"
@@ -193,17 +193,17 @@ export default function ChordDetailModal({
                       return (
                         <g key={`dot-${stringIdx}`}>
                           <path
-                            d={`M ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 - 15} 
-                                L ${20 + stringIdx * 24 + 15} ${20 + (fret - 0.5) * 35} 
-                                L ${20 + stringIdx * 24} ${20 + (fret - 0.5) * 35 + 15} 
-                                L ${20 + stringIdx * 24 - 15} ${20 + (fret - 0.5) * 35} Z`}
+                            d={`M ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 - 15} 
+                                L ${20 + stringIdx * 24 + 15} ${28 + (fret - 0.5) * 35} 
+                                L ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 + 15} 
+                                L ${20 + stringIdx * 24 - 15} ${28 + (fret - 0.5) * 35} Z`}
                             fill="currentColor"
                             className="text-cyan-500"
                           />
                           {fingerNum && (
                             <text
                               x={20 + stringIdx * 24}
-                              y={20 + (fret - 0.5) * 35 + 1}
+                              y={28 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
                               className="text-white text-[15px] font-black"
@@ -219,7 +219,7 @@ export default function ChordDetailModal({
                         <g key={`dot-${stringIdx}`}>
                           <circle
                             cx={20 + stringIdx * 24}
-                            cy={20 + (fret - 0.5) * 35}
+                            cy={28 + (fret - 0.5) * 35}
                             r="11"
                             fill="currentColor"
                             className="text-amber-500"
@@ -227,7 +227,7 @@ export default function ChordDetailModal({
                           {fingerNum && (
                             <text
                               x={20 + stringIdx * 24}
-                              y={20 + (fret - 0.5) * 35 + 1}
+                              y={28 + (fret - 0.5) * 35 + 1}
                               textAnchor="middle"
                               dominantBaseline="middle"
                               className="text-white text-[15px] font-black"

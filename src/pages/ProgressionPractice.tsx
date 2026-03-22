@@ -251,7 +251,7 @@ export default function ProgressionPractice() {
             <div className="flex items-center justify-center gap-8">
               {/* Chord Diagram */}
               <div className="relative">
-                <svg width="260" height="320" viewBox="0 0 260 320" className="select-none">
+                <svg width="260" height="330" viewBox="0 0 260 330" className="select-none">
                   {/* Muted/Open strings at top */}
                   {currentChord.frets.map((fret, idx) => {
                     if (fret === -1) {
@@ -259,18 +259,18 @@ export default function ProgressionPractice() {
                         <g key={`muted-${idx}`}>
                           <line
                             x1={70 + idx * 32 - 5}
-                            y1={36}
+                            y1={46}
                             x2={70 + idx * 32 + 5}
-                            y2={46}
+                            y2={56}
                             stroke="currentColor"
                             strokeWidth="2.5"
                             className="text-zinc-500"
                           />
                           <line
                             x1={70 + idx * 32 + 5}
-                            y1={36}
+                            y1={46}
                             x2={70 + idx * 32 - 5}
-                            y2={46}
+                            y2={56}
                             stroke="currentColor"
                             strokeWidth="2.5"
                             className="text-zinc-500"
@@ -282,8 +282,8 @@ export default function ProgressionPractice() {
                         <circle
                           key={`open-${idx}`}
                           cx={70 + idx * 32}
-                          cy={41}
-                          r="7"
+                          cy={51}
+                          r="6.3"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2.5"
@@ -295,16 +295,16 @@ export default function ProgressionPractice() {
                   })}
 
                   {/* Nut */}
-                  <rect x="54" y="65" width="160" height="4" fill="currentColor" className="text-zinc-200" />
+                  <rect x="54" y="75" width="160" height="4" fill="currentColor" className="text-zinc-200" />
 
                   {/* Frets */}
                   {[1, 2, 3, 4].map((fret) => (
                     <line
                       key={`fret-${fret}`}
                       x1="54"
-                      y1={65 + fret * 55}
+                      y1={75 + fret * 55}
                       x2="214"
-                      y2={65 + fret * 55}
+                      y2={75 + fret * 55}
                       stroke="currentColor"
                       strokeWidth="2.5"
                       className="text-zinc-200"
@@ -316,9 +316,9 @@ export default function ProgressionPractice() {
                     <line
                       key={`string-${string}`}
                       x1={70 + string * 32}
-                      y1="65"
+                      y1="75"
                       x2={70 + string * 32}
-                      y2="285"
+                      y2="295"
                       stroke="currentColor"
                       strokeWidth="2.5"
                       className="text-zinc-200"
@@ -335,17 +335,17 @@ export default function ProgressionPractice() {
                         return (
                           <g key={`dot-${stringIdx}`}>
                             <path
-                              d={`M ${70 + stringIdx * 32} ${65 + (fret - 0.5) * 55 - 14} 
-                                  L ${70 + stringIdx * 32 + 14} ${65 + (fret - 0.5) * 55} 
-                                  L ${70 + stringIdx * 32} ${65 + (fret - 0.5) * 55 + 14} 
-                                  L ${70 + stringIdx * 32 - 14} ${65 + (fret - 0.5) * 55} Z`}
+                              d={`M ${70 + stringIdx * 32} ${75 + (fret - 0.5) * 55 - 14} 
+                                  L ${70 + stringIdx * 32 + 14} ${75 + (fret - 0.5) * 55} 
+                                  L ${70 + stringIdx * 32} ${75 + (fret - 0.5) * 55 + 14} 
+                                  L ${70 + stringIdx * 32 - 14} ${75 + (fret - 0.5) * 55} Z`}
                               fill="currentColor"
                               className="text-cyan-500"
                             />
                             {fingerNum && fingerNum > 0 && (
                               <text
                                 x={70 + stringIdx * 32}
-                                y={65 + (fret - 0.5) * 55 + 1}
+                                y={75 + (fret - 0.5) * 55 + 1}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
                                 className="text-white text-base font-black"
@@ -360,7 +360,7 @@ export default function ProgressionPractice() {
                           <g key={`dot-${stringIdx}`}>
                             <circle
                               cx={70 + stringIdx * 32}
-                              cy={65 + (fret - 0.5) * 55}
+                              cy={75 + (fret - 0.5) * 55}
                               r="15"
                               fill="currentColor"
                               className="text-amber-500"
@@ -368,7 +368,7 @@ export default function ProgressionPractice() {
                             {fingerNum && fingerNum > 0 && (
                               <text
                                 x={70 + stringIdx * 32}
-                                y={65 + (fret - 0.5) * 55 + 1}
+                                y={75 + (fret - 0.5) * 55 + 1}
                                 textAnchor="middle"
                                 dominantBaseline="middle"
                                 className="text-white text-base font-black"

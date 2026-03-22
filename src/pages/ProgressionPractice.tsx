@@ -278,18 +278,33 @@ export default function ProgressionPractice() {
                         </g>
                       );
                     } else if (fret === 0) {
-                      return (
-                        <circle
-                          key={`open-${idx}`}
-                          cx={70 + idx * 32}
-                          cy={51}
-                          r="6.3"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          className="text-emerald-500"
-                        />
-                      );
+                      const isRoot = idx === rootStringIndex;
+                      if (isRoot) {
+                        // Open root note - blue diamond
+                        return (
+                          <path
+                            key={`open-${idx}`}
+                            d={`M ${70 + idx * 32} ${51 - 9} 
+                                L ${70 + idx * 32 + 9} ${51} 
+                                L ${70 + idx * 32} ${51 + 9} 
+                                L ${70 + idx * 32 - 9} ${51} Z`}
+                            fill="currentColor"
+                            className="text-cyan-500"
+                          />
+                        );
+                      } else {
+                        // Open - orange circle
+                        return (
+                          <circle
+                            key={`open-${idx}`}
+                            cx={70 + idx * 32}
+                            cy={51}
+                            r="6.3"
+                            fill="currentColor"
+                            className="text-amber-500"
+                          />
+                        );
+                      }
                     }
                     return null;
                   })}

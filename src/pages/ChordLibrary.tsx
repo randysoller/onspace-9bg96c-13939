@@ -99,19 +99,33 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   </text>
                 );
               } else if (fret === 0) {
-                // Open - circle (10% smaller: 7.2 * 0.9 = 6.48)
-                return (
-                  <circle
-                    key={`marker-${idx}`}
-                    cx={10 + idx * 16}
-                    cy={12}
-                    r="6.48"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    className="text-zinc-500"
-                  />
-                );
+                const isRoot = idx === rootStringIndex;
+                if (isRoot) {
+                  // Open root note - blue diamond
+                  return (
+                    <path
+                      key={`marker-${idx}`}
+                      d={`M ${10 + idx * 16} ${12 - 8} 
+                          L ${10 + idx * 16 + 8} ${12} 
+                          L ${10 + idx * 16} ${12 + 8} 
+                          L ${10 + idx * 16 - 8} ${12} Z`}
+                      fill="currentColor"
+                      className="text-cyan-500"
+                    />
+                  );
+                } else {
+                  // Open - orange circle (10% smaller: 7.2 * 0.9 = 6.48)
+                  return (
+                    <circle
+                      key={`marker-${idx}`}
+                      cx={10 + idx * 16}
+                      cy={12}
+                      r="6.48"
+                      fill="currentColor"
+                      className="text-amber-500"
+                    />
+                  );
+                }
               }
               return null;
             })}

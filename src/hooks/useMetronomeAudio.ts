@@ -21,7 +21,10 @@ export const useMetronomeAudio = () => {
   
   // Voice counting with advanced latency compensation
   const voiceUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
-  const speechLatencyOffsetRef = useRef<number>(0.12); // Optimized initial estimate: 120ms
+  // Mobile detection for platform-specific latency estimates
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const initialLatencyEstimate = isMobile ? 0.050 : 0.090; // 50ms mobile, 90ms desktop
+  const speechLatencyOffsetRef = useRef<number>(initialLatencyEstimate);
   const latencyHistoryRef = useRef<number[]>([]); // Track last 10 measurements for predictive modeling
   const lastSpeechStartTimeRef = useRef<number>(0);
   const lastScheduledTimeRef = useRef<number>(0);
@@ -99,29 +102,31 @@ export const useMetronomeAudio = () => {
               latencyHistoryRef.current.shift();
             }
             
-            // Calibration phase: aggressive learning for first 5 measurements
+            // Conservative calibration phase: gradual learning over 8 measurements
             calibrationAttemptsRef.current++;
-            const isCalibrating = calibrationAttemptsRef.current <= 5;
+            const isCalibrating = calibrationAttemptsRef.current <= 8;
             
             if (isCalibrating) {
-              // During calibration: use simple average for faster convergence
-              const avgLatency = latencyHistoryRef.current.reduce((a, b) => a + b, 0) / latencyHistoryRef.current.length;
-              speechLatencyOffsetRef.current = avgLatency;
-              console.log(`🎯 Calibration ${calibrationAttemptsRef.current}/5 | Measured: ${(measuredLatency * 1000).toFixed(1)}ms | Avg: ${(avgLatency * 1000).toFixed(1)}ms`);
+              // During calibration: use conservative weighted average (70% old, 30% new)
+              // This prevents overcorrection from single measurements
+              speechLatencyOffsetRef.current = 
+                speechLatencyOffsetRef.current * 0.70 + measuredLatency * 0.30;
               
-              if (calibrationAttemptsRef.current === 5) {
+              console.log(`🎯 Calibration ${calibrationAttemptsRef.current}/8 | Measured: ${(measuredLatency * 1000).toFixed(1)}ms | Offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms | Platform: ${isMobile ? 'Mobile' : 'Desktop'}`);
+              
+              if (calibrationAttemptsRef.current === 8) {
                 isVoiceCalibratedRef.current = true;
                 console.log(`✅ Voice calibration complete! Final offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
               }
             } else {
-              // After calibration: use weighted moving average with outlier rejection
-              // Reject measurements that differ by more than 50% from current offset
+              // After calibration: use very conservative EMA with outlier rejection
+              // Reject measurements that differ by more than 40% from current offset
               const deviation = Math.abs(measuredLatency - speechLatencyOffsetRef.current) / speechLatencyOffsetRef.current;
               
-              if (deviation < 0.5) {
-                // Good measurement - use 80/20 EMA (more stable than 70/30)
+              if (deviation < 0.4) {
+                // Good measurement - use 85/15 EMA (very stable)
                 speechLatencyOffsetRef.current = 
-                  speechLatencyOffsetRef.current * 0.8 + measuredLatency * 0.2;
+                  speechLatencyOffsetRef.current * 0.85 + measuredLatency * 0.15;
               } else {
                 console.log(`⚠️ Outlier rejected: ${(measuredLatency * 1000).toFixed(1)}ms (deviation: ${(deviation * 100).toFixed(0)}%)`);
               }
@@ -139,57 +144,23 @@ export const useMetronomeAudio = () => {
       }
       
       console.log(`✅ Created ${voiceUtterancesRef.current.size} voice utterances with ${optimalVoiceRef.current?.name || 'default voice'}`);
+      console.log(`📱 Platform: ${isMobile ? 'Mobile' : 'Desktop'} | Initial latency estimate: ${(initialLatencyEstimate * 1000).toFixed(1)}ms`);
       
-      // Pre-warm speech synthesis engine with calibration utterances
-      // Speak 3 quick utterances to initialize TTS and get initial latency readings
+      // Simple pre-warm with single silent utterance to initialize TTS engine
+      // No pre-calibration - let actual metronome beats calibrate timing
       if (speechSynthRef.current) {
-        console.log('🔥 Pre-warming speech synthesis engine with calibration...');
+        console.log('🔥 Pre-warming speech synthesis engine...');
+        const warmupUtterance = new SpeechSynthesisUtterance('1');
+        warmupUtterance.volume = 0.01; // Nearly silent
+        warmupUtterance.rate = 2.0;    // Fast
+        warmupUtterance.lang = 'en-US';
         
-        // Warm-up sequence: speak "1" three times to calibrate
-        const warmupNumbers = [1, 1, 1];
-        let warmupIndex = 0;
+        if (optimalVoiceRef.current) {
+          warmupUtterance.voice = optimalVoiceRef.current;
+        }
         
-        const speakWarmup = () => {
-          if (warmupIndex < warmupNumbers.length) {
-            const warmupUtterance = new SpeechSynthesisUtterance(warmupNumbers[warmupIndex].toString());
-            warmupUtterance.volume = 0.01; // Nearly silent
-            warmupUtterance.rate = 2.0;    // Fast
-            warmupUtterance.lang = 'en-US';
-            
-            if (optimalVoiceRef.current) {
-              warmupUtterance.voice = optimalVoiceRef.current;
-            }
-            
-            // Track timing for calibration
-            const scheduleTime = performance.now();
-            lastScheduledTimeRef.current = scheduleTime;
-            
-            warmupUtterance.addEventListener('start', () => {
-              const startTime = performance.now();
-              const latency = (startTime - scheduleTime) / 1000;
-              latencyHistoryRef.current.push(latency);
-              console.log(`🔥 Warmup ${warmupIndex + 1}/3 latency: ${(latency * 1000).toFixed(1)}ms`);
-            });
-            
-            warmupUtterance.addEventListener('end', () => {
-              warmupIndex++;
-              if (warmupIndex < warmupNumbers.length) {
-                setTimeout(speakWarmup, 100); // Small gap between warmups
-              } else {
-                // Calculate initial offset from warmup measurements
-                if (latencyHistoryRef.current.length > 0) {
-                  const avgLatency = latencyHistoryRef.current.reduce((a, b) => a + b, 0) / latencyHistoryRef.current.length;
-                  speechLatencyOffsetRef.current = avgLatency;
-                  console.log(`✅ Pre-calibration complete! Initial offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
-                }
-              }
-            });
-            
-            speechSynthRef.current?.speak(warmupUtterance);
-          }
-        };
-        
-        speakWarmup();
+        speechSynthRef.current.speak(warmupUtterance);
+        console.log('✅ TTS engine initialized - timing will calibrate during playback');
       }
     };
     
@@ -248,9 +219,9 @@ export const useMetronomeAudio = () => {
           const currentTime = context.currentTime;
           const msUntilSpeech = Math.max(0, (triggerTime - currentTime) * 1000);
           
-          // Log only during calibration or every 4th beat
-          if (!isVoiceCalibratedRef.current || beatNumber % 4 === 1) {
-            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms`);
+          // Log during calibration or every 8th beat
+          if (!isVoiceCalibratedRef.current || beatNumber % 8 === 1) {
+            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms | ${isMobile ? '📱' : '💻'}`);
           }
           
           // Use high-precision setTimeout for scheduling

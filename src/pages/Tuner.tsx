@@ -43,14 +43,15 @@ export default function Tuner() {
       }
     } else {
       // When detection stops, hold the last note for 400ms before clearing
-      if (displayedNote && !noteHoldTimeoutRef.current) {
+      const currentDisplayedNote = displayedNote;
+      if (currentDisplayedNote && !noteHoldTimeoutRef.current) {
         noteHoldTimeoutRef.current = window.setTimeout(() => {
           setDisplayedNote('');
           noteHoldTimeoutRef.current = null;
         }, 400);
       }
     }
-  }, [detectedNote, displayedNote]);
+  }, [detectedNote]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -77,14 +78,18 @@ export default function Tuner() {
       }
     } else {
       // When out of tune, hold the circle for 400ms before hiding
-      if (showInTuneCircle && !inTuneHoldTimeoutRef.current) {
-        inTuneHoldTimeoutRef.current = window.setTimeout(() => {
-          setShowInTuneCircle(false);
-          inTuneHoldTimeoutRef.current = null;
-        }, 400);
-      }
+      // Capture current state to avoid adding to dependencies
+      setShowInTuneCircle(prev => {
+        if (prev && !inTuneHoldTimeoutRef.current) {
+          inTuneHoldTimeoutRef.current = window.setTimeout(() => {
+            setShowInTuneCircle(false);
+            inTuneHoldTimeoutRef.current = null;
+          }, 400);
+        }
+        return prev;
+      });
     }
-  }, [isInTune, showInTuneCircle]);
+  }, [isInTune]);
 
   const currentTuning = TUNING_PRESETS[tuning];
   const strings = currentTuning.notes.map((note, index) => ({

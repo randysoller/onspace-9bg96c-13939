@@ -426,9 +426,7 @@ export const useMetronomeAudio = () => {
         highShelf.connect(gainNode);
         gainNode.connect(context.destination);
 
-        // Accent beats are 15% louder for hi-hat
-        const hiHatVolume = isAccent ? volume * 0.78 : volume * 0.68;
-        gainNode.gain.setValueAtTime(hiHatVolume, now);
+        gainNode.gain.setValueAtTime(volume * 0.68, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         bufferSource.start(now);

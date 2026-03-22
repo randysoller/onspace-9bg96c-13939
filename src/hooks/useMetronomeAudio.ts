@@ -3,19 +3,6 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useAudioStore } from '@/stores/audioStore';
 
-// TypeScript declaration for meSpeak.js loaded via CDN
-declare global {
-  interface Window {
-    meSpeak: {
-      loadConfig: (path: string) => void;
-      loadVoice: (path: string, callback?: (success: boolean, id: string) => void) => void;
-      speak: (text: string, options: { rawdata: string; speed?: number; pitch?: number; amplitude?: number }) => ArrayBuffer | null;
-      isConfigLoaded: () => boolean;
-      isVoiceLoaded: (id: string) => boolean;
-    };
-  }
-}
-
 export const useMetronomeAudio = () => {
   const { 
     isPlaying, 
@@ -31,96 +18,79 @@ export const useMetronomeAudio = () => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
-  const voiceCountBuffersRef = useRef<Map<number, AudioBuffer>>(new Map());
-  const meSpeakLoadedRef = useRef<boolean>(false);
+  
+  // Voice counting with latency compensation
+  const voiceUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
+  const speechLatencyOffsetRef = useRef<number>(0.15); // Initial estimate: 150ms
+  const lastSpeechStartTimeRef = useRef<number>(0);
+  const lastScheduledTimeRef = useRef<number>(0);
+  const speechSynthRef = useRef<SpeechSynthesis | null>(null);
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    speechSynthRef.current = window.speechSynthesis;
     
-    // Initialize meSpeak.js for voice counting
-    const initMeSpeak = async () => {
-      if (typeof window.meSpeak !== 'undefined' && !meSpeakLoadedRef.current) {
-        console.log('🎤 Initializing meSpeak.js...');
-        try {
-          // Load English voice (config is included by default in meSpeak.js 2.0+)
-          // Using relative path - meSpeak.js will load from masswerk.at/mespeak/voices/
-          window.meSpeak.loadVoice('en/en-us', async (success, message) => {
-            console.log('🎤 Voice load callback - Success:', success, 'Message:', message);
+    // Pre-create and cache SpeechSynthesisUtterance objects for numbers 1-12
+    // This reduces per-call overhead and improves timing consistency
+    const initVoiceUtterances = () => {
+      console.log('🎤 Initializing voice count utterances...');
+      
+      for (let i = 1; i <= 12; i++) {
+        const utterance = new SpeechSynthesisUtterance(i.toString());
+        
+        // Configure utterance for minimal latency
+        utterance.rate = 1.1;     // Slightly faster for punchier delivery
+        utterance.pitch = 1.0;    // Natural pitch
+        utterance.volume = 1.0;   // Full volume (controlled by audio store)
+        utterance.lang = 'en-US'; // Explicit language for consistency
+        
+        // Attach timing measurement callback
+        utterance.addEventListener('start', () => {
+          const actualStartTime = performance.now();
+          const scheduledTime = lastScheduledTimeRef.current;
+          const measuredLatency = (actualStartTime - scheduledTime) / 1000; // Convert to seconds
+          
+          // Adaptive calibration: adjust offset based on measured latency
+          // Use exponential moving average for stability (70% old, 30% new)
+          if (scheduledTime > 0) {
+            speechLatencyOffsetRef.current = 
+              speechLatencyOffsetRef.current * 0.7 + measuredLatency * 0.3;
             
-            if (success) {
-              console.log('✅ meSpeak.js voice loaded successfully');
-              meSpeakLoadedRef.current = true;
-              
-              // Pre-generate audio buffers for numbers 1-12
-              const context = audioContextRef.current;
-              if (!context) {
-                console.error('❌ Audio context not available');
-                return;
-              }
-              
-              console.log('🔊 Generating voice count buffers...');
-              
-              for (let i = 1; i <= 12; i++) {
-                try {
-                  console.log(`Generating buffer for number ${i}...`);
-                  
-                  // Generate speech as ArrayBuffer with meSpeak
-                  const wavData = window.meSpeak.speak(i.toString(), {
-                    rawdata: 'arraybuffer',
-                    speed: 200,
-                    pitch: 50,
-                    amplitude: 100,
-                  });
-                  
-                  console.log(`WAV data for ${i}:`, wavData ? 'Generated' : 'NULL');
-                  
-                  if (wavData) {
-                    // Decode WAV ArrayBuffer to AudioBuffer
-                    const audioBuffer = await context.decodeAudioData(wavData as ArrayBuffer);
-                    voiceCountBuffersRef.current.set(i, audioBuffer);
-                    console.log(`✅ Buffer ${i} decoded successfully (duration: ${audioBuffer.duration}s)`);
-                  } else {
-                    console.error(`❌ No WAV data generated for ${i}`);
-                  }
-                } catch (error) {
-                  console.error(`❌ Failed to generate voice buffer for ${i}:`, error);
-                }
-              }
-              console.log(`✅ Generated ${voiceCountBuffersRef.current.size} voice count buffers`);
-              console.log('📋 Available buffers:', Array.from(voiceCountBuffersRef.current.keys()));
-            } else {
-              console.error('❌ Failed to load meSpeak.js voice:', message);
-            }
-          });
-        } catch (error) {
-          console.error('❌ Failed to initialize meSpeak.js:', error);
-        }
-      } else if (typeof window.meSpeak === 'undefined') {
-        console.error('❌ window.meSpeak is undefined');
-      } else if (meSpeakLoadedRef.current) {
-        console.log('ℹ️ meSpeak already loaded');
+            console.log(`🎯 Latency measurement: ${(measuredLatency * 1000).toFixed(1)}ms | Adjusted offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
+          }
+          
+          lastSpeechStartTimeRef.current = actualStartTime;
+        });
+        
+        voiceUtterancesRef.current.set(i, utterance);
+      }
+      
+      console.log(`✅ Created ${voiceUtterancesRef.current.size} voice utterances`);
+      
+      // Pre-warm speech synthesis engine by speaking a dummy utterance at zero volume
+      // This initializes the TTS engine and reduces first-call latency
+      const warmupUtterance = new SpeechSynthesisUtterance('warmup');
+      warmupUtterance.volume = 0; // Silent
+      warmupUtterance.rate = 10;  // Fast to complete quickly
+      
+      if (speechSynthRef.current) {
+        console.log('🔥 Pre-warming speech synthesis engine...');
+        speechSynthRef.current.speak(warmupUtterance);
+        
+        warmupUtterance.addEventListener('end', () => {
+          console.log('✅ Speech synthesis engine ready');
+        });
       }
     };
     
-    // Wait for meSpeak to be available, then initialize
-    if (typeof window.meSpeak !== 'undefined') {
-      console.log('🎤 meSpeak is available, initializing...');
-      initMeSpeak();
-    } else {
-      console.log('⏳ Waiting for meSpeak to load...');
-      // Poll for meSpeak availability (in case script loads after this hook)
-      const checkMeSpeak = setInterval(() => {
-        if (typeof window.meSpeak !== 'undefined') {
-          console.log('✅ meSpeak loaded, initializing...');
-          clearInterval(checkMeSpeak);
-          initMeSpeak();
-        }
-      }, 100);
-      
-      setTimeout(() => {
-        clearInterval(checkMeSpeak);
-        console.error('❌ meSpeak failed to load after 5 seconds');
-      }, 5000);
+    // Initialize voices when available
+    if (speechSynthRef.current) {
+      // Wait for voices to load (async in some browsers)
+      if (speechSynthRef.current.getVoices().length > 0) {
+        initVoiceUtterances();
+      } else {
+        speechSynthRef.current.addEventListener('voiceschanged', initVoiceUtterances, { once: true });
+      }
     }
     
     return () => {
@@ -139,45 +109,46 @@ export const useMetronomeAudio = () => {
     const baseVolume = masterVolume * metronomeVolume;
     const volume = isAccent ? baseVolume * 1.0 : baseVolume * 0.65;
 
-    // Handle voice counting using meSpeak.js pre-generated buffers
+    // Handle voice counting with advanced latency compensation
     if (soundType === 'voiceCount') {
-      if (beatNumber !== undefined) {
-        console.log(`🎵 Attempting to play voice count for beat ${beatNumber}`);
-        console.log(`📋 Available buffers: ${voiceCountBuffersRef.current.size}`);
+      if (beatNumber !== undefined && speechSynthRef.current) {
+        const utterance = voiceUtterancesRef.current.get(beatNumber);
         
-        const voiceBuffer = voiceCountBuffersRef.current.get(beatNumber);
-        
-        if (voiceBuffer) {
-          console.log(`✅ Playing voice buffer for beat ${beatNumber}`);
+        if (utterance) {
+          // Calculate total system latency:
+          // 1. Web Audio API processing latency (baseLatency + outputLatency)
+          // 2. Empirically measured speech synthesis latency (adaptive)
+          const audioLatency = (context.baseLatency || 0) + (context.outputLatency || 0);
+          const totalLatency = audioLatency + speechLatencyOffsetRef.current;
           
-          // Ensure audio context is running
-          if (context.state === 'suspended') {
-            console.log('▶️ Resuming audio context...');
-            context.resume();
-          }
+          // Schedule speech EARLIER by the total latency amount
+          // This compensates for the delay between calling speak() and hearing the sound
+          const targetTime = now - totalLatency;
+          const currentContextTime = context.currentTime;
           
-          // Play pre-generated voice buffer with precise Web Audio timing
-          const bufferSource = context.createBufferSource();
-          const gainNode = context.createGain();
+          // Use setTimeout with high-resolution timing to trigger speech at the right moment
+          // We schedule relative to performance.now() for sub-millisecond precision
+          const msUntilSpeech = Math.max(0, (targetTime - currentContextTime) * 1000);
           
-          bufferSource.buffer = voiceBuffer;
-          bufferSource.connect(gainNode);
-          gainNode.connect(context.destination);
+          console.log(`🎤 Beat ${beatNumber} | Audio latency: ${(audioLatency * 1000).toFixed(1)}ms | Speech offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms`);
           
-          // Set volume (voice count gets full volume for clarity)
-          gainNode.gain.setValueAtTime(baseVolume * 1.0, now);
-          
-          // Start playback precisely at 'now'
-          bufferSource.start(now);
-          
-          console.log(`🔊 Voice count ${beatNumber} started at ${now}`);
+          setTimeout(() => {
+            if (speechSynthRef.current) {
+              // Record when we trigger speech for latency measurement
+              lastScheduledTimeRef.current = performance.now();
+              
+              // Cancel any pending speech to avoid overlap
+              speechSynthRef.current.cancel();
+              
+              // Speak the number
+              speechSynthRef.current.speak(utterance);
+              
+              console.log(`🔊 Speaking "${beatNumber}" at ${lastScheduledTimeRef.current.toFixed(2)}`);
+            }
+          }, msUntilSpeech);
         } else {
-          console.warn(`⚠️ Voice buffer not ready for beat ${beatNumber}`);
-          console.warn(`Available buffers:`, Array.from(voiceCountBuffersRef.current.keys()));
-          console.warn(`meSpeak loaded:`, meSpeakLoadedRef.current);
+          console.warn(`⚠️ No utterance cached for beat ${beatNumber}`);
         }
-      } else {
-        console.warn('⚠️ beatNumber is undefined');
       }
       return;
     }

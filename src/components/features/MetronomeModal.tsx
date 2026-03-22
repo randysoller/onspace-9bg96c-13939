@@ -53,7 +53,6 @@ export default function MetronomeModal() {
     { value: 'hiHat', label: 'Hi-Hat' },
     { value: 'sideStick', label: 'Side Stick' },
     { value: 'voice', label: 'Voice' },
-    { value: 'voiceCount', label: 'Voice Count' },
   ];
 
   if (!isOpen) return null;

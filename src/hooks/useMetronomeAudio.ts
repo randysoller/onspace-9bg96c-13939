@@ -210,10 +210,12 @@ export const useMetronomeAudio = () => {
             predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
           }
           
-          // Mobile-specific adjustment for number 4: trigger 20ms earlier
+          // Mobile-specific adjustments
           let perNumberAdjustment = 0;
           if (isMobile && beatNumber === 4) {
             perNumberAdjustment = -0.020; // 20ms earlier on mobile
+          } else if (isMobile && beatNumber === 3) {
+            perNumberAdjustment = 0.020; // 20ms later on mobile
           }
           
           const totalLatency = audioLatency + predictedSpeechLatency + perNumberAdjustment;

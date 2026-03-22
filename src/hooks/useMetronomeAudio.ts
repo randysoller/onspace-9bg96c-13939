@@ -40,63 +40,86 @@ export const useMetronomeAudio = () => {
     // Initialize meSpeak.js for voice counting
     const initMeSpeak = async () => {
       if (typeof window.meSpeak !== 'undefined' && !meSpeakLoadedRef.current) {
+        console.log('🎤 Initializing meSpeak.js...');
         try {
-          // Load config
-          window.meSpeak.loadConfig('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/src/mespeak_config.json');
-          
-          // Load English voice
-          window.meSpeak.loadVoice('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/en/en-us.json', async (success) => {
+          // Load English voice (config is included by default in meSpeak.js 2.0+)
+          window.meSpeak.loadVoice('https://cdn.jsdelivr.net/npm/mespeak@2.0.2/voices/en/en-us.json', async (success, message) => {
+            console.log('🎤 Voice load callback - Success:', success, 'Message:', message);
+            
             if (success) {
-              console.log('meSpeak.js voice loaded successfully');
+              console.log('✅ meSpeak.js voice loaded successfully');
               meSpeakLoadedRef.current = true;
               
               // Pre-generate audio buffers for numbers 1-12
               const context = audioContextRef.current;
-              if (!context) return;
+              if (!context) {
+                console.error('❌ Audio context not available');
+                return;
+              }
+              
+              console.log('🔊 Generating voice count buffers...');
               
               for (let i = 1; i <= 12; i++) {
                 try {
+                  console.log(`Generating buffer for number ${i}...`);
+                  
                   // Generate speech as ArrayBuffer with meSpeak
                   const wavData = window.meSpeak.speak(i.toString(), {
                     rawdata: 'arraybuffer',
-                    speed: 220, // Faster for metronome
+                    speed: 200,
                     pitch: 50,
                     amplitude: 100,
                   });
+                  
+                  console.log(`WAV data for ${i}:`, wavData ? 'Generated' : 'NULL');
                   
                   if (wavData) {
                     // Decode WAV ArrayBuffer to AudioBuffer
                     const audioBuffer = await context.decodeAudioData(wavData as ArrayBuffer);
                     voiceCountBuffersRef.current.set(i, audioBuffer);
+                    console.log(`✅ Buffer ${i} decoded successfully (duration: ${audioBuffer.duration}s)`);
+                  } else {
+                    console.error(`❌ No WAV data generated for ${i}`);
                   }
                 } catch (error) {
-                  console.error(`Failed to generate voice buffer for ${i}:`, error);
+                  console.error(`❌ Failed to generate voice buffer for ${i}:`, error);
                 }
               }
-              console.log(`Generated ${voiceCountBuffersRef.current.size} voice count buffers`);
+              console.log(`✅ Generated ${voiceCountBuffersRef.current.size} voice count buffers`);
+              console.log('📋 Available buffers:', Array.from(voiceCountBuffersRef.current.keys()));
             } else {
-              console.error('Failed to load meSpeak.js voice');
+              console.error('❌ Failed to load meSpeak.js voice:', message);
             }
           });
         } catch (error) {
-          console.error('Failed to initialize meSpeak.js:', error);
+          console.error('❌ Failed to initialize meSpeak.js:', error);
         }
+      } else if (typeof window.meSpeak === 'undefined') {
+        console.error('❌ window.meSpeak is undefined');
+      } else if (meSpeakLoadedRef.current) {
+        console.log('ℹ️ meSpeak already loaded');
       }
     };
     
     // Wait for meSpeak to be available, then initialize
     if (typeof window.meSpeak !== 'undefined') {
+      console.log('🎤 meSpeak is available, initializing...');
       initMeSpeak();
     } else {
+      console.log('⏳ Waiting for meSpeak to load...');
       // Poll for meSpeak availability (in case script loads after this hook)
       const checkMeSpeak = setInterval(() => {
         if (typeof window.meSpeak !== 'undefined') {
+          console.log('✅ meSpeak loaded, initializing...');
           clearInterval(checkMeSpeak);
           initMeSpeak();
         }
       }, 100);
       
-      setTimeout(() => clearInterval(checkMeSpeak), 5000); // Give up after 5 seconds
+      setTimeout(() => {
+        clearInterval(checkMeSpeak);
+        console.error('❌ meSpeak failed to load after 5 seconds');
+      }, 5000);
     }
     
     return () => {
@@ -118,8 +141,20 @@ export const useMetronomeAudio = () => {
     // Handle voice counting using meSpeak.js pre-generated buffers
     if (soundType === 'voiceCount') {
       if (beatNumber !== undefined) {
+        console.log(`🎵 Attempting to play voice count for beat ${beatNumber}`);
+        console.log(`📋 Available buffers: ${voiceCountBuffersRef.current.size}`);
+        
         const voiceBuffer = voiceCountBuffersRef.current.get(beatNumber);
+        
         if (voiceBuffer) {
+          console.log(`✅ Playing voice buffer for beat ${beatNumber}`);
+          
+          // Ensure audio context is running
+          if (context.state === 'suspended') {
+            console.log('▶️ Resuming audio context...');
+            context.resume();
+          }
+          
           // Play pre-generated voice buffer with precise Web Audio timing
           const bufferSource = context.createBufferSource();
           const gainNode = context.createGain();
@@ -129,13 +164,19 @@ export const useMetronomeAudio = () => {
           gainNode.connect(context.destination);
           
           // Set volume (voice count gets full volume for clarity)
-          gainNode.gain.setValueAtTime(baseVolume * 0.9, now);
+          gainNode.gain.setValueAtTime(baseVolume * 1.0, now);
           
           // Start playback precisely at 'now'
           bufferSource.start(now);
+          
+          console.log(`🔊 Voice count ${beatNumber} started at ${now}`);
         } else {
-          console.warn(`Voice buffer not ready for beat ${beatNumber}`);
+          console.warn(`⚠️ Voice buffer not ready for beat ${beatNumber}`);
+          console.warn(`Available buffers:`, Array.from(voiceCountBuffersRef.current.keys()));
+          console.warn(`meSpeak loaded:`, meSpeakLoadedRef.current);
         }
+      } else {
+        console.warn('⚠️ beatNumber is undefined');
       }
       return;
     }

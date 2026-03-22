@@ -354,8 +354,8 @@ export const useMetronomeAudio = () => {
       // Play initial beat immediately (beat 1, currentBeat = 0)
       const initialState = useMetronomeStore.getState();
       const isInitialAccent = initialState.accentFirstBeat && (
-        initialState.subdivision === 'eighth'
-          ? initialState.currentBeat % 2 === 0  // Accent on beats 1, 3 (indices 0, 2) for eighth notes
+        initialState.subdivision === 'eighth' || initialState.subdivision === 'sixteenth'
+          ? initialState.subdivisionCounter === 0  // Accent on downbeat (every 2nd click for eighth, every 4th for sixteenth)
           : initialState.beatsPerMeasure === 12 
             ? initialState.currentBeat % 3 === 0  // Beats 1, 4, 7, 10 (indices 0, 3, 6, 9)
             : initialState.currentBeat === 0      // Beat 1 only
@@ -371,8 +371,8 @@ export const useMetronomeAudio = () => {
         // Then play the new beat
         const state = useMetronomeStore.getState();
         const isAccent = state.accentFirstBeat && (
-          state.subdivision === 'eighth'
-            ? state.currentBeat % 2 === 0  // Accent on beats 1, 3 (indices 0, 2) for eighth notes
+          state.subdivision === 'eighth' || state.subdivision === 'sixteenth'
+            ? state.subdivisionCounter === 0  // Accent on downbeat (every 2nd click for eighth, every 4th for sixteenth)
             : state.beatsPerMeasure === 12 
               ? state.currentBeat % 3 === 0  // Accent on beats 0, 3, 6, 9 (displayed as 1, 4, 7, 10)
               : state.currentBeat === 0      // Accent only on first beat

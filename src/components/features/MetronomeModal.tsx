@@ -69,7 +69,7 @@ export default function MetronomeModal() {
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-lg pointer-events-auto shadow-2xl">
           {/* Header */}
-          <div className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
+          <div className="border-b border-zinc-800 px-6 py-2 flex items-center justify-between">
             <button
               onClick={closeMetronome}
               className="p-1 hover:bg-zinc-900 rounded transition-colors"
@@ -85,7 +85,7 @@ export default function MetronomeModal() {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-4 space-y-4">
+          <div className="px-6 py-3 space-y-3">
             {/* Tempo */}
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -244,32 +244,32 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Beat Indicators */}
-            {isPlaying && (
-              <div className="flex items-center justify-center gap-2 py-2">
-                {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
-                  const isCurrentBeat = beat === currentBeat + 1;
-                  const isAccentBeat = beatsPerMeasure === 12 
-                    ? [1, 4, 7, 10].includes(beat)
-                    : beat === 1;
-                  
-                  return (
-                    <div
-                      key={beat}
-                      className={`min-w-[28px] h-8 rounded flex items-center justify-center font-bold text-sm transition-all ${
-                        isCurrentBeat
-                          ? isAccentBeat && accentFirstBeat
-                            ? 'bg-amber-500 text-zinc-950 scale-110'
-                            : 'bg-emerald-500 text-zinc-950 scale-110'
-                          : 'bg-zinc-800 text-zinc-500'
-                      }`}
-                    >
-                      {beat}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {/* Beat Indicators - Always rendered to prevent layout shift */}
+            <div className={`flex items-center justify-center gap-2 py-2 transition-opacity ${
+              isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`} style={{ minHeight: '48px' }}>
+              {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
+                const isCurrentBeat = beat === currentBeat + 1;
+                const isAccentBeat = beatsPerMeasure === 12 
+                  ? [1, 4, 7, 10].includes(beat)
+                  : beat === 1;
+                
+                return (
+                  <div
+                    key={beat}
+                    className={`min-w-[28px] h-8 rounded flex items-center justify-center font-bold text-sm transition-all ${
+                      isCurrentBeat
+                        ? isAccentBeat && accentFirstBeat
+                          ? 'bg-amber-500 text-zinc-950 scale-110'
+                          : 'bg-emerald-500 text-zinc-950 scale-110'
+                        : 'bg-zinc-800 text-zinc-500'
+                    }`}
+                  >
+                    {beat}
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Volume */}
             <div>
@@ -295,7 +295,7 @@ export default function MetronomeModal() {
             </div>
 
             {/* Play/Stop Button */}
-            <div className="pb-2">
+            <div>
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className={`w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${

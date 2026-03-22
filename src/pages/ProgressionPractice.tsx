@@ -254,31 +254,23 @@ export default function ProgressionPractice() {
                 <svg width="260" height="330" viewBox="0 0 260 330" className="select-none">
                   {/* Muted/Open strings at top */}
                   {currentChord.frets.map((fret, idx) => {
+                    const isRoot = idx === rootStringIndex;
                     if (fret === -1) {
+                      // Muted string - gray X, same size as open circles
                       return (
-                        <g key={`muted-${idx}`}>
-                          <line
-                            x1={70 + idx * 32 - 5}
-                            y1={46}
-                            x2={70 + idx * 32 + 5}
-                            y2={56}
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            className="text-zinc-500"
-                          />
-                          <line
-                            x1={70 + idx * 32 + 5}
-                            y1={46}
-                            x2={70 + idx * 32 - 5}
-                            y2={56}
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            className="text-zinc-500"
-                          />
-                        </g>
+                        <text
+                          key={`muted-${idx}`}
+                          x={70 + idx * 32}
+                          y={51}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-zinc-500 font-bold"
+                          style={{ fontSize: '22px' }}
+                        >
+                          ✕
+                        </text>
                       );
                     } else if (fret === 0) {
-                      const isRoot = idx === rootStringIndex;
                       if (isRoot) {
                         // Open root note - blue diamond border
                         return (

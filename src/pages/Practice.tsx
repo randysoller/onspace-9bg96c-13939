@@ -523,44 +523,55 @@ export default function Practice() {
                   {/* Base Fret Indicator (2fr) */}
                   <text x="10" y="70" className="text-xs fill-zinc-500">2fr</text>
 
-                  {/* Muted strings at top */}
+                  {/* Muted/Open strings at top */}
                   {currentChord.frets.map((fret, idx) => {
+                    const isRoot = idx === rootStringIndex;
                     if (fret === -1) {
+                      // Muted string - gray X, same size as open circles
                       return (
-                        <g key={`muted-${idx}`}>
-                          <line
-                            x1={60 + idx * 30 - 4}
-                            y1={36}
-                            x2={60 + idx * 30 + 4}
-                            y2={44}
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="text-zinc-500"
-                          />
-                          <line
-                            x1={60 + idx * 30 + 4}
-                            y1={36}
-                            x2={60 + idx * 30 - 4}
-                            y2={44}
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            className="text-zinc-500"
-                          />
-                        </g>
+                        <text
+                          key={`muted-${idx}`}
+                          x={60 + idx * 30}
+                          y={40}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          className="text-zinc-500 font-bold"
+                          style={{ fontSize: '20px' }}
+                        >
+                          ✕
+                        </text>
                       );
                     } else if (fret === 0) {
-                      return (
-                        <circle
-                          key={`open-${idx}`}
-                          cx={60 + idx * 30}
-                          cy={40}
-                          r="6"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="text-zinc-400"
-                        />
-                      );
+                      if (isRoot) {
+                        // Open root note - blue diamond border
+                        return (
+                          <path
+                            key={`open-${idx}`}
+                            d={`M ${60 + idx * 30} ${40 - 9} 
+                                L ${60 + idx * 30 + 9} ${40} 
+                                L ${60 + idx * 30} ${40 + 9} 
+                                L ${60 + idx * 30 - 9} ${40} Z`}
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-cyan-500"
+                          />
+                        );
+                      } else {
+                        // Open string - orange circle border
+                        return (
+                          <circle
+                            key={`open-${idx}`}
+                            cx={60 + idx * 30}
+                            cy={40}
+                            r="6.3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            className="text-amber-500"
+                          />
+                        );
+                      }
                     }
                     return null;
                   })}

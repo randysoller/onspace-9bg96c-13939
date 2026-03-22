@@ -270,24 +270,20 @@ export default function MetronomeModal() {
 
             {/* Volume */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
-                <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
+              <div className="flex-1 relative mb-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={metronomeVolume * 100}
+                  onChange={(e) => setMetronomeVolume(Number(e.target.value) / 100)}
+                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                />
               </div>
               
-              <div className="flex items-center gap-3">
-                <Volume2 className="w-4 h-4 text-zinc-500" />
-                
-                <div className="flex-1 relative">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={metronomeVolume * 100}
-                    onChange={(e) => setMetronomeVolume(Number(e.target.value) / 100)}
-                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-                  />
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
+                <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
               </div>
             </div>
 

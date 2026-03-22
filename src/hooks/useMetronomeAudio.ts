@@ -156,8 +156,8 @@ export const useMetronomeAudio = () => {
       }
 
       case 'hiHat': {
-        // Realistic closed hi-hat with "shh" noise character
-        const duration = isAccent ? 0.12 : 0.08;
+        // Realistic closed hi-hat with "shh" noise character and 500ms sustain
+        const duration = 0.5; // 500ms sustain
         const bufferSize = context.sampleRate * duration;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
@@ -167,7 +167,7 @@ export const useMetronomeAudio = () => {
         for (let i = 0; i < bufferSize; i++) {
           const t = i / context.sampleRate;
           const attack = Math.exp(-i / (context.sampleRate * 0.002)); // Very sharp attack
-          const sustain = Math.exp(-i / (context.sampleRate * (isAccent ? 0.028 : 0.018))); // Quick decay
+          const sustain = Math.exp(-i / (context.sampleRate * (isAccent ? 0.15 : 0.12))); // Long sustain with gradual decay
           const noise = Math.random() * 2 - 1;
           
           // Subtle high-frequency metallic shimmer (reduced amplitude)

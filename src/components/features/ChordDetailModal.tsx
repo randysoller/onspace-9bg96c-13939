@@ -14,6 +14,7 @@ interface ChordDetailModalProps {
 }
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
+const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E']; // High to low for tablature display
 const FINGER_NAMES = ['', 'Index', 'Middle', 'Ring', 'Pinky'];
 
 export default function ChordDetailModal({
@@ -245,11 +246,11 @@ export default function ChordDetailModal({
 
             {/* Tablature Notation */}
             <div className="bg-white rounded-lg px-3 py-2 text-xs font-mono self-start shadow-lg">
-              {chord.frets.map((fret, idx) => (
+              {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-2 items-center py-0.5">
-                  <span className="text-zinc-800 font-bold w-3">{STRINGS[idx]}</span>
+                  <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>
                   <span className="text-zinc-400">—</span>
-                  <span className="text-zinc-900 font-bold w-3 text-center">
+                  <span className="text-zinc-900 font-bold w-4 text-center text-sm">
                     {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
                   </span>
                   <span className="text-zinc-400">—</span>

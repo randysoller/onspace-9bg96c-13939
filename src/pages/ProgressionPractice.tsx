@@ -266,7 +266,7 @@ export default function ProgressionPractice() {
                           dominantBaseline="middle"
                           fill="#71717a"
                           className="font-bold"
-                          style={{ fontSize: '28px' }}
+                          style={{ fontSize: '29px' }}
                         >
                           ✕
                         </text>

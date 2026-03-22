@@ -537,7 +537,7 @@ export default function Practice() {
                           dominantBaseline="middle"
                           fill="#71717a"
                           className="font-bold"
-                          style={{ fontSize: '26px' }}
+                          style={{ fontSize: '27px' }}
                         >
                           ✕
                         </text>

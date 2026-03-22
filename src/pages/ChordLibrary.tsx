@@ -96,7 +96,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                     dominantBaseline="middle"
                     fill="#71717a"
                     className="font-bold"
-                    style={{ fontSize: '19px' }}
+                    style={{ fontSize: '20px' }}
                   >
                     ✕
                   </text>

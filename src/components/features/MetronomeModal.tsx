@@ -282,7 +282,10 @@ export default function MetronomeModal() {
               </div>
               
               <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
+                <div className="flex items-center gap-1.5">
+                  <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
+                </div>
                 <div className="flex items-center gap-1.5">
                   <Volume2 className="w-4 h-4 text-amber-500" />
                   <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>

@@ -11,6 +11,7 @@ export const useMetronomeAudio = () => {
     subdivision,
     incrementBeat,
     setCurrentBeat,
+    setSubdivisionCounter,
   } = useMetronomeStore();
   
   const { masterVolume, metronomeVolume } = useAudioStore();
@@ -38,178 +39,250 @@ export const useMetronomeAudio = () => {
 
     switch (soundType) {
       case 'click': {
-        // Classic mechanical metronome click - sharp transient with body resonance
-        const oscillator1 = context.createOscillator();
-        const oscillator2 = context.createOscillator();
-        const gainNode = context.createGain();
-        const filter = context.createBiquadFilter();
-
-        oscillator1.connect(gainNode);
-        oscillator2.connect(gainNode);
-        gainNode.connect(filter);
-        filter.connect(context.destination);
-
-        // Accent click is higher and brighter
-        oscillator1.frequency.setValueAtTime(isAccent ? 2400 : 1800, now);
-        oscillator2.frequency.setValueAtTime(isAccent ? 3200 : 2400, now);
-        oscillator1.type = 'square';
-        oscillator2.type = 'square';
-
-        // Bandpass filter for mechanical character
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(isAccent ? 2800 : 2000, now);
-        filter.Q.setValueAtTime(3.0, now);
-
-        // Sharp attack, quick decay
-        gainNode.gain.setValueAtTime(volume, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-        oscillator1.start(now);
-        oscillator2.start(now);
-        oscillator1.stop(now + 0.03);
-        oscillator2.stop(now + 0.03);
-        break;
-      }
-
-      case 'woodBlock': {
-        // Authentic wood block - percussive resonant tone with noise attack
-        const bufferSize = context.sampleRate * 0.06;
+        // Realistic mechanical metronome click with metal strike transient
+        const bufferSize = context.sampleRate * 0.04;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
         const dataR = buffer.getChannelData(1);
 
-        // Generate noise attack with body resonance
+        // Generate sharp metallic transient with multiple harmonics
         for (let i = 0; i < bufferSize; i++) {
-          const decay = Math.exp(-i / (context.sampleRate * 0.012));
-          const noise = (Math.random() * 2 - 1) * 0.4;
+          const decay = Math.exp(-i / (context.sampleRate * 0.008));
+          const noise = (Math.random() * 2 - 1) * 0.3;
           
-          // Add resonant frequency for wood character
-          const freq = isAccent ? 850 : 650;
-          const resonance = Math.sin((i / context.sampleRate) * freq * 6.28) * 0.6;
+          // Multiple frequency components for metallic character
+          const freq1 = isAccent ? 2800 : 2200;
+          const freq2 = isAccent ? 4200 : 3400;
+          const freq3 = isAccent ? 5600 : 4800;
           
-          dataL[i] = (noise + resonance) * decay;
-          dataR[i] = (noise + resonance) * decay;
+          const click1 = Math.sin((i / context.sampleRate) * freq1 * 6.28) * 0.5;
+          const click2 = Math.sin((i / context.sampleRate) * freq2 * 6.28) * 0.3;
+          const click3 = Math.sin((i / context.sampleRate) * freq3 * 6.28) * 0.2;
+          
+          dataL[i] = (noise + click1 + click2 + click3) * decay;
+          dataR[i] = (noise + click1 + click2 + click3) * decay;
+        }
+
+        const bufferSource = context.createBufferSource();
+        const filter = context.createBiquadFilter();
+        const gainNode = context.createGain();
+
+        bufferSource.buffer = buffer;
+        
+        // High-pass for crisp metallic sound
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(1800, now);
+        filter.Q.setValueAtTime(1.5, now);
+
+        bufferSource.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(context.destination);
+
+        gainNode.gain.setValueAtTime(volume * 0.95, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+
+        bufferSource.start(now);
+        bufferSource.stop(now + 0.04);
+        break;
+      }
+
+      case 'woodBlock': {
+        // Realistic wood block with hollow body resonance and sharp attack
+        const bufferSize = context.sampleRate * 0.08;
+        const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
+        const dataL = buffer.getChannelData(0);
+        const dataR = buffer.getChannelData(1);
+
+        // Generate percussive attack with wood body resonance
+        for (let i = 0; i < bufferSize; i++) {
+          const t = i / context.sampleRate;
+          const attack = Math.exp(-i / (context.sampleRate * 0.003)); // Sharp attack
+          const bodyDecay = Math.exp(-i / (context.sampleRate * 0.018)); // Longer body resonance
+          const noise = (Math.random() * 2 - 1) * 0.35;
+          
+          // Multiple resonant frequencies for wood character
+          const fundamental = isAccent ? 920 : 720;
+          const harmonic2 = fundamental * 1.8;
+          const harmonic3 = fundamental * 2.7;
+          
+          const res1 = Math.sin(t * fundamental * 6.28) * 0.5;
+          const res2 = Math.sin(t * harmonic2 * 6.28) * 0.25;
+          const res3 = Math.sin(t * harmonic3 * 6.28) * 0.15;
+          
+          // Combine attack noise with sustained resonance
+          const signal = (noise * attack * 0.7) + ((res1 + res2 + res3) * bodyDecay);
+          
+          dataL[i] = signal;
+          dataR[i] = signal * 0.98; // Slight stereo variation
         }
 
         const bufferSource = context.createBufferSource();
         const filter1 = context.createBiquadFilter();
         const filter2 = context.createBiquadFilter();
+        const filter3 = context.createBiquadFilter();
         const gainNode = context.createGain();
 
         bufferSource.buffer = buffer;
         
         // Bandpass for fundamental resonance
         filter1.type = 'bandpass';
-        filter1.frequency.setValueAtTime(isAccent ? 850 : 650, now);
-        filter1.Q.setValueAtTime(8, now);
+        filter1.frequency.setValueAtTime(isAccent ? 920 : 720, now);
+        filter1.Q.setValueAtTime(10, now);
         
-        // High-pass to remove low mud
-        filter2.type = 'highpass';
-        filter2.frequency.setValueAtTime(300, now);
+        // Peaking filter for upper harmonics
+        filter2.type = 'peaking';
+        filter2.frequency.setValueAtTime(isAccent ? 1650 : 1300, now);
+        filter2.Q.setValueAtTime(4, now);
+        filter2.gain.setValueAtTime(6, now);
+        
+        // High-pass to clean up lows
+        filter3.type = 'highpass';
+        filter3.frequency.setValueAtTime(400, now);
 
         bufferSource.connect(filter1);
         filter1.connect(filter2);
-        filter2.connect(gainNode);
+        filter2.connect(filter3);
+        filter3.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 0.9, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        gainNode.gain.setValueAtTime(volume * 0.92, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
         bufferSource.start(now);
-        bufferSource.stop(now + 0.06);
+        bufferSource.stop(now + 0.08);
         break;
       }
 
       case 'hiHat': {
-        // Authentic closed hi-hat - metallic sizzle with sharp attack
-        const bufferSize = context.sampleRate * (isAccent ? 0.12 : 0.08);
+        // Realistic closed hi-hat with complex metallic spectrum
+        const duration = isAccent ? 0.15 : 0.09;
+        const bufferSize = context.sampleRate * duration;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
         const dataR = buffer.getChannelData(1);
 
-        // Generate metallic noise with multiple frequency components
+        // Generate complex metallic noise spectrum
         for (let i = 0; i < bufferSize; i++) {
-          const decay = Math.exp(-i / (context.sampleRate * (isAccent ? 0.03 : 0.02)));
+          const t = i / context.sampleRate;
+          const attack = Math.exp(-i / (context.sampleRate * 0.003)); // Sharp attack
+          const sustain = Math.exp(-i / (context.sampleRate * (isAccent ? 0.04 : 0.025))); // Body decay
           const noise = Math.random() * 2 - 1;
           
-          // Add metallic harmonics
-          const metal1 = Math.sin((i / context.sampleRate) * 8500 * 6.28) * 0.3;
-          const metal2 = Math.sin((i / context.sampleRate) * 11000 * 6.28) * 0.2;
+          // Multiple inharmonic metal frequencies
+          const freq1 = 7800;
+          const freq2 = 9500;
+          const freq3 = 11200;
+          const freq4 = 13500;
+          const freq5 = 15800;
           
-          dataL[i] = (noise * 0.7 + metal1 + metal2) * decay;
-          dataR[i] = (noise * 0.7 + metal1 * 0.9 + metal2 * 1.1) * decay; // Slight stereo difference
+          const metal1 = Math.sin(t * freq1 * 6.28) * 0.25;
+          const metal2 = Math.sin(t * freq2 * 6.28) * 0.20;
+          const metal3 = Math.sin(t * freq3 * 6.28) * 0.15;
+          const metal4 = Math.sin(t * freq4 * 6.28) * 0.12;
+          const metal5 = Math.sin(t * freq5 * 6.28) * 0.08;
+          
+          // Sharp attack noise + sustained metallic ring
+          const signal = (noise * 0.6 * attack) + ((metal1 + metal2 + metal3 + metal4 + metal5) * sustain);
+          
+          dataL[i] = signal;
+          dataR[i] = signal * 0.92 + (Math.random() * 2 - 1) * 0.08 * sustain; // Stereo shimmer
         }
 
         const bufferSource = context.createBufferSource();
         const highpass = context.createBiquadFilter();
-        const bandpass = context.createBiquadFilter();
+        const peaking1 = context.createBiquadFilter();
+        const peaking2 = context.createBiquadFilter();
         const gainNode = context.createGain();
 
         bufferSource.buffer = buffer;
         
-        // High-pass for metallic character
+        // High-pass to remove lows
         highpass.type = 'highpass';
-        highpass.frequency.setValueAtTime(7000, now);
+        highpass.frequency.setValueAtTime(6500, now);
         highpass.Q.setValueAtTime(0.7, now);
         
-        // Bandpass for sizzle resonance
-        bandpass.type = 'bandpass';
-        bandpass.frequency.setValueAtTime(9500, now);
-        bandpass.Q.setValueAtTime(2.0, now);
+        // Enhance sizzle frequencies
+        peaking1.type = 'peaking';
+        peaking1.frequency.setValueAtTime(9500, now);
+        peaking1.Q.setValueAtTime(2.5, now);
+        peaking1.gain.setValueAtTime(8, now);
+        
+        peaking2.type = 'peaking';
+        peaking2.frequency.setValueAtTime(13000, now);
+        peaking2.Q.setValueAtTime(1.8, now);
+        peaking2.gain.setValueAtTime(5, now);
 
         bufferSource.connect(highpass);
-        highpass.connect(bandpass);
-        bandpass.connect(gainNode);
+        highpass.connect(peaking1);
+        peaking1.connect(peaking2);
+        peaking2.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 0.75, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + (isAccent ? 0.12 : 0.08));
+        gainNode.gain.setValueAtTime(volume * 0.72, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         bufferSource.start(now);
-        bufferSource.stop(now + (isAccent ? 0.12 : 0.08));
+        bufferSource.stop(now + duration);
         break;
       }
 
       case 'sideStick': {
-        // Authentic side stick - short, sharp, woody transient
-        const bufferSize = context.sampleRate * 0.025;
+        // Realistic side stick - sharp rim shot with wood and metal character
+        const bufferSize = context.sampleRate * 0.03;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
         const dataR = buffer.getChannelData(1);
 
-        // Generate sharp transient with resonance
+        // Generate sharp stick-on-rim transient
         for (let i = 0; i < bufferSize; i++) {
-          const decay = Math.exp(-i / (context.sampleRate * 0.005));
-          const noise = (Math.random() * 2 - 1) * 0.6;
+          const t = i / context.sampleRate;
+          const attack = Math.exp(-i / (context.sampleRate * 0.002)); // Very sharp attack
+          const decay = Math.exp(-i / (context.sampleRate * 0.008)); // Quick decay
+          const noise = (Math.random() * 2 - 1) * 0.7;
           
-          // Add click resonance
-          const freq = isAccent ? 1200 : 950;
-          const click = Math.sin((i / context.sampleRate) * freq * 6.28) * 0.4;
+          // Wood stick resonance + metal rim ring
+          const woodFreq = isAccent ? 1400 : 1100;
+          const rimFreq = isAccent ? 3200 : 2600;
           
-          dataL[i] = (noise + click) * decay;
-          dataR[i] = (noise + click) * decay;
+          const wood = Math.sin(t * woodFreq * 6.28) * 0.4;
+          const rim = Math.sin(t * rimFreq * 6.28) * 0.35;
+          const highClick = Math.sin(t * 5500 * 6.28) * 0.15;
+          
+          // Sharp attack noise + resonant body
+          const signal = (noise * attack * 0.8) + ((wood + rim + highClick) * decay);
+          
+          dataL[i] = signal;
+          dataR[i] = signal;
         }
 
         const bufferSource = context.createBufferSource();
-        const filter = context.createBiquadFilter();
+        const highpass = context.createBiquadFilter();
+        const peaking = context.createBiquadFilter();
         const gainNode = context.createGain();
 
         bufferSource.buffer = buffer;
         
-        // Bandpass for stick character
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(isAccent ? 1200 : 950, now);
-        filter.Q.setValueAtTime(4, now);
+        // High-pass for crisp character
+        highpass.type = 'highpass';
+        highpass.frequency.setValueAtTime(800, now);
+        highpass.Q.setValueAtTime(0.7, now);
+        
+        // Enhance the crack frequency
+        peaking.type = 'peaking';
+        peaking.frequency.setValueAtTime(isAccent ? 2800 : 2200, now);
+        peaking.Q.setValueAtTime(5, now);
+        peaking.gain.setValueAtTime(10, now);
 
-        bufferSource.connect(filter);
-        filter.connect(gainNode);
+        bufferSource.connect(highpass);
+        highpass.connect(peaking);
+        peaking.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 0.85, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        gainNode.gain.setValueAtTime(volume * 0.88, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
 
         bufferSource.start(now);
-        bufferSource.stop(now + 0.025);
+        bufferSource.stop(now + 0.03);
         break;
       }
 
@@ -269,6 +342,7 @@ export const useMetronomeAudio = () => {
 
       // Reset beat and timing
       setCurrentBeat(0);
+      setSubdivisionCounter(0);
 
       // Calculate interval based on subdivision
       let subdivisionMultiplier = 1;

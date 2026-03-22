@@ -10,6 +10,7 @@ interface MetronomeStore {
   beatsPerMeasure: number;
   noteValue: number;
   currentBeat: number;
+  subdivisionCounter: number;
   soundType: MetronomeSound;
   accentFirstBeat: boolean;
   subdivision: SubdivisionType;
@@ -19,6 +20,7 @@ interface MetronomeStore {
   setBeatsPerMeasure: (beats: number) => void;
   setTimeSignature: (beats: number, noteValue: number) => void;
   setCurrentBeat: (beat: number) => void;
+  setSubdivisionCounter: (counter: number) => void;
   setSoundType: (sound: MetronomeSound) => void;
   setAccentFirstBeat: (accent: boolean) => void;
   setSubdivision: (subdivision: SubdivisionType) => void;
@@ -33,6 +35,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       beatsPerMeasure: 4,
       noteValue: 4,
       currentBeat: 0,
+      subdivisionCounter: 0,
       soundType: 'click',
       accentFirstBeat: true,
       subdivision: 'quarter',
@@ -42,12 +45,26 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setBeatsPerMeasure: (beats) => set({ beatsPerMeasure: beats }),
       setTimeSignature: (beats, noteValue) => set({ beatsPerMeasure: beats, noteValue }),
       setCurrentBeat: (beat) => set({ currentBeat: beat }),
+      setSubdivisionCounter: (counter) => set({ subdivisionCounter: counter }),
       setSoundType: (sound) => set({ soundType: sound }),
       setAccentFirstBeat: (accent) => set({ accentFirstBeat: accent }),
-      setSubdivision: (subdivision) => set({ subdivision }),
-      incrementBeat: () => set((state) => ({
-        currentBeat: (state.currentBeat + 1) % state.beatsPerMeasure
-      })),
+      setSubdivision: (subdivision) => set({ subdivision, subdivisionCounter: 0 }),
+      incrementBeat: () => set((state) => {
+        const subdivisionMultiplier = state.subdivision === 'quarter' ? 1 : state.subdivision === 'eighth' ? 2 : 4;
+        const nextSubdivisionCounter = (state.subdivisionCounter + 1) % subdivisionMultiplier;
+        
+        // Only increment the beat number when subdivision counter wraps to 0
+        if (nextSubdivisionCounter === 0) {
+          return {
+            subdivisionCounter: 0,
+            currentBeat: (state.currentBeat + 1) % state.beatsPerMeasure
+          };
+        } else {
+          return {
+            subdivisionCounter: nextSubdivisionCounter
+          };
+        }
+      }),
     }),
     {
       name: 'fretmaster-metronome',

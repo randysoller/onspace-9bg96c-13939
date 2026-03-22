@@ -66,10 +66,10 @@ export default function MetronomeModal() {
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-lg pointer-events-auto shadow-2xl">
+      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none pt-16 pb-20 md:pt-20 md:pb-8">
+        <div className="w-full max-w-md h-full max-h-full bg-zinc-950 border border-zinc-800 rounded-lg pointer-events-auto shadow-2xl mx-4 flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="border-b border-zinc-800 px-6 py-2 flex items-center justify-between">
+          <div className="border-b border-zinc-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
             <button
               onClick={closeMetronome}
               className="p-1 hover:bg-zinc-900 rounded transition-colors"
@@ -85,10 +85,10 @@ export default function MetronomeModal() {
           </div>
 
           {/* Content */}
-          <div className="px-6 py-3 space-y-3">
+          <div className="px-4 py-2.5 space-y-2.5 overflow-y-auto">
             {/* Tempo */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Tempo</span>
                 <div className="text-right">
                   <span className="text-xs text-zinc-500 mr-2">{getTempoLabel(bpm)}</span>
@@ -97,7 +97,7 @@ export default function MetronomeModal() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-2">
                 <button
                   onClick={() => handleTempoChange(bpm - 1)}
                   className="w-8 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors"
@@ -144,7 +144,7 @@ export default function MetronomeModal() {
 
             {/* Time Signature */}
             <div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Time Signature</span>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -152,7 +152,7 @@ export default function MetronomeModal() {
                   <button
                     key={sig.beats}
                     onClick={() => setBeatsPerMeasure(sig.beats)}
-                    className={`py-2.5 rounded font-bold transition-all ${
+                    className={`py-2 rounded font-bold transition-all ${
                       beatsPerMeasure === sig.beats
                         ? 'bg-amber-500 text-zinc-950'
                         : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -166,7 +166,7 @@ export default function MetronomeModal() {
 
             {/* Sound */}
             <div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Sound</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
@@ -174,7 +174,7 @@ export default function MetronomeModal() {
                   <button
                     key={s.value}
                     onClick={() => setSoundType(s.value)}
-                    className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                    className={`py-2 rounded font-semibold text-sm transition-all ${
                       soundType === s.value
                         ? 'bg-amber-500 text-zinc-950'
                         : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -188,13 +188,13 @@ export default function MetronomeModal() {
 
             {/* Subdivision */}
             <div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Subdivision</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setSubdivision('quarter')}
-                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                  className={`py-2 rounded font-semibold text-sm transition-all ${
                     subdivision === 'quarter'
                       ? 'bg-amber-500 text-zinc-950'
                       : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -204,7 +204,7 @@ export default function MetronomeModal() {
                 </button>
                 <button
                   onClick={() => setSubdivision('eighth')}
-                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                  className={`py-2 rounded font-semibold text-sm transition-all ${
                     subdivision === 'eighth'
                       ? 'bg-amber-500 text-zinc-950'
                       : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -214,7 +214,7 @@ export default function MetronomeModal() {
                 </button>
                 <button
                   onClick={() => setSubdivision('sixteenth')}
-                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                  className={`py-2 rounded font-semibold text-sm transition-all ${
                     subdivision === 'sixteenth'
                       ? 'bg-amber-500 text-zinc-950'
                       : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -245,7 +245,7 @@ export default function MetronomeModal() {
             </div>
 
             {/* Beat Indicators - Always rendered to prevent layout shift */}
-            <div className={`flex items-center justify-center gap-2 py-2 transition-opacity ${
+            <div className={`flex items-center justify-center gap-2 py-1.5 transition-opacity ${
               isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'
             }`} style={{ minHeight: '48px' }}>
               {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
@@ -273,7 +273,7 @@ export default function MetronomeModal() {
 
             {/* Volume */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
                 <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
               </div>
@@ -295,10 +295,10 @@ export default function MetronomeModal() {
             </div>
 
             {/* Play/Stop Button */}
-            <div>
+            <div className="flex-shrink-0">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className={`w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+                className={`w-full font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
                   isPlaying
                     ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
                     : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'

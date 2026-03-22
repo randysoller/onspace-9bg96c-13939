@@ -254,7 +254,7 @@ export default function MetronomeModal() {
                     key={beat}
                     className={`flex items-center justify-center font-bold rounded transition-all ${
                       isCurrentBeat
-                        ? 'bg-amber-500 text-zinc-950 scale-110'
+                        ? 'bg-emerald-500 text-zinc-950 scale-110'
                         : 'bg-zinc-800 text-zinc-500'
                     } ${
                       beatsPerMeasure === 12 

@@ -277,32 +277,30 @@ export const useMetronomeAudio = () => {
       
       const intervalMs = (60 / (bpm * subdivisionMultiplier)) * 1000;
 
-      // Play initial beat immediately (beat 1)
+      // Play initial beat immediately (beat 1, currentBeat = 0)
       const initialState = useMetronomeStore.getState();
       const isInitialAccent = initialState.accentFirstBeat && (
         initialState.beatsPerMeasure === 12 
-          ? initialState.currentBeat % 3 === 0
-          : initialState.currentBeat === 0
+          ? initialState.currentBeat % 3 === 0  // Beats 1, 4, 7, 10 (indices 0, 3, 6, 9)
+          : initialState.currentBeat === 0      // Beat 1 only
       );
       playClick(isInitialAccent);
-      incrementBeat();
+      // Don't increment yet - let UI show beat 1 first
 
       // Schedule subsequent beats - read fresh state on each tick
       intervalRef.current = window.setInterval(() => {
-        const state = useMetronomeStore.getState();
+        // Increment to next beat first
+        incrementBeat();
         
-        // Determine if this beat should be accented
+        // Then play the new beat
+        const state = useMetronomeStore.getState();
         const isAccent = state.accentFirstBeat && (
           state.beatsPerMeasure === 12 
             ? state.currentBeat % 3 === 0  // Accent on beats 0, 3, 6, 9 (displayed as 1, 4, 7, 10)
             : state.currentBeat === 0      // Accent only on first beat
         );
         
-        // Play the sound
         playClick(isAccent);
-        
-        // Increment beat counter for next iteration
-        incrementBeat();
       }, intervalMs);
     } else {
       if (intervalRef.current) {

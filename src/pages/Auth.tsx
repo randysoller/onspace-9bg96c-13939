@@ -6,6 +6,45 @@ import { LogIn, Mail, Lock, User } from 'lucide-react';
 
 type AuthView = 'login' | 'signup' | 'verify';
 
+// Password validation constants
+const MIN_PASSWORD_LENGTH = 8;
+const PASSWORD_REQUIREMENTS = {
+  minLength: MIN_PASSWORD_LENGTH,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumber: true,
+};
+
+// Common weak passwords to reject
+const COMMON_WEAK_PASSWORDS = [
+  'password', '12345678', 'password123', 'qwerty123', 'abc12345',
+  'letmein', 'welcome1', 'monkey123', 'dragon123', 'master123',
+];
+
+function validatePasswordStrength(password: string): { isValid: boolean; error: string } {
+  if (password.length < PASSWORD_REQUIREMENTS.minLength) {
+    return { isValid: false, error: `Password must be at least ${PASSWORD_REQUIREMENTS.minLength} characters` };
+  }
+
+  if (PASSWORD_REQUIREMENTS.requireUppercase && !/[A-Z]/.test(password)) {
+    return { isValid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+
+  if (PASSWORD_REQUIREMENTS.requireLowercase && !/[a-z]/.test(password)) {
+    return { isValid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+
+  if (PASSWORD_REQUIREMENTS.requireNumber && !/[0-9]/.test(password)) {
+    return { isValid: false, error: 'Password must contain at least one number' };
+  }
+
+  if (COMMON_WEAK_PASSWORDS.includes(password.toLowerCase())) {
+    return { isValid: false, error: 'This password is too common. Please choose a stronger password' };
+  }
+
+  return { isValid: true, error: '' };
+}
+
 export default function Auth() {
   const navigate = useNavigate();
   const { login, setLoading } = useAuthStore();
@@ -33,8 +72,9 @@ export default function Auth() {
         avatar: user.user_metadata?.avatar_url,
       });
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setError(errorMessage);
       setLoading(false);
       setLocalLoading(false);
     }
@@ -49,8 +89,9 @@ export default function Auth() {
       await authApi.sendOtp(email);
       setView('verify');
       setLocalLoading(false);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send verification code');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send verification code';
+      setError(errorMessage);
       setLocalLoading(false);
     }
   };
@@ -58,6 +99,14 @@ export default function Auth() {
   const handleVerifyAndRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password);
+    if (!passwordValidation.isValid) {
+      setError(passwordValidation.error);
+      return;
+    }
+
     setLoading(true);
     setLocalLoading(true);
 
@@ -70,8 +119,9 @@ export default function Auth() {
         avatar: user!.user_metadata?.avatar_url,
       });
       navigate('/');
-    } catch (err: any) {
-      setError(err.message || 'Verification failed');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Verification failed';
+      setError(errorMessage);
       setLoading(false);
       setLocalLoading(false);
     }
@@ -229,10 +279,13 @@ export default function Auth() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={MIN_PASSWORD_LENGTH}
                 className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 placeholder="••••••••"
               />
+              <p className="text-xs text-zinc-500 mt-1">
+                Must be {MIN_PASSWORD_LENGTH}+ characters with uppercase, lowercase, and number
+              </p>
             </div>
 
             <button

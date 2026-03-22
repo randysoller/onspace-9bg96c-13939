@@ -51,8 +51,9 @@ export default function Settings() {
       });
 
       toast.success('Settings saved successfully');
-    } catch (err) {
-      console.error('Failed to save settings:', err);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Failed to save settings:', errorMessage);
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);

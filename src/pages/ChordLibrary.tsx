@@ -290,6 +290,22 @@ export default function ChordLibrary() {
     setDetailModalIndex(index);
   };
 
+  const handleNextChord = () => {
+    if (detailModalIndex < filteredChords.length - 1) {
+      const nextIndex = detailModalIndex + 1;
+      setDetailModalIndex(nextIndex);
+      setDetailModalChord(filteredChords[nextIndex]);
+    }
+  };
+
+  const handlePreviousChord = () => {
+    if (detailModalIndex > 0) {
+      const prevIndex = detailModalIndex - 1;
+      setDetailModalIndex(prevIndex);
+      setDetailModalChord(filteredChords[prevIndex]);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -466,6 +482,8 @@ export default function ChordLibrary() {
           chord={detailModalChord}
           isOpen={!!detailModalChord}
           onClose={() => setDetailModalChord(null)}
+          onNext={handleNextChord}
+          onPrevious={handlePreviousChord}
           currentIndex={detailModalIndex}
           totalChords={filteredChords.length}
         />

@@ -1,4 +1,4 @@
-import { X, Hand, Edit, Volume2 } from 'lucide-react';
+import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChordData } from '@/types/chord';
 
 interface ChordDetailModalProps {
@@ -7,6 +7,8 @@ interface ChordDetailModalProps {
   onClose: () => void;
   onPlay?: () => void;
   onEdit?: () => void;
+  onNext?: () => void;
+  onPrevious?: () => void;
   currentIndex?: number;
   totalChords?: number;
 }
@@ -20,9 +22,13 @@ export default function ChordDetailModal({
   onClose,
   onPlay,
   onEdit,
+  onNext,
+  onPrevious,
   currentIndex = 0,
   totalChords = 0,
 }: ChordDetailModalProps) {
+  const canGoNext = currentIndex < totalChords - 1;
+  const canGoPrevious = currentIndex > 0;
   if (!isOpen) return null;
 
   // Calculate which strings are muted, open, or fretted
@@ -272,8 +278,30 @@ export default function ChordDetailModal({
 
           {/* Pagination */}
           {totalChords > 0 && (
-            <div className="px-6 pb-3 text-center text-xs text-zinc-500">
-              {currentIndex + 1} / {totalChords}
+            <div className="px-6 pb-3">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={onPrevious}
+                  disabled={!canGoPrevious}
+                  className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Previous chord"
+                >
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                </button>
+                
+                <div className="text-center text-sm text-zinc-400">
+                  <span className="font-bold text-white">{currentIndex + 1}</span> / {totalChords}
+                </div>
+                
+                <button
+                  onClick={onNext}
+                  disabled={!canGoNext}
+                  className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Next chord"
+                >
+                  <ChevronRight className="w-5 h-5 text-white" />
+                </button>
+              </div>
             </div>
           )}
 

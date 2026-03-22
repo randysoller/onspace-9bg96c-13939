@@ -29,6 +29,16 @@ import {
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
+// Practice Session Constants
+const MILESTONE_CELEBRATION_DURATION_MS = 3000;
+const CONFETTI_ANIMATION_DURATION_MS = 1000;
+const CONFETTI_PARTICLE_COUNT = 20;
+const PROGRESS_MILESTONE_50_PERCENT = 50;
+const PROGRESS_MILESTONE_75_PERCENT = 75;
+const MS_TO_SECONDS_DIVISOR = 1000;
+const MS_TO_MINUTES_DIVISOR = 60000;
+const STREAK_THRESHOLD = 3;
+
 export default function Practice() {
   const navigate = useNavigate();
   const { practiceChords, currentChordIndex, showDiagrams, nextChord, previousChord } = usePracticeStore();
@@ -70,31 +80,31 @@ export default function Practice() {
         
         // Show confetti animation
         setShowConfetti(true);
-        setTimeout(() => setShowConfetti(false), 1000);
+        setTimeout(() => setShowConfetti(false), CONFETTI_ANIMATION_DURATION_MS);
         
         // Check for milestones
         const progress = ((currentChordIndex + 1) / practiceChords.length) * 100;
         const progressMilestone = Math.floor(progress);
         
-        if (progressMilestone === 50 && !shownMilestones.has(50)) {
+        if (progressMilestone === PROGRESS_MILESTONE_50_PERCENT && !shownMilestones.has(PROGRESS_MILESTONE_50_PERCENT)) {
           setMilestoneText('Halfway there! 💪');
           setShowMilestone(true);
-          setShownMilestones(prev => new Set(prev).add(50));
-          setTimeout(() => setShowMilestone(false), 3000);
+          setShownMilestones(prev => new Set(prev).add(PROGRESS_MILESTONE_50_PERCENT));
+          setTimeout(() => setShowMilestone(false), MILESTONE_CELEBRATION_DURATION_MS);
         }
-        if (progressMilestone === 75 && !shownMilestones.has(75)) {
+        if (progressMilestone === PROGRESS_MILESTONE_75_PERCENT && !shownMilestones.has(PROGRESS_MILESTONE_75_PERCENT)) {
           setMilestoneText('Almost done! 🎯');
           setShowMilestone(true);
-          setShownMilestones(prev => new Set(prev).add(75));
-          setTimeout(() => setShowMilestone(false), 3000);
+          setShownMilestones(prev => new Set(prev).add(PROGRESS_MILESTONE_75_PERCENT));
+          setTimeout(() => setShowMilestone(false), MILESTONE_CELEBRATION_DURATION_MS);
         }
         
         // Check for personal best
         if (attempt.timeMs && (personalBest === null || attempt.timeMs < personalBest)) {
           setPersonalBest(attempt.timeMs);
-          setMilestoneText(`New Record! ${(attempt.timeMs / 1000).toFixed(1)}s 🏆`);
+          setMilestoneText(`New Record! ${(attempt.timeMs / MS_TO_SECONDS_DIVISOR).toFixed(1)}s 🏆`);
           setShowMilestone(true);
-          setTimeout(() => setShowMilestone(false), 3000);
+          setTimeout(() => setShowMilestone(false), MILESTONE_CELEBRATION_DURATION_MS);
         }
       }
     },
@@ -176,7 +186,7 @@ export default function Practice() {
           total_chords: summary.totalCorrect + summary.totalSkipped,
           correct_chords: summary.totalCorrect,
           accuracy: summary.accuracyRate,
-          duration_seconds: Math.floor(summary.totalDurationMs / 1000),
+          duration_seconds: Math.floor(summary.totalDurationMs / MS_TO_SECONDS_DIVISOR),
           practice_mode: 'single',
         });
 
@@ -238,11 +248,12 @@ export default function Practice() {
           } else if (goal.target_type === 'accuracy' && summary.accuracyRate >= goal.target_value) {
             await goalsApi.updateGoalProgress(goal.id, goal.target_value - goal.current_value);
           } else if (goal.target_type === 'minutes') {
-            await goalsApi.updateGoalProgress(goal.id, Math.floor(summary.totalDurationMs / 60000));
+            await goalsApi.updateGoalProgress(goal.id, Math.floor(summary.totalDurationMs / MS_TO_MINUTES_DIVISOR));
           }
         }
-      } catch (err) {
-        console.error('Failed to save session to database:', err);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        console.error('Failed to save session to database:', errorMessage);
       } finally {
         setSavingSession(false);
       }
@@ -302,7 +313,7 @@ export default function Practice() {
               </div>
             )}
             
-            {correctStreak >= 3 && (
+            {correctStreak >= STREAK_THRESHOLD && (
               <div className="flex items-center gap-1.5 animate-pulse">
                 <Flame className="w-4 h-4 text-orange-500" />
                 <span className="text-sm font-bold text-orange-500">
@@ -317,7 +328,7 @@ export default function Practice() {
             <div className="flex items-center gap-2 text-xs text-zinc-500">
               <Clock className="w-3.5 h-3.5" />
               <span>
-                ~{Math.ceil((practiceChords.length - currentChordIndex - 1) * getSummary().avgResponseTimeMs / 1000 / 60)}m remaining
+                ~{Math.ceil((practiceChords.length - currentChordIndex - 1) * getSummary().avgResponseTimeMs / MS_TO_SECONDS_DIVISOR / 60)}m remaining
               </span>
             </div>
           )}
@@ -469,9 +480,9 @@ export default function Practice() {
       {/* Confetti Animation */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-40">
-          {[...Array(20)].map((_, i) => (
+          {[...Array(CONFETTI_PARTICLE_COUNT)].map((_, i) => (
             <div
-              key={i}
+              key={`confetti-${i}`}
               className="absolute w-2 h-2 bg-amber-500 animate-ping"
               style={{
                 left: `${Math.random() * 100}%`,
@@ -696,11 +707,11 @@ export default function Practice() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-400">Avg Response</span>
-                <span className="text-lg font-bold text-amber-500">{(getSummary().avgResponseTimeMs / 1000).toFixed(1)}s</span>
+                <span className="text-lg font-bold text-amber-500">{(getSummary().avgResponseTimeMs / MS_TO_SECONDS_DIVISOR).toFixed(1)}s</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-400">Total Time</span>
-                <span className="text-lg font-bold text-white">{(getSummary().totalDurationMs / 1000 / 60).toFixed(1)}m</span>
+                <span className="text-lg font-bold text-white">{(getSummary().totalDurationMs / MS_TO_SECONDS_DIVISOR / 60).toFixed(1)}m</span>
               </div>
             </div>
             <button

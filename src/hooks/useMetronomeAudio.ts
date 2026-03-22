@@ -10,6 +10,7 @@ export const useMetronomeAudio = () => {
     currentBeat, 
     soundType, 
     accentFirstBeat,
+    subdivision,
     incrementBeat,
     setCurrentBeat,
   } = useMetronomeStore();
@@ -269,19 +270,26 @@ export const useMetronomeAudio = () => {
     if (!context) return;
 
     const now = context.currentTime;
-    const interval = 60 / bpm;
+    
+    // Calculate interval based on subdivision
+    let subdivisionMultiplier = 1;
+    if (subdivision === 'eighth') subdivisionMultiplier = 2;
+    if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
+    
+    const interval = 60 / (bpm * subdivisionMultiplier);
 
     // Schedule next beat
     if (nextBeatTimeRef.current <= now) {
       nextBeatTimeRef.current = now + interval;
     }
 
+    // First beat of the measure gets accent
     const isAccent = accentFirstBeat && currentBeat === 0;
     playClick(isAccent);
     
     // Increment beat for next time
     incrementBeat();
-  }, [bpm, currentBeat, accentFirstBeat, playClick, incrementBeat]);
+  }, [bpm, currentBeat, accentFirstBeat, subdivision, playClick, incrementBeat]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -295,8 +303,13 @@ export const useMetronomeAudio = () => {
       // Initial beat
       scheduleBeat();
 
+      // Calculate interval based on subdivision
+      let subdivisionMultiplier = 1;
+      if (subdivision === 'eighth') subdivisionMultiplier = 2;
+      if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
+      
       // Schedule subsequent beats
-      const interval = (60 / bpm) * 1000; // Convert to milliseconds
+      const interval = (60 / (bpm * subdivisionMultiplier)) * 1000; // Convert to milliseconds
       intervalRef.current = window.setInterval(() => {
         scheduleBeat();
       }, interval);
@@ -314,7 +327,7 @@ export const useMetronomeAudio = () => {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, bpm, scheduleBeat, setCurrentBeat]);
+  }, [isPlaying, bpm, subdivision, scheduleBeat, setCurrentBeat]);
 
   return {
     playClick,

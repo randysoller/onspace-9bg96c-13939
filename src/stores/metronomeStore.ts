@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export type MetronomeSound = 'click' | 'woodBlock' | 'hiHat' | 'sideStick' | 'voice';
+export type SubdivisionType = 'quarter' | 'eighth' | 'sixteenth';
 
 interface MetronomeStore {
   isPlaying: boolean;
@@ -11,6 +12,7 @@ interface MetronomeStore {
   currentBeat: number;
   soundType: MetronomeSound;
   accentFirstBeat: boolean;
+  subdivision: SubdivisionType;
   
   setIsPlaying: (playing: boolean) => void;
   setBpm: (bpm: number) => void;
@@ -19,6 +21,7 @@ interface MetronomeStore {
   setCurrentBeat: (beat: number) => void;
   setSoundType: (sound: MetronomeSound) => void;
   setAccentFirstBeat: (accent: boolean) => void;
+  setSubdivision: (subdivision: SubdivisionType) => void;
   incrementBeat: () => void;
 }
 
@@ -32,6 +35,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       currentBeat: 0,
       soundType: 'click',
       accentFirstBeat: true,
+      subdivision: 'quarter',
       
       setIsPlaying: (playing) => set({ isPlaying: playing }),
       setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(250, bpm)) }),
@@ -40,6 +44,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setCurrentBeat: (beat) => set({ currentBeat: beat }),
       setSoundType: (sound) => set({ soundType: sound }),
       setAccentFirstBeat: (accent) => set({ accentFirstBeat: accent }),
+      setSubdivision: (subdivision) => set({ subdivision }),
       incrementBeat: () => set((state) => ({
         currentBeat: (state.currentBeat + 1) % state.beatsPerMeasure
       })),

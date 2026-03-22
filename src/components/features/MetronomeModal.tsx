@@ -1,4 +1,4 @@
-import { Music, X, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Music, X, Play, Square, Volume2, VolumeX } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
@@ -13,11 +13,13 @@ export default function MetronomeModal() {
     currentBeat,
     soundType,
     accentFirstBeat,
+    subdivision,
     setIsPlaying,
     setBpm,
     setBeatsPerMeasure,
     setSoundType,
     setAccentFirstBeat,
+    setSubdivision,
   } = useMetronomeStore();
   const { metronomeVolume, setMetronomeVolume } = useAudioStore();
   
@@ -38,7 +40,7 @@ export default function MetronomeModal() {
     return 'Prestissimo';
   };
 
-  const quickTempos = [60, 80, 100, 120, 140, 160];
+  const quickTempos = [40, 60, 80, 100, 120, 140, 180];
   const timeSignatures = [2, 3, 4, 6];
   const sounds: Array<{ value: typeof soundType; label: string }> = [
     { value: 'click', label: 'Click' },
@@ -118,12 +120,12 @@ export default function MetronomeModal() {
               </div>
 
               {/* Quick Tempo Buttons */}
-              <div className="grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-7 gap-2">
                 {quickTempos.map((t) => (
                   <button
                     key={t}
                     onClick={() => setBpm(t)}
-                    className={`py-2 px-3 rounded font-bold text-sm transition-all ${
+                    className={`py-2 px-2 rounded font-bold text-sm transition-all ${
                       bpm === t
                         ? 'bg-amber-500 text-zinc-950'
                         : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
@@ -179,6 +181,45 @@ export default function MetronomeModal() {
               </div>
             </div>
 
+            {/* Subdivision */}
+            <div>
+              <div className="mb-3">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">Subdivision</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setSubdivision('quarter')}
+                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                    subdivision === 'quarter'
+                      ? 'bg-amber-500 text-zinc-950'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                  }`}
+                >
+                  ♩ Quarter
+                </button>
+                <button
+                  onClick={() => setSubdivision('eighth')}
+                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                    subdivision === 'eighth'
+                      ? 'bg-amber-500 text-zinc-950'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                  }`}
+                >
+                  ♪ Eighth
+                </button>
+                <button
+                  onClick={() => setSubdivision('sixteenth')}
+                  className={`py-2.5 rounded font-semibold text-sm transition-all ${
+                    subdivision === 'sixteenth'
+                      ? 'bg-amber-500 text-zinc-950'
+                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                  }`}
+                >
+                  ♬ Sixteenth
+                </button>
+              </div>
+            </div>
+
             {/* Accent First Beat */}
             <div>
               <div className="flex items-center justify-between">
@@ -219,16 +260,20 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Play Button */}
+            {/* Play/Stop Button */}
             <div>
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-600/20"
+                className={`w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+                  isPlaying
+                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
+                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+                }`}
               >
                 {isPlaying ? (
                   <>
-                    <Pause className="w-5 h-5" fill="currentColor" />
-                    Pause
+                    <Square className="w-5 h-5" fill="currentColor" />
+                    Stop
                   </>
                 ) : (
                   <>

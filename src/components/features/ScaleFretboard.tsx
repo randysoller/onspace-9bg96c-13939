@@ -14,17 +14,16 @@ export const ScaleFretboard = ({
   showName = true 
 }: ScaleFretboardProps) => {
   const dimensions = {
-    sm: { width: 120, height: 280, fretHeight: 20, stringSpacing: 20 },
-    md: { width: 180, height: 420, fretHeight: 32, stringSpacing: 30 },
-    lg: { width: 240, height: 560, fretHeight: 45, stringSpacing: 40 },
+    sm: { width: 180, height: 340, fretHeight: 25, stringSpacing: 28, padding: 35 },
+    md: { width: 240, height: 460, fretHeight: 35, stringSpacing: 38, padding: 45 },
+    lg: { width: 300, height: 580, fretHeight: 45, stringSpacing: 48, padding: 55 },
   };
 
-  const { width, height, fretHeight, stringSpacing } = dimensions[size];
+  const { width, height, fretHeight, stringSpacing, padding } = dimensions[size];
   const numStrings = 6;
   const numFrets = 12;
-  const padding = 30;
 
-  // Standard guitar tuning (E A D G B E)
+  // Standard guitar tuning (E A D G B E) - low to high
   const stringTuning = ['E', 'B', 'G', 'D', 'A', 'E'];
   const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   
@@ -57,17 +56,46 @@ export const ScaleFretboard = ({
 
   const scalePositions = getScalePositions();
 
+  // Calculate dot/diamond sizes to match chord diagrams
+  const dotRadius = size === 'sm' ? 10 : size === 'md' ? 13 : 15;
+  const diamondSize = size === 'sm' ? 12 : size === 'md' ? 15 : 17;
+  const openStringRadius = size === 'sm' ? 5 : size === 'md' ? 6 : 7;
+
   return (
     <div className="flex flex-col items-center">
       {showName && (
-        <div className="text-center mb-4">
-          <h3 className="text-2xl font-bold text-cyan-500">
+        <div className="text-center mb-6">
+          <h3 className="text-3xl font-bold text-cyan-500">
             {rootNote} {scaleName}
           </h3>
         </div>
       )}
 
       <svg width={width} height={height} className="select-none">
+        {/* Nut (thick top line) */}
+        <rect 
+          x={padding} 
+          y={padding} 
+          width={(numStrings - 1) * stringSpacing} 
+          height="4" 
+          fill="currentColor" 
+          className="text-zinc-200" 
+        />
+
+        {/* Frets (horizontal lines) */}
+        {Array.from({ length: numFrets }).map((_, i) => (
+          <line
+            key={`fret-${i + 1}`}
+            x1={padding}
+            y1={padding + (i + 1) * fretHeight}
+            x2={padding + (numStrings - 1) * stringSpacing}
+            y2={padding + (i + 1) * fretHeight}
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="text-zinc-200"
+          />
+        ))}
+
         {/* Strings (vertical lines) */}
         {Array.from({ length: numStrings }).map((_, i) => (
           <line
@@ -77,102 +105,89 @@ export const ScaleFretboard = ({
             x2={padding + i * stringSpacing}
             y2={padding + numFrets * fretHeight}
             stroke="currentColor"
-            strokeWidth="2"
-            className="text-zinc-600"
+            strokeWidth="2.5"
+            className="text-zinc-200"
           />
         ))}
 
-        {/* Frets (horizontal lines) */}
-        {Array.from({ length: numFrets + 1 }).map((_, i) => (
-          <line
-            key={`fret-${i}`}
-            x1={padding}
-            y1={padding + i * fretHeight}
-            x2={padding + (numStrings - 1) * stringSpacing}
-            y2={padding + i * fretHeight}
-            stroke="currentColor"
-            strokeWidth={i === 0 ? '4' : '2'}
-            className="text-zinc-600"
-          />
-        ))}
-
-        {/* Fret markers (dots at 3, 5, 7, 9, 12) */}
+        {/* Fret markers (dots at 3, 5, 7, 9) */}
         {[3, 5, 7, 9].map(fret => (
           <circle
             key={`marker-${fret}`}
-            cx={width / 2}
+            cx={padding + ((numStrings - 1) * stringSpacing) / 2}
             cy={padding + (fret - 0.5) * fretHeight}
-            r="3"
+            r="4"
             fill="currentColor"
             className="text-zinc-700"
           />
         ))}
         {/* Double dots at 12th fret */}
         <circle
-          cx={width / 2 - 8}
+          cx={padding + ((numStrings - 1) * stringSpacing) / 2 - 12}
           cy={padding + (12 - 0.5) * fretHeight}
-          r="3"
+          r="4"
           fill="currentColor"
           className="text-zinc-700"
         />
         <circle
-          cx={width / 2 + 8}
+          cx={padding + ((numStrings - 1) * stringSpacing) / 2 + 12}
           cy={padding + (12 - 0.5) * fretHeight}
-          r="3"
+          r="4"
           fill="currentColor"
           className="text-zinc-700"
         />
 
-        {/* Scale positions */}
-        {scalePositions.map((pos, idx) => {
-          if (pos.fret === 0) {
-            // Open string - green circle outline
-            return (
-              <circle
-                key={`pos-${idx}`}
-                cx={padding + pos.string * stringSpacing}
-                cy={padding - 10}
-                r="6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-emerald-500"
-              />
-            );
-          } else if (pos.isRoot) {
-            // Root note - cyan diamond
+        {/* Open string indicators (above nut) */}
+        {scalePositions
+          .filter(pos => pos.fret === 0)
+          .map((pos, idx) => (
+            <circle
+              key={`open-${idx}`}
+              cx={padding + pos.string * stringSpacing}
+              cy={padding - 12}
+              r={openStringRadius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              className="text-emerald-500"
+            />
+          ))}
+
+        {/* Scale positions (fretted notes only) */}
+        {scalePositions
+          .filter(pos => pos.fret > 0)
+          .map((pos, idx) => {
             const x = padding + pos.string * stringSpacing;
             const y = padding + (pos.fret - 0.5) * fretHeight;
-            const diamondSize = size === 'sm' ? 6 : size === 'md' ? 8 : 10;
 
-            return (
-              <g key={`pos-${idx}`}>
-                <polygon
-                  points={`
-                    ${x},${y - diamondSize}
-                    ${x + diamondSize},${y}
-                    ${x},${y + diamondSize}
-                    ${x - diamondSize},${y}
-                  `}
+            if (pos.isRoot) {
+              // Root note - cyan diamond (matching chord diagrams)
+              return (
+                <g key={`root-${idx}`}>
+                  <path
+                    d={`M ${x} ${y - diamondSize} 
+                        L ${x + diamondSize} ${y} 
+                        L ${x} ${y + diamondSize} 
+                        L ${x - diamondSize} ${y} Z`}
+                    fill="currentColor"
+                    className="text-cyan-500"
+                  />
+                </g>
+              );
+            } else {
+              // Scale note - amber circle (matching chord diagrams)
+              return (
+                <circle
+                  key={`note-${idx}`}
+                  cx={x}
+                  cy={y}
+                  r={dotRadius}
                   fill="currentColor"
-                  className="text-cyan-500"
+                  className="text-amber-500"
                 />
-              </g>
-            );
-          } else {
-            // Scale note - orange dot
-            return (
-              <circle
-                key={`pos-${idx}`}
-                cx={padding + pos.string * stringSpacing}
-                cy={padding + (pos.fret - 0.5) * fretHeight}
-                r={size === 'sm' ? 6 : size === 'md' ? 8 : 10}
-                fill="currentColor"
-                className="text-amber-500"
-              />
-            );
-          }
-        })}
+              );
+            }
+          })}
 
         {/* String labels */}
         {stringTuning.map((note, i) => (
@@ -181,7 +196,7 @@ export const ScaleFretboard = ({
             x={padding + i * stringSpacing}
             y={padding + numFrets * fretHeight + 20}
             fill="currentColor"
-            className="text-xs text-zinc-500"
+            className="text-sm text-zinc-400 font-bold"
             textAnchor="middle"
           >
             {note}
@@ -189,19 +204,19 @@ export const ScaleFretboard = ({
         ))}
       </svg>
 
-      {/* Legend */}
-      <div className="flex items-center gap-4 mt-4 text-xs text-zinc-400">
+      {/* Legend - matching chord practice aesthetics */}
+      <div className="flex items-center gap-6 mt-6 text-xs">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-cyan-500 rotate-45" />
-          <span>Root</span>
+          <div className="w-3.5 h-3.5 rounded-full bg-amber-500" />
+          <span className="text-zinc-400">Scale Note</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500" />
-          <span>Scale Note</span>
+          <div className="w-2.5 h-2.5 rotate-45 bg-cyan-500" />
+          <span className="text-zinc-400">Root Note</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full border-2 border-emerald-500" />
-          <span>Open String</span>
+          <div className="w-3.5 h-3.5 rounded-full border-2 border-emerald-500" />
+          <span className="text-zinc-400">Open String</span>
         </div>
       </div>
     </div>

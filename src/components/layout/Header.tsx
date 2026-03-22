@@ -27,7 +27,7 @@ export const Header = () => {
   const location = useLocation();
   const { user } = useAuthStore();
 
-  const { toggleMetronome } = useMetronomeUIStore();
+  const { toggleMetronome, closeMetronome } = useMetronomeUIStore();
 
   const handleSignOut = async () => {
     try {
@@ -79,6 +79,7 @@ export const Header = () => {
                 <Link
                   key={item.path}
                   to={item.path}
+                  onClick={closeMetronome}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
                     isActive
                       ? 'bg-amber-500/20 text-amber-500'
@@ -111,6 +112,7 @@ export const Header = () => {
                     <Link
                       key={item.path}
                       to={item.path}
+                      onClick={closeMetronome}
                       className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
                         isActive
                           ? 'bg-amber-500/20 text-amber-500'

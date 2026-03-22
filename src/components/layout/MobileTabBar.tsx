@@ -22,7 +22,7 @@ const TuningForkIcon = ({ className }: { className?: string }) => (
 
 export const MobileTabBar = () => {
   const location = useLocation();
-  const { toggleMetronome } = useMetronomeUIStore();
+  const { toggleMetronome, closeMetronome } = useMetronomeUIStore();
 
   return (
     <div 
@@ -45,6 +45,7 @@ export const MobileTabBar = () => {
         {/* Home */}
         <Link
           to="/"
+          onClick={closeMetronome}
           className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
             location.pathname === '/' ? 'text-amber-500' : 'text-zinc-400'
           }`}
@@ -56,6 +57,7 @@ export const MobileTabBar = () => {
         {/* Tuner */}
         <Link
           to="/tuner"
+          onClick={closeMetronome}
           className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
             location.pathname === '/tuner' ? 'text-amber-500' : 'text-zinc-400'
           }`}
@@ -76,6 +78,7 @@ export const MobileTabBar = () => {
         {/* Library */}
         <Link
           to="/library"
+          onClick={closeMetronome}
           className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
             location.pathname === '/library' ? 'text-amber-500' : 'text-zinc-400'
           }`}
@@ -87,6 +90,7 @@ export const MobileTabBar = () => {
         {/* Editor */}
         <Link
           to="/editor"
+          onClick={closeMetronome}
           className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
             location.pathname === '/editor' ? 'text-amber-500' : 'text-zinc-400'
           }`}

@@ -55,8 +55,8 @@ export default function ChordDetailModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-6 py-12">
+        <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200 max-h-full overflow-y-auto">
           {/* Header */}
           <div className="p-6 pb-4 border-b border-zinc-800/50">
             <div className="flex items-start justify-between mb-2">

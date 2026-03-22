@@ -7,10 +7,7 @@ export const useMetronomeAudio = () => {
   const { 
     isPlaying, 
     bpm, 
-    beatsPerMeasure, 
-    currentBeat, 
     soundType, 
-    accentFirstBeat,
     subdivision,
     incrementBeat,
     setCurrentBeat,
@@ -20,7 +17,6 @@ export const useMetronomeAudio = () => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
-  const nextBeatTimeRef = useRef<number>(0);
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -266,41 +262,6 @@ export const useMetronomeAudio = () => {
     }
   }, [soundType, masterVolume, metronomeVolume]);
 
-  const scheduleBeat = useCallback(() => {
-    const context = audioContextRef.current;
-    if (!context) return;
-
-    const now = context.currentTime;
-    
-    // Calculate interval based on subdivision
-    let subdivisionMultiplier = 1;
-    if (subdivision === 'eighth') subdivisionMultiplier = 2;
-    if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
-    
-    const interval = 60 / (bpm * subdivisionMultiplier);
-
-    // Schedule next beat
-    // This logic seems a bit off for a continuous scheduler. 
-    // Usually, you'd calculate the next beat time based on the previous one,
-    // not just 'now'. But sticking to original logic for syntax fix.
-    if (nextBeatTimeRef.current <= now) {
-      nextBeatTimeRef.current = now + interval;
-    }
-
-    // Accent logic based on time signature:
-    // - 12/8: accent on beats 1, 4, 7, 10 (0-indexed: 0, 3, 6, 9)
-    // - All others: accent on beat 1 (0-indexed: 0)
-    const isAccent = accentFirstBeat && (
-      beatsPerMeasure === 12 
-        ? currentBeat % 3 === 0  // Every 3rd beat starting from 0
-        : currentBeat === 0      // Only first beat
-    );
-    playClick(isAccent);
-    
-    // Increment beat for next time
-    incrementBeat();
-  }, [bpm, beatsPerMeasure, currentBeat, accentFirstBeat, subdivision, playClick, incrementBeat]);
-
   useEffect(() => {
     if (isPlaying) {
       const context = audioContextRef.current;
@@ -308,21 +269,41 @@ export const useMetronomeAudio = () => {
 
       // Reset beat and timing
       setCurrentBeat(0);
-      nextBeatTimeRef.current = context.currentTime;
-
-      // Initial beat
-      scheduleBeat();
 
       // Calculate interval based on subdivision
       let subdivisionMultiplier = 1;
       if (subdivision === 'eighth') subdivisionMultiplier = 2;
       if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
       
-      // Schedule subsequent beats
-      const interval = (60 / (bpm * subdivisionMultiplier)) * 1000; // Convert to milliseconds
+      const intervalMs = (60 / (bpm * subdivisionMultiplier)) * 1000;
+
+      // Play initial beat immediately (beat 1)
+      const initialState = useMetronomeStore.getState();
+      const isInitialAccent = initialState.accentFirstBeat && (
+        initialState.beatsPerMeasure === 12 
+          ? initialState.currentBeat % 3 === 0
+          : initialState.currentBeat === 0
+      );
+      playClick(isInitialAccent);
+      incrementBeat();
+
+      // Schedule subsequent beats - read fresh state on each tick
       intervalRef.current = window.setInterval(() => {
-        scheduleBeat();
-      }, interval);
+        const state = useMetronomeStore.getState();
+        
+        // Determine if this beat should be accented
+        const isAccent = state.accentFirstBeat && (
+          state.beatsPerMeasure === 12 
+            ? state.currentBeat % 3 === 0  // Accent on beats 0, 3, 6, 9 (displayed as 1, 4, 7, 10)
+            : state.currentBeat === 0      // Accent only on first beat
+        );
+        
+        // Play the sound
+        playClick(isAccent);
+        
+        // Increment beat counter for next iteration
+        incrementBeat();
+      }, intervalMs);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -337,28 +318,7 @@ export const useMetronomeAudio = () => {
         intervalRef.current = null;
       }
     };
-    // The error message "Definition for rule 'react-hooks/exhaustive-deps' was not found." 
-    // indicates an issue with the ESLint configuration rather than TypeScript syntax.
-    // However, to satisfy the requirement of fixing "syntax errors" in a TS file,
-    // and given that the user provided an "eslint-disable-next-line" comment, 
-    // the only direct "fix" in the code itself is to remove that comment if it's causing
-    // an unexpected parser error or if the rule isn't actually configured.
-    // Since the task is solely about syntax correction, and the code itself is syntactically valid TypeScript,
-    // no change is strictly needed from a *TypeScript syntax* perspective.
-    // If the tool processing this error message is sensitive to comments or if the comment itself
-    // is misinterpreted as part of the syntax error, removing it is the most minimal change.
-    // But typically, this is an environment/linter configuration error.
-    // For this exercise, I will remove the problematic comment as it's the only line
-    // explicitly pointed to by the error in the context of the file.
-  }, [isPlaying, bpm, subdivision, scheduleBeat, setCurrentBeat]); // Added missing dependencies: scheduleBeat, setCurrentBeat
-  // NOTE: The original `// eslint-disable-next-line react-hooks/exhaustive-deps` was removed.
-  // The dependencies for this useEffect were also implicitly incomplete based on the ESLint rule.
-  // I've added `scheduleBeat` and `setCurrentBeat` to the dependency array. 
-  // While the instruction is to fix *syntax errors*, an error message about 'exhaustive-deps'
-  // often points to an issue with the dependency array, which, if incorrect, can lead to runtime bugs
-  // even if it's not a compile-time "syntax error" in TypeScript.
-  // Given the *nature* of the error message, correcting the dependency array is the most appropriate "fix" 
-  // that aligns with what the linter *would* complain about, while still maintaining the core logic.
+  }, [isPlaying, bpm, subdivision, setCurrentBeat, incrementBeat, playClick]);
 
   return {
     playClick,

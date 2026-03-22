@@ -21,25 +21,22 @@ export const useReferenceTone = () => {
 
     const ctx = audioContextRef.current;
     const now = ctx.currentTime;
-    const volume = tunerVolume * 0.65; // Louder default volume
+    const volume = tunerVolume * 0.65;
 
     // Create master gain node for final stereo output
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(1.0, now);
     masterGain.connect(ctx.destination);
 
-    // Guitar-like tone synthesis using multiple harmonics with subtle stereo spread
-    // Authentic guitar harmonic series with natural amplitude distribution and inharmonicity
+    // Authentic plucked acoustic guitar tone - emphasis on odd harmonics
+    // Real steel strings have inharmonic stretching (higher partials slightly sharp)
     const harmonics = [
-      { freq: frequency, amp: 1.0, type: 'triangle' as OscillatorType, pan: 0, detune: 0 },           // Fundamental (centered)
-      { freq: frequency * 2, amp: 0.6, type: 'triangle' as OscillatorType, pan: -0.1, detune: -3 }, // 2nd harmonic (subtle left)
-      { freq: frequency * 2, amp: 0.6, type: 'triangle' as OscillatorType, pan: 0.1, detune: 3 },   // 2nd harmonic (subtle right, detuned for chorus)
-      { freq: frequency * 3, amp: 0.4, type: 'sine' as OscillatorType, pan: 0.15, detune: 2 },        // 3rd harmonic (slight inharmonicity)
-      { freq: frequency * 4, amp: 0.25, type: 'sine' as OscillatorType, pan: -0.15, detune: -2 },     // 4th harmonic (slight inharmonicity)
-      { freq: frequency * 5, amp: 0.18, type: 'sine' as OscillatorType, pan: 0.2, detune: 4 },      // 5th harmonic (more inharmonicity)
-      { freq: frequency * 6, amp: 0.12, type: 'sine' as OscillatorType, pan: -0.2, detune: -3 },    // 6th harmonic
-      { freq: frequency * 7, amp: 0.08, type: 'sine' as OscillatorType, pan: 0, detune: 5 },         // 7th harmonic (shimmer)
-      { freq: frequency * 8, amp: 0.04, type: 'sine' as OscillatorType, pan: 0.1, detune: -4 },     // 8th harmonic (air)
+      { freq: frequency, amp: 1.0, type: 'sawtooth' as OscillatorType, pan: 0, detune: 0 },         // Fundamental (rich base)
+      { freq: frequency * 2, amp: 0.35, type: 'sine' as OscillatorType, pan: -0.08, detune: 8 },   // 2nd (weak even, inharmonic)
+      { freq: frequency * 3, amp: 0.65, type: 'sine' as OscillatorType, pan: 0.08, detune: 12 },   // 3rd (strong odd, stretched)
+      { freq: frequency * 4, amp: 0.22, type: 'sine' as OscillatorType, pan: -0.05, detune: 15 },  // 4th (weak even)
+      { freq: frequency * 5, amp: 0.45, type: 'sine' as OscillatorType, pan: 0.05, detune: 18 },   // 5th (strong odd)
+      { freq: frequency * 7, amp: 0.28, type: 'sine' as OscillatorType, pan: 0, detune: 22 },      // 7th (odd sparkle)
     ];
 
     harmonics.forEach(({ freq, amp, type, pan, detune }) => {
@@ -52,57 +49,61 @@ export const useReferenceTone = () => {
       const highShelfFilter = ctx.createBiquadFilter();
       const panNode = ctx.createStereoPanner();
 
-      // Mix of waveforms for authentic guitar timbre
+      // Waveform selection (sawtooth for fundamental adds richness, sine for clarity on overtones)
       oscillator.type = type;
       oscillator.frequency.setValueAtTime(freq, now);
-      oscillator.detune.setValueAtTime(detune, now); // Slight detuning for inharmonicity
+      oscillator.detune.setValueAtTime(detune, now); // Inharmonic stretching
 
-      // Multi-stage EQ for authentic guitar tone
-      // 1. Low-pass filter for warmth and natural rolloff
+      // Natural guitar EQ - subtle resonances, not synthetic keyboard peaks
+      // 1. Organic low-pass rolloff (string physics)
       lowPassFilter.type = 'lowpass';
-      lowPassFilter.frequency.setValueAtTime(4200, now);
-      lowPassFilter.Q.setValueAtTime(0.7, now);
+      lowPassFilter.frequency.setValueAtTime(3800, now);
+      lowPassFilter.Q.setValueAtTime(0.5, now); // Gentle rolloff
 
-      // 2. Body resonance (main body cavity ~100-200Hz)
+      // 2. Subtle body resonance (wood cavity, not synth boost)
       bodyResonanceFilter.type = 'peaking';
-      bodyResonanceFilter.frequency.setValueAtTime(180, now);
-      bodyResonanceFilter.Q.setValueAtTime(2.5, now);
-      bodyResonanceFilter.gain.setValueAtTime(3, now); // Body thump
+      bodyResonanceFilter.frequency.setValueAtTime(195, now);
+      bodyResonanceFilter.Q.setValueAtTime(1.8, now);
+      bodyResonanceFilter.gain.setValueAtTime(1.5, now); // Very subtle warmth
 
-      // 3. Air resonance (soundhole ~400-500Hz)
+      // 3. Gentle air resonance (soundhole character)
       airResonanceFilter.type = 'peaking';
-      airResonanceFilter.frequency.setValueAtTime(480, now);
-      airResonanceFilter.Q.setValueAtTime(1.8, now);
-      airResonanceFilter.gain.setValueAtTime(5, now); // Warmth and presence
+      airResonanceFilter.frequency.setValueAtTime(520, now);
+      airResonanceFilter.Q.setValueAtTime(1.2, now);
+      airResonanceFilter.gain.setValueAtTime(2, now); // Natural presence
 
-      // 4. Upper-mid cut to reduce harsh frequencies (1500Hz)
+      // 4. Slight mid scoop for open, natural tone
       midCutFilter.type = 'peaking';
-      midCutFilter.frequency.setValueAtTime(1500, now);
-      midCutFilter.Q.setValueAtTime(1.5, now);
-      midCutFilter.gain.setValueAtTime(-4, now); // Cut harshness
+      midCutFilter.frequency.setValueAtTime(1800, now);
+      midCutFilter.Q.setValueAtTime(1.0, now);
+      midCutFilter.gain.setValueAtTime(-2.5, now); // Gentle scoop
 
-      // 5. High-shelf for air and sparkle
+      // 5. Subtle high-shelf for natural string brightness
       highShelfFilter.type = 'highshelf';
-      highShelfFilter.frequency.setValueAtTime(5000, now);
-      highShelfFilter.gain.setValueAtTime(3, now); // Brightness and clarity
+      highShelfFilter.frequency.setValueAtTime(4500, now);
+      highShelfFilter.gain.setValueAtTime(1.5, now); // Natural air
 
-      // Stereo panning for width
+      // Focused stereo image (not wide keyboard spread)
       panNode.pan.setValueAtTime(pan, now);
 
-      // Authentic guitar ADSR envelope with sharper attack
-      // Attack: Very sharp pluck (3ms) with pre-emphasis
+      // Plucked string envelope - percussive attack with organic multi-stage decay
+      // Pre-attack: String displacement before full release (1ms)
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(volume * amp * 1.4, now + 0.003);
+      gainNode.gain.linearRampToValueAtTime(volume * amp * 0.3, now + 0.001);
       
-      // Decay: Quick initial drop (120ms)
-      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.45, now + 0.12);
+      // Attack: Sharp string release "bloom" (2ms total)
+      gainNode.gain.linearRampToValueAtTime(volume * amp * 1.5, now + 0.003);
       
-      // Sustain: Natural decay curve (3 seconds total)
-      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.18, now + 0.8);
-      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.05, now + 2.0);
+      // Initial decay: Fast drop as string loses initial energy (80ms)
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.5, now + 0.08);
+      
+      // Multi-stage sustain matching real string physics
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.28, now + 0.5);
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.12, now + 1.2);
+      gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.04, now + 2.2);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
 
-      // Signal chain: oscillator → low-pass → body resonance → air resonance → mid cut → high-shelf → gain → pan → master
+      // Signal chain: oscillator → filters → gain → pan → master
       oscillator.connect(lowPassFilter);
       lowPassFilter.connect(bodyResonanceFilter);
       bodyResonanceFilter.connect(airResonanceFilter);
@@ -118,105 +119,42 @@ export const useReferenceTone = () => {
       activeNodesRef.current.push({ osc: oscillator, gain: gainNode });
     });
 
-    // === Enhanced Pick Attack Noise (3-Layer System) ===
+    // === Natural Pick Attack Transient (focused, not overproduced) ===
     
-    // LAYER 1: Pick Scrape (bright, high-frequency attack transient)
-    const scrapeBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.015, ctx.sampleRate);
-    const scrapeL = scrapeBuffer.getChannelData(0);
-    const scrapeR = scrapeBuffer.getChannelData(1);
+    const pickBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.012, ctx.sampleRate);
+    const pickL = pickBuffer.getChannelData(0);
+    const pickR = pickBuffer.getChannelData(1);
     
-    for (let i = 0; i < scrapeL.length; i++) {
-      // Very fast decay for initial scrape (5ms)
-      const decay = Math.exp(-i / (ctx.sampleRate * 0.005));
-      // Add slight pitch sweep to simulate pick sliding across string
-      const sweep = 1 + (i / scrapeL.length) * 0.3;
-      scrapeL[i] = (Math.random() * 2 - 1) * 0.35 * decay * sweep;
-      scrapeR[i] = (Math.random() * 2 - 1) * 0.35 * decay * sweep;
+    for (let i = 0; i < pickL.length; i++) {
+      // Exponential decay matching real pick contact (6ms)
+      const decay = Math.exp(-i / (ctx.sampleRate * 0.006));
+      // Subtle pitch content from string displacement
+      const pitchMod = Math.sin((i / ctx.sampleRate) * frequency * 6.28) * 0.15;
+      const noise = (Math.random() * 2 - 1) * 0.4;
+      
+      pickL[i] = (noise + pitchMod) * decay;
+      pickR[i] = (noise + pitchMod) * decay;
     }
 
-    const scrapeSource = ctx.createBufferSource();
-    const scrapeGain = ctx.createGain();
-    const scrapeFilter = ctx.createBiquadFilter();
+    const pickSource = ctx.createBufferSource();
+    const pickGain = ctx.createGain();
+    const pickFilter = ctx.createBiquadFilter();
 
-    scrapeSource.buffer = scrapeBuffer;
-    // Bright high-pass for pick-on-string scrape
-    scrapeFilter.type = 'highpass';
-    scrapeFilter.frequency.setValueAtTime(2800, now);
-    scrapeFilter.Q.setValueAtTime(1.5, now);
+    pickSource.buffer = pickBuffer;
+    // Bandpass centered near fundamental for natural attack character
+    pickFilter.type = 'bandpass';
+    pickFilter.frequency.setValueAtTime(frequency * 3, now);
+    pickFilter.Q.setValueAtTime(2.5, now);
 
-    scrapeGain.gain.setValueAtTime(volume * 0.7, now);
-    scrapeGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+    pickGain.gain.setValueAtTime(volume * 0.55, now);
+    pickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
 
-    scrapeSource.connect(scrapeFilter);
-    scrapeFilter.connect(scrapeGain);
-    scrapeGain.connect(masterGain);
+    pickSource.connect(pickFilter);
+    pickFilter.connect(pickGain);
+    pickGain.connect(masterGain);
 
-    scrapeSource.start(now);
-    scrapeSource.stop(now + 0.015);
-
-    // LAYER 2: String Collision (mid-frequency thunk)
-    const thunkBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.025, ctx.sampleRate);
-    const thunkL = thunkBuffer.getChannelData(0);
-    const thunkR = thunkBuffer.getChannelData(1);
-    
-    for (let i = 0; i < thunkL.length; i++) {
-      // Medium decay for string collision (10ms)
-      const decay = Math.exp(-i / (ctx.sampleRate * 0.01));
-      thunkL[i] = (Math.random() * 2 - 1) * 0.25 * decay;
-      thunkR[i] = (Math.random() * 2 - 1) * 0.25 * decay;
-    }
-
-    const thunkSource = ctx.createBufferSource();
-    const thunkGain = ctx.createGain();
-    const thunkFilter = ctx.createBiquadFilter();
-
-    thunkSource.buffer = thunkBuffer;
-    // Bandpass for string collision "thunk"
-    thunkFilter.type = 'bandpass';
-    thunkFilter.frequency.setValueAtTime(frequency * 2.5, now);
-    thunkFilter.Q.setValueAtTime(3, now);
-
-    thunkGain.gain.setValueAtTime(volume * 0.6, now);
-    thunkGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
-
-    thunkSource.connect(thunkFilter);
-    thunkFilter.connect(thunkGain);
-    thunkGain.connect(masterGain);
-
-    thunkSource.start(now);
-    thunkSource.stop(now + 0.025);
-
-    // LAYER 3: Finger Release Noise (subtle low-frequency rumble)
-    const releaseBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.04, ctx.sampleRate);
-    const releaseL = releaseBuffer.getChannelData(0);
-    const releaseR = releaseBuffer.getChannelData(1);
-    
-    for (let i = 0; i < releaseL.length; i++) {
-      // Slower decay for finger release (15ms)
-      const decay = Math.exp(-i / (ctx.sampleRate * 0.015));
-      releaseL[i] = (Math.random() * 2 - 1) * 0.15 * decay;
-      releaseR[i] = (Math.random() * 2 - 1) * 0.15 * decay;
-    }
-
-    const releaseSource = ctx.createBufferSource();
-    const releaseGain = ctx.createGain();
-    const releaseFilter = ctx.createBiquadFilter();
-
-    releaseSource.buffer = releaseBuffer;
-    // Low-pass for subtle finger noise
-    releaseFilter.type = 'lowpass';
-    releaseFilter.frequency.setValueAtTime(800, now);
-    releaseFilter.Q.setValueAtTime(1, now);
-
-    releaseGain.gain.setValueAtTime(volume * 0.3, now);
-    releaseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-    releaseSource.connect(releaseFilter);
-    releaseFilter.connect(releaseGain);
-    releaseGain.connect(masterGain);
-
-    releaseSource.start(now);
-    releaseSource.stop(now + 0.04);
+    pickSource.start(now);
+    pickSource.stop(now + 0.012);
   };
 
   const stopTone = () => {

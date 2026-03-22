@@ -209,10 +209,17 @@ export const useMetronomeAudio = () => {
             predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
           }
           
-          // Per-number latency adjustment:
-          // "One" is a shorter word (1 syllable) and processes faster
-          // Longer numbers like "seven" (2 syllables) or "eleven" (3 syllables) need more compensation
-          const numberAdjustment = beatNumber === 1 ? 0.70 : 1.0; // "One" needs 30% less latency compensation
+          // Per-number latency adjustment based on word length and syllables:
+          // Shorter words process faster and need less latency compensation
+          // "One" (1 syllable, very short) - needs 30% less compensation
+          // "Four" (1 syllable, short) - needs 15% less compensation  
+          // Longer numbers like "seven" (2 syllables) or "eleven" (3 syllables) use full compensation
+          const getNumberAdjustment = (num: number): number => {
+            if (num === 1) return 0.70;  // "One" - very short
+            if (num === 4) return 0.85;  // "Four" - short
+            return 1.0;                   // All other numbers
+          };
+          const numberAdjustment = getNumberAdjustment(beatNumber);
           const totalLatency = audioLatency + (predictedSpeechLatency * numberAdjustment);
           
           // Advanced scheduling: calculate precise trigger time

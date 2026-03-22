@@ -21,7 +21,10 @@ import {
   RotateCcw, 
   BarChart3,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Flame,
+  Trophy,
+  Clock
 } from 'lucide-react';
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
@@ -38,6 +41,11 @@ export default function Practice() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [diagramsOn, setDiagramsOn] = useState(true);
   const [sessionActive, setSessionActive] = useState(false);
+  const [correctStreak, setCorrectStreak] = useState(0);
+  const [showMilestone, setShowMilestone] = useState(false);
+  const [milestoneText, setMilestoneText] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [personalBest, setPersonalBest] = useState<number | null>(null);
 
   const currentChord = practiceChords[currentChordIndex];
 
@@ -49,11 +57,31 @@ export default function Practice() {
     onCorrect: () => {
       setIsRevealed(true);
       if (sessionActive && currentChord) {
-        recordAttempt(
+        const attempt = recordAttempt(
           `${currentChord.root}${currentChord.type !== 'major' ? currentChord.type : ''}`,
           `${currentChord.root} ${currentChord.category}`,
           'correct'
         );
+        
+        // Update streak
+        setCorrectStreak(prev => prev + 1);
+        
+        // Show confetti animation
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 1000);
+        
+        // Check for milestones
+        const progress = ((currentChordIndex + 1) / practiceChords.length) * 100;
+        if (Math.floor(progress) === 50 && !showMilestone) {
+          setMilestoneText('Halfway there! 💪');
+          setShowMilestone(true);
+          setTimeout(() => setShowMilestone(false), 3000);
+        }
+        if (Math.floor(progress) === 75 && !showMilestone) {
+          setMilestoneText('Almost done! 🎯');
+          setShowMilestone(true);
+          setTimeout(() => setShowMilestone(false), 3000);
+        }
       }
     },
   });
@@ -72,6 +100,8 @@ export default function Practice() {
         `${currentChord.root} ${currentChord.category}`,
         'skipped'
       );
+      // Reset streak on skip
+      setCorrectStreak(0);
     }
     setIsRevealed(false);
     resetChordTimer();
@@ -230,6 +260,51 @@ export default function Practice() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
+      {/* Progress Indicator - Sticky at top */}
+      <div className="border-b border-amber-500/20 bg-gradient-to-r from-zinc-950 to-black px-4 py-3">
+        <div className="flex items-center justify-between">
+          {/* Progress Stats */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-bold text-white">
+                {currentChordIndex + 1}/{practiceChords.length}
+              </span>
+              <span className="text-xs text-zinc-500">chords</span>
+            </div>
+            
+            {getSummary().totalCorrect + getSummary().totalSkipped > 0 && (
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="text-sm font-bold text-emerald-500">
+                  {getSummary().accuracyRate.toFixed(0)}%
+                </span>
+                <span className="text-xs text-zinc-500">accuracy</span>
+              </div>
+            )}
+            
+            {correctStreak >= 3 && (
+              <div className="flex items-center gap-1.5 animate-pulse">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-bold text-orange-500">
+                  {correctStreak} streak!
+                </span>
+              </div>
+            )}
+          </div>
+          
+          {/* Time Estimate */}
+          {getSummary().avgResponseTimeMs > 0 && (
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <Clock className="w-3.5 h-3.5" />
+              <span>
+                ~{Math.ceil((practiceChords.length - currentChordIndex - 1) * getSummary().avgResponseTimeMs / 1000 / 60)}m remaining
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Top Control Bar */}
       <div className="border-b border-zinc-800 bg-black px-4 py-3">
         <div className="flex items-center justify-between">
@@ -362,6 +437,33 @@ export default function Practice() {
         <AdvancedDetectionPanel />
         <BeatSyncPanel />
       </div>
+
+      {/* Milestone Celebration */}
+      {showMilestone && (
+        <div className="fixed top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-in fade-in zoom-in duration-500">
+          <div className="bg-gradient-to-r from-amber-600 to-amber-500 text-zinc-950 font-black text-3xl px-8 py-6 rounded-2xl shadow-2xl shadow-amber-500/50">
+            {milestoneText}
+          </div>
+        </div>
+      )}
+
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-40">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-amber-500 animate-ping"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+                animationDuration: `${0.5 + Math.random() * 0.5}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Main Chord Display */}
       <div className="flex items-center justify-center min-h-[calc(100vh-300px)] py-12">

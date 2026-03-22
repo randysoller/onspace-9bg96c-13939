@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, Music2, Shapes, Layers, Play } from 'lucide-react';
+import { Bookmark, Music2, Shapes, Layers, Play, CheckSquare, MousePointer } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { usePracticeStore } from '@/stores/practiceStore';
 
@@ -97,11 +97,39 @@ export default function ChordSetup() {
           </div>
         </div>
 
+        {/* Empty State - No chords selected */}
+        {filteredChords.length === 0 && (
+          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 mb-6 text-center">
+            <div className="mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500/10 rounded-full mb-4">
+                <CheckSquare className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">No Chords Match Your Filters</h3>
+              <p className="text-sm text-zinc-400 max-w-md mx-auto mb-4">
+                Try adjusting your filters above to include more chords, or reset to see all available chords.
+              </p>
+            </div>
+            <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 max-w-sm mx-auto">
+              <div className="flex items-start gap-3 text-left">
+                <MousePointer className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <div className="text-sm font-bold text-white mb-1">Quick Tip</div>
+                  <div className="text-xs text-zinc-400">
+                    Use the filter dropdowns to select specific keys, shapes, or chord types. The count updates in real-time!
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Chords Available Count */}
-        <div className="mb-6">
-          <span className="text-amber-500 font-bold text-sm">{filteredChords.length}</span>
-          <span className="text-zinc-500 text-sm"> chords available</span>
-        </div>
+        {filteredChords.length > 0 && (
+          <div className="mb-6">
+            <span className="text-amber-500 font-bold text-sm">{filteredChords.length}</span>
+            <span className="text-zinc-500 text-sm"> chords available</span>
+          </div>
+        )}
 
         {/* Ready to Practice Panel */}
         <div className="bg-zinc-900/50 border-2 border-amber-500/30 rounded-lg p-6">
@@ -131,7 +159,8 @@ export default function ChordSetup() {
 
           <button
             onClick={handleStartPractice}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-amber-500/20"
+            disabled={filteredChords.length === 0}
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-amber-500/20 disabled:shadow-none"
           >
             <Play className="w-5 h-5" fill="currentColor" />
             START PRACTICE

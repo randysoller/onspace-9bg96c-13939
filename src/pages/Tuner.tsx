@@ -207,19 +207,19 @@ export default function Tuner() {
 
         {/* Title & Tuning Selector */}
         <div className="text-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-black mb-3">
+          <h1 className="text-3xl md:text-4xl font-black mb-1">
             Tune Your <span className="text-amber-500">Guitar</span>
           </h1>
           
           {/* Tuning Selector */}
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-0">
             <Select value={tuning} onValueChange={(value) => setTuning(value as TuningPreset)}>
               <SelectTrigger className="w-[280px] bg-zinc-900 border-zinc-800 text-white">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-zinc-900 border-zinc-800">
                 {(Object.keys(TUNING_PRESETS) as TuningPreset[]).map((key) => (
-                  <SelectItem key={key} value={key} className="text-white hover:bg-zinc-800">
+                  <SelectItem key={key} value={key} className="text-white hover:bg-zinc-800 text-lg">
                     <span className="font-bold">{TUNING_PRESETS[key].name}</span>
                     <span className="text-zinc-500 ml-2">{TUNING_PRESETS[key].notes.join(' ')}</span>
                   </SelectItem>

@@ -18,24 +18,55 @@ export const useMetronomeAudio = () => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
+  const voiceCountUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Initialize voice count utterances (numbers 1-12)
+    if ('speechSynthesis' in window) {
+      for (let i = 1; i <= 12; i++) {
+        const utterance = new SpeechSynthesisUtterance(i.toString());
+        utterance.rate = 1.2; // Slightly faster for metronome context
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        voiceCountUtterancesRef.current.set(i, utterance);
+      }
+    }
+    
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+      // Cancel any ongoing speech
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
       }
       audioContextRef.current?.close();
     };
   }, []);
 
-  const playClick = useCallback((isAccent: boolean = false) => {
+  const playClick = useCallback((isAccent: boolean = false, beatNumber?: number) => {
     const context = audioContextRef.current;
     if (!context) return;
 
     const now = context.currentTime;
     const baseVolume = masterVolume * metronomeVolume;
     const volume = isAccent ? baseVolume * 1.0 : baseVolume * 0.65;
+
+    // Handle voice counting separately using speech synthesis
+    if (soundType === 'voiceCount') {
+      if ('speechSynthesis' in window && beatNumber !== undefined) {
+        const utterance = voiceCountUtterancesRef.current.get(beatNumber);
+        if (utterance) {
+          // Cancel any ongoing speech to prevent overlap
+          window.speechSynthesis.cancel();
+          // Speak the number
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+      return;
+    }
 
     switch (soundType) {
       case 'click': {
@@ -350,7 +381,8 @@ export const useMetronomeAudio = () => {
             ? initialState.currentBeat % 3 === 0  // Beats 1, 4, 7, 10 (indices 0, 3, 6, 9)
             : initialState.currentBeat === 0      // Beat 1 only
       );
-      playClick(isInitialAccent);
+      const initialBeatNumber = initialState.currentBeat + 1;
+      playClick(isInitialAccent, initialBeatNumber);
       // Don't increment yet - let UI show beat 1 first
 
       // Schedule subsequent beats - read fresh state on each tick
@@ -367,8 +399,9 @@ export const useMetronomeAudio = () => {
               ? state.currentBeat % 3 === 0  // Accent on beats 0, 3, 6, 9 (displayed as 1, 4, 7, 10)
               : state.currentBeat === 0      // Accent only on first beat
         );
+        const beatNumber = state.currentBeat + 1;
         
-        playClick(isAccent);
+        playClick(isAccent, beatNumber);
       }, intervalMs);
     } else {
       if (intervalRef.current) {

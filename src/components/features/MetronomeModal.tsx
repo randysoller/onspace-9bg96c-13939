@@ -53,6 +53,7 @@ export default function MetronomeModal() {
     { value: 'hiHat', label: 'Hi-Hat' },
     { value: 'sideStick', label: 'Side Stick' },
     { value: 'voice', label: 'Voice' },
+    { value: 'voiceCount', label: 'Voice Count' },
   ];
 
   if (!isOpen) return null;
@@ -170,7 +171,22 @@ export default function MetronomeModal() {
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Sound</span>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {sounds.map((s) => (
+                {sounds.slice(0, 3).map((s) => (
+                  <button
+                    key={s.value}
+                    onClick={() => setSoundType(s.value)}
+                    className={`py-2 rounded font-semibold text-sm transition-all ${
+                      soundType === s.value
+                        ? 'bg-amber-500 text-zinc-950'
+                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {sounds.slice(3).map((s) => (
                   <button
                     key={s.value}
                     onClick={() => setSoundType(s.value)}

@@ -101,50 +101,98 @@ export const ChordDiagram = ({ chord, size = 'md', showName = true }: ChordDiagr
           );
         })}
 
-        {/* Finger positions */}
+        {/* Muted/Open markers above nut */}
         {chord.frets.map((fret, stringIndex) => {
+          const isRoot = stringIndex === (chord.rootString ?? -1);
+          const openCircleRadius = size === 'sm' ? 5.35 : size === 'md' ? 8.01 : 10.68; // 90% of finger dot, then 10% smaller = 8.91
+          
           if (fret === null || fret === -1) {
-            // Muted string (X)
+            // Muted string - gray X matching fret/string color, same size as open circles
             return (
               <text
                 key={`marker-${stringIndex}`}
                 x={padding + stringIndex * stringSpacing}
                 y={padding - 10}
                 fill="currentColor"
-                className="text-sm text-red-500 font-bold"
+                className="text-zinc-500 font-bold"
                 textAnchor="middle"
+                style={{ fontSize: size === 'sm' ? '14px' : size === 'md' ? '18px' : '24px' }}
               >
-                ×
+                ✕
               </text>
             );
           } else if (fret === 0) {
-            // Open string (O)
-            return (
-              <circle
-                key={`marker-${stringIndex}`}
-                cx={padding + stringIndex * stringSpacing}
-                cy={padding - 10}
-                r="6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-emerald-500"
-              />
-            );
-          } else {
-            // Fretted note
-            const fretPosition = fret - baseFret + 1;
-            return (
-              <circle
-                key={`marker-${stringIndex}`}
-                cx={padding + stringIndex * stringSpacing}
-                cy={padding + (fretPosition - 0.5) * fretHeight}
-                r={size === 'sm' ? 6 : size === 'md' ? 8 : 10}
-                fill="currentColor"
-                className="text-amber-500"
-              />
-            );
+            if (isRoot) {
+              // Open root note - blue diamond border
+              const diamondSize = size === 'sm' ? 7 : size === 'md' ? 10.5 : 14;
+              return (
+                <path
+                  key={`marker-${stringIndex}`}
+                  d={`M ${padding + stringIndex * stringSpacing} ${padding - 10 - diamondSize} 
+                      L ${padding + stringIndex * stringSpacing + diamondSize} ${padding - 10} 
+                      L ${padding + stringIndex * stringSpacing} ${padding - 10 + diamondSize} 
+                      L ${padding + stringIndex * stringSpacing - diamondSize} ${padding - 10} Z`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={size === 'sm' ? '1.5' : size === 'md' ? '2.5' : '3.5'}
+                  className="text-cyan-500"
+                />
+              );
+            } else {
+              // Open string - orange circle border
+              return (
+                <circle
+                  key={`marker-${stringIndex}`}
+                  cx={padding + stringIndex * stringSpacing}
+                  cy={padding - 10}
+                  r={openCircleRadius}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={size === 'sm' ? '1.5' : size === 'md' ? '2.5' : '3.5'}
+                  className="text-amber-500"
+                />
+              );
+            }
           }
+          return null;
+        })}
+
+        {/* Finger positions on fretboard */}
+        {chord.frets.map((fret, stringIndex) => {
+          if (fret > 0) {
+            const isRoot = stringIndex === (chord.rootString ?? -1);
+            const fretPosition = fret - baseFret + 1;
+            const fingerDotRadius = size === 'sm' ? 6 : size === 'md' ? 9 : 12;
+            
+            if (isRoot) {
+              // Root note - cyan diamond
+              const diamondSize = size === 'sm' ? 9 : size === 'md' ? 13.5 : 18;
+              return (
+                <path
+                  key={`marker-${stringIndex}`}
+                  d={`M ${padding + stringIndex * stringSpacing} ${padding + (fretPosition - 0.5) * fretHeight - diamondSize} 
+                      L ${padding + stringIndex * stringSpacing + diamondSize} ${padding + (fretPosition - 0.5) * fretHeight} 
+                      L ${padding + stringIndex * stringSpacing} ${padding + (fretPosition - 0.5) * fretHeight + diamondSize} 
+                      L ${padding + stringIndex * stringSpacing - diamondSize} ${padding + (fretPosition - 0.5) * fretHeight} Z`}
+                  fill="currentColor"
+                  className="text-cyan-500"
+                />
+              );
+            } else {
+              // Regular finger dot - amber circle
+              return (
+                <circle
+                  key={`marker-${stringIndex}`}
+                  cx={padding + stringIndex * stringSpacing}
+                  cy={padding + (fretPosition - 0.5) * fretHeight}
+                  r={fingerDotRadius}
+                  fill="currentColor"
+                  className="text-amber-500"
+                />
+              );
+            }
+          }
+          return null;
         })}
       </svg>
     </div>

@@ -181,7 +181,7 @@ export default function Tuner() {
   const noteNameOnly = displayedNote ? displayedNote.replace(/[0-9]/g, '') : '';
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24">
+    <div className="bg-black text-white min-h-[calc(100vh-8rem)]">
       <div className="container mx-auto px-4 py-4 max-w-3xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">

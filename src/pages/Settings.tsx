@@ -160,8 +160,8 @@ export default function Settings() {
               <Slider
                 value={[metronomeStore.bpm]}
                 onValueChange={([value]) => metronomeStore.setBpm(value)}
-                min={40}
-                max={240}
+                min={20}
+                max={250}
                 step={1}
                 className="w-full"
               />

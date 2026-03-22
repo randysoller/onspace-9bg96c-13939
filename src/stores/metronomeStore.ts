@@ -34,7 +34,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       accentFirstBeat: true,
       
       setIsPlaying: (playing) => set({ isPlaying: playing }),
-      setBpm: (bpm) => set({ bpm: Math.max(30, Math.min(300, bpm)) }),
+      setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(250, bpm)) }),
       setBeatsPerMeasure: (beats) => set({ beatsPerMeasure: beats }),
       setTimeSignature: (beats, noteValue) => set({ beatsPerMeasure: beats, noteValue }),
       setCurrentBeat: (beat) => set({ currentBeat: beat }),

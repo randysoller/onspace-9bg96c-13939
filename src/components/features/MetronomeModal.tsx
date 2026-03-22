@@ -25,7 +25,7 @@ export default function MetronomeModal() {
   useMetronomeAudio();
 
   const handleTempoChange = (newTempo: number) => {
-    setBpm(Math.max(30, Math.min(300, newTempo)));
+    setBpm(Math.max(20, Math.min(250, newTempo)));
   };
 
   const getTempoLabel = (tempo: number): string => {
@@ -101,8 +101,8 @@ export default function MetronomeModal() {
                 <div className="flex-1 relative">
                   <input
                     type="range"
-                    min="30"
-                    max="300"
+                    min="20"
+                    max="250"
                     value={bpm}
                     onChange={(e) => handleTempoChange(Number(e.target.value))}
                     className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"

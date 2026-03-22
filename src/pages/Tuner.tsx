@@ -189,7 +189,7 @@ export default function Tuner() {
     <div className="bg-black text-white min-h-[calc(100vh-8rem)]">
       <div className="container mx-auto px-4 py-4 max-w-3xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-0">
           <button
             onClick={() => navigate('/')}
             className="p-2 hover:bg-zinc-900 rounded-lg transition-colors"

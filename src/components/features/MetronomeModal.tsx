@@ -112,7 +112,7 @@ export default function MetronomeModal() {
                     max="250"
                     value={bpm}
                     onChange={(e) => handleTempoChange(Number(e.target.value))}
-                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
                   />
                 </div>
                 
@@ -283,7 +283,10 @@ export default function MetronomeModal() {
               
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
-                <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
+                <div className="flex items-center gap-1.5">
+                  <Volume2 className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
+                </div>
               </div>
             </div>
 

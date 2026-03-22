@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { X, Music, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
@@ -22,6 +22,40 @@ export default function Tuner() {
   const detectedFrequency = currentPitch?.frequency || null;
   const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;
   const cents = currentPitch?.cents || 0;
+
+  // Hold note display to prevent flashing when pitch dies out
+  const [displayedNote, setDisplayedNote] = useState<string>('');
+  const noteHoldTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (detectedNote) {
+      // Immediately update to new note
+      setDisplayedNote(detectedNote);
+      
+      // Clear any existing timeout
+      if (noteHoldTimeoutRef.current) {
+        clearTimeout(noteHoldTimeoutRef.current);
+        noteHoldTimeoutRef.current = null;
+      }
+    } else {
+      // When detection stops, hold the last note for 400ms before clearing
+      if (displayedNote && !noteHoldTimeoutRef.current) {
+        noteHoldTimeoutRef.current = window.setTimeout(() => {
+          setDisplayedNote('');
+          noteHoldTimeoutRef.current = null;
+        }, 400);
+      }
+    }
+  }, [detectedNote, displayedNote]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (noteHoldTimeoutRef.current) {
+        clearTimeout(noteHoldTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const currentTuning = TUNING_PRESETS[tuning];
   const strings = currentTuning.notes.map((note, index) => ({
@@ -84,10 +118,10 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Middle bar is 25% taller (60px vs 48px) and 8px thick
+      // Middle bar is 25% taller (75px vs 60px) and 10px thick (2 points thicker than 8px)
       const isMiddleBar = i === centerBar;
-      const barHeight = isMiddleBar ? 'h-[60px]' : 'h-12';
-      const barWidth = isMiddleBar ? 'w-2' : 'w-1.5';
+      const barHeight = isMiddleBar ? 'h-[75px]' : 'h-12';
+      const barWidth = isMiddleBar ? 'w-2.5' : 'w-1.5';
       
       bars.push(
         <div
@@ -114,8 +148,8 @@ export default function Tuner() {
   // Check if note is in tune (within ±5 cents)
   const isInTune = detectedFrequency && Math.abs(cents) <= 5;
   
-  // Extract just the note name without octave (empty string if no detection)
-  const noteNameOnly = detectedNote ? detectedNote.replace(/[0-9]/g, '') : '';
+  // Extract just the note name without octave (use held note for display)
+  const noteNameOnly = displayedNote ? displayedNote.replace(/[0-9]/g, '') : '';
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">

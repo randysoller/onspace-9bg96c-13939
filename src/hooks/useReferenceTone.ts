@@ -23,20 +23,21 @@ export const useReferenceTone = () => {
     const now = ctx.currentTime;
     const volume = tunerVolume * 0.65; // Louder default volume
 
-    // Create stereo merger for width
-    const merger = ctx.createChannelMerger(2);
-    merger.connect(ctx.destination);
+    // Create master gain node for final stereo output
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(1.0, now);
+    masterGain.connect(ctx.destination);
 
-    // Guitar-like tone synthesis using multiple harmonics with stereo spread
+    // Guitar-like tone synthesis using multiple harmonics with subtle stereo spread
     // Authentic guitar harmonic series with natural amplitude distribution
     const harmonics = [
       { freq: frequency, amp: 1.0, type: 'triangle' as OscillatorType, pan: 0, detune: 0 },           // Fundamental (centered)
-      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: -0.15, detune: -3 }, // 2nd harmonic (slight left)
-      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: 0.15, detune: 3 },   // 2nd harmonic (slight right, detuned for chorus)
-      { freq: frequency * 3, amp: 0.3, type: 'sine' as OscillatorType, pan: 0.2, detune: 0 },        // 3rd harmonic (right)
-      { freq: frequency * 4, amp: 0.2, type: 'sine' as OscillatorType, pan: -0.2, detune: 0 },       // 4th harmonic (left)
-      { freq: frequency * 5, amp: 0.15, type: 'sine' as OscillatorType, pan: 0.25, detune: 0 },      // 5th harmonic (right)
-      { freq: frequency * 6, amp: 0.1, type: 'sine' as OscillatorType, pan: -0.25, detune: 0 },      // 6th harmonic (left)
+      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: -0.1, detune: -3 }, // 2nd harmonic (subtle left)
+      { freq: frequency * 2, amp: 0.5, type: 'triangle' as OscillatorType, pan: 0.1, detune: 3 },   // 2nd harmonic (subtle right, detuned for chorus)
+      { freq: frequency * 3, amp: 0.3, type: 'sine' as OscillatorType, pan: 0.15, detune: 0 },        // 3rd harmonic (subtle right)
+      { freq: frequency * 4, amp: 0.2, type: 'sine' as OscillatorType, pan: -0.15, detune: 0 },       // 4th harmonic (subtle left)
+      { freq: frequency * 5, amp: 0.15, type: 'sine' as OscillatorType, pan: 0.2, detune: 0 },      // 5th harmonic (subtle right)
+      { freq: frequency * 6, amp: 0.1, type: 'sine' as OscillatorType, pan: -0.2, detune: 0 },      // 6th harmonic (subtle left)
       { freq: frequency * 7, amp: 0.05, type: 'sine' as OscillatorType, pan: 0, detune: 0 },         // 7th harmonic (shimmer, centered)
     ];
 
@@ -92,14 +93,14 @@ export const useReferenceTone = () => {
       gainNode.gain.exponentialRampToValueAtTime(volume * amp * 0.15, now + 1.0);
       gainNode.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
 
-      // Signal chain: oscillator → low-pass → low-mid boost → upper-mid cut → high-shelf → gain → pan → stereo output
+      // Signal chain: oscillator → low-pass → low-mid boost → upper-mid cut → high-shelf → gain → pan → master output
       oscillator.connect(lowPassFilter);
       lowPassFilter.connect(lowMidBoostFilter);
       lowMidBoostFilter.connect(midCutFilter);
       midCutFilter.connect(highShelfFilter);
       highShelfFilter.connect(gainNode);
       gainNode.connect(panNode);
-      panNode.connect(merger);
+      panNode.connect(masterGain);
 
       oscillator.start(now);
       oscillator.stop(now + 3.0);
@@ -137,7 +138,7 @@ export const useReferenceTone = () => {
     noiseSourceL.connect(noiseFilterL);
     noiseFilterL.connect(noiseGainL);
     noiseGainL.connect(noisePanL);
-    noisePanL.connect(merger);
+    noisePanL.connect(masterGain);
 
     noiseSourceL.start(now);
     noiseSourceL.stop(now + 0.03);
@@ -160,7 +161,7 @@ export const useReferenceTone = () => {
     noiseSourceR.connect(noiseFilterR);
     noiseFilterR.connect(noiseGainR);
     noiseGainR.connect(noisePanR);
-    noisePanR.connect(merger);
+    noisePanR.connect(masterGain);
 
     noiseSourceR.start(now);
     noiseSourceR.stop(now + 0.03);

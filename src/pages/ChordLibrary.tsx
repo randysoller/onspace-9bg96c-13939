@@ -99,13 +99,13 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                   </text>
                 );
               } else if (fret === 0) {
-                // Open - circle
+                // Open - circle (90% of orange dot size: 8 * 0.9 = 7.2)
                 return (
                   <circle
                     key={`marker-${idx}`}
                     cx={10 + idx * 16}
                     cy={7}
-                    r="3.5"
+                    r="7.2"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="1.5"

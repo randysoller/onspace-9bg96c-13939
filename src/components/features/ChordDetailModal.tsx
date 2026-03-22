@@ -139,13 +139,13 @@ export default function ChordDetailModal({
                       </text>
                     );
                   } else if (fret === 0) {
-                    // Open - circle
+                    // Open - circle (90% of orange dot size: 11 * 0.9 = 9.9)
                     return (
                       <circle
                         key={`marker-${idx}`}
                         cx={20 + idx * 24}
                         cy={8}
-                        r="5"
+                        r="9.9"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"

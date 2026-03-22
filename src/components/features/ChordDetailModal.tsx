@@ -136,7 +136,7 @@ export default function ChordDetailModal({
                         dominantBaseline="middle"
                         fill="#71717a"
                         className="font-bold"
-                        style={{ fontSize: '20px' }}
+                        style={{ fontSize: '26px' }}
                       >
                         ✕
                       </text>

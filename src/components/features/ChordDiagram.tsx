@@ -117,7 +117,7 @@ export const ChordDiagram = ({ chord, size = 'md', showName = true }: ChordDiagr
                 className="font-bold"
                 textAnchor="middle"
                 dominantBaseline="middle"
-                style={{ fontSize: size === 'sm' ? '14px' : size === 'md' ? '20px' : '26px' }}
+                style={{ fontSize: size === 'sm' ? '18px' : size === 'md' ? '26px' : '34px' }}
               >
                 ✕
               </text>

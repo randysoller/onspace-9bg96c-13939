@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Music, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
@@ -30,17 +30,38 @@ export default function Tuner() {
     freq: currentTuning.freqs[index],
   }));
 
+  const stringTimeoutRef = useRef<number | null>(null);
+
   const handleStringClick = (stringData: typeof strings[0]) => {
+    // Stop any currently playing tone to prevent overlap
+    stopTone();
+    
+    // Clear any existing timeout
+    if (stringTimeoutRef.current) {
+      clearTimeout(stringTimeoutRef.current);
+    }
+    
     setSelectedString(stringData.number);
     playTone(stringData.freq);
+    
     // Let the tone play its full 3-second duration naturally
-    setTimeout(() => {
+    stringTimeoutRef.current = window.setTimeout(() => {
       setSelectedString(null);
+      stringTimeoutRef.current = null;
     }, 3000);
   };
 
-  // Generate frequency bars (showing pitch deviation)
-  const generateBars = () => {
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (stringTimeoutRef.current) {
+        clearTimeout(stringTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Generate frequency bars (showing pitch deviation) - Memoized for performance
+  const bars = useMemo(() => {
     const bars = [];
     const totalBars = 50;
     const centerBar = 25;
@@ -79,7 +100,7 @@ export default function Tuner() {
     }
     
     return bars;
-  };
+  }, [cents, detectedFrequency]);
 
   // Get note color based on tuning accuracy
   const getNoteColor = () => {
@@ -169,7 +190,7 @@ export default function Tuner() {
 
           {/* Frequency Bars - Always visible with fixed height */}
           <div className="flex items-center justify-center gap-0.5 mb-4" style={{ minHeight: '48px' }}>
-            {generateBars()}
+            {bars}
           </div>
 
           {/* Cents Indicator */}

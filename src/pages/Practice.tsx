@@ -46,6 +46,8 @@ export default function Practice() {
   const [milestoneText, setMilestoneText] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
   const [personalBest, setPersonalBest] = useState<number | null>(null);
+  const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
+  const [savingSession, setSavingSession] = useState(false);
 
   const currentChord = practiceChords[currentChordIndex];
 
@@ -72,13 +74,25 @@ export default function Practice() {
         
         // Check for milestones
         const progress = ((currentChordIndex + 1) / practiceChords.length) * 100;
-        if (Math.floor(progress) === 50 && !showMilestone) {
+        const progressMilestone = Math.floor(progress);
+        
+        if (progressMilestone === 50 && !shownMilestones.has(50)) {
           setMilestoneText('Halfway there! 💪');
           setShowMilestone(true);
+          setShownMilestones(prev => new Set(prev).add(50));
           setTimeout(() => setShowMilestone(false), 3000);
         }
-        if (Math.floor(progress) === 75 && !showMilestone) {
+        if (progressMilestone === 75 && !shownMilestones.has(75)) {
           setMilestoneText('Almost done! 🎯');
+          setShowMilestone(true);
+          setShownMilestones(prev => new Set(prev).add(75));
+          setTimeout(() => setShowMilestone(false), 3000);
+        }
+        
+        // Check for personal best
+        if (attempt.timeMs && (personalBest === null || attempt.timeMs < personalBest)) {
+          setPersonalBest(attempt.timeMs);
+          setMilestoneText(`New Record! ${(attempt.timeMs / 1000).toFixed(1)}s 🏆`);
           setShowMilestone(true);
           setTimeout(() => setShowMilestone(false), 3000);
         }
@@ -122,6 +136,7 @@ export default function Practice() {
   };
 
   const handleEndSession = async () => {
+    setSavingSession(true);
     stopListening();
     endSession();
     const summary = getSummary();
@@ -228,7 +243,11 @@ export default function Practice() {
         }
       } catch (err) {
         console.error('Failed to save session to database:', err);
+      } finally {
+        setSavingSession(false);
       }
+    } else {
+      setSavingSession(false);
     }
   };
 
@@ -646,6 +665,17 @@ export default function Practice() {
         </div>
       </div>
 
+      {/* Saving Session Overlay */}
+      {savingSession && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
+            <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-white font-bold text-lg">Saving your session...</p>
+            <p className="text-zinc-400 text-sm mt-2">Please wait</p>
+          </div>
+        </div>
+      )}
+
       {/* Stats Summary Modal */}
       {showSummary && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -706,7 +736,8 @@ export default function Practice() {
           
           <button 
             onClick={handleEndSession}
-            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors"
+            disabled={savingSession}
+            className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <BarChart3 className="w-4 h-4 text-zinc-400" />
           </button>

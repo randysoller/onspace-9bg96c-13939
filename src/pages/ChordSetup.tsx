@@ -9,22 +9,31 @@ export default function ChordSetup() {
   const { setPracticeChords } = usePracticeStore();
   
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [selectedShapes, setSelectedShapes] = useState<string | null>(null);
-  const [selectedTypes, setSelectedTypes] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string>('All');
+  const [selectedShapes, setSelectedShapes] = useState<string>('All Shapes');
+  const [selectedTypes, setSelectedTypes] = useState<string>('All Types');
 
   // Filter chords based on selections
   const filteredChords = useMemo(() => {
     return CHORD_DATABASE.filter(chord => {
-      if (selectedKey && selectedKey !== 'All' && chord.root !== selectedKey) return false;
-      if (selectedShapes && selectedShapes !== 'All Shapes') {
-        // Add shape filtering logic here if needed
+      // Key filter
+      if (selectedKey !== 'All' && chord.root !== selectedKey) return false;
+      
+      // Shape filter
+      if (selectedShapes !== 'All Shapes') {
+        if (selectedShapes === 'Open' && !chord.frets.includes(0)) return false;
+        if (selectedShapes === 'Barre' && (!chord.barres || chord.barres.length === 0)) return false;
+        if (selectedShapes === 'Movable' && chord.frets.includes(0)) return false;
       }
-      if (selectedTypes && selectedTypes !== 'All Types') {
+      
+      // Type filter
+      if (selectedTypes !== 'All Types') {
         if (selectedTypes === 'Major' && chord.type !== 'major') return false;
         if (selectedTypes === 'Minor' && chord.type !== 'minor') return false;
-        // Add more type filters as needed
+        if (selectedTypes === '7th' && !chord.type.includes('7')) return false;
+        if (selectedTypes === 'Suspended' && !chord.type.includes('sus')) return false;
       }
+      
       return true;
     });
   }, [selectedKey, selectedShapes, selectedTypes]);
@@ -69,31 +78,63 @@ export default function ChordSetup() {
           {/* Filter Row */}
           <div className="grid grid-cols-3 gap-3">
             {/* Chords in a Key */}
-            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
-              <Music2 className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm text-zinc-300 flex-1 text-left">Chords in a Key</span>
-              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="relative">
+              <select
+                value={selectedKey}
+                onChange={(e) => setSelectedKey(e.target.value)}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-sm text-zinc-300 appearance-none cursor-pointer hover:bg-zinc-900 transition-colors"
+              >
+                <option value="All">All Keys</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="G">G</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+              </select>
+              <Music2 className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <svg className="w-3.5 h-3.5 text-zinc-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </div>
 
             {/* All Shapes */}
-            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
-              <Shapes className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm text-zinc-300 flex-1 text-left">All Shapes</span>
-              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="relative">
+              <select
+                value={selectedShapes}
+                onChange={(e) => setSelectedShapes(e.target.value)}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-sm text-zinc-300 appearance-none cursor-pointer hover:bg-zinc-900 transition-colors"
+              >
+                <option value="All Shapes">All Shapes</option>
+                <option value="Open">Open</option>
+                <option value="Barre">Barre</option>
+                <option value="Movable">Movable</option>
+              </select>
+              <Shapes className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <svg className="w-3.5 h-3.5 text-zinc-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </div>
 
             {/* All Types */}
-            <button className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center gap-2 hover:bg-zinc-900 transition-colors">
-              <Layers className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm text-zinc-300 flex-1 text-left">All Types</span>
-              <svg className="w-3.5 h-3.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="relative">
+              <select
+                value={selectedTypes}
+                onChange={(e) => setSelectedTypes(e.target.value)}
+                className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 text-sm text-zinc-300 appearance-none cursor-pointer hover:bg-zinc-900 transition-colors"
+              >
+                <option value="All Types">All Types</option>
+                <option value="Major">Major</option>
+                <option value="Minor">Minor</option>
+                <option value="7th">7th</option>
+                <option value="Suspended">Suspended</option>
+              </select>
+              <Layers className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <svg className="w-3.5 h-3.5 text-zinc-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-            </button>
+            </div>
           </div>
         </div>
 
@@ -140,16 +181,16 @@ export default function ChordSetup() {
 
           <div className="space-y-3 mb-6">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">Category</span>
-              <span className="text-white font-medium">All Chords</span>
+              <span className="text-zinc-500">Key</span>
+              <span className="text-white font-medium">{selectedKey}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Shape</span>
+              <span className="text-white font-medium">{selectedShapes}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Type</span>
-              <span className="text-white font-medium">All Types</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-zinc-500">Key</span>
-              <span className="text-white font-medium">All</span>
+              <span className="text-white font-medium">{selectedTypes}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Available chords</span>

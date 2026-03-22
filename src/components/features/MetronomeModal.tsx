@@ -52,7 +52,6 @@ export default function MetronomeModal() {
     { value: 'woodBlock', label: 'Wood Block' },
     { value: 'hiHat', label: 'Hi-Hat' },
     { value: 'sideStick', label: 'Side Stick' },
-    { value: 'voice', label: 'Voice' },
     { value: 'voiceCount', label: 'Voice Count' },
   ];
 
@@ -185,7 +184,7 @@ export default function MetronomeModal() {
                   </button>
                 ))}
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="grid grid-cols-2 gap-2 mt-2">
                 {sounds.slice(3).map((s) => (
                   <button
                     key={s.value}

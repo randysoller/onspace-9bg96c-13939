@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type MetronomeSound = 'click' | 'woodBlock' | 'hiHat' | 'sideStick' | 'voice' | 'voiceCount';
+export type MetronomeSound = 'click' | 'woodBlock' | 'hiHat' | 'sideStick' | 'voiceCount';
 export type SubdivisionType = 'quarter' | 'eighth' | 'sixteenth';
 
 interface MetronomeStore {

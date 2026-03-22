@@ -496,52 +496,7 @@ export const useMetronomeAudio = () => {
         break;
       }
 
-      case 'voice': {
-        // Vocal "tick" and "tock" using formant synthesis
-        const osc1 = context.createOscillator();
-        const osc2 = context.createOscillator();
-        const osc3 = context.createOscillator();
-        const formant1 = context.createBiquadFilter();
-        const formant2 = context.createBiquadFilter();
-        const gainNode = context.createGain();
 
-        osc1.connect(formant1);
-        osc2.connect(formant1);
-        osc3.connect(formant1);
-        formant1.connect(formant2);
-        formant2.connect(gainNode);
-        gainNode.connect(context.destination);
-
-        // Accent = "TOCK" (lower), normal = "tick" (higher)
-        const baseFreq = isAccent ? 280 : 420;
-        osc1.frequency.setValueAtTime(baseFreq, now);
-        osc2.frequency.setValueAtTime(baseFreq * 2, now);
-        osc3.frequency.setValueAtTime(baseFreq * 3, now);
-        osc1.type = 'sawtooth';
-        osc2.type = 'sawtooth';
-        osc3.type = 'sawtooth';
-
-        // Formant filters for vocal character
-        formant1.type = 'bandpass';
-        formant1.frequency.setValueAtTime(isAccent ? 650 : 1200, now);
-        formant1.Q.setValueAtTime(8, now);
-        
-        formant2.type = 'bandpass';
-        formant2.frequency.setValueAtTime(isAccent ? 1100 : 2400, now);
-        formant2.Q.setValueAtTime(6, now);
-
-        // Quick attack, moderate decay
-        gainNode.gain.setValueAtTime(volume * 0.55, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-        osc1.start(now);
-        osc2.start(now);
-        osc3.start(now);
-        osc1.stop(now + 0.08);
-        osc2.stop(now + 0.08);
-        osc3.stop(now + 0.08);
-        break;
-      }
     }
   }, [soundType, masterVolume, metronomeVolume]);
 

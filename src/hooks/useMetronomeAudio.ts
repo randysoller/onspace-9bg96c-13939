@@ -19,44 +19,117 @@ export const useMetronomeAudio = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
   
-  // Voice counting with latency compensation
+  // Voice counting with advanced latency compensation
   const voiceUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
-  const speechLatencyOffsetRef = useRef<number>(0.15); // Initial estimate: 150ms
+  const speechLatencyOffsetRef = useRef<number>(0.12); // Optimized initial estimate: 120ms
+  const latencyHistoryRef = useRef<number[]>([]); // Track last 10 measurements for predictive modeling
   const lastSpeechStartTimeRef = useRef<number>(0);
   const lastScheduledTimeRef = useRef<number>(0);
   const speechSynthRef = useRef<SpeechSynthesis | null>(null);
+  const optimalVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const isVoiceCalibratedRef = useRef<boolean>(false);
+  const calibrationAttemptsRef = useRef<number>(0);
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     speechSynthRef.current = window.speechSynthesis;
     
+    // Select optimal voice for fastest response
+    const selectOptimalVoice = () => {
+      const voices = speechSynthRef.current?.getVoices() || [];
+      
+      // Priority: Local > English > Fast-sounding names
+      // Local voices typically have lower latency than network voices
+      const preferredVoices = voices.filter(v => 
+        v.localService && 
+        v.lang.startsWith('en')
+      );
+      
+      if (preferredVoices.length > 0) {
+        // Prefer voices with "compact" or "premium" in name (typically faster)
+        const fastVoice = preferredVoices.find(v => 
+          v.name.toLowerCase().includes('compact') || 
+          v.name.toLowerCase().includes('premium') ||
+          v.name.toLowerCase().includes('samantha') // macOS fast voice
+        ) || preferredVoices[0];
+        
+        optimalVoiceRef.current = fastVoice;
+        console.log(`🎯 Selected optimal voice: ${fastVoice.name} (local: ${fastVoice.localService})`);
+      } else if (voices.length > 0) {
+        // Fallback to any English voice
+        const fallbackVoice = voices.find(v => v.lang.startsWith('en')) || voices[0];
+        optimalVoiceRef.current = fallbackVoice;
+        console.log(`⚠️ Using fallback voice: ${fallbackVoice.name}`);
+      }
+    };
+
     // Pre-create and cache SpeechSynthesisUtterance objects for numbers 1-12
     // This reduces per-call overhead and improves timing consistency
     const initVoiceUtterances = () => {
       console.log('🎤 Initializing voice count utterances...');
       
+      // Select best voice first
+      selectOptimalVoice();
+      
       for (let i = 1; i <= 12; i++) {
         const utterance = new SpeechSynthesisUtterance(i.toString());
         
-        // Configure utterance for minimal latency
-        utterance.rate = 1.1;     // Slightly faster for punchier delivery
-        utterance.pitch = 1.0;    // Natural pitch
+        // Configure utterance for minimal latency and punchy delivery
+        utterance.rate = 1.3;     // Faster for more percussive delivery (was 1.1)
+        utterance.pitch = 1.05;   // Slightly higher pitch for clarity
         utterance.volume = 1.0;   // Full volume (controlled by audio store)
         utterance.lang = 'en-US'; // Explicit language for consistency
         
-        // Attach timing measurement callback
+        // Use optimal voice if available
+        if (optimalVoiceRef.current) {
+          utterance.voice = optimalVoiceRef.current;
+        }
+        
+        // Attach timing measurement callback with predictive modeling
         utterance.addEventListener('start', () => {
           const actualStartTime = performance.now();
           const scheduledTime = lastScheduledTimeRef.current;
           const measuredLatency = (actualStartTime - scheduledTime) / 1000; // Convert to seconds
           
-          // Adaptive calibration: adjust offset based on measured latency
-          // Use exponential moving average for stability (70% old, 30% new)
-          if (scheduledTime > 0) {
-            speechLatencyOffsetRef.current = 
-              speechLatencyOffsetRef.current * 0.7 + measuredLatency * 0.3;
+          // Predictive latency modeling with historical data
+          if (scheduledTime > 0 && measuredLatency > 0 && measuredLatency < 1.0) {
+            // Add to history (keep last 10 measurements)
+            latencyHistoryRef.current.push(measuredLatency);
+            if (latencyHistoryRef.current.length > 10) {
+              latencyHistoryRef.current.shift();
+            }
             
-            console.log(`🎯 Latency measurement: ${(measuredLatency * 1000).toFixed(1)}ms | Adjusted offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
+            // Calibration phase: aggressive learning for first 5 measurements
+            calibrationAttemptsRef.current++;
+            const isCalibrating = calibrationAttemptsRef.current <= 5;
+            
+            if (isCalibrating) {
+              // During calibration: use simple average for faster convergence
+              const avgLatency = latencyHistoryRef.current.reduce((a, b) => a + b, 0) / latencyHistoryRef.current.length;
+              speechLatencyOffsetRef.current = avgLatency;
+              console.log(`🎯 Calibration ${calibrationAttemptsRef.current}/5 | Measured: ${(measuredLatency * 1000).toFixed(1)}ms | Avg: ${(avgLatency * 1000).toFixed(1)}ms`);
+              
+              if (calibrationAttemptsRef.current === 5) {
+                isVoiceCalibratedRef.current = true;
+                console.log(`✅ Voice calibration complete! Final offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
+              }
+            } else {
+              // After calibration: use weighted moving average with outlier rejection
+              // Reject measurements that differ by more than 50% from current offset
+              const deviation = Math.abs(measuredLatency - speechLatencyOffsetRef.current) / speechLatencyOffsetRef.current;
+              
+              if (deviation < 0.5) {
+                // Good measurement - use 80/20 EMA (more stable than 70/30)
+                speechLatencyOffsetRef.current = 
+                  speechLatencyOffsetRef.current * 0.8 + measuredLatency * 0.2;
+              } else {
+                console.log(`⚠️ Outlier rejected: ${(measuredLatency * 1000).toFixed(1)}ms (deviation: ${(deviation * 100).toFixed(0)}%)`);
+              }
+            }
+            
+            if (calibrationAttemptsRef.current % 4 === 0) {
+              console.log(`📊 Offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms | History: [${latencyHistoryRef.current.map(l => (l * 1000).toFixed(0)).join(', ')}]ms`);
+            }
           }
           
           lastSpeechStartTimeRef.current = actualStartTime;
@@ -65,21 +138,58 @@ export const useMetronomeAudio = () => {
         voiceUtterancesRef.current.set(i, utterance);
       }
       
-      console.log(`✅ Created ${voiceUtterancesRef.current.size} voice utterances`);
+      console.log(`✅ Created ${voiceUtterancesRef.current.size} voice utterances with ${optimalVoiceRef.current?.name || 'default voice'}`);
       
-      // Pre-warm speech synthesis engine by speaking a dummy utterance at zero volume
-      // This initializes the TTS engine and reduces first-call latency
-      const warmupUtterance = new SpeechSynthesisUtterance('warmup');
-      warmupUtterance.volume = 0; // Silent
-      warmupUtterance.rate = 10;  // Fast to complete quickly
-      
+      // Pre-warm speech synthesis engine with calibration utterances
+      // Speak 3 quick utterances to initialize TTS and get initial latency readings
       if (speechSynthRef.current) {
-        console.log('🔥 Pre-warming speech synthesis engine...');
-        speechSynthRef.current.speak(warmupUtterance);
+        console.log('🔥 Pre-warming speech synthesis engine with calibration...');
         
-        warmupUtterance.addEventListener('end', () => {
-          console.log('✅ Speech synthesis engine ready');
-        });
+        // Warm-up sequence: speak "1" three times to calibrate
+        const warmupNumbers = [1, 1, 1];
+        let warmupIndex = 0;
+        
+        const speakWarmup = () => {
+          if (warmupIndex < warmupNumbers.length) {
+            const warmupUtterance = new SpeechSynthesisUtterance(warmupNumbers[warmupIndex].toString());
+            warmupUtterance.volume = 0.01; // Nearly silent
+            warmupUtterance.rate = 2.0;    // Fast
+            warmupUtterance.lang = 'en-US';
+            
+            if (optimalVoiceRef.current) {
+              warmupUtterance.voice = optimalVoiceRef.current;
+            }
+            
+            // Track timing for calibration
+            const scheduleTime = performance.now();
+            lastScheduledTimeRef.current = scheduleTime;
+            
+            warmupUtterance.addEventListener('start', () => {
+              const startTime = performance.now();
+              const latency = (startTime - scheduleTime) / 1000;
+              latencyHistoryRef.current.push(latency);
+              console.log(`🔥 Warmup ${warmupIndex + 1}/3 latency: ${(latency * 1000).toFixed(1)}ms`);
+            });
+            
+            warmupUtterance.addEventListener('end', () => {
+              warmupIndex++;
+              if (warmupIndex < warmupNumbers.length) {
+                setTimeout(speakWarmup, 100); // Small gap between warmups
+              } else {
+                // Calculate initial offset from warmup measurements
+                if (latencyHistoryRef.current.length > 0) {
+                  const avgLatency = latencyHistoryRef.current.reduce((a, b) => a + b, 0) / latencyHistoryRef.current.length;
+                  speechLatencyOffsetRef.current = avgLatency;
+                  console.log(`✅ Pre-calibration complete! Initial offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms`);
+                }
+              }
+            });
+            
+            speechSynthRef.current?.speak(warmupUtterance);
+          }
+        };
+        
+        speakWarmup();
       }
     };
     
@@ -117,21 +227,33 @@ export const useMetronomeAudio = () => {
         if (utterance) {
           // Calculate total system latency:
           // 1. Web Audio API processing latency (baseLatency + outputLatency)
-          // 2. Empirically measured speech synthesis latency (adaptive)
+          // 2. Empirically measured speech synthesis latency (adaptive with predictive modeling)
           const audioLatency = (context.baseLatency || 0) + (context.outputLatency || 0);
-          const totalLatency = audioLatency + speechLatencyOffsetRef.current;
           
-          // Schedule speech EARLIER by the total latency amount
-          // This compensates for the delay between calling speak() and hearing the sound
-          const targetTime = now - totalLatency;
-          const currentContextTime = context.currentTime;
+          // Predictive compensation: use median of recent measurements if available
+          let predictedSpeechLatency = speechLatencyOffsetRef.current;
+          if (latencyHistoryRef.current.length >= 3) {
+            const sortedHistory = [...latencyHistoryRef.current].sort((a, b) => a - b);
+            const medianIndex = Math.floor(sortedHistory.length / 2);
+            predictedSpeechLatency = sortedHistory[medianIndex]; // Median is more robust to outliers
+          }
           
-          // Use setTimeout with high-resolution timing to trigger speech at the right moment
-          // We schedule relative to performance.now() for sub-millisecond precision
-          const msUntilSpeech = Math.max(0, (targetTime - currentContextTime) * 1000);
+          const totalLatency = audioLatency + predictedSpeechLatency;
           
-          console.log(`🎤 Beat ${beatNumber} | Audio latency: ${(audioLatency * 1000).toFixed(1)}ms | Speech offset: ${(speechLatencyOffsetRef.current * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms`);
+          // Advanced scheduling: calculate precise trigger time
+          // We want speech to START at audioContext.currentTime (the beat)
+          // So we need to trigger it earlier by totalLatency
+          const beatTime = now; // When the beat should sound
+          const triggerTime = beatTime - totalLatency; // When to call speak()
+          const currentTime = context.currentTime;
+          const msUntilSpeech = Math.max(0, (triggerTime - currentTime) * 1000);
           
+          // Log only during calibration or every 4th beat
+          if (!isVoiceCalibratedRef.current || beatNumber % 4 === 1) {
+            console.log(`🎤 Beat ${beatNumber} | Audio: ${(audioLatency * 1000).toFixed(1)}ms | Speech: ${(predictedSpeechLatency * 1000).toFixed(1)}ms | Total: ${(totalLatency * 1000).toFixed(1)}ms | Trigger in: ${msUntilSpeech.toFixed(1)}ms`);
+          }
+          
+          // Use high-precision setTimeout for scheduling
           setTimeout(() => {
             if (speechSynthRef.current) {
               // Record when we trigger speech for latency measurement
@@ -142,8 +264,6 @@ export const useMetronomeAudio = () => {
               
               // Speak the number
               speechSynthRef.current.speak(utterance);
-              
-              console.log(`🔊 Speaking "${beatNumber}" at ${lastScheduledTimeRef.current.toFixed(2)}`);
             }
           }, msUntilSpeech);
         } else {

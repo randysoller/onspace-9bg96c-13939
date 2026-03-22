@@ -27,6 +27,10 @@ export default function Tuner() {
   const [displayedNote, setDisplayedNote] = useState<string>('');
   const noteHoldTimeoutRef = useRef<number | null>(null);
 
+  // Hold in-tune circle to prevent flashing
+  const [showInTuneCircle, setShowInTuneCircle] = useState(false);
+  const inTuneHoldTimeoutRef = useRef<number | null>(null);
+
   useEffect(() => {
     if (detectedNote) {
       // Immediately update to new note
@@ -54,8 +58,33 @@ export default function Tuner() {
       if (noteHoldTimeoutRef.current) {
         clearTimeout(noteHoldTimeoutRef.current);
       }
+      if (inTuneHoldTimeoutRef.current) {
+        clearTimeout(inTuneHoldTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Hold in-tune circle display to prevent flashing
+  useEffect(() => {
+    if (isInTune) {
+      // Immediately show circle when in tune
+      setShowInTuneCircle(true);
+      
+      // Clear any existing timeout
+      if (inTuneHoldTimeoutRef.current) {
+        clearTimeout(inTuneHoldTimeoutRef.current);
+        inTuneHoldTimeoutRef.current = null;
+      }
+    } else {
+      // When out of tune, hold the circle for 400ms before hiding
+      if (showInTuneCircle && !inTuneHoldTimeoutRef.current) {
+        inTuneHoldTimeoutRef.current = window.setTimeout(() => {
+          setShowInTuneCircle(false);
+          inTuneHoldTimeoutRef.current = null;
+        }, 400);
+      }
+    }
+  }, [isInTune, showInTuneCircle]);
 
   const currentTuning = TUNING_PRESETS[tuning];
   const strings = currentTuning.notes.map((note, index) => ({
@@ -201,7 +230,7 @@ export default function Tuner() {
           <div className="text-center mb-6 relative">
             <div className="relative inline-flex items-center justify-center bg-black rounded-2xl px-12 py-8" style={{ minHeight: '180px', minWidth: '200px' }}>
               {/* Circle indicator when in tune */}
-              {isInTune && (
+              {showInTuneCircle && (
                 <div className="absolute inset-4 border-4 border-emerald-500 rounded-full animate-pulse" />
               )}
               

@@ -157,13 +157,18 @@ export default function Tuner() {
       // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Flying saucer shape: tallest in middle (94px - 25% taller), tapering to ends (20px)
-      // Create steep curve - bars get smaller faster away from center
+      // Flying saucer shape: center bar sticks up 25% above and below the saucer
+      // Center bar: 94px (fixed), Saucer max: 70px (25% below center), Edge bars: 20px
       const normalizedDistance = distance / centerBar; // 0 at center, 1 at edges
       const heightMultiplier = 1 - (normalizedDistance * normalizedDistance * 0.85); // Steeper quadratic falloff
-      const maxHeight = 94; // Tallest bar height (25% taller than original 75px)
+      const centerBarHeight = 94; // Center bar height (fixed)
+      const maxSaucerHeight = 70; // Tallest saucer bars (25% below center bar)
       const minHeight = 20; // Shortest bar height at edges
-      const barHeightPx = Math.round(minHeight + (maxHeight - minHeight) * heightMultiplier);
+      
+      // Center bar gets full height, others follow saucer curve
+      const barHeightPx = i === centerBar 
+        ? centerBarHeight 
+        : Math.round(minHeight + (maxSaucerHeight - minHeight) * heightMultiplier);
       
       const isMiddleBar = i === centerBar;
       const barWidth = isMiddleBar ? 'w-2.5' : 'w-1.5';

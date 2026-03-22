@@ -4,6 +4,7 @@ import { useAudioStore } from '@/stores/audioStore';
 export const useReferenceTone = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const activeNodesRef = useRef<Array<{ osc: OscillatorNode; gain: GainNode }>>([]);
+  const activeBufferGainsRef = useRef<GainNode[]>([]); // FIX #2: Track buffer source gains for cleanup
   const { tunerVolume } = useAudioStore();
 
   useEffect(() => {
@@ -153,6 +154,9 @@ export const useReferenceTone = () => {
 
     scrapeSource.start(now);
     scrapeSource.stop(now + 0.015);
+    
+    // FIX #2: Track buffer gain node for cleanup
+    activeBufferGainsRef.current.push(scrapeGain);
 
     // Layer 2: String collision (mid-frequency thunk)
     const thunkBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.025, ctx.sampleRate);
@@ -179,6 +183,9 @@ export const useReferenceTone = () => {
 
     thunkSource.start(now + 0.002);
     thunkSource.stop(now + 0.027);
+    
+    // FIX #2: Track buffer gain node for cleanup
+    activeBufferGainsRef.current.push(thunkGain);
 
     // Layer 3: Finger release rumble (low-frequency body thump)
     const rumbleBuffer = ctx.createBuffer(2, ctx.sampleRate * 0.04, ctx.sampleRate);
@@ -210,13 +217,18 @@ export const useReferenceTone = () => {
 
     rumbleSource.start(now + 0.005);
     rumbleSource.stop(now + 0.045);
+    
+    // FIX #2: Track buffer gain node for cleanup
+    activeBufferGainsRef.current.push(rumbleGain);
   };
 
   const stopTone = () => {
-    if (audioContextRef.current && activeNodesRef.current.length > 0) {
-      const now = audioContextRef.current.currentTime;
-      
-      // Fade out all active nodes
+    if (!audioContextRef.current) return;
+    
+    const now = audioContextRef.current.currentTime;
+    
+    // FIX #2: Fade out all active oscillator nodes
+    if (activeNodesRef.current.length > 0) {
       activeNodesRef.current.forEach(({ osc, gain }) => {
         try {
           gain.gain.cancelScheduledValues(now);
@@ -229,6 +241,21 @@ export const useReferenceTone = () => {
       });
       
       activeNodesRef.current = [];
+    }
+    
+    // FIX #2: Fade out all active buffer source gains (pick attack noise)
+    if (activeBufferGainsRef.current.length > 0) {
+      activeBufferGainsRef.current.forEach((gain) => {
+        try {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        } catch (e) {
+          // Gain may already be disconnected
+        }
+      });
+      
+      activeBufferGainsRef.current = [];
     }
   };
 

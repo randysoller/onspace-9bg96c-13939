@@ -21,12 +21,40 @@ export default function Settings() {
   const detectionStore = useDetectionSettingsStore();
 
   const [saving, setSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // FIX #7: Track unsaved changes
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
     }
   }, [user]);
+
+  // FIX #7: Track changes to settings
+  useEffect(() => {
+    setHasUnsavedChanges(true);
+  }, [
+    audioStore.chordVolume,
+    audioStore.referenceToneVolume,
+    metronomeStore.bpm,
+    metronomeStore.sound,
+    metronomeStore.volume,
+    tunerStore.calibration,
+    detectionStore.sensitivity,
+    detectionStore.noiseGate,
+  ]);
+
+  // FIX #7: Warn user before leaving with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -51,6 +79,7 @@ export default function Settings() {
       });
 
       toast.success('Settings saved successfully');
+      setHasUnsavedChanges(false); // FIX #7: Clear unsaved changes flag
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Failed to save settings:', errorMessage);

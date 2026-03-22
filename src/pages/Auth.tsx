@@ -52,6 +52,7 @@ export default function Auth() {
   const [view, setView] = useState<AuthView>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // FIX #5: Add password confirmation
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
@@ -99,6 +100,12 @@ export default function Auth() {
   const handleVerifyAndRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // FIX #5: Check password confirmation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
     // Validate password strength
     const passwordValidation = validatePasswordStrength(password);
@@ -286,6 +293,23 @@ export default function Auth() {
               <p className="text-xs text-zinc-500 mt-1">
                 Must be {MIN_PASSWORD_LENGTH}+ characters with uppercase, lowercase, and number
               </p>
+            </div>
+
+            {/* FIX #5: Add password confirmation field */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                <Lock className="w-4 h-4 inline mr-2" />
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                placeholder="••••••••"
+              />
             </div>
 
             <button

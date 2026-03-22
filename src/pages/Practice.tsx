@@ -55,7 +55,11 @@ export default function Practice() {
   const [showMilestone, setShowMilestone] = useState(false);
   const [milestoneText, setMilestoneText] = useState('');
   const [showConfetti, setShowConfetti] = useState(false);
-  const [personalBest, setPersonalBest] = useState<number | null>(null);
+  const [personalBest, setPersonalBest] = useState<number | null>(() => {
+    // FIX #3: Load personal best from localStorage on mount
+    const saved = localStorage.getItem('practice_personal_best');
+    return saved ? Number(saved) : null;
+  });
   const [shownMilestones, setShownMilestones] = useState<Set<number>>(new Set());
   const [savingSession, setSavingSession] = useState(false);
 
@@ -99,10 +103,12 @@ export default function Practice() {
           setTimeout(() => setShowMilestone(false), MILESTONE_CELEBRATION_DURATION_MS);
         }
         
-        // Check for personal best
+        // FIX #3: Check for personal best and persist to localStorage
         if (attempt.timeMs && (personalBest === null || attempt.timeMs < personalBest)) {
-          setPersonalBest(attempt.timeMs);
-          setMilestoneText(`New Record! ${(attempt.timeMs / MS_TO_SECONDS_DIVISOR).toFixed(1)}s 🏆`);
+          const newBest = attempt.timeMs;
+          setPersonalBest(newBest);
+          localStorage.setItem('practice_personal_best', String(newBest));
+          setMilestoneText(`New Record! ${(newBest / MS_TO_SECONDS_DIVISOR).toFixed(1)}s 🏆`);
           setShowMilestone(true);
           setTimeout(() => setShowMilestone(false), MILESTONE_CELEBRATION_DURATION_MS);
         }

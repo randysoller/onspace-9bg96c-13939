@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move, Volume2, Library, MousePointer } from 'lucide-react';
+import { Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move, Volume2, Library, MousePointer, Plus, Save } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { ChordData } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { useChordAudio } from '@/hooks/useChordAudio';
+import { usePresetStore } from '@/stores/presetStore'; // FIX #4: Import preset store
+import { toast } from 'sonner'; // FIX #4: Import toast for notifications
 
 const STRINGS = ['E', 'A', 'D', 'G', 'B', 'e'];
 
@@ -248,6 +250,9 @@ export default function ChordLibrary() {
   const [selectedChords, setSelectedChords] = useState<Set<number>>(new Set());
   const [detailModalChord, setDetailModalChord] = useState<ChordData | null>(null);
   const [detailModalIndex, setDetailModalIndex] = useState(0);
+  const [showPresetMenu, setShowPresetMenu] = useState(false); // FIX #4: Show/hide preset menu
+  const [newPresetName, setNewPresetName] = useState(''); // FIX #4: New preset name
+  const { userPresets, createPreset } = usePresetStore(); // FIX #4: Access preset store
 
   // Filter chords based on search and category
   const filteredChords = CHORD_DATABASE.filter((chord) => {
@@ -306,6 +311,63 @@ export default function ChordLibrary() {
     }
   };
 
+  // FIX #4: Handle preset creation
+  const handleCreatePreset = async () => {
+    if (!newPresetName.trim()) {
+      toast.error('Please enter a preset name');
+      return;
+    }
+
+    if (selectedChords.size === 0) {
+      toast.error('Please select at least one chord');
+      return;
+    }
+
+    try {
+      const chordIndices = Array.from(selectedChords);
+      const chordNames = chordIndices.map(idx => {
+        const chord = CHORD_DATABASE[idx];
+        return `${chord.root}${chord.type === 'major' ? '' : chord.type}`;
+      });
+
+      await createPreset({
+        name: newPresetName,
+        chords: chordNames,
+        filters: {
+          categories: selectedCategories,
+        },
+      });
+
+      toast.success(`Preset "${newPresetName}" created with ${selectedChords.size} chords`);
+      setNewPresetName('');
+      setShowPresetMenu(false);
+      setSelectedChords(new Set());
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create preset';
+      toast.error(errorMessage);
+    }
+  };
+
+  // FIX #4: Load preset
+  const handleLoadPreset = (presetName: string) => {
+    const preset = userPresets.find(p => p.name === presetName);
+    if (preset) {
+      // Find chord indices matching preset chords
+      const indices = new Set<number>();
+      preset.chords?.forEach(chordName => {
+        const index = CHORD_DATABASE.findIndex(c => 
+          `${c.root}${c.type === 'major' ? '' : c.type}` === chordName
+        );
+        if (index !== -1) indices.add(index);
+      });
+      
+      setSelectedChords(indices);
+      setSelectedPreset(presetName);
+      setShowPresetMenu(false);
+      toast.success(`Loaded preset "${presetName}" with ${indices.size} chords`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -320,12 +382,17 @@ export default function ChordLibrary() {
           </p>
         </div>
 
-        {/* Preset Dropdown */}
-        <div className="mb-4">
-          <button className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center justify-between hover:bg-zinc-900 transition-colors">
+        {/* Preset Dropdown - FIX #4: Make functional */}
+        <div className="mb-4 relative">
+          <button 
+            onClick={() => setShowPresetMenu(!showPresetMenu)}
+            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center justify-between hover:bg-zinc-900 transition-colors"
+          >
             <div className="flex items-center gap-2.5">
               <Bookmark className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-300">EASY START - Presets</span>
+              <span className="text-sm font-medium text-zinc-300">
+                {selectedPreset || 'EASY START - Presets'}
+              </span>
               <span className="bg-zinc-800 text-zinc-500 text-xs font-bold px-2 py-0.5 rounded">
                 {selectedChords.size}
               </span>
@@ -334,6 +401,61 @@ export default function ChordLibrary() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
+          {/* Preset Menu */}
+          {showPresetMenu && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-10 overflow-hidden">
+              {/* Create New Preset */}
+              <div className="p-4 border-b border-zinc-800">
+                <div className="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-2">Create New Preset</div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Preset name..."
+                    value={newPresetName}
+                    onChange={(e) => setNewPresetName(e.target.value)}
+                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    onClick={handleCreatePreset}
+                    disabled={!newPresetName.trim() || selectedChords.size === 0}
+                    className="bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-zinc-950 font-bold px-4 py-2 rounded text-sm transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                </div>
+                {selectedChords.size === 0 && (
+                  <p className="text-xs text-zinc-600 mt-1">Select chords below to create a preset</p>
+                )}
+              </div>
+
+              {/* Saved Presets */}
+              {userPresets.length > 0 && (
+                <div className="p-2">
+                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wide px-2 py-1">Your Presets</div>
+                  {userPresets.map((preset) => (
+                    <button
+                      key={preset.id}
+                      onClick={() => handleLoadPreset(preset.name)}
+                      className="w-full text-left px-3 py-2 hover:bg-zinc-800 rounded transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white font-medium">{preset.name}</span>
+                        <span className="text-xs text-zinc-500">{preset.chords?.length || 0} chords</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {userPresets.length === 0 && (
+                <div className="p-4 text-center">
+                  <p className="text-sm text-zinc-500">No saved presets yet</p>
+                  <p className="text-xs text-zinc-600 mt-1">Select chords and create your first preset above</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Search Bar */}

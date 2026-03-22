@@ -267,13 +267,16 @@ export default function ChordDetailModal({
               <Volume2 className="w-4 h-4" />
               Play
             </button>
-            <button
-              onClick={onEdit}
-              className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
-            >
-              <Edit className="w-4 h-4" />
-              Edit
-            </button>
+            {/* FIX #6: Only show Edit button if onEdit handler is provided */}
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </button>
+            )}
           </div>
 
           {/* Pagination */}

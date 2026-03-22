@@ -33,7 +33,9 @@ export default function Tuner() {
   // Hold in-tune circle to prevent flashing
   const [showInTuneCircle, setShowInTuneCircle] = useState(false);
   const inTuneHoldTimeoutRef = useRef<number | null>(null);
+  const wasInTuneRef = useRef(false);
 
+  // FIX #1 & #8: Refactored note display hold logic to avoid stale closures
   useEffect(() => {
     if (detectedNote) {
       // Immediately update to new note
@@ -44,19 +46,45 @@ export default function Tuner() {
         clearTimeout(noteHoldTimeoutRef.current);
         noteHoldTimeoutRef.current = null;
       }
-    } else {
+    } else if (displayedNote) {
       // When detection stops, hold the last note for 400ms before clearing
-      const currentDisplayedNote = displayedNote;
-      if (currentDisplayedNote && !noteHoldTimeoutRef.current) {
+      if (!noteHoldTimeoutRef.current) {
         noteHoldTimeoutRef.current = window.setTimeout(() => {
           setDisplayedNote('');
           noteHoldTimeoutRef.current = null;
         }, 400);
       }
     }
-  }, [detectedNote]);
+  }, [detectedNote, displayedNote]);
 
-  // Cleanup timeout on unmount
+  // FIX #1 & #8: Refactored in-tune circle logic to avoid setState in setState callback
+  useEffect(() => {
+    if (isInTune) {
+      // Immediately show circle when in tune
+      if (!wasInTuneRef.current) {
+        setShowInTuneCircle(true);
+        wasInTuneRef.current = true;
+      }
+      
+      // Clear any existing hide timeout
+      if (inTuneHoldTimeoutRef.current) {
+        clearTimeout(inTuneHoldTimeoutRef.current);
+        inTuneHoldTimeoutRef.current = null;
+      }
+    } else if (wasInTuneRef.current) {
+      // When going out of tune, hold the circle for 400ms before hiding
+      wasInTuneRef.current = false;
+      
+      if (!inTuneHoldTimeoutRef.current) {
+        inTuneHoldTimeoutRef.current = window.setTimeout(() => {
+          setShowInTuneCircle(false);
+          inTuneHoldTimeoutRef.current = null;
+        }, 400);
+      }
+    }
+  }, [isInTune]);
+
+  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
       if (noteHoldTimeoutRef.current) {
@@ -67,32 +95,6 @@ export default function Tuner() {
       }
     };
   }, []);
-
-  // Hold in-tune circle display to prevent flashing
-  useEffect(() => {
-    if (isInTune) {
-      // Immediately show circle when in tune
-      setShowInTuneCircle(true);
-      
-      // Clear any existing timeout
-      if (inTuneHoldTimeoutRef.current) {
-        clearTimeout(inTuneHoldTimeoutRef.current);
-        inTuneHoldTimeoutRef.current = null;
-      }
-    } else {
-      // When out of tune, hold the circle for 400ms before hiding
-      // Capture current state to avoid adding to dependencies
-      setShowInTuneCircle(prev => {
-        if (prev && !inTuneHoldTimeoutRef.current) {
-          inTuneHoldTimeoutRef.current = window.setTimeout(() => {
-            setShowInTuneCircle(false);
-            inTuneHoldTimeoutRef.current = null;
-          }, 400);
-        }
-        return prev;
-      });
-    }
-  }, [isInTune]);
 
   const currentTuning = TUNING_PRESETS[tuning];
   const strings = currentTuning.notes.map((note, index) => ({

@@ -87,32 +87,32 @@ export const useMetronomeAudio = () => {
       }
 
       case 'woodBlock': {
-        // Realistic wood block with deep hollow body resonance and sharp attack
-        const bufferSize = context.sampleRate * 0.1;
+        // Realistic wood block with hollow body resonance and sharp attack
+        const bufferSize = context.sampleRate * 0.08;
         const buffer = context.createBuffer(2, bufferSize, context.sampleRate);
         const dataL = buffer.getChannelData(0);
         const dataR = buffer.getChannelData(1);
 
-        // Generate percussive attack with deep woody body resonance
+        // Generate percussive attack with woody body resonance
         for (let i = 0; i < bufferSize; i++) {
           const t = i / context.sampleRate;
           const attack = Math.exp(-i / (context.sampleRate * 0.003)); // Sharp attack
-          const bodyDecay = Math.exp(-i / (context.sampleRate * 0.025)); // Longer hollow body resonance
+          const bodyDecay = Math.exp(-i / (context.sampleRate * 0.018)); // Hollow body resonance
           const noise = (Math.random() * 2 - 1) * 0.4;
           
-          // Lower resonant frequencies for deeper wood character
-          const fundamental = isAccent ? 520 : 380;
+          // Resonant frequencies for wood character
+          const fundamental = isAccent ? 920 : 720;
           const harmonic2 = fundamental * 2.1;  // Slightly inharmonic for wood
           const harmonic3 = fundamental * 3.3;
           const harmonic4 = fundamental * 4.8;
           
-          const res1 = Math.sin(t * fundamental * 6.28) * 0.55;
-          const res2 = Math.sin(t * harmonic2 * 6.28) * 0.28;
+          const res1 = Math.sin(t * fundamental * 6.28) * 0.5;
+          const res2 = Math.sin(t * harmonic2 * 6.28) * 0.25;
           const res3 = Math.sin(t * harmonic3 * 6.28) * 0.12;
           const res4 = Math.sin(t * harmonic4 * 6.28) * 0.06;
           
           // Combine attack noise with sustained resonance
-          const signal = (noise * attack * 0.65) + ((res1 + res2 + res3 + res4) * bodyDecay);
+          const signal = (noise * attack * 0.6) + ((res1 + res2 + res3 + res4) * bodyDecay);
           
           dataL[i] = signal;
           dataR[i] = signal * 0.97; // Slight stereo variation
@@ -126,20 +126,20 @@ export const useMetronomeAudio = () => {
 
         bufferSource.buffer = buffer;
         
-        // Bandpass for fundamental resonance (lower frequency)
+        // Bandpass for fundamental resonance
         filter1.type = 'bandpass';
-        filter1.frequency.setValueAtTime(isAccent ? 520 : 380, now);
-        filter1.Q.setValueAtTime(12, now);
+        filter1.frequency.setValueAtTime(isAccent ? 920 : 720, now);
+        filter1.Q.setValueAtTime(10, now);
         
         // Peaking filter for woody mid-range character
         filter2.type = 'peaking';
-        filter2.frequency.setValueAtTime(isAccent ? 1100 : 850, now);
-        filter2.Q.setValueAtTime(5, now);
-        filter2.gain.setValueAtTime(7, now);
+        filter2.frequency.setValueAtTime(isAccent ? 1800 : 1400, now);
+        filter2.Q.setValueAtTime(4, now);
+        filter2.gain.setValueAtTime(6, now);
         
-        // High-pass to clean up lows (but allow more low-end through)
+        // High-pass to clean up lows
         filter3.type = 'highpass';
-        filter3.frequency.setValueAtTime(280, now);
+        filter3.frequency.setValueAtTime(400, now);
 
         bufferSource.connect(filter1);
         filter1.connect(filter2);
@@ -148,10 +148,10 @@ export const useMetronomeAudio = () => {
         gainNode.connect(context.destination);
 
         gainNode.gain.setValueAtTime(volume * 0.95, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
         bufferSource.start(now);
-        bufferSource.stop(now + 0.1);
+        bufferSource.stop(now + 0.08);
         break;
       }
 

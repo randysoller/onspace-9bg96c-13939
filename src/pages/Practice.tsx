@@ -535,8 +535,9 @@ export default function Practice() {
                           y={40}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          className="text-zinc-500 font-bold"
-                          style={{ fontSize: '20px' }}
+                          fill="#71717a"
+                          className="font-bold"
+                          style={{ fontSize: '22px' }}
                         >
                           ✕
                         </text>

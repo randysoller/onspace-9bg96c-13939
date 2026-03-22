@@ -264,8 +264,9 @@ export default function ProgressionPractice() {
                           y={51}
                           textAnchor="middle"
                           dominantBaseline="middle"
-                          className="text-zinc-500 font-bold"
-                          style={{ fontSize: '22px' }}
+                          fill="#71717a"
+                          className="font-bold"
+                          style={{ fontSize: '24px' }}
                         >
                           ✕
                         </text>

@@ -113,10 +113,11 @@ export const ChordDiagram = ({ chord, size = 'md', showName = true }: ChordDiagr
                 key={`marker-${stringIndex}`}
                 x={padding + stringIndex * stringSpacing}
                 y={padding - 10}
-                fill="currentColor"
-                className="text-zinc-500 font-bold"
+                fill="#71717a"
+                className="font-bold"
                 textAnchor="middle"
-                style={{ fontSize: size === 'sm' ? '14px' : size === 'md' ? '18px' : '24px' }}
+                dominantBaseline="middle"
+                style={{ fontSize: size === 'sm' ? '14px' : size === 'md' ? '20px' : '26px' }}
               >
                 ✕
               </text>

@@ -86,14 +86,17 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
             {/* Muted/Open markers above nut */}
             {chord.frets.map((fret, idx) => {
               if (fret === -1) {
-                // Muted - X
+                // Muted string - gray X matching fret/string color, same size as open circles
                 return (
                   <text
                     key={`marker-${idx}`}
                     x={10 + idx * 16}
                     y="12"
                     textAnchor="middle"
-                    className="text-zinc-500 text-[8px] font-bold"
+                    dominantBaseline="middle"
+                    fill="#71717a"
+                    className="font-bold"
+                    style={{ fontSize: '16px' }}
                   >
                     ✕
                   </text>

@@ -126,14 +126,17 @@ export default function ChordDetailModal({
                 {/* Muted/Open markers above nut */}
                 {chord.frets.map((fret, idx) => {
                   if (fret === -1) {
-                    // Muted - X
+                    // Muted string - gray X matching fret/string color, same size as open circles
                     return (
                       <text
                         key={`marker-${idx}`}
                         x={20 + idx * 24}
                         y="18"
                         textAnchor="middle"
-                        className="text-zinc-500 text-xs font-bold"
+                        dominantBaseline="middle"
+                        fill="#71717a"
+                        className="font-bold"
+                        style={{ fontSize: '20px' }}
                       >
                         ✕
                       </text>

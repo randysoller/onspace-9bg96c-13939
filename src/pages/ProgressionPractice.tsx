@@ -280,7 +280,7 @@ export default function ProgressionPractice() {
                     } else if (fret === 0) {
                       const isRoot = idx === rootStringIndex;
                       if (isRoot) {
-                        // Open root note - blue diamond
+                        // Open root note - blue diamond border
                         return (
                           <path
                             key={`open-${idx}`}
@@ -288,19 +288,23 @@ export default function ProgressionPractice() {
                                 L ${70 + idx * 32 + 9} ${51} 
                                 L ${70 + idx * 32} ${51 + 9} 
                                 L ${70 + idx * 32 - 9} ${51} Z`}
-                            fill="currentColor"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
                             className="text-cyan-500"
                           />
                         );
                       } else {
-                        // Open - orange circle
+                        // Open - orange circle border
                         return (
                           <circle
                             key={`open-${idx}`}
                             cx={70 + idx * 32}
                             cy={51}
                             r="6.3"
-                            fill="currentColor"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
                             className="text-amber-500"
                           />
                         );

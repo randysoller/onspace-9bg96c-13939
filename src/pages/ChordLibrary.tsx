@@ -101,7 +101,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               } else if (fret === 0) {
                 const isRoot = idx === rootStringIndex;
                 if (isRoot) {
-                  // Open root note - blue diamond
+                  // Open root note - blue diamond border
                   return (
                     <path
                       key={`marker-${idx}`}
@@ -109,19 +109,23 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                           L ${10 + idx * 16 + 8} ${12} 
                           L ${10 + idx * 16} ${12 + 8} 
                           L ${10 + idx * 16 - 8} ${12} Z`}
-                      fill="currentColor"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                       className="text-cyan-500"
                     />
                   );
                 } else {
-                  // Open - orange circle (10% smaller: 7.2 * 0.9 = 6.48)
+                  // Open - orange circle border (10% smaller: 7.2 * 0.9 = 6.48)
                   return (
                     <circle
                       key={`marker-${idx}`}
                       cx={10 + idx * 16}
                       cy={12}
                       r="6.48"
-                      fill="currentColor"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
                       className="text-amber-500"
                     />
                   );

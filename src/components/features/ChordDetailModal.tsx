@@ -141,7 +141,7 @@ export default function ChordDetailModal({
                   } else if (fret === 0) {
                     const isRoot = idx === rootStringIndex;
                     if (isRoot) {
-                      // Open root note - blue diamond
+                      // Open root note - blue diamond border
                       return (
                         <path
                           key={`marker-${idx}`}
@@ -149,19 +149,23 @@ export default function ChordDetailModal({
                               L ${20 + idx * 24 + 11} ${18} 
                               L ${20 + idx * 24} ${18 + 11} 
                               L ${20 + idx * 24 - 11} ${18} Z`}
-                          fill="currentColor"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           className="text-cyan-500"
                         />
                       );
                     } else {
-                      // Open - orange circle (10% smaller: 9.9 * 0.9 = 8.91)
+                      // Open - orange circle border (10% smaller: 9.9 * 0.9 = 8.91)
                       return (
                         <circle
                           key={`marker-${idx}`}
                           cx={20 + idx * 24}
                           cy={18}
                           r="8.91"
-                          fill="currentColor"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
                           className="text-amber-500"
                         />
                       );

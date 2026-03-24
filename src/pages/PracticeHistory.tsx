@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { practiceApi } from '@/lib/api/practice';
+import { usePracticeSessions } from '@/hooks/useQueryHooks';
+import { prefetchStrategies } from '@/lib/react-query';
 import { ArrowLeft, TrendingUp, Target, Clock, Flame } from 'lucide-react';
 import { PracticeHistorySkeleton } from '@/components/SkeletonLoader';
 import { EmptyState } from '@/components/EmptyState';
@@ -40,6 +42,14 @@ interface ChordFrequency {
 export default function PracticeHistory() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  
+  // Use React Query for data fetching with automatic caching
+  const { 
+    data: queryData, 
+    isLoading: queryLoading,
+    refetch 
+  } = usePracticeSessions(user?.id || '', !!user);
+  
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -50,14 +60,27 @@ export default function PracticeHistory() {
     avgAccuracy: 0,
   });
 
+  // Prefetch leaderboard when viewing history
+  useEffect(() => {
+    if (user) {
+      prefetchStrategies.prefetchLeaderboard();
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
 
-    loadData();
-  }, [user]);
+    // Use React Query data if available, otherwise load manually
+    if (queryData) {
+      setSessions(queryData as Session[]);
+      setLoading(false);
+    } else if (!queryLoading) {
+      loadData();
+    }
+  }, [user, queryData, queryLoading]);
 
   const loadData = async () => {
     if (!user) return;
@@ -94,6 +117,8 @@ export default function PracticeHistory() {
 
       // Make API call (placeholder - implement API method)
       // await practiceApi.clearHistory(user.id);
+      // Invalidate React Query cache
+      refetch();
       toast.success('Practice history cleared');
     } catch (err) {
       // Rollback on error

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
+import { createShallowSelector } from '@/hooks/useZustandSelector';
 
 interface AudioStore {
   masterVolume: number;
@@ -13,7 +15,8 @@ interface AudioStore {
   setTunerVolume: (volume: number) => void;
 }
 
-export const useAudioStore = create<AudioStore>()(
+// Base store
+export const useAudioStore = create<AudioStore>()(  
   persist(
     (set) => ({
       masterVolume: 0.7,
@@ -30,4 +33,28 @@ export const useAudioStore = create<AudioStore>()(
       name: 'fretmaster-audio-settings',
     }
   )
+);
+
+// Optimized selectors to prevent unnecessary re-renders
+export const useShallowAudioStore = createShallowSelector(useAudioStore);
+
+// Specific selectors for common use cases
+export const useAudioVolumes = () => useAudioStore(
+  state => ({ 
+    masterVolume: state.masterVolume,
+    chordVolume: state.chordVolume,
+    metronomeVolume: state.metronomeVolume,
+    tunerVolume: state.tunerVolume
+  }),
+  shallow
+);
+
+export const useAudioActions = () => useAudioStore(
+  state => ({
+    setMasterVolume: state.setMasterVolume,
+    setChordVolume: state.setChordVolume,
+    setMetronomeVolume: state.setMetronomeVolume,
+    setTunerVolume: state.setTunerVolume,
+  }),
+  shallow
 );

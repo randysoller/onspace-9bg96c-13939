@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
+import { createShallowSelector } from '@/hooks/useZustandSelector';
 
 export type MetronomeSound = 'click' | 'woodBlock' | 'hiHat' | 'sideStick' | 'voiceCount';
 export type SubdivisionType = 'quarter' | 'eighth' | 'sixteenth';
@@ -27,7 +29,8 @@ interface MetronomeStore {
   incrementBeat: () => void;
 }
 
-export const useMetronomeStore = create<MetronomeStore>()(
+// Base store
+export const useMetronomeStore = create<MetronomeStore>()(  
   persist(
     (set) => ({
       isPlaying: false,
@@ -70,4 +73,51 @@ export const useMetronomeStore = create<MetronomeStore>()(
       name: 'fretmaster-metronome',
     }
   )
+);
+
+// Optimized selectors to prevent unnecessary re-renders
+export const useShallowMetronomeStore = createShallowSelector(useMetronomeStore);
+
+// Specific selectors for common use cases
+export const useMetronomePlayback = () => useMetronomeStore(
+  state => ({ 
+    isPlaying: state.isPlaying,
+    bpm: state.bpm,
+    soundType: state.soundType
+  }),
+  shallow
+);
+
+export const useMetronomeBeats = () => useMetronomeStore(
+  state => ({ 
+    beatsPerMeasure: state.beatsPerMeasure,
+    noteValue: state.noteValue,
+    currentBeat: state.currentBeat,
+    subdivisionCounter: state.subdivisionCounter
+  }),
+  shallow
+);
+
+export const useMetronomeSettings = () => useMetronomeStore(
+  state => ({ 
+    accentFirstBeat: state.accentFirstBeat,
+    subdivision: state.subdivision
+  }),
+  shallow
+);
+
+export const useMetronomeActions = () => useMetronomeStore(
+  state => ({
+    setIsPlaying: state.setIsPlaying,
+    setBpm: state.setBpm,
+    setBeatsPerMeasure: state.setBeatsPerMeasure,
+    setTimeSignature: state.setTimeSignature,
+    setCurrentBeat: state.setCurrentBeat,
+    setSubdivisionCounter: state.setSubdivisionCounter,
+    setSoundType: state.setSoundType,
+    setAccentFirstBeat: state.setAccentFirstBeat,
+    setSubdivision: state.setSubdivision,
+    incrementBeat: state.incrementBeat,
+  }),
+  shallow
 );

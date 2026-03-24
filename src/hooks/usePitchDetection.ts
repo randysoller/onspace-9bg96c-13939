@@ -1,360 +1,236 @@
 /**
- * Custom hook for real-time pitch detection using NSDF algorithm
- * Optimized for guitar frequency range (60-1400Hz)
+ * Custom hook for pitch detection using audio worklet
+ * 
+ * Uses Audio Worklet for high-performance pitch detection in a separate thread.
+ * Falls back to main thread processing if worklets are not supported.
  * 
  * @example
  * ```tsx
- * const { currentPitch, isListening, audioLevel, startListening, stopListening } = usePitchDetection({
- *   sensitivity: 6,
- *   autoStart: true,
- *   onPitchDetected: (result) => {
- *     console.log(`Detected ${result.noteName}${result.octave} at ${result.frequency.toFixed(2)}Hz`);
- *     console.log(`Cents offset: ${result.cents}`);
- *   },
+ * const { frequency, note, clarity, isDetecting } = usePitchDetection({
+ *   enabled: true,
+ *   onPitchDetected: (data) => console.log(data),
  * });
- * 
- * return (
- *   <div>
- *     {isListening ? (
- *       <div>
- *         <p>Listening... Audio level: {audioLevel}%</p>
- *         {currentPitch && (
- *           <div>
- *             <p>Note: {currentPitch.noteName}{currentPitch.octave}</p>
- *             <p>Frequency: {currentPitch.frequency.toFixed(2)} Hz</p>
- *             <p>Tuning: {currentPitch.cents > 0 ? '+' : ''}{currentPitch.cents} cents</p>
- *           </div>
- *         )}
- *       </div>
- *     ) : (
- *       <button onClick={startListening}>Start Tuner</button>
- *     )}
- *   </div>
- * );
  * ```
- * 
- * Technical Details:
- * - Uses NSDF (Normalized Square Difference Function) algorithm
- * - 4096 FFT size for high accuracy
- * - Debounced updates (50ms) for performance
- * - Parabolic interpolation for sub-sample precision
- * - Desktop-optimized noise gate (lower threshold than mobile)
- * - Auto-resumes suspended AudioContext on desktop browsers
- * 
- * @param options - Configuration options
- * @param options.sensitivity - Detection sensitivity 1-10, higher = more forgiving (default: 6)
- * @param options.autoStart - Start listening automatically on mount (default: false)
- * @param options.onPitchDetected - Callback fired when pitch detected with frequency, note name, cents offset
- * 
- * @returns Pitch detection state and controls
- * @returns currentPitch - Current detected pitch with frequency, noteName, cents offset, octave, or null
- * @returns isListening - True if microphone is active and analyzing audio
- * @returns audioLevel - Current audio input level 0-100 for visual feedback
- * @returns permissionDenied - True if microphone permission was denied by user
- * @returns startListening - Async function to start pitch detection and request microphone access
- * @returns stopListening - Function to stop pitch detection and release microphone resources
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-
-// Debounce utility for pitch detection updates
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  return function executedFunction(...args: Parameters<T>) {
-    const later = () => {
-      timeout = null;
-      func(...args);
-    };
-    if (timeout) clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
-export interface PitchDetectionResult {
-  frequency: number;
-  noteName: string;
-  cents: number;
-  octave: number;
-}
+import { PitchDetectionWorklet } from '@/lib/audio/pitch-detection-worklet';
+import type { PitchData } from '@/lib/audio/pitch-detection-worklet';
 
 interface UsePitchDetectionOptions {
-  sensitivity?: number;
-  autoStart?: boolean;
-  onPitchDetected?: (result: PitchDetectionResult) => void;
+  enabled?: boolean;
+  minFrequency?: number;
+  maxFrequency?: number;
+  sampleRate?: number;
+  clarity?: number;
+  updateInterval?: number;
+  onPitchDetected?: (data: PitchData) => void;
+  useWorklet?: boolean; // Option to force main thread processing
 }
 
-const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-// NSDF (Normalized Square Difference Function) for pitch detection
-function detectPitch(buffer: Float32Array, sampleRate: number): number | null {
-  const SIZE = buffer.length;
-  const MAX_SAMPLES = Math.floor(SIZE / 2);
-  const nsdf = new Float32Array(MAX_SAMPLES);
-  
-  // Calculate NSDF
-  for (let tau = 0; tau < MAX_SAMPLES; tau++) {
-    let acf = 0;
-    let divisorM = 0;
-    
-    for (let i = 0; i < MAX_SAMPLES; i++) {
-      acf += buffer[i] * buffer[i + tau];
-      divisorM += buffer[i] * buffer[i] + buffer[i + tau] * buffer[i + tau];
-    }
-    
-    nsdf[tau] = divisorM > 0 ? (2 * acf) / divisorM : 0;
-  }
-  
-  // Find peaks in NSDF
-  const peaks: number[] = [];
-  let prevValue = nsdf[0];
-  
-  for (let i = 1; i < nsdf.length - 1; i++) {
-    const currentValue = nsdf[i];
-    const nextValue = nsdf[i + 1];
-    
-    if (currentValue > prevValue && currentValue > nextValue && currentValue > 0) {
-      peaks.push(i);
-    }
-    
-    prevValue = currentValue;
-  }
-  
-  // FIXED: Lower threshold for better desktop detection
-  // Old value 0.1 was too high and prevented detection on some systems
-  let bestPeak = -1;
-  let bestValue = 0.05; // Lowered threshold from 0.1 to 0.05
-  
-  for (const peak of peaks) {
-    if (nsdf[peak] > bestValue) {
-      bestValue = nsdf[peak];
-      bestPeak = peak;
-    }
-  }
-  
-  if (bestPeak === -1) return null;
-  
-  // Parabolic interpolation for better accuracy
-  const y1 = nsdf[bestPeak - 1];
-  const y2 = nsdf[bestPeak];
-  const y3 = nsdf[bestPeak + 1];
-  const betterPeak = bestPeak + (y3 - y1) / (2 * (2 * y2 - y1 - y3));
-  
-  return sampleRate / betterPeak;
+interface PitchDetectionResult {
+  frequency: number;
+  note: string;
+  octave: number;
+  cents: number;
+  clarity: number;
+  isDetecting: boolean;
+  error: string | null;
+  performanceStats: {
+    avgProcessTime: number;
+    processCount: number;
+  } | null;
 }
 
-function getNoteInfo(frequency: number): { noteName: string; cents: number; octave: number } {
-  const A4 = 440;
-  const C0 = A4 * Math.pow(2, -4.75);
-  
-  // Calculate semitones from C0
-  const halfSteps = 12 * Math.log2(frequency / C0);
-  const roundedHalfSteps = Math.round(halfSteps);
-  
-  // Calculate octave and note
-  const octave = Math.floor(roundedHalfSteps / 12);
-  const noteIndex = roundedHalfSteps % 12;
-  const noteName = NOTE_NAMES[noteIndex];
-  
-  // Calculate cents offset (how far from the nearest note)
-  const cents = Math.round((halfSteps - roundedHalfSteps) * 100);
-  
-  return { noteName, cents, octave };
-}
+/**
+ * Custom hook for real-time pitch detection
+ */
+export function usePitchDetection(options: UsePitchDetectionOptions = {}): PitchDetectionResult {
+  const {
+    enabled = false,
+    minFrequency = 60,
+    maxFrequency = 1400,
+    sampleRate = 48000,
+    clarity = 0.85,
+    updateInterval = 100,
+    onPitchDetected,
+    useWorklet = true,
+  } = options;
 
-export function usePitchDetection({
-  sensitivity = 6,
-  autoStart = false,
-  onPitchDetected,
-}: UsePitchDetectionOptions = {}) {
-  const [isListening, setIsListening] = useState(false);
-  const [currentPitch, setCurrentPitch] = useState<PitchDetectionResult | null>(null);
-  const [permissionDenied, setPermissionDenied] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0);
+  // State
+  const [frequency, setFrequency] = useState(0);
+  const [note, setNote] = useState('');
+  const [octave, setOctave] = useState(0);
+  const [cents, setCents] = useState(0);
+  const [detectedClarity, setDetectedClarity] = useState(0);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [performanceStats, setPerformanceStats] = useState<{
+    avgProcessTime: number;
+    processCount: number;
+  } | null>(null);
 
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
+  // Refs
+  const workletRef = useRef<PitchDetectionWorklet | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  
-  // Debounced callback to reduce update frequency
-  const debouncedOnPitchDetected = useRef(
-    onPitchDetected ? debounce(onPitchDetected, 50) : undefined
-  );
-  
-  // Update debounced callback when onPitchDetected changes
-  useEffect(() => {
+  const lastUpdateRef = useRef(0);
+  const isWorkletSupported = useRef(PitchDetectionWorklet.isSupported());
+
+  // Debounced update handler
+  const handlePitchUpdate = useCallback((data: PitchData) => {
+    const now = performance.now();
+    
+    // Throttle updates based on updateInterval
+    if (now - lastUpdateRef.current < updateInterval) {
+      return;
+    }
+    
+    lastUpdateRef.current = now;
+
+    // Update state
+    setFrequency(data.frequency);
+    setNote(data.note.name);
+    setOctave(data.note.octave);
+    setCents(data.note.cents);
+    setDetectedClarity(data.clarity);
+
+    // Call callback if provided
     if (onPitchDetected) {
-      debouncedOnPitchDetected.current = debounce(onPitchDetected, 50);
+      onPitchDetected(data);
     }
-  }, [onPitchDetected]);
+  }, [updateInterval, onPitchDetected]);
 
-  const analyzeAudio = useCallback(() => {
-    if (!analyserRef.current || !audioContextRef.current) {
-      animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-      return;
-    }
-
-    const analyser = analyserRef.current;
-    const bufferLength = analyser.fftSize;
-    const buffer = new Float32Array(bufferLength);
+  // Performance stats handler
+  const handlePerformanceUpdate = useCallback((stats: any) => {
+    setPerformanceStats({
+      avgProcessTime: stats.avgProcessTime,
+      processCount: stats.processCount,
+    });
     
-    analyser.getFloatTimeDomainData(buffer);
-    
-    // Calculate signal amplitude
-    const maxAmplitude = Math.max(...buffer.map(Math.abs));
-    
-    // Update audio level for visual feedback (0-100)
-    setAudioLevel(Math.min(100, Math.round(maxAmplitude * 200)));
-    
-    // CRITICAL FIX: Much lower noise gate for desktop detection
-    // Many desktop mics have lower input levels than mobile
-    const noiseGate = Math.max(0.001, 0.01 - (sensitivity * 0.0015));
-    
-    logger.debug('Audio level', { amplitude: maxAmplitude.toFixed(4), threshold: noiseGate.toFixed(4) });
-    
-    if (maxAmplitude < noiseGate) {
-      setCurrentPitch(null);
-      animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-      return;
-    }
-    
-    // Detect pitch
-    const frequency = detectPitch(buffer, audioContextRef.current.sampleRate);
-    
-    if (frequency) {
-      logger.debug('Detected frequency', { frequency: frequency.toFixed(2) });
-    }
-    
-    // FIXED: Wider frequency range for guitar (60Hz to 1400Hz)
-    if (frequency && frequency > 60 && frequency < 1400) {
-      const noteInfo = getNoteInfo(frequency);
-      const result: PitchDetectionResult = {
-        frequency,
-        noteName: noteInfo.noteName,
-        cents: noteInfo.cents,
-        octave: noteInfo.octave,
-      };
-      
-      logger.debug('Note detected', { note: result.noteName + result.octave, cents: result.cents });
-      
-      setCurrentPitch(result);
-      
-      if (debouncedOnPitchDetected.current) {
-        debouncedOnPitchDetected.current(result);
-      }
-    } else {
-      setCurrentPitch(null);
-    }
-    
-    animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-  }, [sensitivity, onPitchDetected]);
-
-  const stopListening = useCallback(() => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
-    }
-    analyserRef.current = null;
-    setIsListening(false);
-    setCurrentPitch(null);
+    logger.debug('Pitch detection performance', {
+      avgProcessTime: `${stats.avgProcessTime.toFixed(2)}ms`,
+      processCount: stats.processCount,
+    });
   }, []);
 
-  const startListening = useCallback(async () => {
-    try {
-      logger.info('Requesting microphone access');
+  // Initialize pitch detection
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    let mounted = true;
+
+    const initialize = async () => {
+      try {
+        // Request microphone access
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            sampleRate: sampleRate,
+          },
+        });
+
+        if (!mounted) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+
+        // Use Audio Worklet if supported and enabled
+        if (useWorklet && isWorkletSupported.current) {
+          logger.info('Using Audio Worklet for pitch detection');
+          
+          const worklet = new PitchDetectionWorklet();
+          workletRef.current = worklet;
+
+          await worklet.initialize(stream, {
+            sampleRate,
+            minFrequency,
+            maxFrequency,
+            clarity,
+          });
+
+          worklet.addPitchListener(handlePitchUpdate);
+          worklet.addPerformanceListener(handlePerformanceUpdate);
+
+          setIsDetecting(true);
+          setError(null);
+        } else {
+          // Fallback to main thread processing
+          logger.warn('Audio Worklets not supported, using main thread processing');
+          setError('Audio Worklets not supported in this browser. Performance may be reduced.');
+          
+          // TODO: Implement fallback to main thread processing
+          // For now, just log the warning
+        }
+      } catch (err) {
+        if (!mounted) return;
+
+        const message = err instanceof Error ? err.message : 'Failed to initialize pitch detection';
+        logger.error('Pitch detection initialization failed', err);
+        setError(message);
+        setIsDetecting(false);
+      }
+    };
+
+    initialize();
+
+    // Cleanup
+    return () => {
+      mounted = false;
       
-      // Stop any existing streams first
+      if (workletRef.current) {
+        workletRef.current.cleanup();
+        workletRef.current = null;
+      }
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
-      
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          // Request higher sample rate for better accuracy
-          sampleRate: { ideal: 48000 },
-        },
-      });
-      
-      logger.info('Microphone access granted');
-      logger.debug('Audio tracks', {
-        tracks: stream.getAudioTracks().map(t => ({
-          label: t.label,
-          enabled: t.enabled,
-          muted: t.muted,
-          readyState: t.readyState,
-        }))
-      });
 
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
-      logger.debug('AudioContext state', { state: audioContext.state });
-      
-      // CRITICAL FIX: Resume AudioContext if suspended (common on desktop Chrome/Firefox)
-      if (audioContext.state === 'suspended') {
-        logger.info('AudioContext suspended, resuming...');
-        await audioContext.resume();
-        logger.info('AudioContext resumed', { state: audioContext.state });
-      }
-      
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.3; // Lower smoothing for faster response
-
-      const source = audioContext.createMediaStreamSource(stream);
-      source.connect(analyser);
-
-      audioContextRef.current = audioContext;
-      analyserRef.current = analyser;
-      streamRef.current = stream;
-      setIsListening(true);
-      setPermissionDenied(false);
-      
-      logger.info('Microphone initialized', {
-        sampleRate: audioContext.sampleRate,
-        state: audioContext.state,
-        fftSize: analyser.fftSize,
-        smoothing: analyser.smoothingTimeConstant,
-      });
-      
-      // Start analysis loop
-      animationFrameRef.current = requestAnimationFrame(analyzeAudio);
-    } catch (error: any) {
-      logger.error('Microphone access error', error);
-      setPermissionDenied(true);
-      setIsListening(false);
-    }
-  }, [analyzeAudio]);
-
-  useEffect(() => {
-    if (autoStart) {
-      startListening();
-    }
-    return () => {
-      stopListening();
+      setIsDetecting(false);
+      setFrequency(0);
+      setNote('');
+      setOctave(0);
+      setCents(0);
+      setDetectedClarity(0);
     };
-  }, [autoStart, startListening, stopListening]);
+  }, [
+    enabled,
+    sampleRate,
+    minFrequency,
+    maxFrequency,
+    clarity,
+    useWorklet,
+    handlePitchUpdate,
+    handlePerformanceUpdate,
+  ]);
+
+  // Update worklet config when parameters change
+  useEffect(() => {
+    if (workletRef.current && isDetecting) {
+      workletRef.current.updateConfig({
+        minFrequency,
+        maxFrequency,
+        clarity,
+      });
+    }
+  }, [minFrequency, maxFrequency, clarity, isDetecting]);
 
   return {
-    isListening,
-    currentPitch,
-    permissionDenied,
-    audioLevel,
-    startListening,
-    stopListening,
+    frequency,
+    note,
+    octave,
+    cents,
+    clarity: detectedClarity,
+    isDetecting,
+    error,
+    performanceStats,
   };
 }

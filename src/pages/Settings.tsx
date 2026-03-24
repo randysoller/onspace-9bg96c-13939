@@ -10,6 +10,7 @@ import { ArrowLeft, Save, Volume2, Sliders, Music } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -276,8 +277,9 @@ export default function Settings() {
           onClick={handleSave}
           disabled={saving}
           className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+          aria-live="polite"
         >
-          <Save className="w-5 h-5" />
+          {saving ? <LoadingSpinner size="sm" /> : <Save className="w-5 h-5" />}
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useVoiceSynthesisLatency } from './useVoiceSynthesisLatency';
@@ -45,12 +45,17 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
     };
   }, []);
 
+  // Memoize expensive volume calculations to avoid recalculating on every render
+  const volumeMultiplier = useMemo(() => {
+    return masterVolume * metronomeVolume;
+  }, [masterVolume, metronomeVolume]);
+
   const playClick = useCallback((isAccent: boolean = false, beatNumber?: number): void => {
     const context = audioContextRef.current;
     if (!context) return;
 
     const now = context.currentTime;
-    const baseVolume = masterVolume * metronomeVolume;
+    const baseVolume = volumeMultiplier;
     const volume = isAccent ? baseVolume * 1.0 : baseVolume * 0.65;
 
     // Handle voice counting
@@ -74,7 +79,7 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
         generateSideStickSound(context, isAccent, volume, now);
         break;
     }
-  }, [soundType, masterVolume, metronomeVolume, speakNumber]);
+  }, [soundType, volumeMultiplier, speakNumber]);
 
   useEffect(() => {
     if (isPlaying) {

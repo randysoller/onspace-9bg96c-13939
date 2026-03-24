@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { leaderboardApi, LeaderboardEntry } from '@/lib/api/leaderboard';
 import { friendsApi, Friend } from '@/lib/api/friends';
 import { ArrowLeft, Trophy, Medal, Award, Users, RefreshCw } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 type LeaderboardPeriod = 'all_time' | 'weekly' | 'monthly';
 type LeaderboardView = 'global' | 'friends';
@@ -76,7 +77,7 @@ export default function Leaderboard() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="text-xl text-zinc-400">Loading...</div>
+        <LoadingSpinner aria-label="Loading leaderboard data" />
       </div>
     );
   }

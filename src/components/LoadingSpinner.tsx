@@ -6,6 +6,7 @@ interface LoadingSpinnerProps {
   message?: string;
   fullScreen?: boolean;
   className?: string;
+  'aria-label'?: string;
 }
 
 const sizeClasses = {
@@ -19,13 +20,15 @@ export const LoadingSpinner = memo(({
   size = 'md', 
   message, 
   fullScreen = false,
-  className = '' 
+  className = '',
+  'aria-label': ariaLabel
 }: LoadingSpinnerProps) => {
   const content = (
     <div 
       className={`flex flex-col items-center justify-center gap-4 ${className}`}
       role="status"
       aria-live="polite"
+      aria-label={ariaLabel || message || 'Loading'}
     >
       <Loader2 
         className={`${sizeClasses[size]} text-amber-500 animate-spin`}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
 import { LogIn, Mail, Lock, User } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 type AuthView = 'login' | 'signup' | 'verify';
 
@@ -187,8 +188,10 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              aria-live="polite"
             >
+              {loading && <LoadingSpinner size="sm" />}
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
 
@@ -224,8 +227,10 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              aria-live="polite"
             >
+              {loading && <LoadingSpinner size="sm" />}
               {loading ? 'Sending code...' : 'Send Verification Code'}
             </button>
 
@@ -315,8 +320,10 @@ export default function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              aria-live="polite"
             >
+              {loading && <LoadingSpinner size="sm" />}
               {loading ? 'Creating account...' : 'Complete Registration'}
             </button>
 

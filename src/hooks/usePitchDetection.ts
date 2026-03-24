@@ -1,5 +1,21 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
+// Debounce utility for pitch detection updates
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  return function executedFunction(...args: Parameters<T>) {
+    const later = () => {
+      timeout = null;
+      func(...args);
+    };
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 export interface PitchDetectionResult {
   frequency: number;
   noteName: string;
@@ -105,6 +121,18 @@ export function usePitchDetection({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  
+  // Debounced callback to reduce update frequency
+  const debouncedOnPitchDetected = useRef(
+    onPitchDetected ? debounce(onPitchDetected, 50) : undefined
+  );
+  
+  // Update debounced callback when onPitchDetected changes
+  useEffect(() => {
+    if (onPitchDetected) {
+      debouncedOnPitchDetected.current = debounce(onPitchDetected, 50);
+    }
+  }, [onPitchDetected]);
 
   const analyzeAudio = useCallback(() => {
     if (!analyserRef.current || !audioContextRef.current) {
@@ -157,8 +185,8 @@ export function usePitchDetection({
       
       setCurrentPitch(result);
       
-      if (onPitchDetected) {
-        onPitchDetected(result);
+      if (debouncedOnPitchDetected.current) {
+        debouncedOnPitchDetected.current(result);
       }
     } else {
       setCurrentPitch(null);

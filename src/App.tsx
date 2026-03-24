@@ -1,27 +1,31 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import Index from '@/pages/Index';
 import ChordSetup from '@/pages/ChordSetup';
 import Practice from '@/pages/Practice';
 import ProgressionSetup from '@/pages/ProgressionSetup';
 import ProgressionPractice from '@/pages/ProgressionPractice';
-import ChordLibrary from '@/pages/ChordLibrary';
 import ChordEditor from '@/pages/ChordEditor';
 import Tuner from '@/pages/Tuner';
 import Auth from '@/pages/Auth';
-import PracticeHistory from '@/pages/PracticeHistory';
-import Leaderboard from '@/pages/Leaderboard';
-import Achievements from '@/pages/Achievements';
 import Goals from '@/pages/Goals';
 import SongLibrary from '@/pages/SongLibrary';
-import Analytics from '@/pages/Analytics';
 import Settings from '@/pages/Settings';
-import Lessons from '@/pages/Lessons';
-import Challenges from '@/pages/Challenges';
 import ScaleSetup from '@/pages/ScaleSetup';
 import ScalePractice from '@/pages/ScalePractice';
 import NotFound from '@/pages/NotFound';
+
+// Lazy load heavy routes for code splitting and performance
+const ChordLibrary = lazy(() => import('@/pages/ChordLibrary'));
+const PracticeHistory = lazy(() => import('@/pages/PracticeHistory'));
+const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
+const Achievements = lazy(() => import('@/pages/Achievements'));
+const Challenges = lazy(() => import('@/pages/Challenges'));
+const Lessons = lazy(() => import('@/pages/Lessons'));
+const Analytics = lazy(() => import('@/pages/Analytics'));
 
 function App() {
   return (
@@ -35,7 +39,11 @@ function App() {
             <Route path="/practice" element={<Practice />} />
             <Route path="/progression-setup" element={<ProgressionSetup />} />
             <Route path="/progression-practice" element={<ProgressionPractice />} />
-            <Route path="/library" element={<ChordLibrary />} />
+            <Route path="/library" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading chord library" />}>
+                <ChordLibrary />
+              </Suspense>
+            } />
             <Route 
               path="/editor" 
               element={
@@ -45,15 +53,39 @@ function App() {
               } 
             />
             <Route path="/tuner" element={<Tuner />} />
-            <Route path="/history" element={<PracticeHistory />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/history" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading practice history" />}>
+                <PracticeHistory />
+              </Suspense>
+            } />
+            <Route path="/leaderboard" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading leaderboard" />}>
+                <Leaderboard />
+              </Suspense>
+            } />
+            <Route path="/achievements" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading achievements" />}>
+                <Achievements />
+              </Suspense>
+            } />
             <Route path="/goals" element={<Goals />} />
             <Route path="/songs" element={<SongLibrary />} />
-            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/analytics" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading analytics" />}>
+                <Analytics />
+              </Suspense>
+            } />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/lessons" element={<Lessons />} />
-            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/lessons" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading lessons" />}>
+                <Lessons />
+              </Suspense>
+            } />
+            <Route path="/challenges" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading challenges" />}>
+                <Challenges />
+              </Suspense>
+            } />
             <Route path="/scale-setup" element={<ScaleSetup />} />
             <Route path="/scale-practice" element={<ScalePractice />} />
             <Route path="*" element={<NotFound />} />

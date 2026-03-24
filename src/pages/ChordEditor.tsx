@@ -1,7 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { CustomChordData } from '@/types/customChord';
-import { FileText, Save, Trash2, XCircle, Keyboard } from 'lucide-react';
+import { FileText, Save, Trash2, XCircle, Keyboard, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { FretboardSVG } from '@/components/features/chord-editor/FretboardSVG';
 import { ChordPreview } from '@/components/features/chord-editor/ChordPreview';
 import { DotAppearanceControls } from '@/components/features/chord-editor/DotAppearanceControls';
@@ -9,8 +11,15 @@ import { DOT_COLORS, CHORD_CATEGORIES, CHORD_TYPES } from '@/constants/fretboard
 import type { DotMarker, BarreMarker, StringState, FingerType, ColorOption, ChordShape } from '@/types/fretboard';
 
 export default function ChordEditor() {
-  const { addCustomChord } = useCustomChordStore();
+  const { addCustomChord, customChords } = useCustomChordStore();
   const fretboardRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+  
+  // Validation state
+  const [validationErrors, setValidationErrors] = useState<{
+    chordName?: string;
+    symbol?: string;
+  }>({});
   
   // Fretboard state
   const [baseFret, setBaseFret] = useState<number>(1);
@@ -131,22 +140,95 @@ export default function ChordEditor() {
     }
   }, [barreMode]);
 
-  const handleUpdateChord = useCallback(() => {
-    const newChord: CustomChordData = {
-      id: Date.now().toString(),
-      name: chordName,
-      root: symbol.charAt(0).toUpperCase(),
-      type,
-      markers: markers.map(m => ({ string: m.string, fret: m.fret, finger: m.finger })),
-      barres: [],
-      baseFret,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+  // Real-time validation
+  const validateChordName = useCallback((name: string): string | undefined => {
+    if (!name.trim()) {
+      return 'Chord name is required';
+    }
+    if (name.trim().length < 2) {
+      return 'Chord name must be at least 2 characters';
+    }
+    const duplicate = customChords.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+      return 'A chord with this name already exists in your library';
+    }
+    return undefined;
+  }, [customChords]);
 
-    addCustomChord(newChord);
-    alert('Chord saved to library!');
-  }, [chordName, symbol, type, markers, baseFret, addCustomChord]);
+  const validateSymbol = useCallback((sym: string): string | undefined => {
+    if (!sym.trim()) {
+      return 'Chord symbol is required';
+    }
+    // Regex for valid chord symbols: C, Am7, F#dim, etc.
+    const symbolPattern = /^[A-G][#b]?(m|maj|min|dim|aug|sus)?[0-9]?$/i;
+    if (!symbolPattern.test(sym.trim())) {
+      return 'Invalid symbol format (e.g., C, Am7, F#dim)';
+    }
+    return undefined;
+  }, []);
+
+  // Validate on change
+  useEffect(() => {
+    const errors: typeof validationErrors = {};
+    if (chordName) {
+      errors.chordName = validateChordName(chordName);
+    }
+    if (symbol) {
+      errors.symbol = validateSymbol(symbol);
+    }
+    setValidationErrors(errors);
+  }, [chordName, symbol, validateChordName, validateSymbol]);
+
+  // Check if form is valid
+  const isValid = useMemo(() => {
+    return chordName.trim() && symbol.trim() && 
+           !validationErrors.chordName && 
+           !validationErrors.symbol &&
+           markers.length > 0;
+  }, [chordName, symbol, validationErrors, markers]);
+
+  const handleUpdateChord = useCallback(async () => {
+    // Final validation
+    const nameError = validateChordName(chordName);
+    const symbolError = validateSymbol(symbol);
+    
+    if (nameError || symbolError) {
+      setValidationErrors({ chordName: nameError, symbol: symbolError });
+      toast.error('Please fix validation errors before saving');
+      return;
+    }
+
+    if (markers.length === 0) {
+      toast.error('Please add at least one marker to the fretboard');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const newChord: CustomChordData = {
+        id: Date.now().toString(),
+        name: chordName,
+        root: symbol.charAt(0).toUpperCase(),
+        type,
+        markers: markers.map(m => ({ string: m.string, fret: m.fret, finger: m.finger })),
+        barres: [],
+        baseFret,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      addCustomChord(newChord);
+      toast.success('Chord saved to library!');
+      
+      // Clear form after successful save
+      handleStartNew();
+    } catch (error) {
+      toast.error('Failed to save chord');
+      console.error('Save error:', error);
+    } finally {
+      setSaving(false);
+    }
+  }, [chordName, symbol, type, markers, baseFret, addCustomChord, validateChordName, validateSymbol, handleStartNew]);
 
   const handleStartNew = useCallback(() => {
     setMarkers([]);
@@ -424,12 +506,28 @@ export default function ChordEditor() {
                 type="text"
                 value={chordName}
                 onChange={(e) => setChordName(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                className={`w-full bg-zinc-950 border rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none ${
+                  validationErrors.chordName 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-zinc-700 focus:border-amber-500'
+                }`}
                 placeholder="C Major"
                 aria-required="true"
-                aria-describedby="chord-name-help"
+                aria-describedby="chord-name-help chord-name-error"
+                aria-invalid={!!validationErrors.chordName}
               />
               <span id="chord-name-help" className="sr-only">Enter the full name of the chord, for example C Major or A minor 7</span>
+              {validationErrors.chordName && (
+                <div 
+                  id="chord-name-error" 
+                  className="flex items-center gap-1 mt-1.5 text-xs text-red-500"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <AlertCircle className="w-3 h-3" aria-hidden="true" />
+                  {validationErrors.chordName}
+                </div>
+              )}
             </div>
 
             <div>
@@ -439,12 +537,28 @@ export default function ChordEditor() {
                 type="text"
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-700 rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                className={`w-full bg-zinc-950 border rounded px-3 py-2.5 text-white placeholder-zinc-600 focus:outline-none ${
+                  validationErrors.symbol 
+                    ? 'border-red-500 focus:border-red-500' 
+                    : 'border-zinc-700 focus:border-amber-500'
+                }`}
                 placeholder="C"
                 aria-required="true"
-                aria-describedby="chord-symbol-help"
+                aria-describedby="chord-symbol-help chord-symbol-error"
+                aria-invalid={!!validationErrors.symbol}
               />
               <span id="chord-symbol-help" className="sr-only">Enter the chord symbol, for example C, Am7, or F#dim</span>
+              {validationErrors.symbol && (
+                <div 
+                  id="chord-symbol-error" 
+                  className="flex items-center gap-1 mt-1.5 text-xs text-red-500"
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <AlertCircle className="w-3 h-3" aria-hidden="true" />
+                  {validationErrors.symbol}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -495,12 +609,19 @@ export default function ChordEditor() {
         <div className="space-y-3 my-6">
           <button
             onClick={handleUpdateChord}
-            className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            disabled={!isValid || saving}
+            className="w-full bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 disabled:text-zinc-500 disabled:cursor-not-allowed text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
             aria-label="Save chord to library"
+            aria-live="polite"
           >
-            <Save className="w-5 h-5" aria-hidden="true" />
-            Update Chord
+            {saving ? <LoadingSpinner size="sm" /> : <Save className="w-5 h-5" aria-hidden="true" />}
+            {saving ? 'Saving...' : 'Update Chord'}
           </button>
+          {!isValid && (chordName || symbol || markers.length > 0) && (
+            <p className="text-xs text-zinc-500 text-center -mt-2" role="status" aria-live="polite">
+              {!chordName ? 'Enter chord name' : !symbol ? 'Enter chord symbol' : markers.length === 0 ? 'Add at least one marker' : 'Fix validation errors to save'}
+            </p>
+          )}
 
           <button
             onClick={handleStartNew}

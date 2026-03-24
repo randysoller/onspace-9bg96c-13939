@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { practiceApi } from '@/lib/api/practice';
 import { ArrowLeft, TrendingUp, Target, Clock, Flame } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 import {
   LineChart,
   Line,
@@ -87,7 +88,7 @@ export default function PracticeHistory() {
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="text-xl text-zinc-400">Loading...</div>
+        <LoadingSpinner aria-label="Loading practice history" />
       </div>
     );
   }

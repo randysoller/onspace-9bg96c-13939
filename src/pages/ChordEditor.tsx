@@ -4,16 +4,20 @@ import { CustomChordData } from '@/types/customChord';
 import { FileText, Save, Trash2, XCircle, Keyboard, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { FretboardSVG } from '@/components/features/chord-editor/FretboardSVG';
 import { ChordPreview } from '@/components/features/chord-editor/ChordPreview';
 import { DotAppearanceControls } from '@/components/features/chord-editor/DotAppearanceControls';
 import { DOT_COLORS, CHORD_CATEGORIES, CHORD_TYPES } from '@/constants/fretboard';
 import type { DotMarker, BarreMarker, StringState, FingerType, ColorOption, ChordShape } from '@/types/fretboard';
+import DOMPurify from 'isomorphic-dompurify';
 
 export default function ChordEditor() {
-  const { addCustomChord, customChords } = useCustomChordStore();
+  const { addCustomChord, customChords, removeCustomChord } = useCustomChordStore();
   const fretboardRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [currentChordId, setCurrentChordId] = useState<string | null>(null);
   
   // Validation state
   const [validationErrors, setValidationErrors] = useState<{
@@ -221,10 +225,14 @@ export default function ChordEditor() {
 
     setSaving(true);
     try {
+      // Sanitize user inputs
+      const sanitizedName = DOMPurify.sanitize(chordName.trim());
+      const sanitizedSymbol = DOMPurify.sanitize(symbol.trim());
+
       const newChord: CustomChordData = {
         id: Date.now().toString(),
-        name: chordName,
-        root: symbol.charAt(0).toUpperCase(),
+        name: sanitizedName,
+        root: sanitizedSymbol.charAt(0).toUpperCase(),
         type,
         markers: markers.map(m => ({ string: m.string, fret: m.fret, finger: m.finger })),
         barres: [],
@@ -233,18 +241,37 @@ export default function ChordEditor() {
         updatedAt: Date.now(),
       };
 
+      // Optimistic update
       addCustomChord(newChord);
+      setCurrentChordId(newChord.id);
       toast.success('Chord saved to library!');
       
       // Clear form after successful save
       handleStartNew();
     } catch (error) {
       toast.error('Failed to save chord');
-      console.error('Save error:', error);
     } finally {
       setSaving(false);
     }
   }, [chordName, symbol, type, markers, baseFret, addCustomChord, validateChordName, validateSymbol, handleStartNew]);
+
+  const handleDeleteChord = useCallback(async () => {
+    if (!currentChordId) {
+      toast.error('No chord selected to delete');
+      return;
+    }
+
+    try {
+      // Optimistic update
+      const chordToDelete = customChords.find(c => c.id === currentChordId);
+      removeCustomChord(currentChordId);
+      toast.success('Chord deleted from library');
+      setCurrentChordId(null);
+      handleStartNew();
+    } catch (error) {
+      toast.error('Failed to delete chord');
+    }
+  }, [currentChordId, removeCustomChord, customChords, handleStartNew]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -633,8 +660,9 @@ export default function ChordEditor() {
           </button>
 
           <button
-            onClick={() => {}}
-            className="w-full bg-transparent hover:bg-red-950/30 text-red-500 font-medium py-3 rounded-lg transition-colors border border-zinc-800 hover:border-red-900 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-950"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={!currentChordId}
+            className="w-full bg-transparent hover:bg-red-950/30 text-red-500 font-medium py-3 rounded-lg transition-colors border border-zinc-800 hover:border-red-900 flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Delete chord from library"
           >
             <Trash2 className="w-4 h-4" aria-hidden="true" />
@@ -653,6 +681,18 @@ export default function ChordEditor() {
             openStrings={openStrings}
           />
         </div>
+
+        {/* Delete confirmation dialog */}
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onOpenChange={setShowDeleteConfirm}
+          title="Delete Chord?"
+          description="Are you sure you want to delete this chord from your library? This action cannot be undone."
+          confirmLabel="Delete"
+          cancelLabel="Cancel"
+          variant="danger"
+          onConfirm={handleDeleteChord}
+        />
       </div>
     </div>
   );

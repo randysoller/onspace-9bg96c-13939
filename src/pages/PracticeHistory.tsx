@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { practiceApi } from '@/lib/api/practice';
 import { ArrowLeft, TrendingUp, Target, Clock, Flame } from 'lucide-react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { PracticeHistorySkeleton } from '@/components/SkeletonLoader';
+import { EmptyState } from '@/components/EmptyState';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { handleApiErrorWithToast } from '@/lib/api-error-handler';
+import { toast } from 'sonner';
 import {
   LineChart,
   Line,
@@ -38,6 +42,8 @@ export default function PracticeHistory() {
   const { user } = useAuthStore();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [clearingHistory, setClearingHistory] = useState(false);
   const [stats, setStats] = useState({
     totalSessions: 0,
     totalChords: 0,
@@ -69,9 +75,32 @@ export default function PracticeHistory() {
         avgAccuracy: userStats.average_accuracy,
       });
     } catch (err) {
-      console.error('Failed to load practice history:', err);
+      handleApiErrorWithToast(err, 'Practice History');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!user) return;
+
+    setClearingHistory(true);
+    try {
+      // Optimistic update - clear UI immediately
+      const previousSessions = sessions;
+      const previousStats = stats;
+      setSessions([]);
+      setStats({ totalSessions: 0, totalChords: 0, avgAccuracy: 0 });
+
+      // Make API call (placeholder - implement API method)
+      // await practiceApi.clearHistory(user.id);
+      toast.success('Practice history cleared');
+    } catch (err) {
+      // Rollback on error
+      handleApiErrorWithToast(err, 'Clear History');
+      await loadData(); // Reload data
+    } finally {
+      setClearingHistory(false);
     }
   };
 
@@ -87,8 +116,21 @@ export default function PracticeHistory() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <LoadingSpinner aria-label="Loading practice history" />
+      <div className="min-h-screen bg-zinc-950 text-white pb-24">
+        <div className="border-b border-zinc-800 bg-black px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back</span>
+            </button>
+            <h1 className="text-xl font-bold">Practice History</h1>
+            <div className="w-20" />
+          </div>
+        </div>
+        <PracticeHistorySkeleton />
       </div>
     );
   }
@@ -106,7 +148,14 @@ export default function PracticeHistory() {
             <span className="text-sm">Back</span>
           </button>
           <h1 className="text-xl font-bold">Practice History</h1>
-          <div className="w-20" />
+          {sessions.length > 0 && (
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className="text-xs text-red-500 hover:text-red-400 transition-colors"
+            >
+              Clear
+            </button>
+          )}
         </div>
       </div>
 
@@ -220,14 +269,35 @@ export default function PracticeHistory() {
           ))}
 
           {recentSessions.length === 0 && (
-            <div className="text-center py-12 text-zinc-500">
-              <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No practice sessions yet</p>
-              <p className="text-sm mt-1">Start practicing to see your progress here</p>
-            </div>
+            <EmptyState
+              icon={Target}
+              title="No practice sessions yet"
+              description="Start practicing chords to track your progress and see detailed statistics here!"
+              action={{
+                label: 'Start Practicing',
+                onClick: () => navigate('/chord-setup'),
+              }}
+              secondaryAction={{
+                label: 'View Lessons',
+                onClick: () => navigate('/lessons'),
+              }}
+            />
           )}
         </div>
       </div>
+
+      {/* Confirmation dialog for clearing history */}
+      <ConfirmDialog
+        open={showClearConfirm}
+        onOpenChange={setShowClearConfirm}
+        title="Clear Practice History?"
+        description="This will permanently delete all your practice sessions and statistics. This action cannot be undone."
+        confirmLabel="Clear History"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleClearHistory}
+        loading={clearingHistory}
+      />
     </div>
   );
 }

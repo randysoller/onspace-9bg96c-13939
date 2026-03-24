@@ -4,7 +4,9 @@ import { useAuthStore } from '@/stores/authStore';
 import { leaderboardApi, LeaderboardEntry } from '@/lib/api/leaderboard';
 import { friendsApi, Friend } from '@/lib/api/friends';
 import { ArrowLeft, Trophy, Medal, Award, Users, RefreshCw } from 'lucide-react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LeaderboardSkeleton } from '@/components/SkeletonLoader';
+import { EmptyState } from '@/components/EmptyState';
+import { handleApiErrorWithToast } from '@/lib/api-error-handler';
 
 type LeaderboardPeriod = 'all_time' | 'weekly' | 'monthly';
 type LeaderboardView = 'global' | 'friends';
@@ -49,7 +51,7 @@ export default function Leaderboard() {
       setUserRank(userRankData);
       setFriends(friendsData);
     } catch (err) {
-      console.error('Failed to load leaderboard:', err);
+      handleApiErrorWithToast(err, 'Leaderboard');
     } finally {
       setLoading(false);
     }
@@ -61,7 +63,7 @@ export default function Leaderboard() {
       await leaderboardApi.refreshLeaderboard(period);
       await loadData();
     } catch (err) {
-      console.error('Failed to refresh leaderboard:', err);
+      handleApiErrorWithToast(err, 'Leaderboard Refresh');
     } finally {
       setRefreshing(false);
     }
@@ -76,8 +78,21 @@ export default function Leaderboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <LoadingSpinner aria-label="Loading leaderboard data" />
+      <div className="min-h-screen bg-zinc-950 text-white pb-24">
+        <div className="border-b border-zinc-800 bg-black px-4 py-3">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back</span>
+            </button>
+            <h1 className="text-xl font-bold">Leaderboard</h1>
+            <div className="w-20" />
+          </div>
+        </div>
+        <LeaderboardSkeleton />
       </div>
     );
   }
@@ -222,15 +237,17 @@ export default function Leaderboard() {
         })}
 
         {entries.length === 0 && (
-          <div className="text-center py-12 text-zinc-500">
-            <Trophy className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>No leaderboard entries yet</p>
-            <p className="text-sm mt-1">
-              {view === 'friends' 
-                ? 'Add friends to see their rankings' 
-                : 'Start practicing to climb the ranks'}
-            </p>
-          </div>
+          <EmptyState
+            icon={Trophy}
+            title="No leaderboard entries yet"
+            description={view === 'friends' 
+              ? 'Add friends to see their rankings and compete together!' 
+              : 'Start practicing to climb the ranks and compete with others!'}
+            action={{
+              label: view === 'friends' ? 'Find Friends' : 'Start Practicing',
+              onClick: () => navigate(view === 'friends' ? '/settings' : '/chord-setup'),
+            }}
+          />
         )}
       </div>
     </div>

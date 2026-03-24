@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 // Debounce utility for pitch detection updates
 function debounce<T extends (...args: any[]) => any>(
@@ -156,7 +157,7 @@ export function usePitchDetection({
     // Many desktop mics have lower input levels than mobile
     const noiseGate = Math.max(0.001, 0.01 - (sensitivity * 0.0015));
     
-    console.log('🎤 Audio level:', maxAmplitude.toFixed(4), 'Threshold:', noiseGate.toFixed(4));
+    logger.debug('Audio level', { amplitude: maxAmplitude.toFixed(4), threshold: noiseGate.toFixed(4) });
     
     if (maxAmplitude < noiseGate) {
       setCurrentPitch(null);
@@ -168,7 +169,7 @@ export function usePitchDetection({
     const frequency = detectPitch(buffer, audioContextRef.current.sampleRate);
     
     if (frequency) {
-      console.log('🎵 Detected frequency:', frequency.toFixed(2), 'Hz');
+      logger.debug('Detected frequency', { frequency: frequency.toFixed(2) });
     }
     
     // FIXED: Wider frequency range for guitar (60Hz to 1400Hz)
@@ -181,7 +182,7 @@ export function usePitchDetection({
         octave: noteInfo.octave,
       };
       
-      console.log('✅ Note detected:', result.noteName + result.octave, 'Cents:', result.cents);
+      logger.debug('Note detected', { note: result.noteName + result.octave, cents: result.cents });
       
       setCurrentPitch(result);
       
@@ -215,7 +216,7 @@ export function usePitchDetection({
 
   const startListening = useCallback(async () => {
     try {
-      console.log('🎤 Requesting microphone access...');
+      logger.info('Requesting microphone access');
       
       // Stop any existing streams first
       if (streamRef.current) {
@@ -232,23 +233,25 @@ export function usePitchDetection({
         },
       });
       
-      console.log('✅ Microphone access granted');
-      console.log('🎤 Audio tracks:', stream.getAudioTracks().map(t => ({
-        label: t.label,
-        enabled: t.enabled,
-        muted: t.muted,
-        readyState: t.readyState,
-      })));
+      logger.info('Microphone access granted');
+      logger.debug('Audio tracks', {
+        tracks: stream.getAudioTracks().map(t => ({
+          label: t.label,
+          enabled: t.enabled,
+          muted: t.muted,
+          readyState: t.readyState,
+        }))
+      });
 
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      console.log('🔊 AudioContext state:', audioContext.state);
+      logger.debug('AudioContext state', { state: audioContext.state });
       
       // CRITICAL FIX: Resume AudioContext if suspended (common on desktop Chrome/Firefox)
       if (audioContext.state === 'suspended') {
-        console.log('⏸️ AudioContext suspended, resuming...');
+        logger.info('AudioContext suspended, resuming...');
         await audioContext.resume();
-        console.log('▶️ AudioContext resumed:', audioContext.state);
+        logger.info('AudioContext resumed', { state: audioContext.state });
       }
       
       const analyser = audioContext.createAnalyser();
@@ -264,7 +267,7 @@ export function usePitchDetection({
       setIsListening(true);
       setPermissionDenied(false);
       
-      console.log('🎤 Microphone initialized:', {
+      logger.info('Microphone initialized', {
         sampleRate: audioContext.sampleRate,
         state: audioContext.state,
         fftSize: analyser.fftSize,
@@ -274,9 +277,7 @@ export function usePitchDetection({
       // Start analysis loop
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
     } catch (error: any) {
-      console.error('❌ Microphone access error:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
+      logger.error('Microphone access error', error);
       setPermissionDenied(true);
       setIsListening(false);
     }

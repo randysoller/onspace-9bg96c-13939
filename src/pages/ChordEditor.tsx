@@ -6,10 +6,17 @@ import { FileText, Edit3, Save, Trash2, XCircle } from 'lucide-react';
 interface DotMarker {
   string: number; // 0-5 (E to e)
   fret: number; // 0-5
-  finger: number; // 1-4
+  finger: number | 'T'; // 1-4 or T for thumb
   color: string;
   shape: 'circle' | 'diamond';
   label?: string;
+}
+
+interface BarreMarker {
+  fret: number;
+  fromString: number;
+  toString: number;
+  finger: number | 'T';
 }
 
 const COLORS = [
@@ -42,6 +49,10 @@ export default function ChordEditor() {
     { string: 1, fret: 2, finger: 1, color: '#06b6d4', shape: 'diamond' },
     { string: 4, fret: 3, finger: 3, color: '#64748b', shape: 'circle' },
   ]);
+  const [barres, setBarres] = useState<BarreMarker[]>([]);
+  const [barreMode, setBarreMode] = useState(false);
+  const [barreFret, setBarreFret] = useState<number | null>(null);
+  const [barreFirstString, setBarreFirstString] = useState<number | null>(null);
   
   // Chord info
   const [chordName, setChordName] = useState('C Major');
@@ -52,7 +63,7 @@ export default function ChordEditor() {
   // Dot appearance
   const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [selectedShape, setSelectedShape] = useState<'circle' | 'diamond'>('circle');
-  const [selectedFinger, setSelectedFinger] = useState(1);
+  const [selectedFinger, setSelectedFinger] = useState<number | 'T'>(1);
   const [customLabel, setCustomLabel] = useState('');
   
   // Open strings state (true = open, false = muted, null = not set)
@@ -63,18 +74,51 @@ export default function ChordEditor() {
     const existingIndex = markers.findIndex(m => m.string === string && m.fret === fret);
     
     if (existingIndex !== -1) {
-      // Remove existing marker
-      setMarkers(markers.filter((_, i) => i !== existingIndex));
+      // If in barre mode and clicking on existing marker
+      if (barreMode) {
+        const clickedMarker = markers[existingIndex];
+        
+        // If this is the first click in barre mode
+        if (barreFret === null) {
+          setBarreFret(clickedMarker.fret);
+          setBarreFirstString(clickedMarker.string);
+        } else if (clickedMarker.fret === barreFret && barreFirstString !== null) {
+          // Second click - create the barre
+          const fromString = Math.min(barreFirstString, clickedMarker.string);
+          const toString = Math.max(barreFirstString, clickedMarker.string);
+          
+          setBarres([...barres, {
+            fret: barreFret,
+            fromString,
+            toString,
+            finger: clickedMarker.finger,
+          }]);
+          
+          // Reset barre mode
+          setBarreMode(false);
+          setBarreFret(null);
+          setBarreFirstString(null);
+        } else {
+          // Wrong fret - reset
+          setBarreFret(null);
+          setBarreFirstString(null);
+        }
+      } else {
+        // Not in barre mode - remove existing marker
+        setMarkers(markers.filter((_, i) => i !== existingIndex));
+      }
     } else {
-      // Add new marker
-      setMarkers([...markers, {
-        string,
-        fret,
-        finger: selectedFinger,
-        color: selectedColor.value,
-        shape: selectedShape,
-        label: customLabel || undefined,
-      }]);
+      // Add new marker only if not in barre mode
+      if (!barreMode) {
+        setMarkers([...markers, {
+          string,
+          fret,
+          finger: selectedFinger,
+          color: selectedColor.value,
+          shape: selectedShape,
+          label: customLabel || undefined,
+        }]);
+      }
     }
   };
 
@@ -95,7 +139,15 @@ export default function ChordEditor() {
 
   const handleClear = () => {
     setMarkers([]);
+    setBarres([]);
     setOpenStrings([null, null, null, null, null, null]);
+    setBarreMode(false);
+    setBarreFret(null);
+    setBarreFirstString(null);
+  };
+
+  const handleBarreDoubleClick = (barreIndex: number) => {
+    setBarres(barres.filter((_, i) => i !== barreIndex));
   };
 
   const handleUpdateChord = () => {
@@ -117,11 +169,15 @@ export default function ChordEditor() {
 
   const handleStartNew = () => {
     setMarkers([]);
+    setBarres([]);
     setOpenStrings([null, null, null, null, null, null]);
     setChordName('');
     setSymbol('');
     setBaseFret(1);
     setVisibleFrets(5);
+    setBarreMode(false);
+    setBarreFret(null);
+    setBarreFirstString(null);
   };
 
   return (
@@ -149,7 +205,13 @@ export default function ChordEditor() {
           </div>
 
           <p className="text-xs text-zinc-600 mb-4">
-            Tap fret to place dot. Tap dot to change finger, delete, or start barre. Drag dot to move. Double-click barre to remove.
+            Tap fret to place dot. Tap dot to remove. {barreMode && barreFret === null ? (
+              <span className="text-amber-500 font-semibold">BARRE MODE: Click first dot in fret to start barre.</span>
+            ) : barreMode && barreFret !== null ? (
+              <span className="text-amber-500 font-semibold">BARRE MODE: Click second dot in fret {barreFret} to complete barre.</span>
+            ) : (
+              'Select finger 1-4 or T (thumb), then tap fret. Click "Barre" button to create bar across strings.'
+            )} Double-click barre to remove.
           </p>
 
           {/* Fretboard SVG */}
@@ -212,11 +274,14 @@ export default function ChordEditor() {
               <g>
                 {[1, 2, 3, 4, 'T', '-', 'Barre'].map((label, idx) => {
                   const x = 40 + idx * 35;
-                  const isSelected = selectedFinger === idx + 1 && typeof label === 'number';
+                  const isFingerButton = typeof label === 'number' || label === 'T';
+                  const isSelected = selectedFinger === label && isFingerButton;
+                  const isBarreButton = label === 'Barre';
+                  const isBarreActive = barreMode && isBarreButton;
                   
                   return (
                     <g key={`fret-label-${idx}`}>
-                      {idx < 5 && typeof label === 'number' && (
+                      {isFingerButton && (
                         <rect
                           x={x - 15}
                           y={55}
@@ -225,7 +290,25 @@ export default function ChordEditor() {
                           rx={6}
                           fill={isSelected ? '#f59e0b' : 'transparent'}
                           className="cursor-pointer"
-                          onClick={() => setSelectedFinger(label as number)}
+                          onClick={() => setSelectedFinger(label as number | 'T')}
+                        />
+                      )}
+                      {isBarreButton && (
+                        <rect
+                          x={x - 20}
+                          y={55}
+                          width={40}
+                          height={24}
+                          rx={6}
+                          fill={isBarreActive ? '#f59e0b' : 'transparent'}
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setBarreMode(!barreMode);
+                            if (barreMode) {
+                              setBarreFret(null);
+                              setBarreFirstString(null);
+                            }
+                          }}
                         />
                       )}
                       <text
@@ -233,9 +316,19 @@ export default function ChordEditor() {
                         y={72}
                         textAnchor="middle"
                         className={`text-xs font-semibold cursor-pointer ${
-                          isSelected ? 'fill-zinc-950' : idx === 6 ? 'fill-amber-500' : 'fill-zinc-500'
+                          isSelected || isBarreActive ? 'fill-zinc-950' : 'fill-zinc-500'
                         }`}
-                        onClick={() => typeof label === 'number' && setSelectedFinger(label)}
+                        onClick={() => {
+                          if (isFingerButton) {
+                            setSelectedFinger(label as number | 'T');
+                          } else if (isBarreButton) {
+                            setBarreMode(!barreMode);
+                            if (barreMode) {
+                              setBarreFret(null);
+                              setBarreFirstString(null);
+                            }
+                          }
+                        }}
                       >
                         {label}
                       </text>
@@ -303,10 +396,43 @@ export default function ChordEditor() {
                 ))
               )}
 
+              {/* Barres - draw before markers */}
+              {barres.map((barre, idx) => {
+                const x1 = 40 + barre.fromString * 45;
+                const x2 = 40 + barre.toString * 45;
+                const y = 92 + (barre.fret - 0.5) * 55;
+
+                return (
+                  <g key={`barre-${idx}`}>
+                    <line
+                      x1={x1}
+                      y1={y}
+                      x2={x2}
+                      y2={y}
+                      stroke="#f59e0b"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                      className="cursor-pointer"
+                      onDoubleClick={() => handleBarreDoubleClick(idx)}
+                    />
+                    <text
+                      x={(x1 + x2) / 2}
+                      y={y + 1}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      className="text-sm font-black pointer-events-none fill-zinc-950"
+                    >
+                      {barre.finger}
+                    </text>
+                  </g>
+                );
+              })}
+
               {/* Markers */}
               {markers.map((marker, idx) => {
                 const x = 40 + marker.string * 45;
                 const y = 92 + (marker.fret - 0.5) * 55;
+                const isPartOfBarre = barreMode && barreFirstString !== null && marker.string === barreFirstString && marker.fret === barreFret;
 
                 return (
                   <g key={`marker-${idx}`} className="cursor-pointer">
@@ -316,12 +442,16 @@ export default function ChordEditor() {
                         cy={y}
                         r="14"
                         fill={marker.color}
+                        stroke={isPartOfBarre ? '#f59e0b' : 'none'}
+                        strokeWidth={isPartOfBarre ? '3' : '0'}
                         onClick={() => handleFretClick(marker.string, marker.fret)}
                       />
                     ) : (
                       <path
                         d={`M ${x} ${y - 14} L ${x + 14} ${y} L ${x} ${y + 14} L ${x - 14} ${y} Z`}
                         fill={marker.color}
+                        stroke={isPartOfBarre ? '#f59e0b' : 'none'}
+                        strokeWidth={isPartOfBarre ? '3' : '0'}
                         onClick={() => handleFretClick(marker.string, marker.fret)}
                       />
                     )}
@@ -633,6 +763,36 @@ export default function ChordEditor() {
                     );
                   }
                   return null;
+                })}
+
+                {/* Barres in preview */}
+                {barres.map((barre, idx) => {
+                  const x1 = 30 + barre.fromString * 24;
+                  const x2 = 30 + barre.toString * 24;
+                  const y = 20 + (barre.fret - 0.5) * 45;
+
+                  return (
+                    <g key={`preview-barre-${idx}`}>
+                      <line
+                        x1={x1}
+                        y1={y}
+                        x2={x2}
+                        y2={y}
+                        stroke="#f59e0b"
+                        strokeWidth="8"
+                        strokeLinecap="round"
+                      />
+                      <text
+                        x={(x1 + x2) / 2}
+                        y={y + 1}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="text-xs font-black fill-zinc-950"
+                      >
+                        {barre.finger}
+                      </text>
+                    </g>
+                  );
                 })}
 
                 {/* Markers */}

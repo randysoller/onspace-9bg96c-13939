@@ -12,6 +12,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { formatReminderTime, type PracticeReminderSettings, type ReminderFrequency } from '@/lib/practice-reminder';
+import { 
+  isPushNotificationSupported, 
+  getNotificationPermission, 
+  requestNotificationPermission,
+  testNotification,
+  playNotificationSound,
+  schedulePracticeReminder,
+  type PracticeNotificationData 
+} from '@/lib/push-notifications';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -38,10 +47,44 @@ export default function Settings() {
     };
   });
 
-  // Save reminder settings to localStorage
+  // Notification settings
+  const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(false);
+  const [notificationSound, setNotificationSound] = useState<'default' | 'chime' | 'guitar' | 'none'>('chime');
+  const [notificationPermission, setNotificationPermission] = useState(getNotificationPermission());
+  const [testingNotification, setTestingNotification] = useState(false);
+
+  // Load notification settings
+  useEffect(() => {
+    const storedPush = localStorage.getItem('pushNotificationsEnabled');
+    if (storedPush) setPushNotificationsEnabled(JSON.parse(storedPush));
+    
+    const storedSound = localStorage.getItem('notificationSound');
+    if (storedSound) setNotificationSound(storedSound as any);
+  }, []);
+
+  // Save notification settings
+  useEffect(() => {
+    localStorage.setItem('pushNotificationsEnabled', JSON.stringify(pushNotificationsEnabled));
+  }, [pushNotificationsEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem('notificationSound', notificationSound);
+  }, [notificationSound]);
+
+  // Save reminder settings to localStorage and schedule push notifications
   useEffect(() => {
     localStorage.setItem('practiceReminderSettings', JSON.stringify(reminderSettings));
-  }, [reminderSettings]);
+    
+    // Schedule push notification if enabled
+    if (reminderSettings.enabled && pushNotificationsEnabled && notificationPermission.granted) {
+      const practiceData: PracticeNotificationData = {
+        currentStreak: 0, // Replace with actual streak from store
+        totalSessions: 0, // Replace with actual count
+        averageAccuracy: 0, // Replace with actual average
+      };
+      schedulePracticeReminder(reminderSettings, practiceData);
+    }
+  }, [reminderSettings, pushNotificationsEnabled, notificationPermission]);
 
   useEffect(() => {
     if (!user) {
@@ -75,6 +118,39 @@ export default function Settings() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  const handleRequestNotificationPermission = async () => {
+    const granted = await requestNotificationPermission();
+    setNotificationPermission(getNotificationPermission());
+    if (granted) {
+      setPushNotificationsEnabled(true);
+      toast.success('Notifications enabled!');
+    } else {
+      toast.error('Notification permission denied');
+    }
+  };
+
+  const handleTestNotification = async () => {
+    setTestingNotification(true);
+    try {
+      const practiceData: PracticeNotificationData = {
+        currentStreak: 5,
+        totalSessions: 42,
+        averageAccuracy: 87.5,
+      };
+      await testNotification(practiceData);
+      playNotificationSound(notificationSound);
+      toast.success('Test notification sent!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send test notification');
+    } finally {
+      setTestingNotification(false);
+    }
+  };
+
+  const handlePlaySound = () => {
+    playNotificationSound(notificationSound);
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -293,9 +369,16 @@ export default function Settings() {
 
         {/* Practice Reminders */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell className="w-5 h-5 text-amber-500" aria-hidden="true" />
-            <h2 className="text-lg font-bold">Practice Reminders</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-amber-500" aria-hidden="true" />
+              <h2 className="text-lg font-bold">Practice Reminders</h2>
+            </div>
+            {isPushNotificationSupported() && (
+              <span className="text-xs text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+                Push Supported
+              </span>
+            )}
           </div>
           
           <div className="space-y-4">
@@ -373,6 +456,95 @@ export default function Settings() {
                     )}
                   </p>
                 </div>
+
+                {/* Push Notifications */}
+                {isPushNotificationSupported() && (
+                  <div className="space-y-4 border-t border-zinc-800 pt-4 mt-4">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="enable-push" className="text-sm text-zinc-400 flex items-center gap-2">
+                        <Bell className="w-4 h-4" aria-hidden="true" />
+                        Browser Push Notifications
+                      </label>
+                      {notificationPermission.granted ? (
+                        <button
+                          id="enable-push"
+                          onClick={() => setPushNotificationsEnabled(!pushNotificationsEnabled)}
+                          className={`relative w-14 h-8 rounded-full transition-colors min-w-[56px] ${
+                            pushNotificationsEnabled ? 'bg-emerald-500' : 'bg-zinc-700'
+                          }`}
+                          role="switch"
+                          aria-checked={pushNotificationsEnabled}
+                          aria-label="Toggle push notifications"
+                        >
+                          <span
+                            className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
+                              pushNotificationsEnabled ? 'translate-x-6' : ''
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleRequestNotificationPermission}
+                          className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-zinc-950 text-sm font-semibold rounded-lg transition-colors min-h-[44px]"
+                          aria-label="Enable push notifications"
+                        >
+                          Enable Push
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      {notificationPermission.granted 
+                        ? 'Receive reminders even when the app is closed'
+                        : 'Enable browser notifications to get reminders outside the app'
+                      }
+                    </p>
+
+                    {pushNotificationsEnabled && (
+                      <>
+                        <div>
+                          <label htmlFor="notification-sound" className="text-sm text-zinc-400 mb-2 block flex items-center gap-2">
+                            <Volume2 className="w-4 h-4" aria-hidden="true" />
+                            Notification Sound
+                          </label>
+                          <div className="flex gap-2">
+                            <Select
+                              value={notificationSound}
+                              onValueChange={(value: any) => setNotificationSound(value)}
+                            >
+                              <SelectTrigger id="notification-sound" className="flex-1 bg-zinc-800 border-zinc-700" aria-label="Select notification sound">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">Default Beep</SelectItem>
+                                <SelectItem value="chime">Gentle Chime</SelectItem>
+                                <SelectItem value="guitar">Guitar Pluck</SelectItem>
+                                <SelectItem value="none">Silent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <button
+                              onClick={handlePlaySound}
+                              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                              aria-label="Preview notification sound"
+                            >
+                              <Volume2 className="w-4 h-4" aria-hidden="true" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleTestNotification}
+                          disabled={testingNotification}
+                          className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold py-3 rounded-lg transition-colors min-h-[44px] flex items-center justify-center gap-2"
+                          aria-label="Send test notification"
+                        >
+                          {testingNotification ? <LoadingSpinner size="sm" /> : <Bell className="w-4 h-4" />}
+                          {testingNotification ? 'Sending...' : 'Send Test Notification'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>

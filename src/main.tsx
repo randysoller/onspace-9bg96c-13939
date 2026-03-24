@@ -5,6 +5,21 @@ import './index.css'
 import './stores/authStore'; // Initialize auth state
 import { useSettingsSync } from './hooks/useSettingsSync';
 import { useOfflineSync } from './hooks/useOfflineSync';
+import { logger } from './lib/logger';
+
+// Register service worker for push notifications
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((registration) => {
+        logger.info('Service Worker registered', { scope: registration.scope });
+      })
+      .catch((error) => {
+        logger.error('Service Worker registration failed', error);
+      });
+  });
+}
 
 function AppWrapper() {
   useSettingsSync();
@@ -12,11 +27,11 @@ function AppWrapper() {
 
   useEffect(() => {
     if (!isOnline) {
-      console.log('🔴 Offline mode - changes will be synced when connection is restored');
+      logger.warn('Offline mode - changes will be synced when connection is restored');
     } else if (queuedItems > 0) {
-      console.log(`🔄 Syncing ${queuedItems} queued items...`);
+      logger.info(`Syncing ${queuedItems} queued items...`);
     } else {
-      console.log('✅ All changes synced');
+      logger.info('All changes synced');
     }
   }, [isOnline, queuedItems]);
 

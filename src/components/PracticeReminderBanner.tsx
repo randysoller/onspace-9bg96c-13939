@@ -13,6 +13,7 @@ import {
   getTimeSinceLastPractice,
   type PracticeReminderSettings 
 } from '@/lib/practice-reminder';
+import { playNotificationSound } from '@/lib/push-notifications';
 
 interface PracticeReminderBannerProps {
   settings: PracticeReminderSettings;
@@ -31,9 +32,19 @@ export const PracticeReminderBanner = memo(({
   useEffect(() => {
     const shouldDisplay = shouldShowReminder(settings);
     setShow(shouldDisplay);
+    
+    // Play notification sound when banner appears
+    if (shouldDisplay) {
+      const soundType = localStorage.getItem('notificationSound') as 'default' | 'chime' | 'guitar' | 'none' || 'chime';
+      playNotificationSound(soundType);
+    }
   }, [settings]);
 
   const handleStartPractice = () => {
+    // Play notification sound
+    const soundType = localStorage.getItem('notificationSound') as 'default' | 'chime' | 'guitar' | 'none' || 'chime';
+    playNotificationSound(soundType);
+    
     onDismiss();
     navigate('/chord-setup');
   };

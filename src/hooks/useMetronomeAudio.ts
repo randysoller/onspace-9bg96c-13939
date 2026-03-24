@@ -294,7 +294,7 @@ export const useMetronomeAudio = () => {
         filter.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 1.35, now);
+        gainNode.gain.setValueAtTime(volume * 1.60, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
 
         bufferSource.start(now);
@@ -363,7 +363,7 @@ export const useMetronomeAudio = () => {
         filter3.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 1.35, now);
+        gainNode.gain.setValueAtTime(volume * 1.60, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
 
         bufferSource.start(now);
@@ -425,7 +425,7 @@ export const useMetronomeAudio = () => {
         gainNode.connect(context.destination);
 
         // Accent beats are 15% louder than regular beats
-        const hiHatVolume = isAccent ? volume * 1.25 * 1.15 : volume * 1.25;
+        const hiHatVolume = isAccent ? volume * 1.50 * 1.15 : volume * 1.50;
         gainNode.gain.setValueAtTime(hiHatVolume, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
@@ -486,7 +486,7 @@ export const useMetronomeAudio = () => {
         peaking.connect(gainNode);
         gainNode.connect(context.destination);
 
-        gainNode.gain.setValueAtTime(volume * 1.30, now);
+        gainNode.gain.setValueAtTime(volume * 1.55, now);
         gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
 
         bufferSource.start(now);

@@ -66,8 +66,8 @@ export default function ChordEditor() {
   const [selectedFinger, setSelectedFinger] = useState<number | 'T'>(1);
   const [customLabel, setCustomLabel] = useState('');
   
-  // Open strings state (true = open, false = muted, null = not set)
-  const [openStrings, setOpenStrings] = useState<(boolean | null)[]>([null, null, null, null, null, null]);
+  // Open strings state ('none', 'open-circle', 'muted', 'open-diamond')
+  const [openStrings, setOpenStrings] = useState<('none' | 'open-circle' | 'muted' | 'open-diamond')[]>(['none', 'none', 'none', 'none', 'none', 'none']);
 
   const handleFretClick = (string: number, fret: number) => {
     // Check if there's already a marker here
@@ -126,12 +126,15 @@ export default function ChordEditor() {
     const current = openStrings[string];
     const newState = [...openStrings];
     
-    if (current === null) {
-      newState[string] = true; // Set to open
-    } else if (current === true) {
-      newState[string] = false; // Set to muted
+    // Cycle: none → open-circle → muted → open-diamond → none
+    if (current === 'none') {
+      newState[string] = 'open-circle';
+    } else if (current === 'open-circle') {
+      newState[string] = 'muted';
+    } else if (current === 'muted') {
+      newState[string] = 'open-diamond';
     } else {
-      newState[string] = null; // Clear
+      newState[string] = 'none';
     }
     
     setOpenStrings(newState);
@@ -140,7 +143,7 @@ export default function ChordEditor() {
   const handleClear = () => {
     setMarkers([]);
     setBarres([]);
-    setOpenStrings([null, null, null, null, null, null]);
+    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
     setBarreMode(false);
     setBarreFret(null);
     setBarreFirstString(null);
@@ -170,7 +173,7 @@ export default function ChordEditor() {
   const handleStartNew = () => {
     setMarkers([]);
     setBarres([]);
-    setOpenStrings([null, null, null, null, null, null]);
+    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
     setChordName('');
     setSymbol('');
     setBaseFret(1);
@@ -243,28 +246,37 @@ export default function ChordEditor() {
                       className="hover:fill-white/5"
                     />
                     
-                    {openStrings[idx] === true && (
+                    {openStrings[idx] === 'open-circle' && (
                       <circle
                         cx={40 + idx * 45}
                         cy={40}
                         r="9"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#f59e0b"
                         strokeWidth="3"
-                        className="text-zinc-300 hover:text-amber-500 pointer-events-none"
+                        className="pointer-events-none"
                       />
                     )}
-                    {openStrings[idx] === false && (
+                    {openStrings[idx] === 'muted' && (
                       <text
                         x={40 + idx * 45}
                         y={45}
                         textAnchor="middle"
-                        className="text-lg fill-zinc-300 font-bold hover:fill-amber-500 pointer-events-none"
+                        className="text-lg fill-zinc-300 font-bold pointer-events-none"
                       >
                         ✕
                       </text>
                     )}
-                    {openStrings[idx] === null && (
+                    {openStrings[idx] === 'open-diamond' && (
+                      <path
+                        d={`M ${40 + idx * 45} ${40 - 9} L ${40 + idx * 45 + 9} ${40} L ${40 + idx * 45} ${40 + 9} L ${40 + idx * 45 - 9} ${40} Z`}
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="3"
+                        className="pointer-events-none"
+                      />
+                    )}
+                    {openStrings[idx] === 'none' && (
                       <circle
                         cx={40 + idx * 45}
                         cy={40}
@@ -735,7 +747,7 @@ export default function ChordEditor() {
 
                 {/* Open/Muted markers */}
                 {openStrings.map((state, idx) => {
-                  if (state === true) {
+                  if (state === 'open-circle') {
                     return (
                       <circle
                         key={`preview-open-${idx}`}
@@ -743,12 +755,11 @@ export default function ChordEditor() {
                         cy={10}
                         r="7"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#f59e0b"
                         strokeWidth="2.5"
-                        className="text-zinc-300"
                       />
                     );
-                  } else if (state === false) {
+                  } else if (state === 'muted') {
                     return (
                       <text
                         key={`preview-muted-${idx}`}
@@ -759,6 +770,16 @@ export default function ChordEditor() {
                       >
                         ✕
                       </text>
+                    );
+                  } else if (state === 'open-diamond') {
+                    return (
+                      <path
+                        key={`preview-diamond-${idx}`}
+                        d={`M ${30 + idx * 24} ${10 - 7} L ${30 + idx * 24 + 7} ${10} L ${30 + idx * 24} ${10 + 7} L ${30 + idx * 24 - 7} ${10} Z`}
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="2.5"
+                      />
                     );
                   }
                   return null;

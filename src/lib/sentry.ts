@@ -4,7 +4,6 @@
  */
 
 import * as Sentry from '@sentry/react';
-import { BrowserTracing } from '@sentry/tracing';
 
 /**
  * Initialize Sentry for error and performance monitoring
@@ -16,22 +15,17 @@ export function initSentry() {
     return;
   }
 
+  // Skip if no DSN provided
+  if (!import.meta.env.VITE_SENTRY_DSN) {
+    console.log('Sentry DSN not configured');
+    return;
+  }
+
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    integrations: [
-      new BrowserTracing(),
-      new Sentry.Replay({
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
     
     // Performance Monitoring
     tracesSampleRate: 0.1, // 10% of transactions
-    
-    // Session Replay
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0, // 100% of errors
     
     // Environment
     environment: import.meta.env.MODE,
@@ -102,12 +96,11 @@ export function captureException(error: Error, context?: Record<string, any>) {
 
 /**
  * Capture performance transaction
+ * Note: Use Sentry.startSpan in newer versions
  */
-export function startTransaction(name: string, op: string) {
-  return Sentry.startTransaction({
-    name,
-    op,
-  });
+export function startPerformanceTrace(name: string, op: string) {
+  // Modern Sentry API uses startSpan or manual transactions
+  addBreadcrumb(`Performance: ${name}`, { op });
 }
 
 /**

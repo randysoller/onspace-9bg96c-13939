@@ -3,7 +3,7 @@
  * Monitors Core Web Vitals (LCP, FID, CLS) and other performance metrics
  */
 
-import { onCLS, onFID, onLCP, onFCP, onTTFB, Metric } from 'web-vitals';
+import { onCLS, onINP, onLCP, onFCP, onTTFB, type Metric } from 'web-vitals';
 import { logger } from './logger';
 
 /**
@@ -51,7 +51,7 @@ function sendToAnalytics(metric: Metric) {
 export function initWebVitals() {
   // Core Web Vitals
   onCLS(sendToAnalytics);  // Cumulative Layout Shift
-  onFID(sendToAnalytics);  // First Input Delay
+  onINP(sendToAnalytics);  // Interaction to Next Paint (replaces FID)
   onLCP(sendToAnalytics);  // Largest Contentful Paint
   
   // Additional metrics
@@ -78,7 +78,7 @@ export async function getCurrentWebVitals(): Promise<Record<string, number>> {
     };
 
     onCLS((metric) => { metrics.CLS = metric.value; checkComplete(); }, { reportAllChanges: true });
-    onFID((metric) => { metrics.FID = metric.value; checkComplete(); });
+    onINP((metric) => { metrics.INP = metric.value; checkComplete(); });
     onLCP((metric) => { metrics.LCP = metric.value; checkComplete(); }, { reportAllChanges: true });
     onFCP((metric) => { metrics.FCP = metric.value; checkComplete(); });
     onTTFB((metric) => { metrics.TTFB = metric.value; checkComplete(); });
@@ -90,10 +90,11 @@ export async function getCurrentWebVitals(): Promise<Record<string, number>> {
 
 /**
  * Performance thresholds for each metric
+ * Note: INP replaces FID as of 2024
  */
 export const WEB_VITALS_THRESHOLDS = {
   LCP: { good: 2500, needsImprovement: 4000 },
-  FID: { good: 100, needsImprovement: 300 },
+  INP: { good: 200, needsImprovement: 500 }, // Interaction to Next Paint
   CLS: { good: 0.1, needsImprovement: 0.25 },
   FCP: { good: 1800, needsImprovement: 3000 },
   TTFB: { good: 800, needsImprovement: 1800 },

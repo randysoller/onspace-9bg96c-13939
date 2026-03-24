@@ -28,7 +28,6 @@ Comprehensive guide for FretMaster's monitoring, analytics, and PWA capabilities
 
 - **Automatic error capture**: All unhandled errors are sent to Sentry
 - **Performance monitoring**: Track slow operations and API calls
-- **Session replay**: Watch user sessions leading to errors
 - **Breadcrumbs**: See user actions before error occurred
 - **Source maps**: View original source code in error stack traces
 
@@ -68,10 +67,10 @@ FretMaster tracks all Core Web Vitals:
    - Needs improvement: 2.5s - 4s
    - Poor: > 4s
 
-2. **FID** (First Input Delay): Interactivity
-   - Good: < 100ms
-   - Needs improvement: 100ms - 300ms
-   - Poor: > 300ms
+2. **INP** (Interaction to Next Paint): Interactivity (replaced FID in 2024)
+   - Good: < 200ms
+   - Needs improvement: 200ms - 500ms
+   - Poor: > 500ms
 
 3. **CLS** (Cumulative Layout Shift): Visual stability
    - Good: < 0.1
@@ -260,7 +259,7 @@ Access at `/admin` (requires admin role).
    - Error rates
 
 5. **Web Vitals**
-   - LCP, FID, CLS scores
+   - LCP, INP, CLS scores
    - Performance trends
    - Device breakdowns
 

@@ -4,6 +4,97 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global accessibility improvements */
+
+/* Focus visible indicators - clear focus rings on all interactive elements */
+*:focus-visible {
+  outline: 2px solid theme('colors.amber.500');
+  outline-offset: 2px;
+  border-radius: theme('borderRadius.DEFAULT');
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid theme('colors.amber.500');
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px theme('colors.amber.500 / 0.2');
+}
+
+/* Reduced motion support - respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Ensure minimum touch target sizes (44x44px) */
+button,
+a,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+[role="button"] {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Custom shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    to right,
+    theme('colors.zinc.800') 4%,
+    theme('colors.zinc.700') 25%,
+    theme('colors.zinc.800') 36%
+  );
+  background-size: 1000px 100%;
+}
+
 /* Prevent mobile toolbar movement */
 html, body {
   overflow-x: hidden;

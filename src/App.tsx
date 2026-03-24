@@ -3,6 +3,7 @@ import { Suspense, lazy } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { SkipToContent } from '@/components/SkipToContent';
 import Index from '@/pages/Index';
 import ChordSetup from '@/pages/ChordSetup';
 import Practice from '@/pages/Practice';
@@ -30,6 +31,7 @@ const Analytics = lazy(() => import('@/pages/Analytics'));
 function App() {
   return (
     <ErrorBoundary>
+      <SkipToContent />
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />

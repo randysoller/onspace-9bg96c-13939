@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { CustomChordData } from '@/types/customChord';
-import { FileText, Save, Trash2, XCircle, Keyboard, AlertCircle } from 'lucide-react';
+import { FileText, Save, Trash2, XCircle, Keyboard, AlertCircle, Undo, Redo } from 'lucide-react';
+import { useHistory } from '@/hooks/useHistory';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -25,15 +26,59 @@ export default function ChordEditor() {
     symbol?: string;
   }>({});
   
-  // Fretboard state
+  // Fretboard state with undo/redo history (50 steps)
+  const {
+    state: fretboardState,
+    setState: setFretboardState,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    clear: clearHistory,
+  } = useHistory<{
+    markers: DotMarker[];
+    barres: BarreMarker[];
+    openStrings: StringState[];
+  }>(
+    {
+      markers: [
+        { string: 2, fret: 1, finger: 2, color: '#f59e0b', shape: 'circle' },
+        { string: 1, fret: 2, finger: 1, color: '#06b6d4', shape: 'diamond' },
+        { string: 4, fret: 3, finger: 3, color: '#64748b', shape: 'circle' },
+      ],
+      barres: [],
+      openStrings: ['none', 'none', 'none', 'none', 'none', 'none'],
+    },
+    50
+  );
+  
+  const markers = fretboardState.markers;
+  const barres = fretboardState.barres;
+  const openStrings = fretboardState.openStrings;
+  
+  const setMarkers = useCallback((updater: DotMarker[] | ((prev: DotMarker[]) => DotMarker[])) => {
+    setFretboardState(prev => ({
+      ...prev,
+      markers: typeof updater === 'function' ? updater(prev.markers) : updater,
+    }));
+  }, [setFretboardState]);
+  
+  const setBarres = useCallback((updater: BarreMarker[] | ((prev: BarreMarker[]) => BarreMarker[])) => {
+    setFretboardState(prev => ({
+      ...prev,
+      barres: typeof updater === 'function' ? updater(prev.barres) : updater,
+    }));
+  }, [setFretboardState]);
+  
+  const setOpenStrings = useCallback((updater: StringState[] | ((prev: StringState[]) => StringState[])) => {
+    setFretboardState(prev => ({
+      ...prev,
+      openStrings: typeof updater === 'function' ? updater(prev.openStrings) : updater,
+    }));
+  }, [setFretboardState]);
+  
   const [baseFret, setBaseFret] = useState<number>(1);
   const [visibleFrets, setVisibleFrets] = useState<number>(5);
-  const [markers, setMarkers] = useState<DotMarker[]>([
-    { string: 2, fret: 1, finger: 2, color: '#f59e0b', shape: 'circle' },
-    { string: 1, fret: 2, finger: 1, color: '#06b6d4', shape: 'diamond' },
-    { string: 4, fret: 3, finger: 3, color: '#64748b', shape: 'circle' },
-  ]);
-  const [barres, setBarres] = useState<BarreMarker[]>([]);
   const [barreMode, setBarreMode] = useState<boolean>(false);
   const [barreFret, setBarreFret] = useState<number | null>(null);
   const [barreFirstString, setBarreFirstString] = useState<number | null>(null);
@@ -50,8 +95,6 @@ export default function ChordEditor() {
   const [selectedFinger, setSelectedFinger] = useState<FingerType>(1);
   const [customLabel, setCustomLabel] = useState<string>('');
   
-  // Open strings state
-  const [openStrings, setOpenStrings] = useState<StringState[]>(['none', 'none', 'none', 'none', 'none', 'none']);
   
   // Keyboard navigation state
   const [keyboardNavEnabled, setKeyboardNavEnabled] = useState<boolean>(false);
@@ -124,13 +167,15 @@ export default function ChordEditor() {
   }, []);
 
   const handleClear = useCallback(() => {
-    setMarkers([]);
-    setBarres([]);
-    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
+    setFretboardState({
+      markers: [],
+      barres: [],
+      openStrings: ['none', 'none', 'none', 'none', 'none', 'none'],
+    });
     setBarreMode(false);
     setBarreFret(null);
     setBarreFirstString(null);
-  }, []);
+  }, [setFretboardState]);
 
   const handleBarreDoubleClick = useCallback((barreIndex: number) => {
     setBarres(prev => prev.filter((_, i) => i !== barreIndex));
@@ -193,9 +238,11 @@ export default function ChordEditor() {
 
   // FIXED: Move handleStartNew BEFORE handleUpdateChord to avoid TDZ error
   const handleStartNew = useCallback(() => {
-    setMarkers([]);
-    setBarres([]);
-    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
+    clearHistory({
+      markers: [],
+      barres: [],
+      openStrings: ['none', 'none', 'none', 'none', 'none', 'none'],
+    });
     setChordName('');
     setSymbol('');
     setBaseFret(1);
@@ -205,7 +252,7 @@ export default function ChordEditor() {
     setBarreFirstString(null);
     setSelectedString(null);
     setSelectedFret(null);
-  }, []);
+  }, [clearHistory]);
 
   const handleUpdateChord = useCallback(async () => {
     // Final validation
@@ -351,6 +398,16 @@ export default function ChordEditor() {
         handleBarreToggle();
       }
       
+      // Undo/Redo
+      else if (e.key === 'z' && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      }
+      else if (e.key === 'z' && (e.metaKey || e.ctrlKey) && e.shiftKey) {
+        e.preventDefault();
+        redo();
+      }
+      
       // Escape to exit modes
       else if (e.key === 'Escape') {
         e.preventDefault();
@@ -368,7 +425,7 @@ export default function ChordEditor() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [keyboardNavEnabled, selectedString, selectedFret, visibleFrets, markers, handleFretClick, handleBarreToggle, barreMode]);
+  }, [keyboardNavEnabled, selectedString, selectedFret, visibleFrets, markers, handleFretClick, handleBarreToggle, barreMode, undo, redo]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
@@ -409,6 +466,8 @@ export default function ChordEditor() {
                 <div><kbd className="px-2 py-1 bg-zinc-800 rounded">T</kbd> Thumb</div>
                 <div><kbd className="px-2 py-1 bg-zinc-800 rounded">B</kbd> Toggle barre</div>
                 <div><kbd className="px-2 py-1 bg-zinc-800 rounded">Del</kbd> Remove dot</div>
+                <div><kbd className="px-2 py-1 bg-zinc-800 rounded">Cmd/Ctrl+Z</kbd> Undo</div>
+                <div><kbd className="px-2 py-1 bg-zinc-800 rounded">Cmd/Ctrl+Shift+Z</kbd> Redo</div>
                 <div><kbd className="px-2 py-1 bg-zinc-800 rounded">Esc</kbd> Cancel/Exit</div>
               </div>
             </div>
@@ -432,8 +491,26 @@ export default function ChordEditor() {
                 </span>
               )}
               <button
+                onClick={undo}
+                disabled={!canUndo}
+                className="p-2 text-zinc-500 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Undo last change"
+                title="Undo (Cmd/Ctrl+Z)"
+              >
+                <Undo className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
+                onClick={redo}
+                disabled={!canRedo}
+                className="p-2 text-zinc-500 hover:text-amber-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label="Redo last undone change"
+                title="Redo (Cmd/Ctrl+Shift+Z)"
+              >
+                <Redo className="w-4 h-4" aria-hidden="true" />
+              </button>
+              <button
                 onClick={handleClear}
-                className="text-xs text-zinc-500 hover:text-amber-500 transition-colors flex items-center gap-1"
+                className="text-xs text-zinc-500 hover:text-amber-500 transition-colors flex items-center gap-1 min-w-[44px] min-h-[44px]"
                 aria-label="Clear all markers"
               >
                 <XCircle className="w-3 h-3" aria-hidden="true" />

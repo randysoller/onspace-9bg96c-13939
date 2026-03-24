@@ -1,11 +1,58 @@
 import { Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { MobileTabBar } from './MobileTabBar';
+import { PracticeReminderBanner } from '@/components/PracticeReminderBanner';
 import MetronomeModal from '@/components/features/MetronomeModal';
+import type { PracticeReminderSettings } from '@/lib/practice-reminder';
 
 export const AppLayout = () => {
+  const [reminderSettings, setReminderSettings] = useState<PracticeReminderSettings>(() => {
+    const stored = localStorage.getItem('practiceReminderSettings');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return {
+      enabled: false,
+      frequency: 'daily' as const,
+      reminderTime: '09:00',
+    };
+  });
+
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
+
+  // Load reminder settings from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('practiceReminderSettings');
+    if (stored) {
+      setReminderSettings(JSON.parse(stored));
+    }
+    
+    // Load current streak (you can replace with actual streak from practice store)
+    const streakStored = localStorage.getItem('currentStreak');
+    if (streakStored) {
+      setCurrentStreak(Number(streakStored));
+    }
+  }, []);
+
+  const handleDismissReminder = () => {
+    setReminderDismissed(true);
+    // Hide reminder for 1 hour
+    setTimeout(() => {
+      setReminderDismissed(false);
+    }, 60 * 60 * 1000);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 text-white">
+      {!reminderDismissed && (
+        <PracticeReminderBanner 
+          settings={reminderSettings} 
+          currentStreak={currentStreak}
+          onDismiss={handleDismissReminder}
+        />
+      )}
       <Header />
       <main id="main-content" className="pt-16 pb-20 md:pb-8" tabIndex={-1}>
         <Outlet />

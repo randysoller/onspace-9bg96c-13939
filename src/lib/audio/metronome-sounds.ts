@@ -1,5 +1,26 @@
+/**
+ * Metronome percussion sound generators using Web Audio API
+ * Each generator creates synthesized percussion sounds with accent variations
+ * Optimized for musical timing and realistic acoustic characteristics
+ */
+
 import type { SoundGeneratorFunction } from '@/types/audio';
 
+/**
+ * Generate classic metronome click sound
+ * Combines high-frequency tones with noise for crisp attack
+ * 
+ * @param context - Web Audio API context
+ * @param isAccent - True for accented beat (louder, higher pitch)
+ * @param volume - Master volume multiplier (0-1)
+ * @param now - Audio context current time for scheduling
+ * 
+ * @example
+ * ```ts
+ * const context = new AudioContext();
+ * generateClickSound(context, true, 0.8, context.currentTime);
+ * ```
+ */
 export const generateClickSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
@@ -48,6 +69,15 @@ export const generateClickSound: SoundGeneratorFunction = (
   bufferSource.stop(now + 0.04);
 };
 
+/**
+ * Generate wood block percussion sound
+ * Resonant body with harmonic overtones for warm, woody timbre
+ * 
+ * @param context - Web Audio API context
+ * @param isAccent - True for accented beat (higher fundamental frequency)
+ * @param volume - Master volume multiplier (0-1)
+ * @param now - Audio context current time for scheduling
+ */
 export const generateWoodBlockSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
@@ -114,6 +144,15 @@ export const generateWoodBlockSound: SoundGeneratorFunction = (
   bufferSource.stop(now + 0.08);
 };
 
+/**
+ * Generate hi-hat cymbal sound
+ * High-frequency noise with metallic shimmer and sustain
+ * 
+ * @param context - Web Audio API context
+ * @param isAccent - True for accented beat (15% louder, longer sustain)
+ * @param volume - Master volume multiplier (0-1)
+ * @param now - Audio context current time for scheduling
+ */
 export const generateHiHatSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
@@ -174,6 +213,15 @@ export const generateHiHatSound: SoundGeneratorFunction = (
   bufferSource.stop(now + duration);
 };
 
+/**
+ * Generate side stick (cross-stick) sound
+ * Short, sharp attack combining wood resonance with rim click
+ * 
+ * @param context - Web Audio API context
+ * @param isAccent - True for accented beat (higher frequencies)
+ * @param volume - Master volume multiplier (0-1)
+ * @param now - Audio context current time for scheduling
+ */
 export const generateSideStickSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,

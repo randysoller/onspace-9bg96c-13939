@@ -6,11 +6,12 @@ import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useTunerStore } from '@/stores/tunerStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { settingsApi } from '@/lib/api/settings';
-import { ArrowLeft, Save, Volume2, Sliders, Music } from 'lucide-react';
+import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { formatReminderTime, type PracticeReminderSettings, type ReminderFrequency } from '@/lib/practice-reminder';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -23,6 +24,24 @@ export default function Settings() {
 
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // FIX #7: Track unsaved changes
+
+  // Practice reminder state
+  const [reminderSettings, setReminderSettings] = useState<PracticeReminderSettings>(() => {
+    const stored = localStorage.getItem('practiceReminderSettings');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return {
+      enabled: false,
+      frequency: 'daily' as ReminderFrequency,
+      reminderTime: '09:00',
+    };
+  });
+
+  // Save reminder settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('practiceReminderSettings', JSON.stringify(reminderSettings));
+  }, [reminderSettings]);
 
   useEffect(() => {
     if (!user) {
@@ -269,6 +288,93 @@ export default function Settings() {
                 {Math.round(detectionStore.noiseGate * 100)}%
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Practice Reminders */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-5 h-5 text-amber-500" aria-hidden="true" />
+            <h2 className="text-lg font-bold">Practice Reminders</h2>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label htmlFor="enable-reminders" className="text-sm text-zinc-400">Enable Reminders</label>
+              <button
+                id="enable-reminders"
+                onClick={() => setReminderSettings(prev => ({ ...prev, enabled: !prev.enabled }))}
+                className={`relative w-14 h-8 rounded-full transition-colors min-w-[56px] ${
+                  reminderSettings.enabled ? 'bg-amber-500' : 'bg-zinc-700'
+                }`}
+                role="switch"
+                aria-checked={reminderSettings.enabled}
+                aria-label="Toggle practice reminders"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
+                    reminderSettings.enabled ? 'translate-x-6' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            {reminderSettings.enabled && (
+              <>
+                <div>
+                  <label htmlFor="reminder-time" className="text-sm text-zinc-400 mb-2 block flex items-center gap-2">
+                    <Clock className="w-4 h-4" aria-hidden="true" />
+                    Reminder Time
+                  </label>
+                  <input
+                    id="reminder-time"
+                    type="time"
+                    value={reminderSettings.reminderTime}
+                    onChange={(e) => setReminderSettings(prev => ({ ...prev, reminderTime: e.target.value }))}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-amber-500 min-h-[44px]"
+                    aria-label="Select reminder time"
+                  />
+                  <span className="text-xs text-zinc-500 mt-1 block">
+                    You'll receive a reminder at this time
+                  </span>
+                </div>
+
+                <div>
+                  <label htmlFor="reminder-frequency" className="text-sm text-zinc-400 mb-2 block">Frequency</label>
+                  <Select
+                    value={reminderSettings.frequency}
+                    onValueChange={(value: ReminderFrequency) => setReminderSettings(prev => ({ ...prev, frequency: value }))}
+                  >
+                    <SelectTrigger id="reminder-frequency" className="w-full bg-zinc-800 border-zinc-700" aria-label="Select reminder frequency">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="every-other-day">Every Other Day</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="bg-zinc-800 border border-zinc-700 rounded-lg p-3">
+                  <p className="text-xs text-zinc-400">
+                    <span className="font-semibold text-amber-500">Next reminder:</span>{' '}
+                    {reminderSettings.enabled && reminderSettings.lastPracticeDate ? (
+                      formatReminderTime(
+                        new Date(
+                          new Date(reminderSettings.lastPracticeDate).getTime() + 
+                          (reminderSettings.frequency === 'daily' ? 86400000 : 
+                           reminderSettings.frequency === 'every-other-day' ? 172800000 : 604800000)
+                        ).getTime()
+                      )
+                    ) : (
+                      `Tomorrow at ${reminderSettings.reminderTime}`
+                    )}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

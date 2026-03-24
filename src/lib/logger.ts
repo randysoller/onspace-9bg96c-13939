@@ -1,5 +1,20 @@
 /**
  * Production-ready logging utility with log levels and environment filtering
+ * Automatically filters logs based on environment and configured log level
+ * 
+ * @example
+ * ```ts
+ * import { logger } from '@/lib/logger';
+ * 
+ * // Development: all logs shown
+ * logger.debug('Starting pitch detection', { frequency: 440 });
+ * logger.info('User logged in', { userId: '123' });
+ * logger.warn('High latency detected', { latency: 150 });
+ * logger.error('API request failed', error);
+ * 
+ * // Production: only errors shown (configurable)
+ * logger.error('Critical error', new Error('Database connection failed'));
+ * ```
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';

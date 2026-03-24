@@ -1,3 +1,60 @@
+/**
+ * Custom hook for real-time pitch detection using NSDF algorithm
+ * Optimized for guitar frequency range (60-1400Hz)
+ * 
+ * @example
+ * ```tsx
+ * const { currentPitch, isListening, audioLevel, startListening, stopListening } = usePitchDetection({
+ *   sensitivity: 6,
+ *   autoStart: true,
+ *   onPitchDetected: (result) => {
+ *     console.log(`Detected ${result.noteName}${result.octave} at ${result.frequency.toFixed(2)}Hz`);
+ *     console.log(`Cents offset: ${result.cents}`);
+ *   },
+ * });
+ * 
+ * return (
+ *   <div>
+ *     {isListening ? (
+ *       <div>
+ *         <p>Listening... Audio level: {audioLevel}%</p>
+ *         {currentPitch && (
+ *           <div>
+ *             <p>Note: {currentPitch.noteName}{currentPitch.octave}</p>
+ *             <p>Frequency: {currentPitch.frequency.toFixed(2)} Hz</p>
+ *             <p>Tuning: {currentPitch.cents > 0 ? '+' : ''}{currentPitch.cents} cents</p>
+ *           </div>
+ *         )}
+ *       </div>
+ *     ) : (
+ *       <button onClick={startListening}>Start Tuner</button>
+ *     )}
+ *   </div>
+ * );
+ * ```
+ * 
+ * Technical Details:
+ * - Uses NSDF (Normalized Square Difference Function) algorithm
+ * - 4096 FFT size for high accuracy
+ * - Debounced updates (50ms) for performance
+ * - Parabolic interpolation for sub-sample precision
+ * - Desktop-optimized noise gate (lower threshold than mobile)
+ * - Auto-resumes suspended AudioContext on desktop browsers
+ * 
+ * @param options - Configuration options
+ * @param options.sensitivity - Detection sensitivity 1-10, higher = more forgiving (default: 6)
+ * @param options.autoStart - Start listening automatically on mount (default: false)
+ * @param options.onPitchDetected - Callback fired when pitch detected with frequency, note name, cents offset
+ * 
+ * @returns Pitch detection state and controls
+ * @returns currentPitch - Current detected pitch with frequency, noteName, cents offset, octave, or null
+ * @returns isListening - True if microphone is active and analyzing audio
+ * @returns audioLevel - Current audio input level 0-100 for visual feedback
+ * @returns permissionDenied - True if microphone permission was denied by user
+ * @returns startListening - Async function to start pitch detection and request microphone access
+ * @returns stopListening - Function to stop pitch detection and release microphone resources
+ */
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 

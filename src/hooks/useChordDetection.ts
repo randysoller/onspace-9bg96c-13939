@@ -1,3 +1,50 @@
+/**
+ * Custom hook for real-time guitar chord detection using NSDF pitch detection
+ * Analyzes audio input and compares detected notes against target chord
+ * 
+ * @example
+ * ```tsx
+ * const targetChord = { symbol: 'C', frets: [null, 3, 2, 0, 1, 0], ... };
+ * 
+ * const { isListening, result, detectedNotes, startListening, stopListening } = useChordDetection({
+ *   targetChord,
+ *   sensitivity: 6,
+ *   onCorrect: () => {
+ *     console.log('Correct chord played!');
+ *     playSuccessSound();
+ *   },
+ *   onWrongDetected: (notes) => {
+ *     console.log(`Wrong notes detected: ${notes}`);
+ *   },
+ * });
+ * 
+ * return (
+ *   <div>
+ *     <button onClick={startListening}>Start Detection</button>
+ *     {result === 'correct' && <p className="text-green-500">✓ Correct!</p>}
+ *     {result === 'wrong' && <p className="text-red-500">✗ Try again</p>}
+ *     <p>Detected: {detectedNotes.join(', ')}</p>
+ *   </div>
+ * );
+ * ```
+ * 
+ * @param options - Configuration options for chord detection
+ * @param options.targetChord - The chord to detect (ChordData with frets array)
+ * @param options.onCorrect - Callback fired when correct chord is detected
+ * @param options.onWrongDetected - Callback fired when wrong notes detected, receives detected note names
+ * @param options.sensitivity - Detection sensitivity 1-10, higher = more forgiving (default: 6)
+ * @param options.autoStart - If true, starts listening automatically on mount (default: false)
+ * @param options.advancedSettings - Optional advanced detection settings (noiseGate, harmonicBoost, fluxTolerance)
+ * 
+ * @returns Chord detection state and controls
+ * @returns isListening - True if microphone is active and analyzing chords
+ * @returns result - Detection result: 'correct', 'wrong', or null
+ * @returns permissionDenied - True if microphone permission was denied
+ * @returns detectedNotes - Array of recently detected note names (last 6 notes)
+ * @returns startListening - Function to start chord detection and request microphone access
+ * @returns stopListening - Function to stop detection and release microphone
+ */
+
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 

@@ -1,3 +1,55 @@
+/**
+ * Custom hook for metronome audio engine with voice counting
+ * Handles beat scheduling, percussion sound generation, and voice synthesis
+ * Uses Web Audio API for precise timing with adaptive latency compensation
+ * 
+ * @example
+ * ```tsx
+ * function MetronomeControls() {
+ *   const { isPlaying, bpm, setIsPlaying, setBpm } = useMetronomeStore();
+ *   useMetronomeAudio(); // Initialize metronome audio engine
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={() => setIsPlaying(!isPlaying)}>
+ *         {isPlaying ? 'Stop' : 'Start'}
+ *       </button>
+ *       <input 
+ *         type="range" 
+ *         min={20} 
+ *         max={250} 
+ *         value={bpm} 
+ *         onChange={(e) => setBpm(Number(e.target.value))}
+ *       />
+ *       <span>{bpm} BPM</span>
+ *     </div>
+ *   );
+ * }
+ * ```
+ * 
+ * Features:
+ * - 4 percussion sounds: click, wood block, hi-hat, side stick
+ * - Voice counting with adaptive latency compensation
+ * - Multiple time signatures: 2/4, 3/4, 4/4, 12/8
+ * - Subdivisions: quarter, eighth, sixteenth notes
+ * - Accent patterns on downbeats
+ * - Tempo range: 20-250 BPM
+ * - Mobile-optimized timing
+ * 
+ * State Management:
+ * - Reads from metronomeStore via Zustand for current state
+ * - Auto-starts/stops based on isPlaying state
+ * - Resets on BPM or subdivision changes
+ * 
+ * Performance Optimizations:
+ * - Memoized volume calculations to prevent recalculation on every render
+ * - Direct store access via getState() to avoid stale closures
+ * - Interval-based scheduling for consistent timing
+ * 
+ * @returns Object with playClick function for manual beat triggering
+ * @returns playClick - Function to play a single beat (isAccent: boolean, beatNumber?: number)
+ */
+
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useAudioStore } from '@/stores/audioStore';

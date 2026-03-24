@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 
 interface VoiceSynthesisConfig {
   isMobile: boolean;
@@ -16,6 +16,12 @@ export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSyn
   const optimalVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const isVoiceCalibratedRef = useRef<boolean>(false);
   const calibrationAttemptsRef = useRef<number>(0);
+
+  // Store callback in ref to avoid re-running effect when it changes
+  const onLatencyUpdateRef = useRef(onLatencyUpdate);
+  useEffect(() => {
+    onLatencyUpdateRef.current = onLatencyUpdate;
+  });
 
   useEffect(() => {
     speechSynthRef.current = window.speechSynthesis;
@@ -95,8 +101,8 @@ export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSyn
               }
             }
 
-            if (onLatencyUpdate) {
-              onLatencyUpdate(speechLatencyOffsetRef.current);
+            if (onLatencyUpdateRef.current) {
+              onLatencyUpdateRef.current(speechLatencyOffsetRef.current);
             }
           }
           
@@ -132,9 +138,9 @@ export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSyn
         speechSynthRef.current.addEventListener('voiceschanged', initVoiceUtterances, { once: true });
       }
     }
-  }, [isMobile, onLatencyUpdate]);
+  }, [isMobile]);
 
-  const speakNumber = (
+  const speakNumber = useCallback((
     beatNumber: number,
     audioContext: AudioContext,
     currentTime: number
@@ -176,7 +182,7 @@ export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSyn
         speechSynthRef.current.speak(utterance);
       }
     }, msUntilSpeech);
-  };
+  }, [isMobile]);
 
   return {
     speakNumber,

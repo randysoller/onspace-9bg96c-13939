@@ -1,8 +1,104 @@
 /**
- * Service Worker for handling push notifications and background tasks
+ * Service Worker for handling push notifications, background tasks, and offline caching
  */
 
 const CACHE_NAME = 'fretmaster-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/favicon.ico',
+];
+
+// Install service worker and cache static assets
+self.addEventListener('install', (event) => {
+  console.log('Service Worker installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
+
+// Activate service worker and clean up old caches
+self.addEventListener('activate', (event) => {
+  console.log('Service Worker activating...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => clients.claim())
+  );
+});
+
+// Fetch with network-first strategy for API, cache-first for static assets
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Network-first for API calls
+  if (url.pathname.startsWith('/api') || url.hostname.includes('supabase')) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Cache successful API responses
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if offline
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || new Response(JSON.stringify({ error: 'Offline' }), {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' },
+            });
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first for static assets
+  event.respondWith(
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(request).then((response) => {
+        if (response.ok) {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, responseClone);
+          });
+        }
+        return response;
+      });
+    })
+  );
+});
+
+// Background sync for queued operations
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-operations') {
+    event.waitUntil(syncQueuedOperations());
+  }
+});
+
+async function syncQueuedOperations() {
+  // This will be triggered by the background sync hook
+  console.log('Background sync triggered');
+}
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
@@ -45,14 +141,4 @@ self.addEventListener('push', (event) => {
   );
 });
 
-// Install service worker
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  self.skipWaiting();
-});
 
-// Activate service worker
-self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
-  event.waitUntil(clients.claim());
-});

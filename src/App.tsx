@@ -28,6 +28,7 @@ const Challenges = lazy(() => import('@/pages/Challenges'));
 const Lessons = lazy(() => import('@/pages/Lessons'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
 const DataExport = lazy(() => import('@/pages/DataExport'));
+const Admin = lazy(() => import('@/pages/Admin'));
 
 function App() {
   return (
@@ -94,6 +95,11 @@ function App() {
             <Route path="/data-export" element={
               <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading data export" />}>
                 <DataExport />
+              </Suspense>
+            } />
+            <Route path="/admin" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading admin dashboard" />}>
+                <Admin />
               </Suspense>
             } />
             <Route path="*" element={<NotFound />} />

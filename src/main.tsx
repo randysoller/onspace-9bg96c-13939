@@ -1,13 +1,22 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client'
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './lib/react-query';
 import App from './App.tsx'
 import './index.css'
 import './stores/authStore'; // Initialize auth state
 import { useSettingsSync } from './hooks/useSettingsSync';
 import { useOfflineSync } from './hooks/useOfflineSync';
 import { logger } from './lib/logger';
+import { indexedDB } from './lib/indexeddb';
 
-// Register service worker for push notifications
+// Initialize IndexedDB for offline storage
+indexedDB.init().catch((error) => {
+  logger.error('Failed to initialize IndexedDB', error);
+});
+
+// Register service worker for push notifications and offline caching
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
@@ -54,6 +63,9 @@ function AppWrapper() {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AppWrapper />
+    <QueryClientProvider client={queryClient}>
+      <AppWrapper />
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+    </QueryClientProvider>
   </StrictMode>
 );

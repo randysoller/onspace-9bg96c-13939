@@ -3,10 +3,14 @@ import { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { MobileTabBar } from './MobileTabBar';
 import { PracticeReminderBanner } from '@/components/PracticeReminderBanner';
+import { InstallPrompt } from '@/components/InstallPrompt';
+import { usePWA } from '@/hooks/usePWA';
 import MetronomeModal from '@/components/features/MetronomeModal';
 import type { PracticeReminderSettings } from '@/lib/practice-reminder';
 
 export const AppLayout = () => {
+  const { isUpdateAvailable, updateServiceWorker } = usePWA();
+  
   const [reminderSettings, setReminderSettings] = useState<PracticeReminderSettings>(() => {
     const stored = localStorage.getItem('practiceReminderSettings');
     if (stored) {
@@ -53,12 +57,27 @@ export const AppLayout = () => {
           onDismiss={handleDismissReminder}
         />
       )}
+      
+      {/* PWA update notification */}
+      {isUpdateAvailable && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-amber-500 text-black px-4 py-2 rounded-lg shadow-lg z-50">
+          <p className="text-sm font-medium mb-2">New version available!</p>
+          <button
+            onClick={updateServiceWorker}
+            className="px-3 py-1 bg-black text-white rounded text-xs hover:bg-zinc-800 transition-colors"
+          >
+            Update Now
+          </button>
+        </div>
+      )}
+      
       <Header />
       <main id="main-content" className="pt-16 pb-20 md:pb-8" tabIndex={-1}>
         <Outlet />
       </main>
       <MobileTabBar />
       <MetronomeModal />
+      <InstallPrompt />
     </div>
   );
 };

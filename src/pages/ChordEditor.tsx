@@ -403,28 +403,18 @@ export default function ChordEditor() {
                 const y = 92 + (barre.fret - 0.5) * 55;
 
                 return (
-                  <g key={`barre-${idx}`}>
-                    <line
-                      x1={x1}
-                      y1={y}
-                      x2={x2}
-                      y2={y}
-                      stroke="#f59e0b"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      className="cursor-pointer"
-                      onDoubleClick={() => handleBarreDoubleClick(idx)}
-                    />
-                    <text
-                      x={(x1 + x2) / 2}
-                      y={y + 1}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      className="text-sm font-black pointer-events-none fill-zinc-950"
-                    >
-                      {barre.finger}
-                    </text>
-                  </g>
+                  <line
+                    key={`barre-${idx}`}
+                    x1={x1}
+                    y1={y}
+                    x2={x2}
+                    y2={y}
+                    stroke="#f59e0b"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    className="cursor-pointer"
+                    onDoubleClick={() => handleBarreDoubleClick(idx)}
+                  />
                 );
               })}
 
@@ -772,26 +762,16 @@ export default function ChordEditor() {
                   const y = 20 + (barre.fret - 0.5) * 45;
 
                   return (
-                    <g key={`preview-barre-${idx}`}>
-                      <line
-                        x1={x1}
-                        y1={y}
-                        x2={x2}
-                        y2={y}
-                        stroke="#f59e0b"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                      />
-                      <text
-                        x={(x1 + x2) / 2}
-                        y={y + 1}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="text-xs font-black fill-zinc-950"
-                      >
-                        {barre.finger}
-                      </text>
-                    </g>
+                    <line
+                      key={`preview-barre-${idx}`}
+                      x1={x1}
+                      y1={y}
+                      x2={x2}
+                      y2={y}
+                      stroke="#f59e0b"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                    />
                   );
                 })}
 

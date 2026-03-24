@@ -187,6 +187,22 @@ export default function ChordEditor() {
            markers.length > 0;
   }, [chordName, symbol, validationErrors, markers]);
 
+  // FIXED: Move handleStartNew BEFORE handleUpdateChord to avoid TDZ error
+  const handleStartNew = useCallback(() => {
+    setMarkers([]);
+    setBarres([]);
+    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
+    setChordName('');
+    setSymbol('');
+    setBaseFret(1);
+    setVisibleFrets(5);
+    setBarreMode(false);
+    setBarreFret(null);
+    setBarreFirstString(null);
+    setSelectedString(null);
+    setSelectedFret(null);
+  }, []);
+
   const handleUpdateChord = useCallback(async () => {
     // Final validation
     const nameError = validateChordName(chordName);
@@ -229,21 +245,6 @@ export default function ChordEditor() {
       setSaving(false);
     }
   }, [chordName, symbol, type, markers, baseFret, addCustomChord, validateChordName, validateSymbol, handleStartNew]);
-
-  const handleStartNew = useCallback(() => {
-    setMarkers([]);
-    setBarres([]);
-    setOpenStrings(['none', 'none', 'none', 'none', 'none', 'none']);
-    setChordName('');
-    setSymbol('');
-    setBaseFret(1);
-    setVisibleFrets(5);
-    setBarreMode(false);
-    setBarreFret(null);
-    setBarreFirstString(null);
-    setSelectedString(null);
-    setSelectedFret(null);
-  }, []);
 
   // Keyboard navigation
   useEffect(() => {

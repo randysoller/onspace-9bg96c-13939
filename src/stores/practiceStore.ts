@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { shallow } from 'zustand/shallow';
 import { ChordRoot, ChordData } from '@/types/chord';
+import { createShallowSelector } from '@/hooks/useZustandSelector';
 
 interface PracticeFilters {
   types?: string[];
@@ -38,6 +40,7 @@ interface PracticeStore extends PracticeSettings {
   setFilters: (filters: PracticeFilters) => void;
 }
 
+// Base store
 export const usePracticeStore = create<PracticeStore>((set) => ({
   selectedRoots: ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
   selectedCategories: [],
@@ -73,3 +76,54 @@ export const usePracticeStore = create<PracticeStore>((set) => ({
     selectedCategories: filters.category ? [filters.category] : [] 
   }),
 }));
+
+// Optimized selectors to prevent unnecessary re-renders
+export const useShallowPracticeStore = createShallowSelector(usePracticeStore);
+
+// Specific selectors for common use cases
+export const usePracticeFilters = () => usePracticeStore(
+  state => ({ 
+    selectedRoots: state.selectedRoots, 
+    selectedCategories: state.selectedCategories,
+    selectedTypes: state.selectedTypes 
+  }),
+  shallow
+);
+
+export const usePracticeSettings = () => usePracticeStore(
+  state => ({ 
+    interval: state.interval,
+    playSound: state.playSound,
+    showDiagrams: state.showDiagrams,
+    metronomeEnabled: state.metronomeEnabled
+  }),
+  shallow
+);
+
+export const usePracticeState = () => usePracticeStore(
+  state => ({ 
+    isPracticing: state.isPracticing,
+    currentChordIndex: state.currentChordIndex,
+    practiceChords: state.practiceChords
+  }),
+  shallow
+);
+
+export const usePracticeActions = () => usePracticeStore(
+  state => ({
+    startPractice: state.startPractice,
+    stopPractice: state.stopPractice,
+    nextChord: state.nextChord,
+    previousChord: state.previousChord,
+    setPracticeChords: state.setPracticeChords,
+    setFilters: state.setFilters,
+    setSelectedRoots: state.setSelectedRoots,
+    setSelectedCategories: state.setSelectedCategories,
+    setSelectedTypes: state.setSelectedTypes,
+    setInterval: state.setInterval,
+    setPlaySound: state.setPlaySound,
+    setShowDiagrams: state.setShowDiagrams,
+    setMetronomeEnabled: state.setMetronomeEnabled,
+  }),
+  shallow
+);

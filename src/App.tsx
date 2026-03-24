@@ -27,6 +27,7 @@ const Achievements = lazy(() => import('@/pages/Achievements'));
 const Challenges = lazy(() => import('@/pages/Challenges'));
 const Lessons = lazy(() => import('@/pages/Lessons'));
 const Analytics = lazy(() => import('@/pages/Analytics'));
+const DataExport = lazy(() => import('@/pages/DataExport'));
 
 function App() {
   return (
@@ -90,6 +91,11 @@ function App() {
             } />
             <Route path="/scale-setup" element={<ScaleSetup />} />
             <Route path="/scale-practice" element={<ScalePractice />} />
+            <Route path="/data-export" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading data export" />}>
+                <DataExport />
+              </Suspense>
+            } />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

@@ -6,7 +6,7 @@ import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useTunerStore } from '@/stores/tunerStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { settingsApi } from '@/lib/api/settings';
-import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock, Download, TestTube } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -564,6 +564,34 @@ export default function Settings() {
         <p className="text-xs text-zinc-500 text-center">
           Settings are automatically synced across all your devices
         </p>
+
+        {/* Advanced Options */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <h2 className="text-lg font-bold mb-4">Advanced</h2>
+          
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/data-export')}
+              className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors min-h-[44px]"
+            >
+              <Download className="w-5 h-5" />
+              Export My Data (GDPR)
+            </button>
+            
+            {import.meta.env.DEV && (
+              <button
+                onClick={() => {
+                  const PushTester = () => import('@/components/PushNotificationTester').then(m => m.PushNotificationTester);
+                  toast.info('Push notification tester available in development mode');
+                }}
+                className="w-full bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 transition-colors min-h-[44px]"
+              >
+                <TestTube className="w-5 h-5" />
+                Test Push Notifications
+              </button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

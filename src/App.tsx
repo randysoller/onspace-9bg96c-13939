@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLayout } from '@/components/layout/AppLayout';
 import Index from '@/pages/Index';
 import ChordSetup from '@/pages/ChordSetup';
@@ -24,33 +25,42 @@ import NotFound from '@/pages/NotFound';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<Auth />} />
-        <Route element={<AppLayout />}>
-          <Route path="/" element={<Index />} />
-          <Route path="/chord-setup" element={<ChordSetup />} />
-          <Route path="/practice" element={<Practice />} />
-          <Route path="/progression-setup" element={<ProgressionSetup />} />
-          <Route path="/progression-practice" element={<ProgressionPractice />} />
-          <Route path="/library" element={<ChordLibrary />} />
-          <Route path="/editor" element={<ChordEditor />} />
-          <Route path="/tuner" element={<Tuner />} />
-          <Route path="/history" element={<PracticeHistory />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/goals" element={<Goals />} />
-          <Route path="/songs" element={<SongLibrary />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/lessons" element={<Lessons />} />
-          <Route path="/challenges" element={<Challenges />} />
-          <Route path="/scale-setup" element={<ScaleSetup />} />
-          <Route path="/scale-practice" element={<ScalePractice />} />
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route element={<AppLayout />}>
+            <Route path="/" element={<Index />} />
+            <Route path="/chord-setup" element={<ChordSetup />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/progression-setup" element={<ProgressionSetup />} />
+            <Route path="/progression-practice" element={<ProgressionPractice />} />
+            <Route path="/library" element={<ChordLibrary />} />
+            <Route 
+              path="/editor" 
+              element={
+                <ErrorBoundary>
+                  <ChordEditor />
+                </ErrorBoundary>
+              } 
+            />
+            <Route path="/tuner" element={<Tuner />} />
+            <Route path="/history" element={<PracticeHistory />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/songs" element={<SongLibrary />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/lessons" element={<Lessons />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/scale-setup" element={<ScaleSetup />} />
+            <Route path="/scale-practice" element={<ScalePractice />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

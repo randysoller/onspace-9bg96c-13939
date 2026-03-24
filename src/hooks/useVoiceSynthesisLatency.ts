@@ -1,11 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react';
+import type { VoiceSynthesisConfig, VoiceSynthesisResult } from '@/types/audio';
 
-interface VoiceSynthesisConfig {
-  isMobile: boolean;
-  onLatencyUpdate?: (latency: number) => void;
-}
-
-export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSynthesisConfig) => {
+export const useVoiceSynthesisLatency = ({ isMobile, onLatencyUpdate }: VoiceSynthesisConfig): VoiceSynthesisResult => {
   const voiceUtterancesRef = useRef<Map<number, SpeechSynthesisUtterance>>(new Map());
   const initialLatencyEstimate = isMobile ? 0.070 : 0.090;
   const speechLatencyOffsetRef = useRef<number>(initialLatencyEstimate);

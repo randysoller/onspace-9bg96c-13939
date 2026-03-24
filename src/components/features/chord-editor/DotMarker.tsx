@@ -1,12 +1,13 @@
 import { memo } from 'react';
 import { STRING_SPACING, FRET_SPACING, BASE_X, BASE_Y, MARKER_RADIUS } from '@/constants/fretboard';
+import type { FingerType, ChordShape } from '@/types/fretboard';
 
 interface DotMarkerProps {
   string: number;
   fret: number;
-  finger: number | 'T';
+  finger: FingerType;
   color: string;
-  shape: 'circle' | 'diamond';
+  shape: ChordShape;
   label?: string;
   isHighlighted?: boolean;
   onClick: () => void;
@@ -29,7 +30,13 @@ export const DotMarker = memo(({
   const displayText = label || finger;
 
   return (
-    <g className="cursor-pointer" onClick={onClick}>
+    <g 
+      className="cursor-pointer" 
+      onClick={onClick}
+      role="button"
+      aria-label={`${label || finger} on string ${string + 1}, fret ${fret}`}
+      tabIndex={-1}
+    >
       {shape === 'circle' ? (
         <circle
           cx={x}

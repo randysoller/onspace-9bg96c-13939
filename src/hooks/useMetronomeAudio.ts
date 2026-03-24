@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useVoiceSynthesisLatency } from './useVoiceSynthesisLatency';
+import type { SoundGeneratorFunction } from '@/types/audio';
 import {
   generateClickSound,
   generateWoodBlockSound,
@@ -9,7 +10,11 @@ import {
   generateSideStickSound,
 } from '@/lib/audio/metronome-sounds';
 
-export const useMetronomeAudio = () => {
+interface UseMetronomeAudioReturn {
+  playClick: (isAccent?: boolean, beatNumber?: number) => void;
+}
+
+export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
   const { 
     isPlaying, 
     bpm, 
@@ -40,7 +45,7 @@ export const useMetronomeAudio = () => {
     };
   }, []);
 
-  const playClick = useCallback((isAccent: boolean = false, beatNumber?: number) => {
+  const playClick = useCallback((isAccent: boolean = false, beatNumber?: number): void => {
     const context = audioContextRef.current;
     if (!context) return;
 

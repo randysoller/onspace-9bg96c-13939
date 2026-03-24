@@ -10,39 +10,24 @@ import {
   BASE_Y,
   NUT_Y 
 } from '@/constants/fretboard';
-
-type StringState = 'none' | 'open-circle' | 'muted' | 'open-diamond';
-
-interface DotMarkerData {
-  string: number;
-  fret: number;
-  finger: number | 'T';
-  color: string;
-  shape: 'circle' | 'diamond';
-  label?: string;
-}
-
-interface BarreMarkerData {
-  fret: number;
-  fromString: number;
-  toString: number;
-  finger: number | 'T';
-}
+import type { StringState, DotMarker as DotMarkerType, BarreMarker as BarreMarkerType, FingerType } from '@/types/fretboard';
 
 interface FretboardSVGProps {
   baseFret: number;
   visibleFrets: number;
-  markers: DotMarkerData[];
-  barres: BarreMarkerData[];
+  markers: DotMarkerType[];
+  barres: BarreMarkerType[];
   openStrings: StringState[];
-  selectedFinger: number | 'T';
+  selectedFinger: FingerType;
   barreMode: boolean;
   barreFret: number | null;
   barreFirstString: number | null;
+  selectedString?: number | null;
+  selectedFret?: number | null;
   onFretClick: (string: number, fret: number) => void;
   onStringHeaderClick: (string: number) => void;
   onBarreDoubleClick: (index: number) => void;
-  onFingerSelect: (finger: number | 'T') => void;
+  onFingerSelect: (finger: FingerType) => void;
   onBarreToggle: () => void;
 }
 
@@ -56,6 +41,8 @@ export const FretboardSVG = memo(({
   barreMode,
   barreFret,
   barreFirstString,
+  selectedString = null,
+  selectedFret = null,
   onFretClick,
   onStringHeaderClick,
   onBarreDoubleClick,
@@ -111,23 +98,31 @@ export const FretboardSVG = memo(({
     [baseFret, visibleFrets]
   );
 
-  // Memoize interactive areas
+  // Memoize interactive areas with keyboard navigation highlight
   const interactiveAreas = useMemo(() =>
     STRING_NAMES.flatMap((_, stringIdx) =>
-      Array.from({ length: visibleFrets }).map((_, fretIdx) => (
-        <rect
-          key={`hit-${stringIdx}-${fretIdx}`}
-          x={BASE_X + stringIdx * STRING_SPACING - 20}
-          y={BASE_Y + fretIdx * FRET_SPACING}
-          width={40}
-          height={FRET_SPACING}
-          fill="transparent"
-          className="cursor-pointer hover:fill-white/5"
-          onClick={() => onFretClick(stringIdx, fretIdx + 1)}
-        />
-      ))
+      Array.from({ length: visibleFrets }).map((_, fretIdx) => {
+        const isKeyboardSelected = selectedString === stringIdx && selectedFret === fretIdx + 1;
+        return (
+          <rect
+            key={`hit-${stringIdx}-${fretIdx}`}
+            x={BASE_X + stringIdx * STRING_SPACING - 20}
+            y={BASE_Y + fretIdx * FRET_SPACING}
+            width={40}
+            height={FRET_SPACING}
+            fill={isKeyboardSelected ? 'rgba(251, 146, 60, 0.1)' : 'transparent'}
+            stroke={isKeyboardSelected ? '#f59e0b' : 'none'}
+            strokeWidth={isKeyboardSelected ? '2' : '0'}
+            className="cursor-pointer hover:fill-white/5"
+            onClick={() => onFretClick(stringIdx, fretIdx + 1)}
+            aria-label={`String ${STRING_NAMES[stringIdx]}, fret ${fretIdx + 1}`}
+            role="button"
+            tabIndex={-1}
+          />
+        );
+      })
     ),
-    [visibleFrets, onFretClick]
+    [visibleFrets, selectedString, selectedFret, onFretClick]
   );
 
   // Memoized callbacks
@@ -140,7 +135,14 @@ export const FretboardSVG = memo(({
   }, [onBarreDoubleClick]);
 
   return (
-    <svg width="320" height="400" viewBox="0 0 320 400" className="select-none">
+    <svg 
+      width="320" 
+      height="400" 
+      viewBox="0 0 320 400" 
+      className="select-none"
+      role="img"
+      aria-label="Guitar chord fretboard diagram"
+    >
       {/* String labels and headers */}
       {STRING_NAMES.map((_, idx) => (
         <StringHeader
@@ -152,7 +154,7 @@ export const FretboardSVG = memo(({
       ))}
 
       {/* Finger selector buttons */}
-      <g>
+      <g role="toolbar" aria-label="Finger selection">
         {[1, 2, 3, 4, 'T', '-', 'Barre'].map((label, idx) => {
           const x = BASE_X + idx * 35;
           const isFingerButton = typeof label === 'number' || label === 'T';
@@ -171,7 +173,11 @@ export const FretboardSVG = memo(({
                   rx={6}
                   fill={isSelected ? '#f59e0b' : 'transparent'}
                   className="cursor-pointer"
-                  onClick={() => onFingerSelect(label as number | 'T')}
+                  onClick={() => onFingerSelect(label as FingerType)}
+                  role="button"
+                  aria-label={`Select finger ${label}`}
+                  aria-pressed={isSelected}
+                  tabIndex={0}
                 />
               )}
               {isBarreButton && (
@@ -184,22 +190,20 @@ export const FretboardSVG = memo(({
                   fill={isBarreActive ? '#f59e0b' : 'transparent'}
                   className="cursor-pointer"
                   onClick={onBarreToggle}
+                  role="button"
+                  aria-label="Toggle barre chord mode"
+                  aria-pressed={isBarreActive}
+                  tabIndex={0}
                 />
               )}
               <text
                 x={x}
                 y={72}
                 textAnchor="middle"
-                className={`text-xs font-semibold cursor-pointer ${
+                className={`text-xs font-semibold cursor-pointer pointer-events-none ${
                   isSelected || isBarreActive ? 'fill-zinc-950' : 'fill-zinc-500'
                 }`}
-                onClick={() => {
-                  if (isFingerButton) {
-                    onFingerSelect(label as number | 'T');
-                  } else if (isBarreButton) {
-                    onBarreToggle();
-                  }
-                }}
+                aria-hidden="true"
               >
                 {label}
               </text>

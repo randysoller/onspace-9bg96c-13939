@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { STRING_SPACING, FRET_SPACING, BASE_X, BASE_Y } from '@/constants/fretboard';
+import type { FingerType } from '@/types/fretboard';
 
 interface BarreMarkerProps {
   fret: number;
@@ -24,6 +25,9 @@ export const BarreMarker = memo(({ fret, fromString, toString, onDoubleClick }: 
       strokeLinecap="round"
       className="cursor-pointer"
       onDoubleClick={onDoubleClick}
+      role="button"
+      aria-label={`Barre chord marker on fret ${fret}, strings ${fromString + 1} to ${toString + 1}. Double-click to remove`}
+      tabIndex={-1}
     />
   );
 });

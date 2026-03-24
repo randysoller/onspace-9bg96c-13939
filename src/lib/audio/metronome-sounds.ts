@@ -1,6 +1,6 @@
-// Metronome sound generation functions
+import type { SoundGeneratorFunction } from '@/types/audio';
 
-export const generateClickSound = (
+export const generateClickSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
   volume: number,
@@ -48,7 +48,7 @@ export const generateClickSound = (
   bufferSource.stop(now + 0.04);
 };
 
-export const generateWoodBlockSound = (
+export const generateWoodBlockSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
   volume: number,
@@ -114,7 +114,7 @@ export const generateWoodBlockSound = (
   bufferSource.stop(now + 0.08);
 };
 
-export const generateHiHatSound = (
+export const generateHiHatSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
   volume: number,
@@ -174,7 +174,7 @@ export const generateHiHatSound = (
   bufferSource.stop(now + duration);
 };
 
-export const generateSideStickSound = (
+export const generateSideStickSound: SoundGeneratorFunction = (
   context: AudioContext,
   isAccent: boolean,
   volume: number,

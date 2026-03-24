@@ -229,28 +229,37 @@ export default function ChordEditor() {
                     {name}
                   </text>
                   
-                  {/* Open/Muted indicator */}
+                  {/* Open/Muted indicator with larger hit area */}
                   <g
                     onClick={() => handleStringHeaderClick(idx)}
                     className="cursor-pointer"
                   >
+                    {/* Larger transparent hit area for easier clicking */}
+                    <circle
+                      cx={40 + idx * 45}
+                      cy={40}
+                      r="16"
+                      fill="transparent"
+                      className="hover:fill-white/5"
+                    />
+                    
                     {openStrings[idx] === true && (
                       <circle
                         cx={40 + idx * 45}
                         cy={40}
-                        r="6"
+                        r="9"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
-                        className="text-zinc-400 hover:text-amber-500"
+                        strokeWidth="3"
+                        className="text-zinc-300 hover:text-amber-500 pointer-events-none"
                       />
                     )}
                     {openStrings[idx] === false && (
                       <text
                         x={40 + idx * 45}
-                        y={44}
+                        y={45}
                         textAnchor="middle"
-                        className="text-sm fill-zinc-400 font-bold hover:fill-amber-500"
+                        className="text-lg fill-zinc-300 font-bold hover:fill-amber-500 pointer-events-none"
                       >
                         ✕
                       </text>
@@ -259,11 +268,11 @@ export default function ChordEditor() {
                       <circle
                         cx={40 + idx * 45}
                         cy={40}
-                        r="6"
+                        r="9"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="1"
-                        className="text-zinc-700 hover:text-zinc-500"
+                        strokeWidth="1.5"
+                        className="text-zinc-600 hover:text-zinc-400 pointer-events-none"
                       />
                     )}
                   </g>
@@ -732,11 +741,11 @@ export default function ChordEditor() {
                         key={`preview-open-${idx}`}
                         cx={30 + idx * 24}
                         cy={10}
-                        r="5"
+                        r="7"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2"
-                        className="text-zinc-400"
+                        strokeWidth="2.5"
+                        className="text-zinc-300"
                       />
                     );
                   } else if (state === false) {
@@ -744,9 +753,9 @@ export default function ChordEditor() {
                       <text
                         key={`preview-muted-${idx}`}
                         x={30 + idx * 24}
-                        y={13}
+                        y={14}
                         textAnchor="middle"
-                        className="text-xs fill-zinc-400 font-bold"
+                        className="text-base fill-zinc-300 font-bold"
                       >
                         ✕
                       </text>

@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { visualizer } from "rollup-plugin-visualizer";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -11,13 +10,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    // Bundle analyzer - run with ANALYZE=true to generate stats
-    visualizer({
-      open: process.env.ANALYZE === 'true',
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    // Bundle analyzer can be added with: npm install -D rollup-plugin-visualizer
   ],
   resolve: {
     alias: {
@@ -37,15 +30,11 @@ export default defineConfig({
         },
       },
     },
-    // Enable minification and tree-shaking
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true, // Remove console.logs in production
-        drop_debugger: true,
-      },
-    },
+    // Enable minification with esbuild (default, faster than terser)
+    minify: 'esbuild',
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
+    // Source maps for production debugging (optional)
+    sourcemap: false,
   },
 });

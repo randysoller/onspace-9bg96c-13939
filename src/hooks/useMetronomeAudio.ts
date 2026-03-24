@@ -129,7 +129,7 @@ export const useMetronomeAudio = () => {
         intervalRef.current = null;
       }
     };
-  }, [isPlaying, bpm, subdivision, setCurrentBeat, incrementBeat, playClick]);
+  }, [isPlaying, bpm, subdivision, playClick]);
 
   return {
     playClick,

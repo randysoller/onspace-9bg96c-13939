@@ -10,39 +10,55 @@ import { logger } from './logger';
  * Send metric to analytics endpoint
  */
 function sendToAnalytics(metric: Metric) {
-  const body = JSON.stringify({
-    name: metric.name,
+  // For now, just log metrics instead of sending to non-existent endpoint
+  // TODO: Create /api/analytics/vitals endpoint or Supabase function
+  logger.debug(`Web Vital: ${metric.name}`, {
     value: metric.value,
     rating: metric.rating,
     delta: metric.delta,
-    id: metric.id,
-    navigationType: metric.navigationType,
-    timestamp: Date.now(),
-    url: window.location.href,
   });
 
-  // Use sendBeacon for reliability
-  if (navigator.sendBeacon) {
-    navigator.sendBeacon('/api/analytics/vitals', body);
-  } else {
-    // Fallback to fetch
-    fetch('/api/analytics/vitals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-      keepalive: true,
-    }).catch(error => {
-      logger.error('Failed to send Web Vitals metric', error);
-    });
-  }
-
-  // Log to console in development
-  if (import.meta.env.DEV) {
-    logger.debug(`Web Vital: ${metric.name}`, {
+  // Store in localStorage for later analysis
+  try {
+    const key = `web-vitals-${metric.name}`;
+    const stored = localStorage.getItem(key);
+    const metrics = stored ? JSON.parse(stored) : [];
+    
+    metrics.push({
       value: metric.value,
       rating: metric.rating,
+      timestamp: Date.now(),
+      url: window.location.pathname,
     });
+    
+    // Keep only last 50 measurements
+    localStorage.setItem(key, JSON.stringify(metrics.slice(-50)));
+  } catch (error) {
+    // Ignore localStorage errors
   }
+
+  // Uncomment when endpoint is ready:
+  // const body = JSON.stringify({
+  //   name: metric.name,
+  //   value: metric.value,
+  //   rating: metric.rating,
+  //   delta: metric.delta,
+  //   id: metric.id,
+  //   navigationType: metric.navigationType,
+  //   timestamp: Date.now(),
+  //   url: window.location.href,
+  // });
+  //
+  // if (navigator.sendBeacon) {
+  //   navigator.sendBeacon('/api/analytics/vitals', body);
+  // } else {
+  //   fetch('/api/analytics/vitals', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body,
+  //     keepalive: true,
+  //   }).catch(() => {});
+  // }
 }
 
 /**

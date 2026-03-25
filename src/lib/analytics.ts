@@ -103,26 +103,36 @@ class Analytics {
   async flush() {
     if (this.queue.length === 0) return;
 
+    // Limit queue size to prevent memory leaks
+    const MAX_QUEUE_SIZE = 100;
+    if (this.queue.length > MAX_QUEUE_SIZE) {
+      logger.warn(`Analytics queue exceeded ${MAX_QUEUE_SIZE} events, dropping oldest`);
+      this.queue = this.queue.slice(-MAX_QUEUE_SIZE);
+    }
+
     const events = [...this.queue];
     this.queue = [];
 
     try {
-      // Send to Supabase or external analytics service
-      const { error } = await supabase
-        .from('analytics_events')
-        .insert(events);
-
-      if (error) {
-        logger.error('Failed to send analytics events', error);
-        // Re-queue events on failure
-        this.queue.push(...events);
-      } else {
-        logger.debug(`Flushed ${events.length} analytics events`);
-      }
+      // Check if analytics_events table exists before inserting
+      // For now, just log events instead of inserting to database
+      // TODO: Create analytics_events table in Supabase
+      logger.debug(`Analytics events (${events.length}):`, events);
+      
+      // Uncomment when table is created:
+      // const { error } = await supabase
+      //   .from('analytics_events')
+      //   .insert(events);
+      // 
+      // if (error) {
+      //   logger.error('Failed to send analytics events', error);
+      //   // Re-queue limited events on failure
+      //   this.queue.push(...events.slice(-10));
+      // }
     } catch (error) {
       logger.error('Analytics flush error', error);
-      // Re-queue events on error
-      this.queue.push(...events);
+      // Only re-queue last 10 events to prevent unbounded growth
+      this.queue.push(...events.slice(-10));
     }
   }
 

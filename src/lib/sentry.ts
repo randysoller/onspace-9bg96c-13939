@@ -9,19 +9,20 @@ import * as Sentry from '@sentry/react';
  * Initialize Sentry for error and performance monitoring
  */
 export function initSentry() {
-  // Only initialize in production
-  if (import.meta.env.MODE !== 'production') {
-    console.log('Sentry disabled in development mode');
-    return;
-  }
+  try {
+    // Only initialize in production
+    if (import.meta.env.MODE !== 'production') {
+      console.log('Sentry disabled in development mode');
+      return;
+    }
 
-  // Skip if no DSN provided
-  if (!import.meta.env.VITE_SENTRY_DSN) {
-    console.log('Sentry DSN not configured');
-    return;
-  }
+    // Skip if no DSN provided
+    if (!import.meta.env.VITE_SENTRY_DSN) {
+      console.log('Sentry DSN not configured');
+      return;
+    }
 
-  Sentry.init({
+    Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     
     // Performance Monitoring
@@ -53,6 +54,12 @@ export function initSentry() {
       return event;
     },
   });
+    
+    console.log('Sentry initialized successfully');
+  } catch (error) {
+    console.error('Failed to initialize Sentry:', error);
+    // Don't throw - allow app to continue without Sentry
+  }
 }
 
 /**

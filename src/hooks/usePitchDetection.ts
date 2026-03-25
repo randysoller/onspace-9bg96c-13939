@@ -324,20 +324,13 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             handlePerformanceUpdate(event.data);
           } else if (event.data.type === 'audioLevel') {
             handleAudioLevelUpdate(event.data.level);
-          } else if (event.data.type === 'actualSampleRate') {
-            const mismatch = event.data.sampleRate !== actualSampleRate;
-            logger.info('Worklet sample rate verification', {
-              workletRate: event.data.sampleRate,
-              contextRate: actualSampleRate,
-              globalRate: event.data.globalSampleRate,
-              match: !mismatch,
-            });
-            if (mismatch) {
-              logger.warn('Sample rate mismatch detected!', {
-                expected: actualSampleRate,
-                actual: event.data.sampleRate,
-                errorPercent: ((event.data.sampleRate / actualSampleRate - 1) * 100).toFixed(2) + '%',
-              });
+          } else if (event.data.type === 'diagnostic') {
+            // Enhanced diagnostic logging for mobile debugging
+            logger.warn('🔍 YIN DIAGNOSTIC', event.data);
+            
+            // Alert user in console about critical issues
+            if (event.data.mismatch || event.data.possibleSampleRateMismatch) {
+              console.error('⚠️ SAMPLE RATE ISSUE DETECTED:', event.data);
             }
           } else if (event.data.type === 'calibrationSuggestion') {
             setCalibrationSuggestion({
@@ -348,6 +341,17 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
               offset: ((event.data.averageRatio - 1) * 100).toFixed(2) + '%',
               currentCal: calibrationHz,
               recommended: event.data.recommendedCalibrationHz,
+              diagnosticDetails: event.data.diagnosticDetails,
+            });
+            
+            // Log to console for mobile debugging
+            console.warn('🎯 AUTO-CALIBRATION SUGGESTION:', {
+              currentCalibration: calibrationHz + 'Hz',
+              recommended: event.data.recommendedCalibrationHz + 'Hz',
+              offset: ((event.data.averageRatio - 1) * 100).toFixed(2) + '%',
+              likelyCause: event.data.diagnosticDetails?.possibleSampleRateMismatch 
+                ? 'SAMPLE RATE MISMATCH' 
+                : 'Unknown',
             });
           } else if (event.data.type === 'debug') {
             logger.debug('YIN debug', event.data);

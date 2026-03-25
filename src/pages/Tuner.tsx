@@ -564,6 +564,18 @@ export default function Tuner() {
           {/* Advanced Settings Panel */}
           {showAdvancedSettings && (
             <div className="space-y-4 mb-4 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+              {/* Mobile Diagnostic Instructions */}
+              <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <div className="text-xs text-blue-400 font-bold mb-2">📱 MOBILE DEBUGGING ACTIVE</div>
+                <div className="text-xs text-blue-300 space-y-1">
+                  <p>1. Open browser console to see diagnostic data</p>
+                  <p>2. Look for "🔍 YIN DIAGNOSTIC" messages</p>
+                  <p>3. Check for "⚠️ SAMPLE RATE ISSUE" warnings</p>
+                  <p>4. Play a guitar string and check "🎯 AUTO-CALIBRATION" suggestion</p>
+                  <p className="mt-2 text-amber-400">If you see "SAMPLE RATE MISMATCH", that's the problem!</p>
+                </div>
+              </div>
+
               {/* YIN Threshold */}
               <div>
                 <div className="flex items-center gap-2 mb-2">

@@ -547,14 +547,14 @@ export default function Practice() {
                       );
                     } else if (fret === 0) {
                       if (isRoot) {
-                        // Open root note - blue diamond (10% smaller: 7 → 6.3)
+                        // Open root note - blue diamond (5% increase: 6.615)
                         return (
                           <path
                             key={`open-${idx}`}
-                            d={`M ${60 + idx * 30} ${40 - 6.3} 
-                                L ${60 + idx * 30 + 6.3} ${40} 
-                                L ${60 + idx * 30} ${40 + 6.3} 
-                                L ${60 + idx * 30 - 6.3} ${40} Z`}
+                            d={`M ${60 + idx * 30} ${40 - 6.615} 
+                                L ${60 + idx * 30 + 6.615} ${40} 
+                                L ${60 + idx * 30} ${40 + 6.615} 
+                                L ${60 + idx * 30 - 6.615} ${40} Z`}
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
@@ -621,10 +621,10 @@ export default function Practice() {
                         return (
                           <g key={`dot-${stringIdx}`}>
                             <path
-                              d={`M ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 - 9.9} 
-                                  L ${60 + stringIdx * 30 + 9.9} ${60 + (fret - 0.5) * 50} 
-                                  L ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 + 9.9} 
-                                  L ${60 + stringIdx * 30 - 9.9} ${60 + (fret - 0.5) * 50} Z`}
+                              d={`M ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 - 10.395} 
+                                  L ${60 + stringIdx * 30 + 10.395} ${60 + (fret - 0.5) * 50} 
+                                  L ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 + 10.395} 
+                                  L ${60 + stringIdx * 30 - 10.395} ${60 + (fret - 0.5) * 50} Z`}
                               fill="currentColor"
                               className="text-cyan-500"
                             />

@@ -104,14 +104,14 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               } else if (fret === 0) {
                 const isRoot = idx === rootStringIndex;
                 if (isRoot) {
-                  // Open root note - blue diamond (10% smaller: 6 → 5.4)
+                  // Open root note - blue diamond (5% increase: 5.67)
                   return (
                     <path
                       key={`marker-${idx}`}
-                      d={`M ${10 + idx * 16} ${12 - 5.4} 
-                          L ${10 + idx * 16 + 5.4} ${12} 
-                          L ${10 + idx * 16} ${12 + 5.4} 
-                          L ${10 + idx * 16 - 5.4} ${12} Z`}
+                      d={`M ${10 + idx * 16} ${12 - 5.67} 
+                          L ${10 + idx * 16 + 5.67} ${12} 
+                          L ${10 + idx * 16} ${12 + 5.67} 
+                          L ${10 + idx * 16 - 5.67} ${12} Z`}
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2"
@@ -170,14 +170,14 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
                 const fingerNum = chord.fingers?.[stringIdx];
 
                 if (isRoot) {
-                  // Root note - blue diamond (10% smaller: 11 → 9.9)
+                  // Root note - blue diamond (5% increase: 10.395)
                   return (
                     <g key={`dot-${stringIdx}`}>
                       <path
-                        d={`M ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 - 9.9} 
-                            L ${10 + stringIdx * 16 + 9.9} ${20 + (fret - 0.5) * 25} 
-                            L ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 + 9.9} 
-                            L ${10 + stringIdx * 16 - 9.9} ${20 + (fret - 0.5) * 25} Z`}
+                        d={`M ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 - 10.395} 
+                            L ${10 + stringIdx * 16 + 10.395} ${20 + (fret - 0.5) * 25} 
+                            L ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 + 10.395} 
+                            L ${10 + stringIdx * 16 - 10.395} ${20 + (fret - 0.5) * 25} Z`}
                         fill="currentColor"
                         className="text-cyan-500"
                       />

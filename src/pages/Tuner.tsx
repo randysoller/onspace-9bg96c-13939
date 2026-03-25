@@ -1,18 +1,32 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { X, Music, Mic } from 'lucide-react';
+import { X, Music, Mic, Settings, Check, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
 import { useReferenceTone } from '@/hooks/useReferenceTone';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { useTunerStore, TUNING_PRESETS, TuningPreset } from '@/stores/tunerStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
 
 export default function Tuner() {
   const navigate = useNavigate();
   const { sensitivity, setSensitivity } = useDetectionSettingsStore();
   const { playTone, stopTone } = useReferenceTone();
-  const { tuning, setTuning } = useTunerStore();
+  const { 
+    tuning, 
+    setTuning,
+    calibrationHz,
+    isCalibrating,
+    calibrationDetections,
+    setIsCalibrating,
+    addCalibrationDetection,
+    setCalibrationHz,
+    resetCalibration,
+    clearCalibrationDetections,
+  } = useTunerStore();
   const [selectedString, setSelectedString] = useState<number | null>(null);
+  const [noiseGate, setNoiseGate] = useState(0.015); // Default noise gate threshold
+  const [showCalibrationPanel, setShowCalibrationPanel] = useState(false);
 
   // Map sensitivity 1-10 to clarity threshold with mobile-friendly range
   // Low sensitivity (1-3): 0.1-0.3 (very lenient, good for noisy environments)
@@ -24,14 +38,57 @@ export default function Tuner() {
     ? 0.3 + (sensitivity - 3) * 0.1  // 4->0.4, 5->0.5, 6->0.6, 7->0.7
     : 0.7 + (sensitivity - 7) * 0.05; // 8->0.75, 9->0.8, 10->0.85
 
-  const { frequency, note, octave, cents, clarity, isDetecting, error, performanceStats } = usePitchDetection({
+  const { frequency, note, octave, cents, clarity, isDetecting, error, performanceStats, audioLevel, isAboveNoiseGate } = usePitchDetection({
     enabled: true,
     optimizeForGuitar: true, // Use guitar-optimized adaptive settings
     clarity: clarityThreshold,
+    calibrationHz, // Pass current calibration
+    noiseGateThreshold: noiseGate, // Pass noise gate threshold
   });
 
   const detectedFrequency = frequency > 0 ? frequency : null;
   const detectedNote = note && octave > 0 ? `${note}${octave}` : null;
+
+  // Calibration logic: collect detections when in calibration mode
+  useEffect(() => {
+    if (isCalibrating && detectedFrequency && note === 'A' && octave === 4) {
+      // Only collect A4 notes
+      addCalibrationDetection(detectedFrequency);
+    }
+  }, [isCalibrating, detectedFrequency, note, octave, addCalibrationDetection]);
+
+  // Calculate average calibration from collected detections
+  const averageCalibrationHz = useMemo(() => {
+    if (calibrationDetections.length === 0) return calibrationHz;
+    const sum = calibrationDetections.reduce((a, b) => a + b, 0);
+    return Math.round(sum / calibrationDetections.length * 10) / 10; // Round to 1 decimal
+  }, [calibrationDetections, calibrationHz]);
+
+  // Start calibration mode
+  const handleStartCalibration = () => {
+    setIsCalibrating(true);
+    clearCalibrationDetections();
+    toast.info('Calibration mode: Play an A4 note (440Hz)');
+  };
+
+  // Confirm calibration
+  const handleConfirmCalibration = () => {
+    if (calibrationDetections.length < 3) {
+      toast.error('Need at least 3 stable detections. Keep playing A4...');
+      return;
+    }
+    
+    setCalibrationHz(averageCalibrationHz);
+    setIsCalibrating(false);
+    toast.success(`Calibration set to A${averageCalibrationHz}Hz`);
+  };
+
+  // Cancel calibration
+  const handleCancelCalibration = () => {
+    setIsCalibrating(false);
+    clearCalibrationDetections();
+    toast.info('Calibration cancelled');
+  };
 
   // Hysteresis for in-tune detection to prevent flickering
   // Use different thresholds for entering vs exiting in-tune state
@@ -320,15 +377,33 @@ export default function Tuner() {
             
             {/* Show detection status */}
             {!error && isDetecting && (
-              <div className="mt-2 flex items-center justify-center gap-2 text-emerald-500 text-xs">
-                <div className="flex gap-0.5">
-                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="font-medium">Listening...</span>
+              <div className="mt-2">
+                {/* Calibration Mode Banner */}
+                {isCalibrating && (
+                  <div className="mb-2 px-4 py-2 bg-amber-500/20 border border-amber-500/40 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 text-amber-500 text-xs font-bold mb-1">
+                      <Settings className="w-3 h-3 animate-spin" />
+                      <span>CALIBRATION MODE</span>
+                    </div>
+                    <div className="text-center text-xs text-amber-400">
+                      Play A4 note • {calibrationDetections.length} detections • Target: {averageCalibrationHz}Hz
+                    </div>
+                  </div>
+                )}
+                
+                {/* Normal Listening Status */}
+                {!isCalibrating && (
+                  <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs">
+                    <div className="flex gap-0.5">
+                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <span className="font-medium">Listening...</span>
+                  </div>
+                )}
               </div>
-            )}
+            )}          
           </div>
 
           {/* Frequency Bars - Always visible with fixed height */}
@@ -352,6 +427,133 @@ export default function Tuner() {
               Sharp
               <span className="text-xl">♯</span>
             </span>
+          </div>
+
+          {/* Calibration Panel */}
+          {showCalibrationPanel && (
+            <div className="mb-4 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-bold text-white">Calibration</span>
+                </div>
+                <button
+                  onClick={() => setShowCalibrationPanel(false)}
+                  className="text-zinc-500 hover:text-white transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                <div className="text-xs text-zinc-400">
+                  Current: <span className="text-white font-bold">A{calibrationHz}Hz</span>
+                  {calibrationHz !== 440 && (
+                    <span className="ml-2 text-amber-500">({calibrationHz > 440 ? '+' : ''}{(calibrationHz - 440).toFixed(1)}Hz)</span>
+                  )}
+                </div>
+                
+                {!isCalibrating ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleStartCalibration}
+                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
+                    >
+                      Start Calibration
+                    </button>
+                    {calibrationHz !== 440 && (
+                      <button
+                        onClick={() => {
+                          resetCalibration();
+                          toast.success('Reset to A440');
+                        }}
+                        className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleConfirmCalibration}
+                      disabled={calibrationDetections.length < 3}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white font-bold py-2 px-3 rounded text-xs transition-colors flex items-center justify-center gap-1"
+                    >
+                      <Check className="w-3 h-3" />
+                      Confirm ({calibrationDetections.length})
+                    </button>
+                    <button
+                      onClick={handleCancelCalibration}
+                      className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                
+                <p className="text-xs text-zinc-500 leading-relaxed">
+                  Play an A4 note from a reference source (tuning fork, piano, etc.) and the tuner will auto-detect and adjust.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Noise Gate Control */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-sm font-bold uppercase tracking-wider text-white">Noise Gate</span>
+              <span className="ml-auto text-sm font-bold text-white">{(noiseGate * 100).toFixed(1)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0.001"
+              max="0.05"
+              step="0.001"
+              value={noiseGate}
+              onChange={(e) => setNoiseGate(Number(e.target.value))}
+              className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500"
+            />
+            <div className="flex justify-between items-center text-xs mt-1">
+              <span className="text-zinc-600">Very Sensitive</span>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full transition-colors ${
+                  isAboveNoiseGate ? 'bg-emerald-500' : 'bg-zinc-700'
+                }`} />
+                <span className={isAboveNoiseGate ? 'text-emerald-500' : 'text-zinc-600'}>
+                  {isAboveNoiseGate ? 'Signal' : 'Quiet'}
+                </span>
+              </div>
+              <span className="text-zinc-600">Less Sensitive</span>
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">
+              Adjust to prevent false detections from background noise. Increase if tuner is too jittery on mobile.
+            </p>
+          </div>
+
+          {/* Audio Level Meter */}
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs text-zinc-500">Input Level</span>
+              <span className="text-xs font-bold text-white">{(audioLevel * 100).toFixed(1)}%</span>
+            </div>
+            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden relative">
+              {/* Noise gate threshold marker */}
+              <div 
+                className="absolute top-0 bottom-0 w-0.5 bg-amber-500 z-10"
+                style={{ left: `${(noiseGate / 0.05) * 100}%` }}
+              />
+              {/* Audio level bar */}
+              <div 
+                className={`h-full transition-all duration-100 ${
+                  audioLevel >= noiseGate ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-zinc-700'
+                }`}
+                style={{ width: `${Math.min(100, (audioLevel / 0.05) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-zinc-600 mt-1">
+              Play louder if the bar doesn't reach the orange line (noise gate threshold)
+            </p>
           </div>
 
           {/* Mic Sensitivity & Detection Quality */}
@@ -410,9 +612,16 @@ export default function Tuner() {
                 )}
                 {performanceStats && (
                   <p className="text-xs text-zinc-600 mt-1">
-                    Buffer: {(performanceStats as any).bufferSize || 8192} samples • Processing: {performanceStats.avgProcessTime.toFixed(1)}ms
+                    Buffer: {(performanceStats as any).bufferSize || 8192} samples • Processing: {performanceStats.avgProcessTime.toFixed(1)}ms • Calibration: A{calibrationHz}Hz
                   </p>
                 )}
+                <button
+                  onClick={() => setShowCalibrationPanel(!showCalibrationPanel)}
+                  className="w-full mt-2 flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
+                >
+                  <Settings className="w-3 h-3" />
+                  {showCalibrationPanel ? 'Hide' : 'Show'} Calibration Settings
+                </button>
               </div>
             )}
           </div>

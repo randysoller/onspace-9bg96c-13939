@@ -29,6 +29,8 @@ interface UsePitchDetectionOptions {
   onPitchDetected?: (data: PitchData) => void;
   useWorklet?: boolean; // Option to force main thread processing
   optimizeForGuitar?: boolean; // Use guitar-optimized settings
+  calibrationHz?: number; // A4 reference frequency (default 440)
+  noiseGateThreshold?: number; // RMS level threshold (0-1) for noise gate
 }
 
 interface PitchDetectionResult {
@@ -43,6 +45,8 @@ interface PitchDetectionResult {
     avgProcessTime: number;
     processCount: number;
   } | null;
+  audioLevel: number; // Current RMS audio level (0-1)
+  isAboveNoiseGate: boolean; // Whether signal is above noise gate
 }
 
 /**
@@ -118,6 +122,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     onPitchDetected,
     useWorklet = true,
     optimizeForGuitar = false,
+    calibrationHz = 440,
+    noiseGateThreshold = 0.01, // Very low default threshold (RMS 0.01 = ~1% of max)
   } = options;
 
   // Get optimized settings if requested
@@ -144,6 +150,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     avgProcessTime: number;
     processCount: number;
   } | null>(null);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [isAboveNoiseGate, setIsAboveNoiseGate] = useState(false);
 
   // Refs
   const workletRef = useRef<PitchDetectionWorklet | null>(null);
@@ -155,9 +163,20 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
   const centsSmoother = useRef(new ExponentialMovingAverage(smoothingFactor * 1.2)); // Slightly more smoothing for cents
   const isWorkletSupported = useRef(PitchDetectionWorklet.isSupported());
 
+  // Handle audio level updates from worklet
+  const handleAudioLevelUpdate = useCallback((level: number) => {
+    setAudioLevel(level);
+    setIsAboveNoiseGate(level >= noiseGateThreshold);
+  }, [noiseGateThreshold]);
+
   // Debounced update handler with smoothing
-  const handlePitchUpdate = useCallback((data: PitchData) => {
+  const handlePitchUpdate = useCallback((data: PitchData & { audioLevel?: number }) => {
     const now = performance.now();
+    
+    // Update audio level if provided
+    if (data.audioLevel !== undefined) {
+      handleAudioLevelUpdate(data.audioLevel);
+    }
     
     // Throttle updates based on updateInterval
     if (now - lastUpdateRef.current < updateInterval) {
@@ -165,6 +184,17 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     }
     
     lastUpdateRef.current = now;
+
+    // Noise gate: don't process if signal is too weak
+    if (data.audioLevel !== undefined && data.audioLevel < noiseGateThreshold) {
+      // Clear display when below noise gate
+      setFrequency(0);
+      setNote('');
+      setOctave(0);
+      setCents(0);
+      setDetectedClarity(0);
+      return;
+    }
 
     // Minimum clarity threshold - don't show unreliable detections
     // Map clarity 0.1-1.0 to minimum threshold (mobile-friendly)
@@ -210,9 +240,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
           ...data.note,
           cents: smoothedCents,
         },
+        audioLevel: data.audioLevel,
       });
     }
-  }, [updateInterval, onPitchDetected, clarity, frequency, cents]);
+  }, [updateInterval, onPitchDetected, clarity, frequency, cents, noiseGateThreshold, handleAudioLevelUpdate]);
 
   // Performance stats handler
   const handlePerformanceUpdate = useCallback((stats: any) => {
@@ -267,6 +298,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             maxFrequency,
             clarity,
             bufferSize, // Pass adaptive buffer size
+            calibrationHz, // Pass calibration offset
+            noiseGateThreshold, // Pass noise gate threshold
           });
 
           logger.info('Pitch detection initialized with adaptive settings', {
@@ -324,6 +357,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       setOctave(0);
       setCents(0);
       setDetectedClarity(0);
+      setAudioLevel(0);
+      setIsAboveNoiseGate(false);
       
       // Reset filters and smoothers
       frequencyMedian.current.reset();
@@ -339,6 +374,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     clarity,
     useWorklet,
     bufferSize,
+    calibrationHz,
+    noiseGateThreshold,
     handlePitchUpdate,
     handlePerformanceUpdate,
   ]);
@@ -351,9 +388,11 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
         maxFrequency,
         clarity,
         bufferSize,
+        calibrationHz,
+        noiseGateThreshold,
       });
     }
-  }, [minFrequency, maxFrequency, clarity, bufferSize, isDetecting]);
+  }, [minFrequency, maxFrequency, clarity, bufferSize, calibrationHz, noiseGateThreshold, isDetecting]);
 
   return {
     frequency,
@@ -364,5 +403,7 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     isDetecting,
     error,
     performanceStats,
+    audioLevel,
+    isAboveNoiseGate,
   };
 }

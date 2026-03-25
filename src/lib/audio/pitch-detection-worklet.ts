@@ -22,6 +22,8 @@ export interface WorkletConfig {
   maxFrequency?: number;
   clarity?: number;
   bufferSize?: number;
+  calibrationHz?: number;
+  noiseGateThreshold?: number;
 }
 
 /**
@@ -75,6 +77,9 @@ export class PitchDetectionWorklet {
           this.listeners.forEach(listener => listener(event.data));
         } else if (event.data.type === 'performance') {
           this.performanceListeners.forEach(listener => listener(event.data));
+        } else if (event.data.type === 'audioLevel') {
+          // Audio level updates can be handled separately if needed
+          // For now, they're included in pitch messages
         }
       };
 
@@ -84,7 +89,7 @@ export class PitchDetectionWorklet {
       // Connect nodes: source → worklet
       this.sourceNode.connect(this.workletNode);
 
-      // Send configuration to worklet (including buffer size)
+      // Send configuration to worklet (including buffer size, calibration, noise gate)
       this.workletNode.port.postMessage({
         type: 'config',
         sampleRate: config.sampleRate,
@@ -92,6 +97,8 @@ export class PitchDetectionWorklet {
         maxFrequency: config.maxFrequency,
         clarity: config.clarity,
         bufferSize: config.bufferSize,
+        calibrationHz: config.calibrationHz,
+        noiseGateThreshold: config.noiseGateThreshold,
       });
 
       this.isInitialized = true;

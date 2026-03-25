@@ -20,6 +20,8 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
     this.minFrequency = 70;
     this.maxFrequency = 400;
     this.clarity = 0.85;
+    this.calibrationHz = 440; // A4 reference frequency
+    this.noiseGateThreshold = 0.01; // RMS threshold
     
     // Buffers - dynamic sizing
     this.bufferSize = 8192;
@@ -34,6 +36,9 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
     this.lastFrequency = 0;
     this.lastClarity = 0;
     this.stableCount = 0;
+    
+    // Audio level tracking
+    this.rmsLevel = 0;
     
     // Listen for configuration messages
     this.port.onmessage = (event) => {
@@ -51,6 +56,8 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
     this.minFrequency = config.minFrequency || this.minFrequency;
     this.maxFrequency = config.maxFrequency || this.maxFrequency;
     this.clarity = config.clarity || this.clarity;
+    this.calibrationHz = config.calibrationHz || this.calibrationHz;
+    this.noiseGateThreshold = config.noiseGateThreshold !== undefined ? config.noiseGateThreshold : this.noiseGateThreshold;
     
     // Resize buffer if needed
     if (config.bufferSize && config.bufferSize !== this.bufferSize) {
@@ -88,10 +95,38 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
   }
 
   /**
+   * Calculate RMS (Root Mean Square) level of buffer
+   */
+  calculateRMS(buffer) {
+    let sum = 0;
+    for (let i = 0; i < buffer.length; i++) {
+      sum += buffer[i] * buffer[i];
+    }
+    return Math.sqrt(sum / buffer.length);
+  }
+
+  /**
    * Detect pitch using enhanced NSDF algorithm
    */
   detectPitch() {
     const startTime = currentTime;
+    
+    // Calculate audio level (RMS)
+    this.rmsLevel = this.calculateRMS(this.buffer);
+    
+    // Noise gate: skip processing if signal is too weak
+    if (this.rmsLevel < this.noiseGateThreshold) {
+      // Send audio level update even when below threshold
+      this.port.postMessage({
+        type: 'audioLevel',
+        level: this.rmsLevel,
+      });
+      
+      // Reset stability when below noise gate
+      this.stableCount = 0;
+      this.lastFrequency = 0;
+      return;
+    }
     
     const result = this.enhancedNSDF(this.buffer);
     
@@ -115,6 +150,7 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
           note: this.frequencyToNote(result.frequency),
           timestamp: currentTime,
           isStable: this.stableCount >= 3,
+          audioLevel: this.rmsLevel,
         });
       }
       
@@ -286,10 +322,11 @@ class PitchDetectionProcessor extends AudioWorkletProcessor {
 
   /**
    * Convert frequency to note name with cents offset
+   * Uses calibrationHz for A4 reference (supports non-standard tunings)
    */
   frequencyToNote(frequency) {
     const noteStrings = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    const A4 = 440;
+    const A4 = this.calibrationHz; // Use calibration setting instead of fixed 440
     const C0 = A4 * Math.pow(2, -4.75);
     
     const halfSteps = 12 * Math.log2(frequency / C0);

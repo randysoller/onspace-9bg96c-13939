@@ -42,6 +42,9 @@ interface TunerStore {
   centOffset: number;
   tuning: TuningPreset;
   targetString: number;
+  calibrationHz: number; // A4 reference frequency (default 440)
+  isCalibrating: boolean; // Calibration mode flag
+  calibrationDetections: number[]; // Store multiple detections for averaging
   
   setIsActive: (active: boolean) => void;
   setCurrentNote: (note: string) => void;
@@ -49,6 +52,11 @@ interface TunerStore {
   setCentOffset: (offset: number) => void;
   setTuning: (tuning: TuningPreset) => void;
   setTargetString: (stringNum: number) => void;
+  setCalibrationHz: (hz: number) => void;
+  setIsCalibrating: (calibrating: boolean) => void;
+  addCalibrationDetection: (freq: number) => void;
+  resetCalibration: () => void;
+  clearCalibrationDetections: () => void;
 }
 
 export const useTunerStore = create<TunerStore>((set) => ({
@@ -58,6 +66,9 @@ export const useTunerStore = create<TunerStore>((set) => ({
   centOffset: 0,
   tuning: 'standard',
   targetString: 0,
+  calibrationHz: 440, // Default A440
+  isCalibrating: false,
+  calibrationDetections: [],
   
   setIsActive: (active) => set({ isActive: active }),
   setCurrentNote: (note) => set({ currentNote: note }),
@@ -65,4 +76,11 @@ export const useTunerStore = create<TunerStore>((set) => ({
   setCentOffset: (offset) => set({ centOffset: offset }),
   setTuning: (tuning) => set({ tuning }),
   setTargetString: (stringNum) => set({ targetString: stringNum }),
+  setCalibrationHz: (hz) => set({ calibrationHz: hz }),
+  setIsCalibrating: (calibrating) => set({ isCalibrating: calibrating, calibrationDetections: calibrating ? [] : [] }),
+  addCalibrationDetection: (freq) => set((state) => ({
+    calibrationDetections: [...state.calibrationDetections, freq].slice(-10) // Keep last 10
+  })),
+  resetCalibration: () => set({ calibrationHz: 440, calibrationDetections: [], isCalibrating: false }),
+  clearCalibrationDetections: () => set({ calibrationDetections: [] }),
 }));

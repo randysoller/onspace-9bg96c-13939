@@ -547,14 +547,14 @@ export default function Practice() {
                       );
                     } else if (fret === 0) {
                       if (isRoot) {
-                        // Open root note - blue diamond (original 9 + 5% = 9.45)
+                        // Open root note - blue diamond (5% reduction: 9.45 * 0.95 = 8.9775)
                         return (
                           <path
                             key={`open-${idx}`}
-                            d={`M ${60 + idx * 30} ${40 - 9.45} 
-                                L ${60 + idx * 30 + 9.45} ${40} 
-                                L ${60 + idx * 30} ${40 + 9.45} 
-                                L ${60 + idx * 30 - 9.45} ${40} Z`}
+                            d={`M ${60 + idx * 30} ${40 - 8.9775} 
+                                L ${60 + idx * 30 + 8.9775} ${40} 
+                                L ${60 + idx * 30} ${40 + 8.9775} 
+                                L ${60 + idx * 30 - 8.9775} ${40} Z`}
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="2.5"
@@ -621,10 +621,10 @@ export default function Practice() {
                         return (
                           <g key={`dot-${stringIdx}`}>
                             <path
-                              d={`M ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 - 13.65} 
-                                  L ${60 + stringIdx * 30 + 13.65} ${60 + (fret - 0.5) * 50} 
-                                  L ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 + 13.65} 
-                                  L ${60 + stringIdx * 30 - 13.65} ${60 + (fret - 0.5) * 50} Z`}
+                              d={`M ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 - 12.9675} 
+                                  L ${60 + stringIdx * 30 + 12.9675} ${60 + (fret - 0.5) * 50} 
+                                  L ${60 + stringIdx * 30} ${60 + (fret - 0.5) * 50 + 12.9675} 
+                                  L ${60 + stringIdx * 30 - 12.9675} ${60 + (fret - 0.5) * 50} Z`}
                               fill="currentColor"
                               className="text-cyan-500"
                             />

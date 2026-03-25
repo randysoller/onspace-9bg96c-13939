@@ -124,8 +124,8 @@ export const ChordDiagram = ({ chord, size = 'md', showName = true }: ChordDiagr
             );
           } else if (fret === 0) {
             if (isRoot) {
-              // Open root note - blue diamond (original + 5%: sm 7.35, md 11.025, lg 14.7)
-              const diamondSize = size === 'sm' ? 7.35 : size === 'md' ? 11.025 : 14.7;
+              // Open root note - blue diamond (5% reduction: sm 6.9825, md 10.47375, lg 13.965)
+              const diamondSize = size === 'sm' ? 6.9825 : size === 'md' ? 10.47375 : 13.965;
               return (
                 <path
                   key={`marker-${stringIndex}`}
@@ -166,8 +166,8 @@ export const ChordDiagram = ({ chord, size = 'md', showName = true }: ChordDiagr
             const fingerDotRadius = size === 'sm' ? 6 : size === 'md' ? 9 : 12;
             
             if (isRoot) {
-              // Root note - cyan diamond (original + 5%: sm 9.45, md 14.175, lg 18.9)
-              const diamondSize = size === 'sm' ? 9.45 : size === 'md' ? 14.175 : 18.9;
+              // Root note - cyan diamond (5% reduction: sm 8.9775, md 13.46625, lg 17.955)
+              const diamondSize = size === 'sm' ? 8.9775 : size === 'md' ? 13.46625 : 17.955;
               return (
                 <path
                   key={`marker-${stringIndex}`}

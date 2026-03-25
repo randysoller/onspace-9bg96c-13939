@@ -7,24 +7,39 @@ import './index.css'
 import './stores/authStore'; // Initialize auth state
 import { logger } from './lib/logger';
 
-// Initialize monitoring (production only) with error handling
+// CRITICAL: Start React app FIRST, then initialize monitoring
+// This prevents Sentry from interfering with React's hook dispatcher
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>
+);
+
+// Initialize monitoring AFTER React is running (production only)
 if (import.meta.env.MODE === 'production') {
-  try {
-    // Dynamically import monitoring to avoid blocking app startup
-    import('./lib/sentry').then(({ initSentry }) => {
-      initSentry();
-    }).catch(err => {
-      logger.error('Failed to initialize Sentry', err);
-    });
-    
-    import('./lib/web-vitals').then(({ initWebVitals }) => {
-      initWebVitals();
-    }).catch(err => {
-      logger.error('Failed to initialize Web Vitals', err);
-    });
-  } catch (error) {
-    logger.error('Monitoring initialization failed', error);
-  }
+  // Delay monitoring initialization to ensure React is fully mounted
+  requestAnimationFrame(() => {
+    try {
+      // Dynamically import monitoring to avoid blocking app
+      import('./lib/sentry').then(({ initSentry }) => {
+        initSentry();
+        logger.info('Sentry initialized after React mount');
+      }).catch(err => {
+        logger.error('Failed to initialize Sentry', err);
+      });
+      
+      import('./lib/web-vitals').then(({ initWebVitals }) => {
+        initWebVitals();
+        logger.info('Web Vitals initialized');
+      }).catch(err => {
+        logger.error('Failed to initialize Web Vitals', err);
+      });
+    } catch (error) {
+      logger.error('Monitoring initialization failed', error);
+    }
+  });
 }
 
 // Register service worker (production only, non-blocking)
@@ -45,12 +60,3 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       });
   });
 }
-
-// React Query enabled for better data caching and performance
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </StrictMode>
-);

@@ -28,6 +28,7 @@ export default function Tuner() {
   const [yinThreshold, setYinThreshold] = useState(0.15); // YIN threshold (0.1-0.3)
   const [showCalibrationPanel, setShowCalibrationPanel] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
 
   // YIN pitch detection with optimal settings
   const { 
@@ -575,12 +576,72 @@ export default function Tuner() {
                       <div className="text-white font-bold">{(performanceStats as any).bufferSize || 4096}</div>
                     </div>
                     <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Sample Rate</div>
+                      <div className="text-white font-bold">{(performanceStats as any).sampleRate || 48000} Hz</div>
+                    </div>
+                    <div className="bg-zinc-900 rounded p-2">
                       <div className="text-zinc-600">Calibration</div>
                       <div className="text-white font-bold">A{calibrationHz}</div>
+                    </div>
+                    <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Detections</div>
+                      <div className="text-white font-bold">{performanceStats.processCount}</div>
                     </div>
                   </div>
                 </div>
               )}
+
+              {/* Debug Toggle */}
+              <button
+                onClick={() => setShowDebugInfo(!showDebugInfo)}
+                className="w-full mt-3 flex items-center justify-center gap-2 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors text-xs font-medium"
+              >
+                {showDebugInfo ? 'Hide' : 'Show'} Debug Info
+              </button>
+            </div>
+          )}
+
+          {/* Debug Panel */}
+          {showDebugInfo && isDetecting && (
+            <div className="mb-4 p-4 bg-zinc-900/50 border border-amber-500/30 rounded-lg">
+              <div className="text-xs text-amber-500 font-bold mb-3">🔧 DEBUG INFORMATION</div>
+              <div className="space-y-2 text-xs font-mono">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Detected Frequency:</span>
+                  <span className="text-white font-bold">{frequency.toFixed(2)} Hz</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Detected Note:</span>
+                  <span className="text-white font-bold">{note}{octave}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Cents Offset:</span>
+                  <span className={`font-bold ${Math.abs(cents) < 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
+                    {cents > 0 ? '+' : ''}{cents}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Clarity Score:</span>
+                  <span className="text-white font-bold">{(clarity * 100).toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Audio Level (RMS):</span>
+                  <span className="text-white font-bold">{(audioLevel * 100).toFixed(2)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Above Noise Gate:</span>
+                  <span className={isAboveNoiseGate ? 'text-emerald-500' : 'text-red-500'}>
+                    {isAboveNoiseGate ? 'YES' : 'NO'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">YIN Threshold:</span>
+                  <span className="text-white font-bold">{yinThreshold.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="mt-3 p-2 bg-zinc-950 rounded text-[10px] text-zinc-500">
+                💡 If notes are consistently off by a half/full step, check sample rate mismatch in console logs
+              </div>
             </div>
           )}
 

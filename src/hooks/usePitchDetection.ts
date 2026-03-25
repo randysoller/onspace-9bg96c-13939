@@ -254,7 +254,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
-            sampleRate: deviceCaps.recommendedSampleRate,
+            // Don't specify sampleRate - let browser choose
+            // We'll detect the actual rate and adapt
           },
         });
 
@@ -265,27 +266,41 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
 
         streamRef.current = stream;
 
-        // Create AudioContext
+        // Create AudioContext without forcing sample rate
+        // CRITICAL: Let browser choose optimal rate, then detect it
         const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-          sampleRate: deviceCaps.recommendedSampleRate,
           latencyHint: 'interactive',
         });
 
         audioContextRef.current = audioContext;
 
+        // CRITICAL: Get ACTUAL sample rate (might differ from requested)
+        const actualSampleRate = audioContext.sampleRate;
+        logger.info('AudioContext created', {
+          requestedSampleRate: deviceCaps.recommendedSampleRate,
+          actualSampleRate: actualSampleRate,
+          mismatch: actualSampleRate !== deviceCaps.recommendedSampleRate,
+        });
+
         // Load YIN worklet
         await audioContext.audioWorklet.addModule('/yin-pitch-detector.js');
 
-        // Create worklet node
+        // CRITICAL: Calculate optimal buffer size for ACTUAL sample rate
+        const periodsRequired = 4;
+        const minBufferSize = Math.ceil((periodsRequired / minFrequency) * actualSampleRate);
+        const optimalBufferSize = Math.pow(2, Math.ceil(Math.log2(minBufferSize)));
+        const clampedBufferSize = Math.max(4096, Math.min(16384, optimalBufferSize));
+
+        // Create worklet node with ACTUAL sample rate
         const workletNode = new AudioWorkletNode(audioContext, 'yin-pitch-detector', {
           numberOfInputs: 1,
           numberOfOutputs: 0,
           processorOptions: {
-            sampleRate: deviceCaps.recommendedSampleRate,
+            sampleRate: actualSampleRate, // Use actual, not requested
             minFrequency,
             maxFrequency,
             threshold,
-            bufferSize: deviceCaps.recommendedBufferSize,
+            bufferSize: clampedBufferSize,
             calibrationHz,
             noiseGateThreshold,
           },
@@ -301,6 +316,15 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             handlePerformanceUpdate(event.data);
           } else if (event.data.type === 'audioLevel') {
             handleAudioLevelUpdate(event.data.level);
+          } else if (event.data.type === 'actualSampleRate') {
+            // Verify sample rate matches
+            logger.info('Worklet actual sample rate', {
+              workletRate: event.data.sampleRate,
+              contextRate: actualSampleRate,
+              match: event.data.sampleRate === actualSampleRate,
+            });
+          } else if (event.data.type === 'debug') {
+            logger.debug('YIN debug', event.data);
           }
         };
 
@@ -318,10 +342,14 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
         setError(null);
 
         logger.info('YIN pitch detection initialized', {
-          sampleRate: audioContext.sampleRate,
-          bufferSize: deviceCaps.recommendedBufferSize,
+          requestedSampleRate: deviceCaps.recommendedSampleRate,
+          actualSampleRate: actualSampleRate,
+          bufferSize: clampedBufferSize,
+          calculatedBufferSize: optimalBufferSize,
           isMobile: deviceCaps.isMobile,
           threshold,
+          minFrequency,
+          maxFrequency,
         });
 
         // Add visibility change listener to handle tab switching

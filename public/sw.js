@@ -2,7 +2,7 @@
  * Service Worker for handling push notifications, background tasks, and offline caching
  */
 
-const CACHE_NAME = 'fretmaster-v1';
+const CACHE_NAME = 'fretmaster-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -69,23 +69,48 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first for static assets
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(request).then((response) => {
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
+  // Network-first for development/preview, cache-first for production
+  const isPreview = url.hostname.includes('localhost') || url.hostname.includes('onspace') || url.hostname.includes('127.0.0.1');
+  
+  if (isPreview) {
+    // Network-first for preview - always get fresh content
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || new Response('Offline', { status: 503 });
           });
+        })
+    );
+  } else {
+    // Cache-first for production
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return response;
-      });
-    })
-  );
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+  }
+});
 });
 
 // Background sync for queued operations

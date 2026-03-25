@@ -162,9 +162,10 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
 
   // ─── Anti-Octave-Error Strategy ───
   // Guitar strings have weak fundamentals (especially wound strings)
-  // Lower threshold to catch fundamental even when harmonics are stronger
-  const primaryThreshold = 0.28;  // Lowered from 0.42 to catch weak fundamentals
-  const minConfidence = 0.20;     // Minimum confidence to accept any peak
+  // Key insight: Fundamentals have HIGHER tau (LOWER frequency) than harmonics
+  // Solution: Scan peaks BACKWARDS (high tau → low tau) to prefer fundamentals
+  const primaryThreshold = 0.25;  // Lower threshold to catch weak fundamentals
+  const minConfidence = 0.18;     // Minimum confidence to collect peaks
   const peaks: { tau: number; val: number }[] = [];
 
   // Find first zero crossing after minLag
@@ -193,40 +194,27 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
 
   if (peaks.length === 0) return null;
 
-  // ─── Sub-Harmonic Check (Anti-Octave-Up) ───
-  // If we have multiple peaks, check if a later peak is exactly 2x the first
-  // (indicating the first is the fundamental, later is 1st harmonic)
+  // ─── Fundamental-First Selection (Anti-Harmonic) ───
+  // Peaks are ordered: low tau (high freq) → high tau (low freq)
+  // Fundamentals have HIGHER tau (LOWER freq), so scan BACKWARDS
+  // This prefers fundamentals (110 Hz) over harmonics (220 Hz, 330 Hz, etc.)
   let bestTau = -1;
   let bestVal = -Infinity;
   
-  // Strategy: Prefer the FIRST peak above threshold (lowest freq = fundamental)
-  // But verify it's not a sub-harmonic by checking for 2x frequency peak
-  for (let i = 0; i < peaks.length; i++) {
+  // Scan from highest tau (lowest frequency) first
+  for (let i = peaks.length - 1; i >= 0; i--) {
     const p = peaks[i];
     if (p.val >= primaryThreshold) {
       bestTau = p.tau;
       bestVal = p.val;
-      
-      // Check if there's a peak at ~tau/2 (octave below) with higher confidence
-      // If so, that's probably the real fundamental
-      for (let j = i + 1; j < peaks.length; j++) {
-        const candidate = peaks[j];
-        const ratio = candidate.tau / p.tau;
-        // Check for octave relationship (ratio ≈ 2.0)
-        if (ratio > 1.85 && ratio < 2.15) {
-          // If the higher freq (lower tau) peak exists with similar confidence,
-          // current peak might be sub-harmonic - stick with it (lower freq)
-          // This is correct behavior - we want the fundamental
-          break;
-        }
-      }
-      break; // Take first peak above threshold
+      break; // Take first peak when scanning backwards = lowest frequency = fundamental
     }
   }
 
-  // Fallback: if no peak meets primary threshold, take strongest peak
+  // Fallback: if no peak meets primary threshold, take strongest peak (prefer lower freqs)
   if (bestTau <= 0) {
-    for (const p of peaks) {
+    for (let i = peaks.length - 1; i >= 0; i--) {
+      const p = peaks[i];
       if (p.val > bestVal) {
         bestVal = p.val;
         bestTau = p.tau;

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Mic, MicOff, Music, X, ChevronDown } from 'lucide-react';
+import { Mic, MicOff, Music, ChevronDown, Crosshair, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import CalibrationWizard from '@/components/features/CalibrationWizard';
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -51,30 +52,6 @@ const TUNING_PRESETS: TuningPreset[] = [
       { string: 3, note: 'G3', freq: 196.00, display: 'G' },
       { string: 2, note: 'B3', freq: 246.94, display: 'B' },
       { string: 1, note: 'E4', freq: 329.63, display: 'E' },
-    ],
-  },
-  {
-    name: 'open-g',
-    label: 'Open G',
-    strings: [
-      { string: 6, note: 'D2', freq: 73.42, display: 'D' },
-      { string: 5, note: 'G2', freq: 98.00, display: 'G' },
-      { string: 4, note: 'D3', freq: 146.83, display: 'D' },
-      { string: 3, note: 'G3', freq: 196.00, display: 'G' },
-      { string: 2, note: 'B3', freq: 246.94, display: 'B' },
-      { string: 1, note: 'D4', freq: 293.66, display: 'D' },
-    ],
-  },
-  {
-    name: 'open-d',
-    label: 'Open D',
-    strings: [
-      { string: 6, note: 'D2', freq: 73.42, display: 'D' },
-      { string: 5, note: 'A2', freq: 110.00, display: 'A' },
-      { string: 4, note: 'D3', freq: 146.83, display: 'D' },
-      { string: 3, note: 'F#3', freq: 185.00, display: 'F#' },
-      { string: 2, note: 'A3', freq: 220.00, display: 'A' },
-      { string: 1, note: 'D4', freq: 293.66, display: 'D' },
     ],
   },
   {
@@ -235,14 +212,15 @@ export default function Tuner() {
   const [noteInfo, setNoteInfo] = useState<{ note: string; octave: number; cents: number } | null>(null);
   const [closestString, setClosestString] = useState<GuitarString | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
-  const [playingString, setPlayingString] = useState<number | null>(null);
+  const [selectedString, setSelectedString] = useState<number | null>(null);
   const [inTuneConfirmed, setInTuneConfirmed] = useState(false);
+  const [showCalibration, setShowCalibration] = useState(false);
+  const [autoDetect, setAutoDetect] = useState(true);
   const [sensitivity, setSensitivity] = useState(() => {
     const saved = localStorage.getItem('tuner-mic-sensitivity');
     return saved !== null ? Number(saved) : 60;
   });
 
-  const sensitivityRef = useRef(60);
   const startedRef = useRef(false);
   const inTuneStartRef = useRef<number | null>(0);
 
@@ -251,8 +229,6 @@ export default function Tuner() {
   const streamRef = useRef<MediaStream | null>(null);
   const audioBufferRef = useRef<Float32Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const oscillatorRef = useRef<OscillatorNode | null>(null);
-  const gainNodeRef = useRef<GainNode | null>(null);
 
   // Pitch detection loop
   const detectPitch = useCallback(() => {
@@ -270,11 +246,16 @@ export default function Tuner() {
       const closest = findClosestString(result.frequency, selectedTuning.strings);
       setClosestString(closest);
 
+      // Auto-select string
+      if (autoDetect && closest) {
+        setSelectedString(closest.string);
+      }
+
       // Check in-tune state
       if (Math.abs(info.cents) <= 5) {
         if (inTuneStartRef.current === null) {
           inTuneStartRef.current = performance.now();
-        } else if (performance.now() - inTuneStartRef.current > 500) {
+        } else if (performance.now() - (inTuneStartRef.current || 0) > 500) {
           setInTuneConfirmed(true);
         }
       } else {
@@ -290,7 +271,7 @@ export default function Tuner() {
     }
 
     animationFrameRef.current = requestAnimationFrame(detectPitch);
-  }, [selectedTuning]);
+  }, [selectedTuning, autoDetect]);
 
   // Start/stop listening
   const toggleListening = useCallback(async () => {
@@ -351,53 +332,10 @@ export default function Tuner() {
     }
   }, [isListening, detectPitch]);
 
-  // Play reference tone
-  const playReferenceTone = useCallback((freq: number, stringNum: number) => {
-    if (!audioContextRef.current) {
-      const context = new (window.AudioContext || (window as any).webkitAudioContext)();
-      audioContextRef.current = context;
-    }
-
-    const context = audioContextRef.current;
-
-    if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-      oscillatorRef.current = null;
-    }
-    if (gainNodeRef.current) {
-      gainNodeRef.current = null;
-    }
-
-    const oscillator = context.createOscillator();
-    const gainNode = context.createGain();
-
-    oscillator.type = 'sine';
-    oscillator.frequency.value = freq;
-    gainNode.gain.value = 0.3;
-
-    oscillator.connect(gainNode);
-    gainNode.connect(context.destination);
-
-    oscillator.start();
-    oscillatorRef.current = oscillator;
-    gainNodeRef.current = gainNode;
-
-    setPlayingString(stringNum);
-
-    setTimeout(() => {
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current = null;
-      }
-      setPlayingString(null);
-    }, 2000);
-  }, []);
-
   // Update RMS threshold when sensitivity changes
   useEffect(() => {
     const mappedThreshold = 0.001 + (1 - sensitivity / 100) * 0.04;
     (globalThis as any).__tunerRmsThreshold = mappedThreshold;
-    sensitivityRef.current = sensitivity;
     localStorage.setItem('tuner-mic-sensitivity', sensitivity.toString());
   }, [sensitivity]);
 
@@ -432,47 +370,65 @@ export default function Tuner() {
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-      }
     };
   }, []);
 
-  const centsBarFill = useMemo(() => {
-    if (!noteInfo) return 50;
-    return 50 + (noteInfo.cents / 50) * 50;
-  }, [noteInfo]);
+  // Calculate cents offset for each string
+  const stringCentsOffsets = useMemo(() => {
+    if (!frequency || !closestString) return {};
+    
+    const offsets: Record<number, number> = {};
+    selectedTuning.strings.forEach(str => {
+      const cents = Math.round(1200 * Math.log2(frequency / str.freq));
+      offsets[str.string] = cents;
+    });
+    return offsets;
+  }, [frequency, closestString, selectedTuning.strings]);
+
+  // Visual pitch meter bars
+  const pitchMeterBars = useMemo(() => {
+    const bars = [];
+    const totalBars = 41; // Centered meter with 41 bars
+    const centerIndex = 20;
+    
+    for (let i = 0; i < totalBars; i++) {
+      const distanceFromCenter = Math.abs(i - centerIndex);
+      let color = 'bg-zinc-800';
+      
+      if (noteInfo && closestString) {
+        const barCents = ((i - centerIndex) / centerIndex) * 50; // -50 to +50 cents
+        const currentCents = noteInfo.cents;
+        
+        // Highlight bars based on current cents
+        if (Math.abs(barCents - currentCents) < 2.5) {
+          if (Math.abs(currentCents) <= 5) {
+            color = 'bg-emerald-500';
+          } else if (Math.abs(currentCents) <= 15) {
+            color = 'bg-yellow-500';
+          } else {
+            color = 'bg-red-500';
+          }
+        } else if (distanceFromCenter < 3) {
+          color = 'bg-zinc-700';
+        }
+      }
+      
+      bars.push(
+        <div
+          key={i}
+          className={`w-1 h-12 rounded-full transition-colors duration-100 ${color}`}
+        />
+      );
+    }
+    return bars;
+  }, [noteInfo, closestString]);
 
   return (
-    <div className="bg-black text-white min-h-[calc(100vh-8rem)]">
-      <div className="container mx-auto px-4 py-4 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-zinc-900 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-zinc-400" />
-          </button>
-          
-          <div className="flex items-center gap-2">
-            <Music className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-semibold text-amber-500">Guitar Tuner</span>
-          </div>
-          
-          <button
-            onClick={toggleListening}
-            className={`p-2 rounded-lg transition-colors ${
-              isListening ? 'bg-amber-500 text-zinc-950' : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-            }`}
-          >
-            {isListening ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-          </button>
-        </div>
-
+    <div className="bg-black text-white min-h-screen pb-24">
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
         {/* Title */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-black mb-2">
+          <h1 className="text-4xl md:text-5xl font-black mb-4">
             Tune Your <span className="text-amber-500">Guitar</span>
           </h1>
           
@@ -481,18 +437,24 @@ export default function Tuner() {
             <div className="relative" ref={tuningDropdownRef}>
               <button
                 onClick={() => setTuningDropdownOpen(!tuningDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 rounded-lg hover:bg-zinc-800 transition-colors"
+                className="flex items-center gap-3 px-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl hover:bg-zinc-800 transition-colors"
               >
-                <span className="font-bold">{selectedTuning.label}</span>
-                <span className="text-zinc-500">{selectedTuning.strings.map(s => s.display).join(' ')}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${tuningDropdownOpen ? 'rotate-180' : ''}`} />
+                <span className="font-bold text-lg">{selectedTuning.label}</span>
+                <span className="text-zinc-500 text-sm tracking-wider">
+                  {selectedTuning.strings.map(s => s.display).join(' ')}
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-amber-500 transition-transform ${
+                    tuningDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
               </button>
               
               {tuningDropdownOpen && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-full mt-2 left-0 right-0 bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden z-10"
+                  className="absolute top-full mt-2 left-0 right-0 bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden z-10 shadow-2xl"
                 >
                   {TUNING_PRESETS.map((preset) => (
                     <button
@@ -501,74 +463,69 @@ export default function Tuner() {
                         setSelectedTuning(preset);
                         setTuningDropdownOpen(false);
                       }}
-                      className="w-full px-4 py-3 text-left hover:bg-zinc-800 transition-colors"
+                      className="w-full px-6 py-4 text-left hover:bg-zinc-800 transition-colors"
                     >
-                      <div className="font-bold">{preset.label}</div>
-                      <div className="text-sm text-zinc-500">{preset.strings.map(s => s.display).join(' ')}</div>
+                      <div className="font-bold text-lg">{preset.label}</div>
+                      <div className="text-sm text-zinc-500 tracking-wider">
+                        {preset.strings.map(s => s.display).join(' ')}
+                      </div>
                     </button>
                   ))}
                 </motion.div>
               )}
             </div>
           </div>
+          
+          <p className="text-sm text-zinc-500 mt-4">
+            Play a string and the tuner will detect the pitch.
+          </p>
         </div>
 
-        {/* Main Display */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 mb-6">
-          {/* Note Display */}
+        {/* Main Display Card */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-8 mb-6">
+          {/* Note Display with Octave */}
           <div className="text-center mb-6">
-            <div className="relative inline-flex items-center justify-center bg-black rounded-2xl px-12 py-8" style={{ minHeight: '180px', minWidth: '200px' }}>
-              {inTuneConfirmed && (
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="absolute inset-4 border-4 border-emerald-500 rounded-full"
-                />
+            <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
+              !noteInfo ? 'text-zinc-800' :
+              Math.abs(noteInfo.cents) <= 5 ? 'text-emerald-500' :
+              Math.abs(noteInfo.cents) <= 15 ? 'text-yellow-500' : 'text-red-500'
+            }`}>
+              {noteInfo ? (
+                <>
+                  {noteInfo.note}
+                  <sub className="text-4xl md:text-5xl">{noteInfo.octave}</sub>
+                </>
+              ) : (
+                <span className="text-zinc-800">—</span>
               )}
-              
-              <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
-                !noteInfo ? 'text-zinc-700' :
-                Math.abs(noteInfo.cents) <= 5 ? 'text-emerald-500' :
-                Math.abs(noteInfo.cents) <= 15 ? 'text-yellow-500' : 'text-red-500'
-              }`} style={{ minHeight: '120px', minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {noteInfo ? noteInfo.note : '\u00A0'}
-              </div>
             </div>
-            
-            {permissionDenied && (
-              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                <div className="text-red-500 text-sm font-bold text-center">
-                  Microphone access denied. Please enable microphone permissions.
-                </div>
+          </div>
+
+          {/* Frequency + Target */}
+          <div className="text-center mb-6 space-y-1">
+            <div className={`text-xl font-mono ${noteInfo ? 'text-white' : 'text-zinc-700'}`}>
+              {frequency ? `${frequency.toFixed(1)} Hz` : '0.0 Hz'}
+            </div>
+            {closestString && (
+              <div className="text-sm text-zinc-500">
+                Target: {closestString.note} ({closestString.freq.toFixed(1)} Hz)
               </div>
             )}
           </div>
 
-          {/* Cents Bar */}
+          {/* Visual Pitch Meter */}
           <div className="mb-6">
-            <div className="h-24 bg-zinc-800 rounded-lg relative overflow-hidden">
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-0.5 h-full bg-white opacity-50" />
-              </div>
-              
-              {frequency && noteInfo && (
-                <motion.div
-                  className={`absolute top-0 bottom-0 w-1 ${
-                    Math.abs(noteInfo.cents) <= 5 ? 'bg-emerald-500' :
-                    Math.abs(noteInfo.cents) <= 15 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`}
-                  style={{ left: `${centsBarFill}%` }}
-                  initial={false}
-                  animate={{ left: `${centsBarFill}%` }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                />
-              )}
+            <div className="flex justify-center items-end gap-0.5 h-16">
+              {pitchMeterBars}
             </div>
-            
-            <div className="flex items-center justify-between text-sm text-zinc-500 mt-2">
+          </div>
+
+          {/* Cents Display */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-between text-sm text-zinc-500 mb-2">
               <span>♭ Flat</span>
-              <span className={`font-bold ${
-                !noteInfo ? 'text-zinc-600' :
+              <span className={`font-bold text-2xl ${
+                !noteInfo ? 'text-zinc-700' :
                 Math.abs(noteInfo.cents) <= 5 ? 'text-emerald-500' :
                 Math.abs(noteInfo.cents) <= 15 ? 'text-yellow-500' : 'text-red-500'
               }`}>
@@ -578,10 +535,26 @@ export default function Tuner() {
             </div>
           </div>
 
-          {/* Sensitivity Control */}
-          <div className="mb-4">
+          {/* IN TUNE Message */}
+          {inTuneConfirmed && (
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-center py-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl mb-6"
+            >
+              <div className="text-2xl font-black text-emerald-500 flex items-center justify-center gap-2">
+                IN TUNE <Check className="w-6 h-6" />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Mic Sensitivity */}
+          <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-bold uppercase tracking-wider text-white">Sensitivity</span>
+              <Mic className="w-4 h-4 text-zinc-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                MIC SENSITIVITY
+              </span>
               <span className="ml-auto text-sm font-bold text-white">{sensitivity}%</span>
             </div>
             <input
@@ -591,50 +564,103 @@ export default function Tuner() {
               step="1"
               value={sensitivity}
               onChange={(e) => setSensitivity(Number(e.target.value))}
-              className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
             />
             <div className="flex justify-between text-xs text-zinc-600 mt-1">
-              <span>More Sensitive</span>
-              <span>Less Sensitive</span>
+              <span>Low</span>
+              <span>High</span>
             </div>
           </div>
 
-          {/* Frequency Display */}
-          {frequency && (
-            <div className="text-center text-sm text-zinc-500">
-              {frequency.toFixed(2)} Hz
+          {/* Calibration */}
+          <div className="flex items-center justify-between p-4 bg-zinc-900 rounded-xl border border-zinc-800">
+            <div className="flex items-center gap-3">
+              <Crosshair className="w-5 h-5 text-amber-500" />
+              <span className="font-bold uppercase tracking-wider text-sm">Calibration</span>
+            </div>
+            <button
+              onClick={() => setShowCalibration(true)}
+              className="px-4 py-2 border-2 border-amber-500 text-amber-500 rounded-lg font-bold hover:bg-amber-500/10 transition-colors text-sm"
+            >
+              <Crosshair className="w-4 h-4 inline mr-1" />
+              Calibrate
+            </button>
+          </div>
+
+          {permissionDenied && (
+            <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <div className="text-red-500 text-sm font-bold text-center">
+                Microphone access denied. Please enable microphone permissions.
+              </div>
             </div>
           )}
         </div>
 
-        {/* Strings */}
-        <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-          <div className="text-center mb-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-zinc-400">Reference Tones</h2>
+        {/* Strings Section */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-400">STRINGS</h2>
+            <button
+              onClick={() => setAutoDetect(!autoDetect)}
+              className={`px-4 py-2 rounded-lg font-bold text-sm transition-colors ${
+                autoDetect
+                  ? 'bg-amber-500 text-zinc-950'
+                  : 'border-2 border-amber-500 text-amber-500 hover:bg-amber-500/10'
+              }`}
+            >
+              <Mic className="w-4 h-4 inline mr-1" />
+              Auto-Detect
+            </button>
           </div>
 
           <div className="grid grid-cols-6 gap-2">
-            {selectedTuning.strings.map((string) => (
-              <button
-                key={string.string}
-                onClick={() => playReferenceTone(string.freq, string.string)}
-                className={`border rounded-lg px-2 py-3 transition-all ${
-                  playingString === string.string
-                    ? 'bg-amber-500 border-amber-500 text-zinc-950'
-                    : closestString?.string === string.string
-                    ? 'bg-emerald-500/20 border-emerald-500 text-emerald-500'
-                    : 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white'
-                }`}
-              >
-                <div className={`text-[10px] mb-1 ${
-                  playingString === string.string ? 'text-zinc-950/70' : 'text-zinc-500'
-                }`}>{string.string}</div>
-                <div className="text-lg font-black">{string.display}</div>
-              </button>
-            ))}
+            {selectedTuning.strings.map((string) => {
+              const isSelected = selectedString === string.string;
+              const isClosest = closestString?.string === string.string;
+              const centsOffset = stringCentsOffsets[string.string];
+              const hasOffset = centsOffset !== undefined && Math.abs(centsOffset) < 400;
+              
+              return (
+                <button
+                  key={string.string}
+                  onClick={() => setSelectedString(isSelected ? null : string.string)}
+                  className={`relative border-2 rounded-xl px-2 py-4 transition-all ${
+                    isSelected && isClosest
+                      ? 'bg-emerald-500/20 border-emerald-500'
+                      : isSelected
+                      ? 'bg-zinc-800 border-zinc-600'
+                      : 'bg-zinc-900 hover:bg-zinc-800 border-zinc-800'
+                  }`}
+                >
+                  {isSelected && isClosest && (
+                    <div className="absolute top-2 right-2">
+                      <Check className="w-4 h-4 text-emerald-500" />
+                    </div>
+                  )}
+                  
+                  <div className="text-[10px] mb-1 text-zinc-500">String {string.string}</div>
+                  <div className="text-2xl font-black">{string.display}</div>
+                  
+                  {hasOffset && (
+                    <div className={`text-xs mt-1 font-mono ${
+                      Math.abs(centsOffset) <= 5
+                        ? 'text-emerald-500'
+                        : Math.abs(centsOffset) <= 20
+                        ? 'text-yellow-500'
+                        : 'text-red-500'
+                    }`}>
+                      {centsOffset > 0 ? '+' : ''}{centsOffset}¢
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>
+
+      {/* Calibration Wizard */}
+      <CalibrationWizard open={showCalibration} onClose={() => setShowCalibration(false)} />
     </div>
   );
 }

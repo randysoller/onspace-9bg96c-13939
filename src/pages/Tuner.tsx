@@ -14,14 +14,15 @@ export default function Tuner() {
   const { tuning, setTuning } = useTunerStore();
   const [selectedString, setSelectedString] = useState<number | null>(null);
 
-  const { isListening, currentPitch, permissionDenied, audioLevel } = usePitchDetection({
-    sensitivity,
-    autoStart: true,
+  const { frequency, note, octave, cents, clarity, isDetecting, error } = usePitchDetection({
+    enabled: true,
+    minFrequency: 60,
+    maxFrequency: 1400,
+    clarity: sensitivity / 10, // Map sensitivity (1-10) to clarity (0.1-1.0)
   });
 
-  const detectedFrequency = currentPitch?.frequency || null;
-  const detectedNote = currentPitch ? `${currentPitch.noteName}${currentPitch.octave}` : null;
-  const cents = currentPitch?.cents || 0;
+  const detectedFrequency = frequency > 0 ? frequency : null;
+  const detectedNote = note && octave > 0 ? `${note}${octave}` : null;
 
   // Check if note is in tune (within ±5 cents) - Must be declared before useEffect hooks that use it
   const isInTune = detectedFrequency && Math.abs(cents) <= 5;
@@ -261,11 +262,31 @@ export default function Tuner() {
               </div>
             </div>
             
-            {/* Only show permission error */}
-            {permissionDenied && (
+            {/* Show errors (permission denied, worklet issues, etc.) */}
+            {error && (
               <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                <div className="text-sm font-bold text-red-500">Microphone access denied</div>
-                <div className="text-xs text-red-400 mt-1">Please allow microphone access in your browser settings</div>
+                <div className="text-sm font-bold text-red-500">
+                  {error.includes('denied') || error.includes('permission') 
+                    ? 'Microphone access denied' 
+                    : 'Detection Error'}
+                </div>
+                <div className="text-xs text-red-400 mt-1">
+                  {error.includes('denied') || error.includes('permission')
+                    ? 'Please allow microphone access in your browser settings'
+                    : error}
+                </div>
+              </div>
+            )}
+            
+            {/* Show detection status */}
+            {!error && isDetecting && (
+              <div className="mt-2 flex items-center justify-center gap-2 text-emerald-500 text-xs">
+                <div className="flex gap-0.5">
+                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '300ms' }} />
+                </div>
+                <span className="font-medium">Listening...</span>
               </div>
             )}
           </div>
@@ -293,24 +314,47 @@ export default function Tuner() {
             </span>
           </div>
 
-          {/* Mic Sensitivity */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <Mic className="w-6 h-6 text-amber-500" />
-              <span className="text-sm font-bold uppercase tracking-wider text-white">Sensitivity</span>
-              <span className="ml-auto text-sm font-bold text-white">{sensitivity}</span>
+          {/* Mic Sensitivity & Detection Quality */}
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Mic className="w-6 h-6 text-amber-500" />
+                <span className="text-sm font-bold uppercase tracking-wider text-white">Detection Quality</span>
+                <span className="ml-auto text-sm font-bold text-white">{sensitivity}/10</span>
+              </div>
+              
+              <div className="relative">
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={sensitivity}
+                  onChange={(e) => setSensitivity(Number(e.target.value))}
+                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                />
+              </div>
+              <div className="flex justify-between text-xs text-zinc-600 mt-1">
+                <span>Noisy</span>
+                <span>Balanced</span>
+                <span>Precise</span>
+              </div>
             </div>
             
-            <div className="relative">
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={sensitivity}
-                onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-              />
-            </div>
+            {/* Clarity indicator */}
+            {isDetecting && clarity > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-zinc-500">Signal Clarity</span>
+                  <span className="text-xs font-bold text-amber-500">{(clarity * 100).toFixed(0)}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-200"
+                    style={{ width: `${clarity * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

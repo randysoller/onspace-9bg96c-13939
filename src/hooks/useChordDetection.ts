@@ -1,20 +1,20 @@
 /**
- * Custom hook for real-time guitar chord detection using NSDF pitch detection
- * Analyzes audio input and compares detected notes against target chord
+ * Custom hook for real-time guitar chord detection using chromagram analysis
+ * Uses industry-standard chroma features + template matching for accurate chord recognition
  * 
  * @example
  * ```tsx
  * const targetChord = { symbol: 'C', frets: [null, 3, 2, 0, 1, 0], ... };
  * 
- * const { isListening, result, detectedNotes, startListening, stopListening } = useChordDetection({
+ * const { isListening, result, detectedNotes, detectedChord, confidence, startListening, stopListening } = useChordDetection({
  *   targetChord,
  *   sensitivity: 6,
  *   onCorrect: () => {
  *     console.log('Correct chord played!');
  *     playSuccessSound();
  *   },
- *   onWrongDetected: (notes) => {
- *     console.log(`Wrong notes detected: ${notes}`);
+ *   onWrongDetected: (chord) => {
+ *     console.log(`Wrong chord detected: ${chord}`);
  *   },
  * });
  * 
@@ -23,7 +23,8 @@
  *     <button onClick={startListening}>Start Detection</button>
  *     {result === 'correct' && <p className="text-green-500">✓ Correct!</p>}
  *     {result === 'wrong' && <p className="text-red-500">✗ Try again</p>}
- *     <p>Detected: {detectedNotes.join(', ')}</p>
+ *     <p>Detected: {detectedChord || 'None'} ({(confidence * 100).toFixed(0)}%)</p>
+ *     <p>Notes: {detectedNotes.join(', ')}</p>
  *   </div>
  * );
  * ```
@@ -31,7 +32,7 @@
  * @param options - Configuration options for chord detection
  * @param options.targetChord - The chord to detect (ChordData with frets array)
  * @param options.onCorrect - Callback fired when correct chord is detected
- * @param options.onWrongDetected - Callback fired when wrong notes detected, receives detected note names
+ * @param options.onWrongDetected - Callback fired when wrong chord detected, receives detected chord name
  * @param options.sensitivity - Detection sensitivity 1-10, higher = more forgiving (default: 6)
  * @param options.autoStart - If true, starts listening automatically on mount (default: false)
  * @param options.advancedSettings - Optional advanced detection settings (noiseGate, harmonicBoost, fluxTolerance)
@@ -40,13 +41,18 @@
  * @returns isListening - True if microphone is active and analyzing chords
  * @returns result - Detection result: 'correct', 'wrong', or null
  * @returns permissionDenied - True if microphone permission was denied
- * @returns detectedNotes - Array of recently detected note names (last 6 notes)
+ * @returns detectedNotes - Array of detected note names in current chord
+ * @returns detectedChord - Full chord name with root (e.g., "C major", "Am7")
+ * @returns confidence - Confidence score 0-1 for current detection
  * @returns startListening - Function to start chord detection and request microphone access
  * @returns stopListening - Function to stop detection and release microphone
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
+import { extractChromagram, getDominantPitchClasses, pitchClassesToNotes, findBestRotation, CHROMA_NOTES } from '@/lib/audio/chromagram';
+import { CHORD_TEMPLATES } from '@/lib/audio/chord-templates';
+import { logger } from '@/lib/logger';
 
 export type DetectionResult = 'correct' | 'wrong' | null;
 
@@ -69,62 +75,32 @@ const STANDARD_TUNING_FREQ = {
   'E2': 82.41, 'A2': 110.00, 'D3': 146.83, 'G3': 196.00, 'B3': 246.94, 'E4': 329.63
 };
 
-// NSDF (Normalized Square Difference Function) for pitch detection
-function detectPitch(buffer: Float32Array, sampleRate: number): number | null {
-  const SIZE = buffer.length;
-  const MAX_SAMPLES = Math.floor(SIZE / 2);
-  const nsdf = new Float32Array(MAX_SAMPLES);
+/**
+ * Get expected notes from chord frets
+ */
+function getExpectedNotesFromChord(chord: ChordData): Set<string> {
+  const expectedNotes = new Set<string>();
+  const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
   
-  // Calculate NSDF
-  for (let tau = 0; tau < MAX_SAMPLES; tau++) {
-    let acf = 0;
-    let divisorM = 0;
-    
-    for (let i = 0; i < MAX_SAMPLES; i++) {
-      acf += buffer[i] * buffer[i + tau];
-      divisorM += buffer[i] * buffer[i] + buffer[i + tau] * buffer[i + tau];
+  chord.frets.forEach((fret, idx) => {
+    if (fret !== null && fret !== -1) {
+      const baseFreq = STANDARD_TUNING_FREQ[STANDARD_TUNING[idx] as keyof typeof STANDARD_TUNING_FREQ];
+      if (baseFreq) {
+        const noteFreq = baseFreq * Math.pow(2, fret / 12);
+        const noteName = getNoteName(noteFreq);
+        // Strip octave for comparison
+        const noteWithoutOctave = noteName.replace(/\d+$/, '');
+        expectedNotes.add(noteWithoutOctave);
+      }
     }
-    
-    nsdf[tau] = divisorM > 0 ? (2 * acf) / divisorM : 0;
-  }
+  });
   
-  // Find peaks in NSDF
-  const peaks: number[] = [];
-  let prevValue = nsdf[0];
-  
-  for (let i = 1; i < nsdf.length - 1; i++) {
-    const currentValue = nsdf[i];
-    const nextValue = nsdf[i + 1];
-    
-    if (currentValue > prevValue && currentValue > nextValue && currentValue > 0) {
-      peaks.push(i);
-    }
-    
-    prevValue = currentValue;
-  }
-  
-  // Find the highest peak above threshold
-  let bestPeak = -1;
-  let bestValue = 0.1; // Threshold
-  
-  for (const peak of peaks) {
-    if (nsdf[peak] > bestValue) {
-      bestValue = nsdf[peak];
-      bestPeak = peak;
-    }
-  }
-  
-  if (bestPeak === -1) return null;
-  
-  // Parabolic interpolation for better accuracy
-  const y1 = nsdf[bestPeak - 1];
-  const y2 = nsdf[bestPeak];
-  const y3 = nsdf[bestPeak + 1];
-  const betterPeak = bestPeak + (y3 - y1) / (2 * (2 * y2 - y1 - y3));
-  
-  return sampleRate / betterPeak;
+  return expectedNotes;
 }
 
+/**
+ * Convert frequency to note name
+ */
 function getNoteName(frequency: number): string {
   const A4 = 440;
   const C0 = A4 * Math.pow(2, -4.75);
@@ -149,87 +125,203 @@ export function useChordDetection({
   const [result, setResult] = useState<DetectionResult>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [detectedNotes, setDetectedNotes] = useState<string[]>([]);
+  const [detectedChord, setDetectedChord] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<number>(0);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const detectionBufferRef = useRef<string[]>([]);
+  const detectionBufferRef = useRef<{
+    chord: string;
+    root: string;
+    confidence: number;
+    timestamp: number;
+  }[]>([]);
 
+  /**
+   * Main audio analysis loop using chromagram
+   */
   const analyzeAudio = useCallback(() => {
-    if (!analyserRef.current || !audioContextRef.current || !targetChord) {
+    if (!analyserRef.current || !audioContextRef.current) {
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
       return;
     }
 
     const analyser = analyserRef.current;
-    const bufferLength = analyser.fftSize;
-    const buffer = new Float32Array(bufferLength);
+    const bufferLength = analyser.frequencyBinCount;
+    const frequencyData = new Uint8Array(bufferLength);
     
-    analyser.getFloatTimeDomainData(buffer);
+    // Get frequency domain data
+    analyser.getByteFrequencyData(frequencyData);
     
-    // Apply noise gate
-    const noiseGate = advancedSettings?.noiseGate || 0.01;
-    const maxAmplitude = Math.max(...buffer.map(Math.abs));
+    // Apply noise gate - check if there's sufficient signal
+    const noiseGate = advancedSettings?.noiseGate || 20; // Minimum dB level
+    const averageVolume = frequencyData.reduce((sum, val) => sum + val, 0) / bufferLength;
     
-    if (maxAmplitude < noiseGate) {
+    if (averageVolume < noiseGate) {
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
       return;
     }
     
-    // Detect pitch
-    const frequency = detectPitch(buffer, audioContextRef.current.sampleRate);
-    
-    if (frequency) {
-      const noteName = getNoteName(frequency);
-      setDetectedNotes(prev => [...prev.slice(-5), noteName]);
+    try {
+      // Extract chromagram from frequency data
+      const chroma = extractChromagram(
+        frequencyData,
+        audioContextRef.current.sampleRate,
+        analyser.fftSize
+      );
       
-      // Add to detection buffer
-      detectionBufferRef.current.push(noteName);
-      if (detectionBufferRef.current.length > 10) {
-        detectionBufferRef.current.shift();
+      // Find best matching chord template
+      let bestMatch = {
+        chord: '',
+        root: '',
+        similarity: 0,
+        template: CHORD_TEMPLATES[0],
+      };
+      
+      for (const template of CHORD_TEMPLATES) {
+        const match = findBestRotation(chroma, template.chroma);
+        
+        if (match.similarity > bestMatch.similarity) {
+          bestMatch = {
+            chord: template.name,
+            root: match.rootNote,
+            similarity: match.similarity,
+            template,
+          };
+        }
       }
       
-      // Check if we have enough consistent detections
-      if (detectionBufferRef.current.length >= 5) {
-        const targetNotes = new Set<string>();
+      // Apply sensitivity threshold
+      // Higher sensitivity = lower threshold
+      const minSimilarity = Math.max(0.3, 0.7 - (sensitivity - 6) * 0.05);
+      
+      if (bestMatch.similarity >= minSimilarity) {
+        const fullChordName = `${bestMatch.root}${bestMatch.template.symbol}`;
         
-        // Build expected notes from target chord
-        const STANDARD_TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
-        targetChord.frets.forEach((fret, idx) => {
-          if (fret !== null && fret !== -1) {
-            const baseFreq = STANDARD_TUNING_FREQ[STANDARD_TUNING[idx] as keyof typeof STANDARD_TUNING_FREQ];
-            if (baseFreq) {
-              const noteFreq = baseFreq * Math.pow(2, fret / 12);
-              targetNotes.add(getNoteName(noteFreq));
-            }
-          }
+        // Add to detection buffer for stability
+        detectionBufferRef.current.push({
+          chord: fullChordName,
+          root: bestMatch.root,
+          confidence: bestMatch.similarity,
+          timestamp: Date.now(),
         });
         
-        // Check if detected notes match target chord (with tolerance)
-        const recentNotes = new Set(detectionBufferRef.current.slice(-8));
-        const matchCount = Array.from(targetNotes).filter(note => recentNotes.has(note)).length;
-        const matchRatio = targetNotes.size > 0 ? matchCount / targetNotes.size : 0;
+        // Keep only last 10 detections
+        if (detectionBufferRef.current.length > 10) {
+          detectionBufferRef.current.shift();
+        }
         
-        const threshold = Math.max(0.4, 0.8 - (sensitivity - 6) * 0.05);
-        
-        if (matchRatio >= threshold) {
-          setResult('correct');
-          detectionBufferRef.current = [];
-          if (onCorrect) {
-            onCorrect();
+        // Check for consistent detection (last 5 detections)
+        const recentDetections = detectionBufferRef.current.slice(-5);
+        if (recentDetections.length >= 3) {
+          // Most common chord in recent detections
+          const chordCounts = new Map<string, number>();
+          recentDetections.forEach(d => {
+            chordCounts.set(d.chord, (chordCounts.get(d.chord) || 0) + 1);
+          });
+          
+          let mostCommon = '';
+          let maxCount = 0;
+          chordCounts.forEach((count, chord) => {
+            if (count > maxCount) {
+              maxCount = count;
+              mostCommon = chord;
+            }
+          });
+          
+          // Update state with most common chord
+          if (mostCommon && maxCount >= 3) {
+            const avgConfidence = recentDetections
+              .filter(d => d.chord === mostCommon)
+              .reduce((sum, d) => sum + d.confidence, 0) / maxCount;
+            
+            setDetectedChord(mostCommon);
+            setConfidence(avgConfidence);
+            
+            // Get dominant pitch classes for display
+            const dominantPitches = getDominantPitchClasses(chroma, 0.4);
+            const noteNames = pitchClassesToNotes(dominantPitches);
+            setDetectedNotes(noteNames);
+            
+            // Check if matches target chord
+            if (targetChord) {
+              const targetSymbol = targetChord.symbol.trim();
+              const detectedSymbol = mostCommon.trim();
+              
+              // Simple comparison: check if detected chord contains target symbol
+              // e.g., "Cmaj7" contains "C", "Am" contains "Am"
+              const isMatch = 
+                detectedSymbol === targetSymbol ||
+                detectedSymbol.startsWith(targetSymbol) ||
+                // Also check note-based matching as fallback
+                checkNoteBasedMatch(targetChord, noteNames);
+              
+              if (isMatch && avgConfidence >= minSimilarity) {
+                setResult('correct');
+                detectionBufferRef.current = [];
+                logger.info('Correct chord detected', {
+                  target: targetSymbol,
+                  detected: detectedSymbol,
+                  confidence: avgConfidence,
+                });
+                if (onCorrect) {
+                  onCorrect();
+                }
+              } else if (maxCount >= 4) {
+                // Only mark as wrong if we're very confident it's a different chord
+                setResult('wrong');
+                logger.debug('Wrong chord detected', {
+                  target: targetSymbol,
+                  detected: detectedSymbol,
+                  confidence: avgConfidence,
+                });
+                if (onWrongDetected) {
+                  onWrongDetected(mostCommon);
+                }
+              }
+            }
           }
-        } else if (recentNotes.size >= 2) {
-          setResult('wrong');
-          if (onWrongDetected) {
-            onWrongDetected(Array.from(recentNotes).join(', '));
+        }
+      } else {
+        // Clear detection if similarity drops
+        if (detectionBufferRef.current.length > 0) {
+          const timeSinceLastDetection = Date.now() - detectionBufferRef.current[detectionBufferRef.current.length - 1].timestamp;
+          if (timeSinceLastDetection > 500) {
+            detectionBufferRef.current = [];
+            setDetectedChord(null);
+            setConfidence(0);
           }
         }
       }
+    } catch (error) {
+      logger.error('Chromagram analysis error', error);
     }
     
     animationFrameRef.current = requestAnimationFrame(analyzeAudio);
   }, [targetChord, sensitivity, advancedSettings, onCorrect, onWrongDetected]);
+
+  /**
+   * Fallback: Check if detected notes match expected notes from chord frets
+   */
+  function checkNoteBasedMatch(chord: ChordData, detectedNotes: string[]): boolean {
+    const expectedNotes = getExpectedNotesFromChord(chord);
+    const detectedSet = new Set(detectedNotes);
+    
+    // Count matching notes
+    let matches = 0;
+    expectedNotes.forEach(note => {
+      if (detectedSet.has(note)) {
+        matches++;
+      }
+    });
+    
+    const matchRatio = expectedNotes.size > 0 ? matches / expectedNotes.size : 0;
+    const threshold = Math.max(0.4, 0.7 - (sensitivity - 6) * 0.05);
+    
+    return matchRatio >= threshold;
+  }
 
   const stopListening = useCallback(() => {
     if (animationFrameRef.current) {
@@ -248,6 +340,8 @@ export function useChordDetection({
     setIsListening(false);
     setResult(null);
     setDetectedNotes([]);
+    setDetectedChord(null);
+    setConfidence(0);
     detectionBufferRef.current = [];
   }, []);
 
@@ -263,8 +357,12 @@ export function useChordDetection({
 
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 4096;
-      analyser.smoothingTimeConstant = 0.8;
+      
+      // Optimized settings for chord detection
+      analyser.fftSize = 8192; // Higher resolution for better frequency detection
+      analyser.smoothingTimeConstant = 0.7; // Moderate smoothing
+      analyser.minDecibels = -90;
+      analyser.maxDecibels = -10;
 
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
@@ -277,10 +375,16 @@ export function useChordDetection({
       setResult(null);
       detectionBufferRef.current = [];
       
+      logger.info('Chromagram-based chord detection started', {
+        fftSize: analyser.fftSize,
+        sampleRate: audioContext.sampleRate,
+        templates: CHORD_TEMPLATES.length,
+      });
+      
       // Start analysis loop
       animationFrameRef.current = requestAnimationFrame(analyzeAudio);
     } catch (error) {
-      console.error('Microphone access denied:', error);
+      logger.error('Microphone access denied', error);
       setPermissionDenied(true);
     }
   }, [analyzeAudio]);
@@ -299,6 +403,8 @@ export function useChordDetection({
     result,
     permissionDenied,
     detectedNotes,
+    detectedChord,
+    confidence,
     startListening,
     stopListening,
   };

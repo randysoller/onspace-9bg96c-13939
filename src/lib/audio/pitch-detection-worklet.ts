@@ -21,6 +21,7 @@ export interface WorkletConfig {
   minFrequency?: number;
   maxFrequency?: number;
   clarity?: number;
+  bufferSize?: number;
 }
 
 /**
@@ -83,10 +84,14 @@ export class PitchDetectionWorklet {
       // Connect nodes: source → worklet
       this.sourceNode.connect(this.workletNode);
 
-      // Send configuration to worklet
+      // Send configuration to worklet (including buffer size)
       this.workletNode.port.postMessage({
         type: 'config',
-        ...config,
+        sampleRate: config.sampleRate,
+        minFrequency: config.minFrequency,
+        maxFrequency: config.maxFrequency,
+        clarity: config.clarity,
+        bufferSize: config.bufferSize,
       });
 
       this.isInitialized = true;

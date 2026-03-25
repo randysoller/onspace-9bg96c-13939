@@ -24,10 +24,9 @@ export default function Tuner() {
     ? 0.3 + (sensitivity - 3) * 0.1  // 4->0.4, 5->0.5, 6->0.6, 7->0.7
     : 0.7 + (sensitivity - 7) * 0.05; // 8->0.75, 9->0.8, 10->0.85
 
-  const { frequency, note, octave, cents, clarity, isDetecting, error } = usePitchDetection({
+  const { frequency, note, octave, cents, clarity, isDetecting, error, performanceStats } = usePitchDetection({
     enabled: true,
-    minFrequency: 60,
-    maxFrequency: 1400,
+    optimizeForGuitar: true, // Use guitar-optimized adaptive settings
     clarity: clarityThreshold,
   });
 
@@ -408,6 +407,11 @@ export default function Tuner() {
                 </div>
                 {clarity < 0.3 && (
                   <p className="text-xs text-red-400 mt-1">Low signal - try playing louder or adjusting sensitivity</p>
+                )}
+                {performanceStats && (
+                  <p className="text-xs text-zinc-600 mt-1">
+                    Buffer: {(performanceStats as any).bufferSize || 8192} samples • Processing: {performanceStats.avgProcessTime.toFixed(1)}ms
+                  </p>
                 )}
               </div>
             )}

@@ -17,6 +17,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
 import { PitchDetectionWorklet } from '@/lib/audio/pitch-detection-worklet';
 import type { PitchData } from '@/lib/audio/pitch-detection-worklet';
+import { getGuitarTunerSettings, detectDeviceCapabilities } from '@/lib/audio/device-detection';
 
 interface UsePitchDetectionOptions {
   enabled?: boolean;
@@ -27,6 +28,7 @@ interface UsePitchDetectionOptions {
   updateInterval?: number;
   onPitchDetected?: (data: PitchData) => void;
   useWorklet?: boolean; // Option to force main thread processing
+  optimizeForGuitar?: boolean; // Use guitar-optimized settings
 }
 
 interface PitchDetectionResult {
@@ -73,19 +75,62 @@ class ExponentialMovingAverage {
 }
 
 /**
+ * Median filter for removing outliers
+ */
+class MedianFilter {
+  private buffer: number[] = [];
+  private readonly size: number;
+
+  constructor(size: number = 5) {
+    this.size = size;
+  }
+
+  update(value: number): number {
+    this.buffer.push(value);
+    if (this.buffer.length > this.size) {
+      this.buffer.shift();
+    }
+
+    // Return median of buffer
+    const sorted = [...this.buffer].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0
+      ? (sorted[mid - 1] + sorted[mid]) / 2
+      : sorted[mid];
+  }
+
+  reset(): void {
+    this.buffer = [];
+  }
+}
+
+/**
  * Custom hook for real-time pitch detection
  */
 export function usePitchDetection(options: UsePitchDetectionOptions = {}): PitchDetectionResult {
   const {
     enabled = false,
-    minFrequency = 60,
-    maxFrequency = 1400,
-    sampleRate = 48000,
+    minFrequency: userMinFreq,
+    maxFrequency: userMaxFreq,
+    sampleRate: userSampleRate,
     clarity = 0.85,
-    updateInterval = 100,
+    updateInterval: userUpdateInterval,
     onPitchDetected,
     useWorklet = true,
+    optimizeForGuitar = false,
   } = options;
+
+  // Get optimized settings if requested
+  const optimizedSettings = optimizeForGuitar ? getGuitarTunerSettings() : null;
+  const deviceCaps = detectDeviceCapabilities();
+
+  // Use optimized settings or user settings
+  const minFrequency = userMinFreq ?? optimizedSettings?.minFrequency ?? 60;
+  const maxFrequency = userMaxFreq ?? optimizedSettings?.maxFrequency ?? 1400;
+  const sampleRate = userSampleRate ?? optimizedSettings?.sampleRate ?? 48000;
+  const updateInterval = userUpdateInterval ?? optimizedSettings?.updateInterval ?? 100;
+  const bufferSize = optimizedSettings?.bufferSize ?? (deviceCaps.isMobile ? 4096 : 8192);
+  const smoothingFactor = optimizedSettings?.smoothingFactor ?? (deviceCaps.isMobile ? 0.3 : 0.2);
 
   // State
   const [frequency, setFrequency] = useState(0);
@@ -104,8 +149,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
   const workletRef = useRef<PitchDetectionWorklet | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const lastUpdateRef = useRef(0);
-  const frequencySmoother = useRef(new ExponentialMovingAverage(0.25)); // Smooth frequency
-  const centsSmoother = useRef(new ExponentialMovingAverage(0.35)); // Smooth cents slightly more
+  const frequencyMedian = useRef(new MedianFilter(3)); // Remove outliers first
+  const frequencySmoother = useRef(new ExponentialMovingAverage(smoothingFactor)); // Then smooth
+  const centsMedian = useRef(new MedianFilter(3));
+  const centsSmoother = useRef(new ExponentialMovingAverage(smoothingFactor * 1.2)); // Slightly more smoothing for cents
   const isWorkletSupported = useRef(PitchDetectionWorklet.isSupported());
 
   // Debounced update handler with smoothing
@@ -128,9 +175,12 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       return;
     }
 
-    // Apply exponential smoothing to frequency and cents
-    const smoothedFrequency = frequencySmoother.current.update(data.frequency);
-    const smoothedCents = centsSmoother.current.update(data.note.cents);
+    // Apply median filter first to remove outliers, then EMA smoothing
+    const medianFrequency = frequencyMedian.current.update(data.frequency);
+    const smoothedFrequency = frequencySmoother.current.update(medianFrequency);
+    
+    const medianCents = centsMedian.current.update(data.note.cents);
+    const smoothedCents = centsSmoother.current.update(medianCents);
 
     // Only update if values changed significantly (reduce jitter)
     const freqDelta = Math.abs(smoothedFrequency - frequency);
@@ -216,6 +266,17 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             minFrequency,
             maxFrequency,
             clarity,
+            bufferSize, // Pass adaptive buffer size
+          });
+
+          logger.info('Pitch detection initialized with adaptive settings', {
+            bufferSize,
+            sampleRate,
+            minFrequency,
+            maxFrequency,
+            isMobile: deviceCaps.isMobile,
+            updateInterval,
+            smoothingFactor,
           });
 
           worklet.addPitchListener(handlePitchUpdate);
@@ -264,8 +325,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       setCents(0);
       setDetectedClarity(0);
       
-      // Reset smoothers
+      // Reset filters and smoothers
+      frequencyMedian.current.reset();
       frequencySmoother.current.reset();
+      centsMedian.current.reset();
       centsSmoother.current.reset();
     };
   }, [
@@ -275,6 +338,7 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     maxFrequency,
     clarity,
     useWorklet,
+    bufferSize,
     handlePitchUpdate,
     handlePerformanceUpdate,
   ]);
@@ -286,9 +350,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
         minFrequency,
         maxFrequency,
         clarity,
+        bufferSize,
       });
     }
-  }, [minFrequency, maxFrequency, clarity, isDetecting]);
+  }, [minFrequency, maxFrequency, clarity, bufferSize, isDetecting]);
 
   return {
     frequency,

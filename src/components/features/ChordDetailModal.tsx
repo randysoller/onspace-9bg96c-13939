@@ -144,14 +144,14 @@ export default function ChordDetailModal({
                   } else if (fret === 0) {
                     const isRoot = idx === rootStringIndex;
                     if (isRoot) {
-                      // Open root note - blue diamond border
+                      // Open root note - blue diamond border (2pt smaller: 11 → 9)
                       return (
                         <path
                           key={`marker-${idx}`}
-                          d={`M ${20 + idx * 24} ${18 - 11} 
-                              L ${20 + idx * 24 + 11} ${18} 
-                              L ${20 + idx * 24} ${18 + 11} 
-                              L ${20 + idx * 24 - 11} ${18} Z`}
+                          d={`M ${20 + idx * 24} ${18 - 9} 
+                              L ${20 + idx * 24 + 9} ${18} 
+                              L ${20 + idx * 24} ${18 + 9} 
+                              L ${20 + idx * 24 - 9} ${18} Z`}
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2.5"
@@ -210,14 +210,14 @@ export default function ChordDetailModal({
                     const fingerNum = chord.fingers?.[stringIdx];
 
                     if (isRoot) {
-                      // Root note - blue diamond (larger, with finger number)
+                      // Root note - blue diamond (2pt smaller: 15 → 13)
                       return (
                         <g key={`dot-${stringIdx}`}>
                           <path
-                            d={`M ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 - 15} 
-                                L ${20 + stringIdx * 24 + 15} ${28 + (fret - 0.5) * 35} 
-                                L ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 + 15} 
-                                L ${20 + stringIdx * 24 - 15} ${28 + (fret - 0.5) * 35} Z`}
+                            d={`M ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 - 13} 
+                                L ${20 + stringIdx * 24 + 13} ${28 + (fret - 0.5) * 35} 
+                                L ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 + 13} 
+                                L ${20 + stringIdx * 24 - 13} ${28 + (fret - 0.5) * 35} Z`}
                             fill="currentColor"
                             className="text-cyan-500"
                           />

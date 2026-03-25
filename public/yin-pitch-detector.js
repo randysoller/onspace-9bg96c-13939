@@ -5,23 +5,27 @@
  * by Alain de Cheveigné and Hideki Kawahara (2002)
  * 
  * Mobile-Optimized with Critical Fixes:
- * - Actual sample rate verification (fixes iOS/Android mismatches)
+ * - FIXED: Use actualSampleRate from AudioContext, not global sampleRate
  * - Enhanced sub-harmonic rejection for guitar tuning
  * - Adaptive threshold based on signal quality
  * - Robust octave error correction
+ * - Auto-calibration support via reference frequency detection
  */
 
 class YinPitchDetector extends AudioWorkletProcessor {
-  constructor() {
+  constructor(options) {
     super();
     
-    // Configuration (will be updated from main thread with ACTUAL sample rate)
-    this.sampleRate = sampleRate; // Use worklet's actual sample rate, not requested
-    this.minFrequency = 70;
-    this.maxFrequency = 400;
-    this.threshold = 0.15; // YIN threshold (will be adaptive)
-    this.calibrationHz = 440;
-    this.noiseGateThreshold = 0.01;
+    // CRITICAL FIX: Use sample rate from options, NOT global sampleRate
+    // Global sampleRate might not match AudioContext's actual sample rate
+    const processorOptions = options.processorOptions || {};
+    this.sampleRate = processorOptions.sampleRate || sampleRate; // Fallback to global if not provided
+    
+    this.minFrequency = processorOptions.minFrequency || 70;
+    this.maxFrequency = processorOptions.maxFrequency || 400;
+    this.threshold = processorOptions.threshold || 0.15;
+    this.calibrationHz = processorOptions.calibrationHz || 440;
+    this.noiseGateThreshold = processorOptions.noiseGateThreshold || 0.01;
     
     // Adaptive buffer sizing based on ACTUAL sample rate
     this.recalculateBufferSize();
@@ -39,13 +43,15 @@ class YinPitchDetector extends AudioWorkletProcessor {
     // Audio level
     this.rmsLevel = 0;
     
-    // Diagnostic logging
-    this.logCount = 0;
+    // Auto-calibration: Track detected frequencies for systematic offset detection
+    this.calibrationBuffer = [];
+    this.calibrationBufferSize = 20;
     
     // Send actual sample rate to main thread for verification
     this.port.postMessage({
       type: 'actualSampleRate',
       sampleRate: this.sampleRate,
+      globalSampleRate: sampleRate, // For comparison
     });
     
     // Listen for config updates
@@ -77,9 +83,10 @@ class YinPitchDetector extends AudioWorkletProcessor {
     // Log for debugging
     this.port.postMessage({
       type: 'debug',
-      message: `Buffer recalculated: ${this.bufferSize} samples @ ${this.sampleRate} Hz`,
+      message: `Buffer recalculated: ${this.bufferSize} samples @ ${this.sampleRate} Hz (global: ${sampleRate} Hz)`,
       minBufferSize,
       actualBufferSize: this.bufferSize,
+      sampleRateMismatch: this.sampleRate !== sampleRate,
     });
   }
 
@@ -196,7 +203,7 @@ class YinPitchDetector extends AudioWorkletProcessor {
     // Step 5: Parabolic interpolation
     const betterTau = this.parabolicInterpolation(yinBuffer, tau);
     
-    // Calculate frequency
+    // Calculate frequency (USING CORRECT SAMPLE RATE FROM CONFIG)
     let frequency = this.sampleRate / betterTau;
     
     // CRITICAL: Sub-harmonic rejection for guitar tuning
@@ -204,6 +211,9 @@ class YinPitchDetector extends AudioWorkletProcessor {
     
     // CRITICAL: Octave error correction (handles 2x, 0.5x errors)
     frequency = this.correctOctaveErrors(frequency);
+    
+    // Auto-calibration: Track frequency offset from expected guitar strings
+    this.trackCalibrationOffset(frequency);
     
     // Validate frequency range
     if (frequency < this.minFrequency || frequency > this.maxFrequency) {
@@ -256,6 +266,63 @@ class YinPitchDetector extends AudioWorkletProcessor {
         bufferSize: this.bufferSize,
         sampleRate: this.sampleRate,
       });
+    }
+  }
+
+  /**
+   * Auto-calibration: Track frequency offset from expected guitar strings
+   * Detects systematic errors (e.g., sample rate mismatch causing 1 semitone offset)
+   */
+  trackCalibrationOffset(detectedFreq) {
+    // Standard guitar string frequencies (E2, A2, D3, G3, B3, E4)
+    const guitarStringFreqs = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63];
+    
+    // Find closest expected frequency
+    let closestExpected = guitarStringFreqs[0];
+    let minDiff = Math.abs(detectedFreq - closestExpected);
+    
+    for (const expectedFreq of guitarStringFreqs) {
+      const diff = Math.abs(detectedFreq - expectedFreq);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestExpected = expectedFreq;
+      }
+    }
+    
+    // If we're within 20 Hz of a guitar string, calculate the ratio
+    if (minDiff < 20) {
+      const ratio = detectedFreq / closestExpected;
+      
+      // Add to calibration buffer
+      this.calibrationBuffer.push({
+        detected: detectedFreq,
+        expected: closestExpected,
+        ratio: ratio,
+        timestamp: currentTime,
+      });
+      
+      // Keep buffer size limited
+      if (this.calibrationBuffer.length > this.calibrationBufferSize) {
+        this.calibrationBuffer.shift();
+      }
+      
+      // If we have enough samples, check for systematic offset
+      if (this.calibrationBuffer.length >= 10) {
+        const avgRatio = this.calibrationBuffer.reduce((sum, item) => sum + item.ratio, 0) / this.calibrationBuffer.length;
+        
+        // Check if there's a consistent offset (>2% deviation from 1.0)
+        const deviation = Math.abs(avgRatio - 1.0);
+        if (deviation > 0.02) {
+          // Suggest calibration correction
+          this.port.postMessage({
+            type: 'calibrationSuggestion',
+            averageRatio: avgRatio,
+            deviation: deviation,
+            recommendedCalibrationHz: this.calibrationHz * avgRatio,
+            detectedSamples: this.calibrationBuffer.length,
+          });
+        }
+      }
     }
   }
 

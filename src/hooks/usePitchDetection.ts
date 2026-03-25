@@ -41,6 +41,10 @@ interface PitchDetectionResult {
   } | null;
   audioLevel: number;
   isAboveNoiseGate: boolean;
+  calibrationSuggestion: {
+    averageRatio: number;
+    recommendedCalibrationHz: number;
+  } | null;
 }
 
 /**
@@ -134,6 +138,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
   const [performanceStats, setPerformanceStats] = useState<any>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isAboveNoiseGate, setIsAboveNoiseGate] = useState(false);
+  const [calibrationSuggestion, setCalibrationSuggestion] = useState<{
+    averageRatio: number;
+    recommendedCalibrationHz: number;
+  } | null>(null);
 
   // Refs
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -317,11 +325,29 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
           } else if (event.data.type === 'audioLevel') {
             handleAudioLevelUpdate(event.data.level);
           } else if (event.data.type === 'actualSampleRate') {
-            // Verify sample rate matches
-            logger.info('Worklet actual sample rate', {
+            const mismatch = event.data.sampleRate !== actualSampleRate;
+            logger.info('Worklet sample rate verification', {
               workletRate: event.data.sampleRate,
               contextRate: actualSampleRate,
-              match: event.data.sampleRate === actualSampleRate,
+              globalRate: event.data.globalSampleRate,
+              match: !mismatch,
+            });
+            if (mismatch) {
+              logger.warn('Sample rate mismatch detected!', {
+                expected: actualSampleRate,
+                actual: event.data.sampleRate,
+                errorPercent: ((event.data.sampleRate / actualSampleRate - 1) * 100).toFixed(2) + '%',
+              });
+            }
+          } else if (event.data.type === 'calibrationSuggestion') {
+            setCalibrationSuggestion({
+              averageRatio: event.data.averageRatio,
+              recommendedCalibrationHz: event.data.recommendedCalibrationHz,
+            });
+            logger.warn('Auto-calibration suggested', {
+              offset: ((event.data.averageRatio - 1) * 100).toFixed(2) + '%',
+              currentCal: calibrationHz,
+              recommended: event.data.recommendedCalibrationHz,
             });
           } else if (event.data.type === 'debug') {
             logger.debug('YIN debug', event.data);
@@ -457,5 +483,6 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     performanceStats,
     audioLevel,
     isAboveNoiseGate,
+    calibrationSuggestion,
   };
 }

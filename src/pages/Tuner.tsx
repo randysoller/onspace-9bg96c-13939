@@ -29,6 +29,7 @@ export default function Tuner() {
   const [showCalibrationPanel, setShowCalibrationPanel] = useState(false);
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
+  const [autoCalibrationDismissed, setAutoCalibrationDismissed] = useState(false);
 
   // YIN pitch detection with optimal settings
   const { 
@@ -41,7 +42,8 @@ export default function Tuner() {
     error, 
     performanceStats, 
     audioLevel, 
-    isAboveNoiseGate 
+    isAboveNoiseGate,
+    calibrationSuggestion,
   } = usePitchDetection({
     enabled: true,
     minFrequency: 70,
@@ -89,6 +91,18 @@ export default function Tuner() {
     setIsCalibrating(false);
     clearCalibrationDetections();
     toast.info('Calibration cancelled');
+  };
+
+  const handleAutoCalibrate = () => {
+    if (!calibrationSuggestion) return;
+    const newCal = Math.round(calibrationSuggestion.recommendedCalibrationHz * 10) / 10;
+    setCalibrationHz(newCal);
+    setAutoCalibrationDismissed(true);
+    toast.success(`Auto-calibrated to A${newCal}Hz`);
+  };
+
+  const handleDismissAutoCalibration = () => {
+    setAutoCalibrationDismissed(true);
   };
 
   // In-tune detection with hysteresis
@@ -387,6 +401,32 @@ export default function Tuner() {
               <span className="text-xl">♯</span>
             </span>
           </div>
+
+          {/* Auto-Calibration Alert */}
+          {calibrationSuggestion && !autoCalibrationDismissed && (
+            <div className="mb-4 p-4 bg-amber-500/20 border border-amber-500/40 rounded-lg">
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span className="text-sm font-bold text-amber-500">Auto-Calibration Suggested</span>
+                </div>
+                <button onClick={handleDismissAutoCalibration} className="text-zinc-500 hover:text-white transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-amber-400 mb-3">
+                Detected {Math.abs((calibrationSuggestion.averageRatio - 1) * 100).toFixed(1)}% systematic offset.
+              </p>
+              <div className="flex gap-2">
+                <button onClick={handleAutoCalibrate} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors">
+                  Apply (A{Math.round(calibrationSuggestion.recommendedCalibrationHz * 10) / 10}Hz)
+                </button>
+                <button onClick={handleDismissAutoCalibration} className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors">
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Calibration Panel */}
           {showCalibrationPanel && (

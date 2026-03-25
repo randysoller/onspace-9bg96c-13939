@@ -9,9 +9,13 @@ import { supabase } from '@/lib/supabase';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 
+const MAX_RETRY_COUNT = 3;
+const RETRY_DELAY = 5000; // 5 seconds
+
 export function useBackgroundSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -35,6 +39,19 @@ export function useBackgroundSync() {
   }, []);
 
   const syncQueuedOperations = async () => {
+    // Prevent multiple simultaneous syncs
+    if (isSyncing) {
+      logger.warn('Sync already in progress, skipping');
+      return;
+    }
+    
+    // Check retry limit
+    if (retryCount >= MAX_RETRY_COUNT) {
+      logger.warn(`Max retry count (${MAX_RETRY_COUNT}) reached, stopping sync attempts`);
+      toast.error('Sync failed multiple times. Please check your connection.');
+      return;
+    }
+    
     setIsSyncing(true);
     
     try {
@@ -43,10 +60,11 @@ export function useBackgroundSync() {
       if (unsyncedActions.length === 0) {
         logger.info('No queued operations to sync');
         setIsSyncing(false);
+        setRetryCount(0); // Reset retry count on success
         return;
       }
 
-      logger.info(`Syncing ${unsyncedActions.length} queued operations`);
+      logger.info(`Syncing ${unsyncedActions.length} queued operations (attempt ${retryCount + 1}/${MAX_RETRY_COUNT})`);
       let successCount = 0;
       let errorCount = 0;
 
@@ -79,13 +97,29 @@ export function useBackgroundSync() {
 
       if (successCount > 0) {
         toast.success(`Synced ${successCount} operations`);
+        setRetryCount(0); // Reset retry count on partial success
       }
       if (errorCount > 0) {
-        toast.error(`Failed to sync ${errorCount} operations`);
+        setRetryCount(prev => prev + 1);
+        
+        // Retry after delay if under limit
+        if (retryCount + 1 < MAX_RETRY_COUNT) {
+          setTimeout(() => syncQueuedOperations(), RETRY_DELAY);
+          toast.error(`Failed to sync ${errorCount} operations. Retrying...`);
+        } else {
+          toast.error(`Failed to sync ${errorCount} operations. Max retries reached.`);
+        }
       }
     } catch (error) {
       logger.error('Background sync failed', error);
-      toast.error('Sync failed - will retry later');
+      setRetryCount(prev => prev + 1);
+      
+      if (retryCount + 1 < MAX_RETRY_COUNT) {
+        setTimeout(() => syncQueuedOperations(), RETRY_DELAY);
+        toast.error('Sync failed - retrying...');
+      } else {
+        toast.error('Sync failed. Please try again later.');
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -94,6 +128,8 @@ export function useBackgroundSync() {
   return {
     isSyncing,
     isOnline,
+    retryCount,
     syncNow: syncQueuedOperations,
+    resetRetryCount: () => setRetryCount(0),
   };
 }

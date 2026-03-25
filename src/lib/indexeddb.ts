@@ -1,3 +1,4 @@
+
 /**
  * IndexedDB wrapper for offline-first data storage
  * Stores large practice data sets locally for offline access
@@ -24,16 +25,31 @@ const STORES: DBStores = {
 
 class IndexedDBManager {
   private db: IDBDatabase | null = null;
+  private initPromise: Promise<void> | null = null;
+  private initFailed = false;
 
   /**
    * Initialize IndexedDB connection
    */
   async init(): Promise<void> {
-    return new Promise((resolve, reject) => {
+    // Return existing initialization promise if in progress
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    
+    // Don't retry if previous init failed
+    if (this.initFailed) {
+      logger.warn('IndexedDB initialization previously failed, operations will be skipped');
+      return Promise.resolve();
+    }
+    
+    this.initPromise = new Promise((resolve, reject) => { // FIX: Assign the new Promise to this.initPromise
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
       request.onerror = () => {
         logger.error('Failed to open IndexedDB', request.error);
+        this.initFailed = true;
+        this.initPromise = null;
         reject(request.error);
       };
 
@@ -74,13 +90,25 @@ class IndexedDBManager {
         logger.info('IndexedDB schema upgraded');
       };
     });
+    return this.initPromise; // FIX: Return the assigned promise
   }
 
   /**
    * Get item from store
    */
   async get<T>(storeName: keyof DBStores, key: string): Promise<T | null> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, returning null');
+        return null;
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      return null;
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readonly');
@@ -99,7 +127,18 @@ class IndexedDBManager {
    * Get all items from store
    */
   async getAll<T>(storeName: keyof DBStores): Promise<T[]> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, returning empty array');
+        return [];
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      return [];
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readonly');
@@ -122,7 +161,18 @@ class IndexedDBManager {
     indexName: string, 
     value: any
   ): Promise<T[]> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, returning empty array');
+        return [];
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      return [];
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readonly');
@@ -142,7 +192,19 @@ class IndexedDBManager {
    * Put item into store
    */
   async put(storeName: keyof DBStores, item: any): Promise<void> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, skipping put operation');
+        return;
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      logger.warn('IndexedDB unavailable, operation skipped');
+      return;
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readwrite');
@@ -161,7 +223,18 @@ class IndexedDBManager {
    * Delete item from store
    */
   async delete(storeName: keyof DBStores, key: string): Promise<void> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, skipping delete operation');
+        return;
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      return;
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readwrite');
@@ -180,7 +253,18 @@ class IndexedDBManager {
    * Clear all items from store
    */
   async clear(storeName: keyof DBStores): Promise<void> {
-    if (!this.db) await this.init();
+    if (!this.db) {
+      try {
+        await this.init();
+      } catch (error) {
+        logger.warn('IndexedDB unavailable, skipping clear operation');
+        return;
+      }
+    }
+    
+    if (this.initFailed || !this.db) {
+      return;
+    }
     
     return new Promise((resolve, reject) => {
       const transaction = this.db!.transaction(storeName, 'readwrite');

@@ -42,12 +42,14 @@ export function InstallPrompt() {
     }
 
     // Listen for beforeinstallprompt event
+    let timeoutId: number | null = null;
+    
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       
       // Show prompt after 30 seconds of usage
-      setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         setShowPrompt(true);
         analytics.track('feature_enabled', {
           feature: 'install_prompt',
@@ -60,6 +62,9 @@ export function InstallPrompt() {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
     };
   }, []);
 

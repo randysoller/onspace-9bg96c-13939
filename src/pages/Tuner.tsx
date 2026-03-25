@@ -14,18 +14,59 @@ export default function Tuner() {
   const { tuning, setTuning } = useTunerStore();
   const [selectedString, setSelectedString] = useState<number | null>(null);
 
+  // Map sensitivity 1-10 to clarity threshold with mobile-friendly range
+  // Low sensitivity (1-3): 0.1-0.3 (very lenient, good for noisy environments)
+  // Medium (4-7): 0.4-0.7 (balanced)
+  // High (8-10): 0.75-0.85 (strict, for clean signals)
+  const clarityThreshold = sensitivity <= 3 
+    ? 0.1 + (sensitivity - 1) * 0.1  // 1->0.1, 2->0.2, 3->0.3
+    : sensitivity <= 7
+    ? 0.3 + (sensitivity - 3) * 0.1  // 4->0.4, 5->0.5, 6->0.6, 7->0.7
+    : 0.7 + (sensitivity - 7) * 0.05; // 8->0.75, 9->0.8, 10->0.85
+
   const { frequency, note, octave, cents, clarity, isDetecting, error } = usePitchDetection({
     enabled: true,
     minFrequency: 60,
     maxFrequency: 1400,
-    clarity: sensitivity / 10, // Map sensitivity (1-10) to clarity (0.1-1.0)
+    clarity: clarityThreshold,
   });
 
   const detectedFrequency = frequency > 0 ? frequency : null;
   const detectedNote = note && octave > 0 ? `${note}${octave}` : null;
 
-  // Check if note is in tune (within ±5 cents) - Must be declared before useEffect hooks that use it
-  const isInTune = detectedFrequency && Math.abs(cents) <= 5;
+  // Hysteresis for in-tune detection to prevent flickering
+  // Use different thresholds for entering vs exiting in-tune state
+  const IN_TUNE_ENTER_THRESHOLD = 5;  // Must be within ±5 cents to enter
+  const IN_TUNE_EXIT_THRESHOLD = 10;  // Can drift to ±10 cents before exiting
+  
+  const [isInTuneState, setIsInTuneState] = useState(false);
+  const prevCentsRef = useRef(0);
+  
+  // Update in-tune state with hysteresis
+  useEffect(() => {
+    if (!detectedFrequency) {
+      setIsInTuneState(false);
+      return;
+    }
+    
+    const absCents = Math.abs(cents);
+    
+    if (!isInTuneState) {
+      // Not in tune - need to be within tight threshold to enter
+      if (absCents <= IN_TUNE_ENTER_THRESHOLD) {
+        setIsInTuneState(true);
+      }
+    } else {
+      // Already in tune - allow wider threshold before exiting
+      if (absCents > IN_TUNE_EXIT_THRESHOLD) {
+        setIsInTuneState(false);
+      }
+    }
+    
+    prevCentsRef.current = cents;
+  }, [cents, detectedFrequency, isInTuneState]);
+  
+  const isInTune = isInTuneState;
 
   // Hold note display to prevent flashing when pitch dies out
   const [displayedNote, setDisplayedNote] = useState<string>('');
@@ -334,25 +375,40 @@ export default function Tuner() {
                 />
               </div>
               <div className="flex justify-between text-xs text-zinc-600 mt-1">
-                <span>Noisy</span>
+                <span>Lenient</span>
                 <span>Balanced</span>
-                <span>Precise</span>
+                <span>Strict</span>
               </div>
             </div>
             
-            {/* Clarity indicator */}
-            {isDetecting && clarity > 0 && (
+            {/* Clarity indicator - always show when detecting */}
+            {isDetecting && (
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-zinc-500">Signal Clarity</span>
-                  <span className="text-xs font-bold text-amber-500">{(clarity * 100).toFixed(0)}%</span>
+                  <span className="text-xs text-zinc-500">Signal Quality</span>
+                  <span className={`text-xs font-bold ${
+                    clarity >= 0.7 ? 'text-emerald-500' :
+                    clarity >= 0.4 ? 'text-amber-500' : 
+                    'text-red-500'
+                  }`}>
+                    {clarity >= 0.7 ? 'Excellent' :
+                     clarity >= 0.4 ? 'Good' : 
+                     'Poor'} ({(clarity * 100).toFixed(0)}%)
+                  </span>
                 </div>
                 <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-200"
-                    style={{ width: `${clarity * 100}%` }}
+                    className={`h-full transition-all duration-300 ${
+                      clarity >= 0.7 ? 'bg-emerald-500' :
+                      clarity >= 0.4 ? 'bg-amber-500' : 
+                      'bg-red-500'
+                    }`}
+                    style={{ width: `${Math.min(100, clarity * 100)}%` }}
                   />
                 </div>
+                {clarity < 0.3 && (
+                  <p className="text-xs text-red-400 mt-1">Low signal - try playing louder or adjusting sensitivity</p>
+                )}
               </div>
             )}
           </div>

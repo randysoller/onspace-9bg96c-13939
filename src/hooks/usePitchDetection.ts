@@ -44,6 +44,35 @@ interface PitchDetectionResult {
 }
 
 /**
+ * Exponential moving average for smoothing
+ */
+class ExponentialMovingAverage {
+  private value: number | null = null;
+  private readonly alpha: number;
+
+  constructor(smoothingFactor: number = 0.3) {
+    this.alpha = smoothingFactor; // Lower = smoother
+  }
+
+  update(newValue: number): number {
+    if (this.value === null) {
+      this.value = newValue;
+    } else {
+      this.value = this.alpha * newValue + (1 - this.alpha) * this.value;
+    }
+    return this.value;
+  }
+
+  reset(): void {
+    this.value = null;
+  }
+
+  getValue(): number | null {
+    return this.value;
+  }
+}
+
+/**
  * Custom hook for real-time pitch detection
  */
 export function usePitchDetection(options: UsePitchDetectionOptions = {}): PitchDetectionResult {
@@ -75,9 +104,11 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
   const workletRef = useRef<PitchDetectionWorklet | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const lastUpdateRef = useRef(0);
+  const frequencySmoother = useRef(new ExponentialMovingAverage(0.25)); // Smooth frequency
+  const centsSmoother = useRef(new ExponentialMovingAverage(0.35)); // Smooth cents slightly more
   const isWorkletSupported = useRef(PitchDetectionWorklet.isSupported());
 
-  // Debounced update handler
+  // Debounced update handler with smoothing
   const handlePitchUpdate = useCallback((data: PitchData) => {
     const now = performance.now();
     
@@ -88,18 +119,50 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
     
     lastUpdateRef.current = now;
 
-    // Update state
-    setFrequency(data.frequency);
+    // Minimum clarity threshold - don't show unreliable detections
+    // Map clarity 0.1-1.0 to minimum threshold (mobile-friendly)
+    const minClarityThreshold = Math.max(0.1, clarity * 0.5);
+    
+    if (data.clarity < minClarityThreshold) {
+      // Low clarity - don't update display, but don't reset smoothers
+      return;
+    }
+
+    // Apply exponential smoothing to frequency and cents
+    const smoothedFrequency = frequencySmoother.current.update(data.frequency);
+    const smoothedCents = centsSmoother.current.update(data.note.cents);
+
+    // Only update if values changed significantly (reduce jitter)
+    const freqDelta = Math.abs(smoothedFrequency - frequency);
+    const centsDelta = Math.abs(smoothedCents - cents);
+    
+    // Update frequency if changed by more than 0.5 Hz
+    if (freqDelta > 0.5 || frequency === 0) {
+      setFrequency(smoothedFrequency);
+    }
+    
+    // Update cents if changed by more than 1 cent
+    if (centsDelta > 1 || cents === 0) {
+      setCents(Math.round(smoothedCents)); // Round to integer cents
+    }
+    
+    // Always update note/octave/clarity
     setNote(data.note.name);
     setOctave(data.note.octave);
-    setCents(data.note.cents);
     setDetectedClarity(data.clarity);
 
     // Call callback if provided
     if (onPitchDetected) {
-      onPitchDetected(data);
+      onPitchDetected({
+        ...data,
+        frequency: smoothedFrequency,
+        note: {
+          ...data.note,
+          cents: smoothedCents,
+        },
+      });
     }
-  }, [updateInterval, onPitchDetected]);
+  }, [updateInterval, onPitchDetected, clarity, frequency, cents]);
 
   // Performance stats handler
   const handlePerformanceUpdate = useCallback((stats: any) => {
@@ -200,6 +263,10 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       setOctave(0);
       setCents(0);
       setDetectedClarity(0);
+      
+      // Reset smoothers
+      frequencySmoother.current.reset();
+      centsSmoother.current.reset();
     };
   }, [
     enabled,

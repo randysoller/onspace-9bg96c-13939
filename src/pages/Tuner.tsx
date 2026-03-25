@@ -160,12 +160,7 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
     nsdf[tau] = divisor > 0 ? (2 * acf) / divisor : 0;
   }
 
-  // ─── Anti-Octave-Error Strategy ───
-  // Guitar strings have weak fundamentals (especially wound strings)
-  // Key insight: Fundamentals have HIGHER tau (LOWER frequency) than harmonics
-  // Solution: Scan peaks BACKWARDS (high tau → low tau) to prefer fundamentals
-  const primaryThreshold = 0.25;  // Lower threshold to catch weak fundamentals
-  const minConfidence = 0.18;     // Minimum confidence to collect peaks
+  const threshold = 0.42;
   const peaks: { tau: number; val: number }[] = [];
 
   // Find first zero crossing after minLag
@@ -194,27 +189,20 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
 
   if (peaks.length === 0) return null;
 
-  // ─── Fundamental-First Selection (Anti-Harmonic) ───
-  // Peaks are ordered: low tau (high freq) → high tau (low freq)
-  // Fundamentals have HIGHER tau (LOWER freq), so scan BACKWARDS
-  // This prefers fundamentals (110 Hz) over harmonics (220 Hz, 330 Hz, etc.)
+  // Pick first peak above threshold (lowest frequency fundamental)
   let bestTau = -1;
   let bestVal = -Infinity;
-  
-  // Scan from highest tau (lowest frequency) first
-  for (let i = peaks.length - 1; i >= 0; i--) {
-    const p = peaks[i];
-    if (p.val >= primaryThreshold) {
+  for (const p of peaks) {
+    if (p.val >= threshold) {
       bestTau = p.tau;
       bestVal = p.val;
-      break; // Take first peak when scanning backwards = lowest frequency = fundamental
+      break;
     }
   }
 
-  // Fallback: if no peak meets primary threshold, take strongest peak (prefer lower freqs)
+  // Fallback: strongest peak
   if (bestTau <= 0) {
-    for (let i = peaks.length - 1; i >= 0; i--) {
-      const p = peaks[i];
+    for (const p of peaks) {
       if (p.val > bestVal) {
         bestVal = p.val;
         bestTau = p.tau;
@@ -222,7 +210,7 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
     }
   }
 
-  if (bestTau <= 0 || bestVal < minConfidence) return null;
+  if (bestTau <= 0 || bestVal < 0.25) return null;
 
   // Parabolic interpolation for sub-sample precision
   let refinedTau = bestTau;
@@ -442,16 +430,7 @@ export default function TunerPanel() {
         analyserRef.current.getFloatTimeDomainData(bufferRef.current);
         const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate);
 
-        // ─── DEBUG: Log pitch detection ───
-        if (pitchResult && pitchResult.frequency) {
-          console.log('[Tuner] Detected:', {
-            freq: pitchResult.frequency.toFixed(1),
-            note: frequencyToNoteInfo(pitchResult.frequency).note,
-            octave: frequencyToNoteInfo(pitchResult.frequency).octave,
-            confidence: pitchResult.confidence.toFixed(2),
-            sampleRate: audioCtxRef.current.sampleRate,
-          });
-        }
+
 
         if (pitchResult) {
           const { frequency: rawFreq, confidence } = pitchResult;
@@ -557,7 +536,7 @@ export default function TunerPanel() {
               freqHistoryRef.current = [];
               confidenceHistoryRef.current = [];
               holdTimerRef.current = 0;
-            }, 400);
+            }, 800);
           }
         }
 

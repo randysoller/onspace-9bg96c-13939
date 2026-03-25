@@ -229,10 +229,14 @@ export default function Tuner() {
   const streamRef = useRef<MediaStream | null>(null);
   const audioBufferRef = useRef<Float32Array | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const oscillatorRef = useRef<OscillatorNode | null>(null);
+  const gainRef = useRef<GainNode | null>(null);
 
   // Pitch detection loop
   const detectPitch = useCallback(() => {
     if (!analyserRef.current || !audioBufferRef.current || !audioContextRef.current) {
+      console.log('[Tuner] detectPitch: Missing refs, skipping frame');
+      animationFrameRef.current = requestAnimationFrame(detectPitch);
       return;
     }
 
@@ -323,11 +327,12 @@ export default function Tuner() {
 
         setIsListening(true);
         setPermissionDenied(false);
+        console.log('[Tuner] Microphone started, sample rate:', audioContext.sampleRate);
         animationFrameRef.current = requestAnimationFrame(detectPitch);
       } catch (err) {
-        console.error('Microphone access error:', err);
+        console.error('[Tuner] Microphone access error:', err);
         setPermissionDenied(true);
-        toast.error('Microphone access denied');
+        toast.error('Microphone access denied. Please allow microphone access in your browser settings.');
       }
     }
   }, [isListening, detectPitch]);
@@ -354,9 +359,67 @@ export default function Tuner() {
   useEffect(() => {
     if (!startedRef.current) {
       startedRef.current = true;
+      console.log('[Tuner] Auto-starting microphone...');
       toggleListening();
     }
   }, [toggleListening]);
+
+  // Play reference tone
+  const playReferenceTone = useCallback((frequency: number) => {
+    try {
+      // Stop any existing tone
+      if (oscillatorRef.current) {
+        oscillatorRef.current.stop();
+        oscillatorRef.current.disconnect();
+        oscillatorRef.current = null;
+      }
+      if (gainRef.current) {
+        gainRef.current.disconnect();
+        gainRef.current = null;
+      }
+
+      // Create audio context if needed (for reference tones)
+      const ctx = audioContextRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+
+      // Create oscillator + gain
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+      gain.gain.value = 0.3; // Volume
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      oscillatorRef.current = osc;
+      gainRef.current = gain;
+      
+      osc.start();
+      
+      // Auto-stop after 1 second
+      setTimeout(() => {
+        if (oscillatorRef.current) {
+          try {
+            oscillatorRef.current.stop();
+            oscillatorRef.current.disconnect();
+          } catch (e) {
+            // Already stopped
+          }
+          oscillatorRef.current = null;
+        }
+        if (gainRef.current) {
+          gainRef.current.disconnect();
+          gainRef.current = null;
+        }
+      }, 1000);
+      
+      console.log('[Tuner] Playing reference tone:', frequency, 'Hz');
+    } catch (err) {
+      console.error('[Tuner] Error playing reference tone:', err);
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -623,7 +686,10 @@ export default function Tuner() {
               return (
                 <button
                   key={string.string}
-                  onClick={() => setSelectedString(isSelected ? null : string.string)}
+                  onClick={() => {
+                    setSelectedString(isSelected ? null : string.string);
+                    playReferenceTone(string.freq);
+                  }}
                   className={`relative border-2 rounded-xl px-2 py-4 transition-all ${
                     isSelected && isClosest
                       ? 'bg-emerald-500/20 border-emerald-500'

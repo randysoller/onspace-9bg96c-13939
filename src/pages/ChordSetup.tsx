@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, Music2, Shapes, Layers, Play, CheckSquare, MousePointer } from 'lucide-react';
+import { Bookmark, Music2, Shapes, Layers, Play, CheckSquare, MousePointer, Filter } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { usePracticeStore } from '@/stores/practiceStore';
+import { useChordTypeFilterStore, FILTER_PRESETS, type FilterPreset } from '@/stores/chordTypeFilterStore';
 
 export default function ChordSetup() {
   const navigate = useNavigate();
   const { setPracticeChords } = usePracticeStore();
+  const chordFilterStore = useChordTypeFilterStore();
   
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string>('All');
@@ -74,6 +76,42 @@ export default function ChordSetup() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
+          {/* Chord Type Filter */}
+          <div className="relative mb-3">
+            <div className="bg-zinc-900/50 border border-amber-500/30 rounded-lg px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-medium text-zinc-300">Chord Types</span>
+                  <span className="bg-amber-500/20 text-amber-500 text-xs font-bold px-2 py-0.5 rounded">
+                    {chordFilterStore.allowedCategories.size}/6
+                  </span>
+                </div>
+                <div className="flex gap-1">
+                  {(['beginner', 'intermediate', 'advanced', 'jazz'] as FilterPreset[]).map((preset) => {
+                    const isActive = chordFilterStore.activePreset === preset;
+                    return (
+                      <button
+                        key={preset}
+                        onClick={() => chordFilterStore.setPreset(preset)}
+                        className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                          isActive
+                            ? 'bg-amber-500 text-black'
+                            : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                        }`}
+                      >
+                        {preset === 'beginner' && 'Beginner'}
+                        {preset === 'intermediate' && 'Inter'}
+                        {preset === 'advanced' && 'Adv'}
+                        {preset === 'jazz' && 'Jazz'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Filter Row */}
           <div className="grid grid-cols-3 gap-3">
@@ -193,9 +231,20 @@ export default function ChordSetup() {
               <span className="text-white font-medium">{selectedTypes}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-500">Chord types</span>
+              <span className="text-white font-medium">{chordFilterStore.allowedCategories.size} of 6</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Available chords</span>
               <span className="text-amber-500 font-bold text-lg">{filteredChords.length}</span>
             </div>
+            {chordFilterStore.allowedCategories.size < 6 && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded px-3 py-2">
+                <p className="text-xs text-emerald-400">
+                  ⚡ {((1 - chordFilterStore.allowedCategories.size / 6) * 100).toFixed(0)}% faster detection with filtered types
+                </p>
+              </div>
+            )}
           </div>
 
           <button

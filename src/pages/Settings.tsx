@@ -5,8 +5,9 @@ import { useAudioStore } from '@/stores/audioStore';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useTunerStore } from '@/stores/tunerStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
+import { useChordTypeFilterStore, FILTER_PRESETS, type FilterPreset, type ChordCategory } from '@/stores/chordTypeFilterStore';
 import { settingsApi } from '@/lib/api/settings';
-import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock, Download, TestTube } from 'lucide-react';
+import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock, Download, TestTube, Filter, CheckCircle2, Circle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -30,6 +31,7 @@ export default function Settings() {
   const metronomeStore = useMetronomeStore();
   const tunerStore = useTunerStore();
   const detectionStore = useDetectionSettingsStore();
+  const chordFilterStore = useChordTypeFilterStore();
 
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // FIX #7: Track unsaved changes
@@ -324,6 +326,92 @@ export default function Settings() {
                 {tunerStore.calibration} Hz
               </span>
             </div>
+          </div>
+        </div>
+
+        {/* Chord Type Filtering */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold">Chord Detection Filter</h2>
+          </div>
+          
+          <p className="text-sm text-zinc-400 mb-4">
+            Select which chord types to detect. Fewer types = higher accuracy and faster detection.
+          </p>
+
+          {/* Preset Buttons */}
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {(['beginner', 'intermediate', 'advanced', 'jazz'] as FilterPreset[]).map((preset) => {
+              const isActive = chordFilterStore.activePreset === preset;
+              const categoryCount = FILTER_PRESETS[preset].size;
+              
+              return (
+                <button
+                  key={preset}
+                  onClick={() => {
+                    chordFilterStore.setPreset(preset);
+                    setHasUnsavedChanges(true);
+                  }}
+                  className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                    isActive
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-500'
+                      : 'border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600'
+                  }`}
+                >
+                  <div className="text-sm font-bold capitalize">{preset}</div>
+                  <div className="text-xs text-zinc-500">{categoryCount} types</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Category Checkboxes */}
+          <div className="space-y-2 bg-zinc-800/50 rounded-lg p-4">
+            {(['major', 'minor', 'dominant', 'diminished', 'augmented', 'extended'] as ChordCategory[]).map((category) => {
+              const isEnabled = chordFilterStore.allowedCategories.has(category);
+              
+              return (
+                <button
+                  key={category}
+                  onClick={() => {
+                    chordFilterStore.toggleCategory(category);
+                    setHasUnsavedChanges(true);
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded hover:bg-zinc-700/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {isEnabled ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-zinc-600" />
+                    )}
+                    <span className={`text-sm capitalize ${
+                      isEnabled ? 'text-white font-medium' : 'text-zinc-500'
+                    }`}>
+                      {category}
+                    </span>
+                  </div>
+                  <span className="text-xs text-zinc-500">
+                    {category === 'major' && '(C, G, D, ...)' }
+                    {category === 'minor' && '(Am, Em, Dm, ...)' }
+                    {category === 'dominant' && '(G7, C9, ...)' }
+                    {category === 'diminished' && '(Bdim, Cdim7, ...)' }
+                    {category === 'augmented' && '(Caug, Daug7, ...)' }
+                    {category === 'extended' && '(Cmaj9, Am11, ...)' }
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <p className="text-xs text-amber-200">
+              <strong>Active:</strong> {chordFilterStore.allowedCategories.size} of 6 chord types enabled
+              {chordFilterStore.allowedCategories.size < 6 && (
+                <> • <strong>{((1 - chordFilterStore.allowedCategories.size / 6) * 100).toFixed(0)}%</strong> faster detection</>
+              )}
+            </p>
           </div>
         </div>
 

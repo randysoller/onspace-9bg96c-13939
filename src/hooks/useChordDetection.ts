@@ -51,8 +51,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { extractChromagram, getDominantPitchClasses, pitchClassesToNotes, findBestRotation, CHROMA_NOTES } from '@/lib/audio/chromagram';
-import { CHORD_TEMPLATES } from '@/lib/audio/chord-templates';
+import { CHORD_TEMPLATES, type ChordTemplate } from '@/lib/audio/chord-templates';
 import { logger } from '@/lib/logger';
+import { useMemo } from 'react';
 
 export type DetectionResult = 'correct' | 'wrong' | null;
 
@@ -69,6 +70,7 @@ interface UseChordDetectionOptions {
   sensitivity?: number;
   autoStart?: boolean;
   advancedSettings?: AdvancedDetectionSettings | null;
+  allowedCategories?: Set<ChordTemplate['category']>;
 }
 
 const STANDARD_TUNING_FREQ = {
@@ -120,6 +122,7 @@ export function useChordDetection({
   sensitivity = 6,
   autoStart = false,
   advancedSettings = null,
+  allowedCategories,
 }: UseChordDetectionOptions) {
   const [isListening, setIsListening] = useState(false);
   const [result, setResult] = useState<DetectionResult>(null);
@@ -127,6 +130,27 @@ export function useChordDetection({
   const [detectedNotes, setDetectedNotes] = useState<string[]>([]);
   const [detectedChord, setDetectedChord] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number>(0);
+
+  // Filter templates based on allowed categories (cached)
+  const filteredTemplates = useMemo(() => {
+    const startTime = performance.now();
+    
+    const templates = allowedCategories && allowedCategories.size > 0
+      ? CHORD_TEMPLATES.filter(t => allowedCategories.has(t.category))
+      : CHORD_TEMPLATES;
+    
+    const endTime = performance.now();
+    
+    logger.debug('Chord templates filtered', {
+      totalTemplates: CHORD_TEMPLATES.length,
+      filteredCount: templates.length,
+      allowedCategories: allowedCategories ? Array.from(allowedCategories) : 'all',
+      filterTime: `${(endTime - startTime).toFixed(2)}ms`,
+      performanceGain: `${((1 - templates.length / CHORD_TEMPLATES.length) * 100).toFixed(0)}% reduction`,
+    });
+    
+    return templates;
+  }, [allowedCategories]);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -172,15 +196,15 @@ export function useChordDetection({
         analyser.fftSize
       );
       
-      // Find best matching chord template
+      // Find best matching chord template (using filtered set)
       let bestMatch = {
         chord: '',
         root: '',
         similarity: 0,
-        template: CHORD_TEMPLATES[0],
+        template: filteredTemplates[0],
       };
       
-      for (const template of CHORD_TEMPLATES) {
+      for (const template of filteredTemplates) {
         const match = findBestRotation(chroma, template.chroma);
         
         if (match.similarity > bestMatch.similarity) {
@@ -378,7 +402,10 @@ export function useChordDetection({
       logger.info('Chromagram-based chord detection started', {
         fftSize: analyser.fftSize,
         sampleRate: audioContext.sampleRate,
-        templates: CHORD_TEMPLATES.length,
+        totalTemplates: CHORD_TEMPLATES.length,
+        activeTemplates: filteredTemplates.length,
+        allowedCategories: allowedCategories ? Array.from(allowedCategories) : 'all',
+        performanceBoost: `${((1 - filteredTemplates.length / CHORD_TEMPLATES.length) * 100).toFixed(0)}% fewer comparisons`,
       });
       
       // Start analysis loop
@@ -397,6 +424,17 @@ export function useChordDetection({
       stopListening();
     };
   }, [autoStart, startListening, stopListening]);
+
+  // Log when filter changes
+  useEffect(() => {
+    if (allowedCategories && allowedCategories.size > 0) {
+      logger.info('Chord type filter updated', {
+        activeCategories: Array.from(allowedCategories),
+        templateCount: filteredTemplates.length,
+        reductionPercent: `${((1 - filteredTemplates.length / CHORD_TEMPLATES.length) * 100).toFixed(0)}%`,
+      });
+    }
+  }, [allowedCategories, filteredTemplates]);
 
   return {
     isListening,

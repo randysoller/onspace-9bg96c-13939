@@ -7,6 +7,7 @@ import { usePracticeHistoryStore } from '@/stores/practiceHistoryStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { useChordDetection } from '@/hooks/useChordDetection';
+import { useChordTypeFilterStore } from '@/stores/chordTypeFilterStore';
 import { useSessionStats } from '@/hooks/useSessionStats';
 import { AdvancedDetectionPanel } from '@/components/features/AdvancedDetectionPanel';
 import { BeatSyncPanel } from '@/components/features/BeatSyncPanel';
@@ -47,6 +48,7 @@ export default function Practice() {
   const { addSession } = usePracticeHistoryStore();
   const { playChord } = useChordAudio();
   const { startSession, recordAttempt, resetChordTimer, endSession, getSummary, showSummary, dismissSummary } = useSessionStats();
+  const chordFilterStore = useChordTypeFilterStore();
   
   const [isRevealed, setIsRevealed] = useState(false);
   const [diagramsOn, setDiagramsOn] = useState(true);
@@ -70,6 +72,7 @@ export default function Practice() {
     sensitivity,
     autoStart: false,
     advancedSettings: advancedEnabled ? advancedValues : null,
+    allowedCategories: chordFilterStore.allowedCategories,
     onCorrect: () => {
       setIsRevealed(true);
       if (sessionActive && currentChord) {

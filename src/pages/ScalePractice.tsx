@@ -125,11 +125,11 @@ export default function ScalePractice() {
             <div className="text-xs text-zinc-500 mt-1">Practice Time</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-amber-500">{notesPlayed}</div>
+            <div className="text-2xl font-bold text-cyan-500">{notesPlayed}</div>
             <div className="text-xs text-zinc-500 mt-1">Notes Played</div>
           </div>
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold text-emerald-500">{currentBpm}</div>
+            <div className="text-2xl font-bold text-cyan-500">{currentBpm}</div>
             <div className="text-xs text-zinc-500 mt-1">BPM</div>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function ScalePractice() {
                   max="200"
                   value={currentBpm}
                   onChange={(e) => setCurrentBpm(parseInt(e.target.value))}
-                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500"
                 />
                 <div className="flex justify-between text-xs text-zinc-500 mt-1">
                   <span>Slow</span>
@@ -237,7 +237,7 @@ export default function ScalePractice() {
             {user && (
               <button
                 onClick={handleSaveSession}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
               >
                 <Save className="w-5 h-5" />
                 Save Session

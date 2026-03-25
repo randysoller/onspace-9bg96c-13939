@@ -109,7 +109,7 @@ export default function ScaleSetup() {
                   max="200"
                   value={bpm}
                   onChange={(e) => setBpm(parseInt(e.target.value))}
-                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                  className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-500"
                 />
                 <div className="flex justify-between text-xs text-zinc-500 mt-1">
                   <span>40</span>

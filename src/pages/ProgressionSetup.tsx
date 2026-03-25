@@ -38,8 +38,8 @@ export default function ProgressionSetup() {
       <div className="container mx-auto px-4 py-12 max-w-6xl">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black mb-3">
-            Practice <span className="text-amber-500">Progressions</span>
+          <h1 className="text-4xl md:text-5xl font-black mb-3">
+            Practice <span className="text-purple-500">Progressions</span>
           </h1>
           <p className="text-base text-zinc-400 max-w-2xl mx-auto">
             Choose a key, scale, and chord progression. Practice smooth transitions between chords.
@@ -51,9 +51,9 @@ export default function ProgressionSetup() {
           {/* Left Column - Key & Scale Selection */}
           <div className="space-y-6">
             {/* Select Key */}
-            <div className="bg-zinc-900/50 border-t-4 border-t-amber-500 border-x border-b border-zinc-800 rounded-lg p-6">
+            <div className="bg-zinc-900/50 border-t-4 border-t-purple-500 border-x border-b border-zinc-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Key className="w-5 h-5 text-amber-500" />
+                <Key className="w-5 h-5 text-purple-500" />
                 <h2 className="text-sm font-bold uppercase tracking-wider">Select Key</h2>
               </div>
               
@@ -64,9 +64,9 @@ export default function ProgressionSetup() {
             </div>
 
             {/* Select Scale */}
-            <div className="bg-zinc-900/50 border-t-4 border-t-cyan-500 border-x border-b border-zinc-800 rounded-lg p-6">
+            <div className="bg-zinc-900/50 border-t-4 border-t-purple-500 border-x border-b border-zinc-800 rounded-lg p-6">
               <div className="flex items-center gap-2 mb-4">
-                <Waves className="w-5 h-5 text-cyan-500" />
+                <Waves className="w-5 h-5 text-purple-500" />
                 <h2 className="text-sm font-bold uppercase tracking-wider">Select Scale</h2>
               </div>
               
@@ -86,7 +86,7 @@ export default function ProgressionSetup() {
                     >
                       <div className="text-xs text-zinc-500 mb-1.5">{chord.numeral}</div>
                       <div className="text-base font-bold text-white mb-1">{chord.name}</div>
-                      <Volume2 className="w-3.5 h-3.5 text-cyan-500 mx-auto" />
+                      <Volume2 className="w-3.5 h-3.5 text-purple-500 mx-auto" />
                     </button>
                   ))}
                 </div>
@@ -109,7 +109,7 @@ export default function ProgressionSetup() {
                   onClick={() => setSelectedTab(tab)}
                   className={`px-4 py-2 rounded font-semibold text-sm whitespace-nowrap transition-all ${
                     selectedTab === tab
-                      ? 'bg-amber-500 text-zinc-950'
+                      ? 'bg-purple-500 text-white'
                       : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                   }`}
                 >
@@ -127,19 +127,19 @@ export default function ProgressionSetup() {
                   <button
                     key={idx}
                     onClick={() => setSelectedProgression(prog.name)}
-                    className={`text-left bg-zinc-950 border rounded-lg p-4 hover:border-amber-500/40 transition-all ${
+                    className={`text-left bg-zinc-950 border rounded-lg p-4 hover:border-purple-500/40 transition-all ${
                       selectedProgression === prog.name
-                        ? 'border-amber-500 bg-amber-500/5'
+                        ? 'border-purple-500 bg-purple-500/5'
                         : 'border-zinc-800'
                     }`}
                   >
-                    <div className="text-xs text-amber-500 font-medium mb-1.5">{prog.name}</div>
+                    <div className="text-xs text-purple-500 font-medium mb-1.5">{prog.name}</div>
                     <div className="text-sm text-white font-semibold">{prog.chords}</div>
                   </button>
                 ))}
               </div>
 
-              <button className="w-full text-center text-sm text-amber-500 hover:text-amber-400 font-semibold py-2 transition-colors">
+              <button className="w-full text-center text-sm text-purple-500 hover:text-purple-400 font-semibold py-2 transition-colors">
                 Show all 13 progressions
               </button>
             </div>
@@ -156,7 +156,7 @@ export default function ProgressionSetup() {
                     <div className="text-[10px] text-zinc-500 mb-0.5">{chord.numeral}</div>
                     <div className="text-xs text-zinc-400 mb-0.5">{chord.numeral}</div>
                     <div className="text-sm font-bold text-white">{chord.name}</div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-zinc-950 text-sm font-bold transition-opacity">
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold transition-opacity">
                       +
                     </div>
                   </button>
@@ -167,13 +167,13 @@ export default function ProgressionSetup() {
         </div>
 
         {/* My Progressions */}
-        <div className="bg-zinc-900/50 border-t-4 border-t-pink-500 border-x border-b border-zinc-800 rounded-lg p-6 mb-6">
+        <div className="bg-zinc-900/50 border-t-4 border-t-purple-500 border-x border-b border-zinc-800 rounded-lg p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Folder className="w-5 h-5 text-pink-500" />
+              <Folder className="w-5 h-5 text-purple-500" />
               <h2 className="text-sm font-bold uppercase tracking-wider">My Progressions</h2>
             </div>
-            <button className="px-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-500 font-semibold text-sm rounded-lg transition-colors flex items-center gap-2">
+            <button className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-500 font-semibold text-sm rounded-lg transition-colors flex items-center gap-2">
               <Folder className="w-4 h-4" />
               Save Current
             </button>
@@ -184,9 +184,9 @@ export default function ProgressionSetup() {
         </div>
 
         {/* Ready to Practice Panel */}
-        <div className="bg-zinc-900/50 border-t-4 border-t-amber-500 border-x border-b border-zinc-800 rounded-lg p-6">
+        <div className="bg-zinc-900/50 border-t-4 border-t-purple-500 border-x border-b border-zinc-800 rounded-lg p-6">
           <div className="flex items-center gap-2 mb-6">
-            <Play className="w-5 h-5 text-amber-500" />
+            <Play className="w-5 h-5 text-purple-500" />
             <h2 className="text-sm font-bold uppercase tracking-wider">Ready to Practice</h2>
           </div>
 
@@ -205,13 +205,13 @@ export default function ProgressionSetup() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Chords</span>
-              <span className="text-amber-500 font-bold text-lg">4</span>
+              <span className="text-purple-500 font-bold text-lg">4</span>
             </div>
           </div>
 
           <button
             onClick={handleStartPractice}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-amber-500/20"
+            className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-purple-500/20"
           >
             <Play className="w-5 h-5" fill="currentColor" />
             START PROGRESSION

@@ -172,7 +172,7 @@ export default function ProgressionPractice() {
 
           <div className="text-center">
             <div className="text-xs text-zinc-500 uppercase tracking-wide">Progression Practice</div>
-            <div className="text-sm font-bold text-amber-500">{mockProgression.key} {mockProgression.scale}</div>
+            <div className="text-sm font-bold text-purple-500">{mockProgression.key} {mockProgression.scale}</div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -183,7 +183,7 @@ export default function ProgressionPractice() {
               max="100"
               value={volume}
               onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              className="w-20 h-1 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-purple-500"
             />
           </div>
         </div>
@@ -199,8 +199,8 @@ export default function ProgressionPractice() {
                   onClick={() => setCurrentChordIndex(idx)}
                   className={`relative px-6 py-3 rounded-lg border-2 transition-all ${
                     idx === currentChordIndex
-                      ? 'bg-amber-500 border-amber-500 text-zinc-950 font-bold scale-110'
-                      : 'bg-zinc-900 border-zinc-700 text-white hover:border-amber-500/50'
+                      ? 'bg-purple-500 border-purple-500 text-white font-bold scale-110'
+                      : 'bg-zinc-900 border-zinc-700 text-white hover:border-purple-500/50'
                   }`}
                 >
                   <div className="text-xs opacity-70 mb-1">{mockProgression.romanNumerals[idx]}</div>
@@ -209,9 +209,9 @@ export default function ProgressionPractice() {
                     {chord.type !== 'major' ? chord.type : ''}
                   </div>
                   {idx === currentChordIndex && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-amber-500 rounded-full overflow-hidden">
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-amber-300 transition-all duration-100"
+                        className="h-full bg-purple-300 transition-all duration-100"
                         style={{ width: `${progress}%` }}
                       />
                     </div>
@@ -231,7 +231,7 @@ export default function ProgressionPractice() {
         <div className="text-center">
           {/* Roman Numeral & Chord Name */}
           <div className="mb-8">
-            <div className="text-6xl font-black text-amber-500 mb-2">
+            <div className="text-6xl font-black text-purple-500 mb-2">
               {currentRoman}
             </div>
             <div className="text-9xl font-black text-white mb-3">
@@ -418,7 +418,7 @@ export default function ProgressionPractice() {
             <div className="mt-12 text-center">
               <div className="text-xs text-zinc-600 uppercase tracking-wide mb-2">Next Chord</div>
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-zinc-900/50 border border-zinc-800 rounded-lg">
-                <div className="text-sm text-amber-500 font-bold">
+                <div className="text-sm text-purple-500 font-bold">
                   {mockProgression.romanNumerals[currentChordIndex + 1]}
                 </div>
                 <div className="text-2xl font-bold">
@@ -439,10 +439,10 @@ export default function ProgressionPractice() {
           {/* Stats Summary */}
           <div className="flex items-center justify-center gap-6 mb-3 text-xs text-zinc-500">
             <div>
-              <span className="text-amber-500 font-bold">{completedCycles}</span> cycle{completedCycles !== 1 ? 's' : ''} completed
+              <span className="text-purple-500 font-bold">{completedCycles}</span> cycle{completedCycles !== 1 ? 's' : ''} completed
             </div>
             <div>
-              <span className="text-cyan-500 font-bold">{chordHistory.length}</span> chord{chordHistory.length !== 1 ? 's' : ''} played
+              <span className="text-purple-500 font-bold">{chordHistory.length}</span> chord{chordHistory.length !== 1 ? 's' : ''} played
             </div>
           </div>
 
@@ -474,9 +474,9 @@ export default function ProgressionPractice() {
 
             <button
               onClick={handleNext}
-              className="p-2.5 bg-amber-500 hover:bg-amber-600 rounded-lg transition-colors"
+              className="p-2.5 bg-purple-500 hover:bg-purple-600 rounded-lg transition-colors"
             >
-              <SkipForward className="w-4 h-4 text-zinc-950" />
+              <SkipForward className="w-4 h-4 text-white" />
             </button>
 
             {user && (

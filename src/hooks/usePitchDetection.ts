@@ -290,28 +290,28 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
           mismatch: actualSampleRate !== deviceCaps.recommendedSampleRate,
         });
 
-        // Load YIN worklet
-        await audioContext.audioWorklet.addModule('/yin-pitch-detector.js');
+        // Load NSDF worklet (original working algorithm)
+        await audioContext.audioWorklet.addModule('/pitch-detection-processor.js');
 
-        // CRITICAL: Calculate optimal buffer size for ACTUAL sample rate
-        const periodsRequired = 4;
-        const minBufferSize = Math.ceil((periodsRequired / minFrequency) * actualSampleRate);
-        const optimalBufferSize = Math.pow(2, Math.ceil(Math.log2(minBufferSize)));
-        const clampedBufferSize = Math.max(4096, Math.min(16384, optimalBufferSize));
+        // Calculate optimal buffer size
+        const optimalBufferSize = deviceCaps.isMobile ? 4096 : 8192;
 
-        // Create worklet node with ACTUAL sample rate
-        const workletNode = new AudioWorkletNode(audioContext, 'yin-pitch-detector', {
+        // Create worklet node
+        const workletNode = new AudioWorkletNode(audioContext, 'pitch-detection-processor', {
           numberOfInputs: 1,
           numberOfOutputs: 0,
-          processorOptions: {
-            sampleRate: actualSampleRate, // Use actual, not requested
-            minFrequency,
-            maxFrequency,
-            threshold,
-            bufferSize: clampedBufferSize,
-            calibrationHz,
-            noiseGateThreshold,
-          },
+        });
+
+        // Send configuration to worklet
+        workletNode.port.postMessage({
+          type: 'config',
+          sampleRate: actualSampleRate,
+          minFrequency,
+          maxFrequency,
+          clarity: threshold,
+          calibrationHz,
+          noiseGateThreshold,
+          bufferSize: optimalBufferSize,
         });
 
         workletNodeRef.current = workletNode;
@@ -324,37 +324,8 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
             handlePerformanceUpdate(event.data);
           } else if (event.data.type === 'audioLevel') {
             handleAudioLevelUpdate(event.data.level);
-          } else if (event.data.type === 'diagnostic') {
-            // Enhanced diagnostic logging for mobile debugging
-            logger.warn('🔍 YIN DIAGNOSTIC', event.data);
-            
-            // Alert user in console about critical issues
-            if (event.data.mismatch || event.data.possibleSampleRateMismatch) {
-              console.error('⚠️ SAMPLE RATE ISSUE DETECTED:', event.data);
-            }
-          } else if (event.data.type === 'calibrationSuggestion') {
-            setCalibrationSuggestion({
-              averageRatio: event.data.averageRatio,
-              recommendedCalibrationHz: event.data.recommendedCalibrationHz,
-            });
-            logger.warn('Auto-calibration suggested', {
-              offset: ((event.data.averageRatio - 1) * 100).toFixed(2) + '%',
-              currentCal: calibrationHz,
-              recommended: event.data.recommendedCalibrationHz,
-              diagnosticDetails: event.data.diagnosticDetails,
-            });
-            
-            // Log to console for mobile debugging
-            console.warn('🎯 AUTO-CALIBRATION SUGGESTION:', {
-              currentCalibration: calibrationHz + 'Hz',
-              recommended: event.data.recommendedCalibrationHz + 'Hz',
-              offset: ((event.data.averageRatio - 1) * 100).toFixed(2) + '%',
-              likelyCause: event.data.diagnosticDetails?.possibleSampleRateMismatch 
-                ? 'SAMPLE RATE MISMATCH' 
-                : 'Unknown',
-            });
           } else if (event.data.type === 'debug') {
-            logger.debug('YIN debug', event.data);
+            logger.debug('NSDF debug', event.data);
           }
         };
 
@@ -371,13 +342,12 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
         setIsDetecting(true);
         setError(null);
 
-        logger.info('YIN pitch detection initialized', {
+        logger.info('NSDF pitch detection initialized', {
           requestedSampleRate: deviceCaps.recommendedSampleRate,
           actualSampleRate: actualSampleRate,
-          bufferSize: clampedBufferSize,
-          calculatedBufferSize: optimalBufferSize,
+          bufferSize: optimalBufferSize,
           isMobile: deviceCaps.isMobile,
-          threshold,
+          clarity: threshold,
           minFrequency,
           maxFrequency,
         });
@@ -469,7 +439,7 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
         type: 'config',
         minFrequency,
         maxFrequency,
-        threshold,
+        clarity: threshold,
         calibrationHz,
         noiseGateThreshold,
       });

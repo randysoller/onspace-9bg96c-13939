@@ -25,13 +25,8 @@ export default function Tuner() {
   
   const [selectedString, setSelectedString] = useState<number | null>(null);
   const [noiseGate, setNoiseGate] = useState(0.015);
-  const [yinThreshold, setYinThreshold] = useState(0.15); // YIN threshold (0.1-0.3)
-  const [showCalibrationPanel, setShowCalibrationPanel] = useState(false);
-  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
-  const [showDebugInfo, setShowDebugInfo] = useState(false);
-  const [autoCalibrationDismissed, setAutoCalibrationDismissed] = useState(false);
 
-  // YIN pitch detection with optimal settings
+  // NSDF pitch detection (original working algorithm)
   const { 
     frequency, 
     note, 
@@ -43,15 +38,14 @@ export default function Tuner() {
     performanceStats, 
     audioLevel, 
     isAboveNoiseGate,
-    calibrationSuggestion,
   } = usePitchDetection({
     enabled: true,
     minFrequency: 70,
     maxFrequency: 400,
-    threshold: yinThreshold,
+    threshold: 0.85, // NSDF clarity threshold
     calibrationHz,
     noiseGateThreshold: noiseGate,
-    updateInterval: 50, // 20 Hz update rate for smooth display
+    updateInterval: 50,
   });
 
   const detectedFrequency = frequency > 0 ? frequency : null;
@@ -93,17 +87,7 @@ export default function Tuner() {
     toast.info('Calibration cancelled');
   };
 
-  const handleAutoCalibrate = () => {
-    if (!calibrationSuggestion) return;
-    const newCal = Math.round(calibrationSuggestion.recommendedCalibrationHz * 10) / 10;
-    setCalibrationHz(newCal);
-    setAutoCalibrationDismissed(true);
-    toast.success(`Auto-calibrated to A${newCal}Hz`);
-  };
 
-  const handleDismissAutoCalibration = () => {
-    setAutoCalibrationDismissed(true);
-  };
 
   // In-tune detection with hysteresis
   const IN_TUNE_ENTER_THRESHOLD = 5;
@@ -367,12 +351,8 @@ export default function Tuner() {
                 
                 {!isCalibrating && (
                   <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs">
-                    <div className="flex gap-0.5">
-                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
-                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '150ms' }} />
-                      <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span className="font-medium">Listening with YIN...</span>
+                    <Mic className="w-3 h-3" />
+                    <span className="font-medium">Listening...</span>
                   </div>
                 )}
               </div>
@@ -402,101 +382,7 @@ export default function Tuner() {
             </span>
           </div>
 
-          {/* Auto-Calibration Alert */}
-          {calibrationSuggestion && !autoCalibrationDismissed && (
-            <div className="mb-4 p-4 bg-amber-500/20 border border-amber-500/40 rounded-lg">
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-amber-500 animate-pulse" />
-                  <span className="text-sm font-bold text-amber-500">Auto-Calibration Suggested</span>
-                </div>
-                <button onClick={handleDismissAutoCalibration} className="text-zinc-500 hover:text-white transition-colors">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-xs text-amber-400 mb-3">
-                Detected {Math.abs((calibrationSuggestion.averageRatio - 1) * 100).toFixed(1)}% systematic offset.
-              </p>
-              <div className="flex gap-2">
-                <button onClick={handleAutoCalibrate} className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors">
-                  Apply (A{Math.round(calibrationSuggestion.recommendedCalibrationHz * 10) / 10}Hz)
-                </button>
-                <button onClick={handleDismissAutoCalibration} className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors">
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Calibration Panel */}
-          {showCalibrationPanel && (
-            <div className="mb-4 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-bold text-white">Calibration</span>
-                </div>
-                <button
-                  onClick={() => setShowCalibrationPanel(false)}
-                  className="text-zinc-500 hover:text-white transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="text-xs text-zinc-400">
-                  Current: <span className="text-white font-bold">A{calibrationHz}Hz</span>
-                  {calibrationHz !== 440 && (
-                    <span className="ml-2 text-amber-500">({calibrationHz > 440 ? '+' : ''}{(calibrationHz - 440).toFixed(1)}Hz)</span>
-                  )}
-                </div>
-                
-                {!isCalibrating ? (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleStartCalibration}
-                      className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
-                    >
-                      Start Calibration
-                    </button>
-                    {calibrationHz !== 440 && (
-                      <button
-                        onClick={() => {
-                          resetCalibration();
-                          toast.success('Reset to A440');
-                        }}
-                        className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleConfirmCalibration}
-                      disabled={calibrationDetections.length < 3}
-                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white font-bold py-2 px-3 rounded text-xs transition-colors flex items-center justify-center gap-1"
-                    >
-                      <Check className="w-3 h-3" />
-                      Confirm ({calibrationDetections.length})
-                    </button>
-                    <button
-                      onClick={handleCancelCalibration}
-                      className="bg-zinc-700 hover:bg-zinc-600 text-white font-bold py-2 px-3 rounded text-xs transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                
-                <p className="text-xs text-zinc-500 leading-relaxed">
-                  Play an A4 note from a reference source (tuning fork, piano, etc.) and the tuner will auto-detect and adjust.
-                </p>
-              </div>
-            </div>
-          )}
 
           {/* Noise Gate Control */}
           <div className="mb-4">
@@ -552,179 +438,31 @@ export default function Tuner() {
             </p>
           </div>
 
-          {/* Advanced Settings Toggle */}
-          <button
-            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
-            className="w-full mb-3 flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
-          >
-            <Settings className="w-3 h-3" />
-            {showAdvancedSettings ? 'Hide' : 'Show'} Advanced Settings
-          </button>
 
-          {/* Advanced Settings Panel */}
-          {showAdvancedSettings && (
-            <div className="space-y-4 mb-4 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
-              {/* Mobile Diagnostic Instructions */}
-              <div className="mb-4 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                <div className="text-xs text-blue-400 font-bold mb-2">📱 MOBILE DEBUGGING ACTIVE</div>
-                <div className="text-xs text-blue-300 space-y-1">
-                  <p>1. Open browser console to see diagnostic data</p>
-                  <p>2. Look for "🔍 YIN DIAGNOSTIC" messages</p>
-                  <p>3. Check for "⚠️ SAMPLE RATE ISSUE" warnings</p>
-                  <p>4. Play a guitar string and check "🎯 AUTO-CALIBRATION" suggestion</p>
-                  <p className="mt-2 text-amber-400">If you see "SAMPLE RATE MISMATCH", that's the problem!</p>
-                </div>
-              </div>
-
-              {/* YIN Threshold */}
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-bold uppercase tracking-wider text-white">Detection Strictness</span>
-                  <span className="ml-auto text-sm font-bold text-white">{yinThreshold.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.10"
-                  max="0.30"
-                  step="0.01"
-                  value={yinThreshold}
-                  onChange={(e) => setYinThreshold(Number(e.target.value))}
-                  className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-                />
-                <div className="flex justify-between text-xs text-zinc-600 mt-1">
-                  <span>Strict (0.10)</span>
-                  <span>Balanced</span>
-                  <span>Lenient (0.30)</span>
-                </div>
-                <p className="text-xs text-zinc-500 mt-1">
-                  Lower = more accurate but may miss quiet notes. Higher = picks up weaker signals but less accurate.
-                </p>
-              </div>
-
-              {/* Calibration Button */}
-              <button
-                onClick={() => setShowCalibrationPanel(!showCalibrationPanel)}
-                className="w-full flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
-              >
-                <Settings className="w-3 h-3" />
-                {showCalibrationPanel ? 'Hide' : 'Show'} Calibration Settings
-              </button>
-
-              {/* Performance Stats */}
-              {isDetecting && performanceStats && (
-                <div className="pt-3 border-t border-zinc-700">
-                  <div className="text-xs text-zinc-500 mb-2">Performance Stats</div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Algorithm</div>
-                      <div className="text-white font-bold">YIN</div>
-                    </div>
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Processing</div>
-                      <div className="text-white font-bold">{performanceStats.avgProcessTime.toFixed(1)}ms</div>
-                    </div>
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Buffer Size</div>
-                      <div className="text-white font-bold">{(performanceStats as any).bufferSize || 4096}</div>
-                    </div>
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Sample Rate</div>
-                      <div className="text-white font-bold">{(performanceStats as any).sampleRate || 48000} Hz</div>
-                    </div>
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Calibration</div>
-                      <div className="text-white font-bold">A{calibrationHz}</div>
-                    </div>
-                    <div className="bg-zinc-900 rounded p-2">
-                      <div className="text-zinc-600">Detections</div>
-                      <div className="text-white font-bold">{performanceStats.processCount}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Debug Toggle */}
-              <button
-                onClick={() => setShowDebugInfo(!showDebugInfo)}
-                className="w-full mt-3 flex items-center justify-center gap-2 py-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg transition-colors text-xs font-medium"
-              >
-                {showDebugInfo ? 'Hide' : 'Show'} Debug Info
-              </button>
-            </div>
-          )}
-
-          {/* Debug Panel */}
-          {showDebugInfo && isDetecting && (
-            <div className="mb-4 p-4 bg-zinc-900/50 border border-amber-500/30 rounded-lg">
-              <div className="text-xs text-amber-500 font-bold mb-3">🔧 DEBUG INFORMATION</div>
-              <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Detected Frequency:</span>
-                  <span className="text-white font-bold">{frequency.toFixed(2)} Hz</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Detected Note:</span>
-                  <span className="text-white font-bold">{note}{octave}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Cents Offset:</span>
-                  <span className={`font-bold ${Math.abs(cents) < 5 ? 'text-emerald-500' : 'text-amber-500'}`}>
-                    {cents > 0 ? '+' : ''}{cents}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Clarity Score:</span>
-                  <span className="text-white font-bold">{(clarity * 100).toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Audio Level (RMS):</span>
-                  <span className="text-white font-bold">{(audioLevel * 100).toFixed(2)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Above Noise Gate:</span>
-                  <span className={isAboveNoiseGate ? 'text-emerald-500' : 'text-red-500'}>
-                    {isAboveNoiseGate ? 'YES' : 'NO'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">YIN Threshold:</span>
-                  <span className="text-white font-bold">{yinThreshold.toFixed(2)}</span>
-                </div>
-              </div>
-              <div className="mt-3 p-2 bg-zinc-950 rounded text-[10px] text-zinc-500">
-                💡 If notes are consistently off by a half/full step, check sample rate mismatch in console logs
-              </div>
-            </div>
-          )}
 
           {/* Clarity Indicator */}
-          {isDetecting && (
+          {isDetecting && detectedFrequency && (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-zinc-500">Signal Quality</span>
+                <span className="text-xs text-zinc-500">Clarity</span>
                 <span className={`text-xs font-bold ${
-                  clarity >= 0.7 ? 'text-emerald-500' :
-                  clarity >= 0.4 ? 'text-amber-500' : 
+                  clarity >= 0.85 ? 'text-emerald-500' :
+                  clarity >= 0.70 ? 'text-amber-500' : 
                   'text-red-500'
                 }`}>
-                  {clarity >= 0.7 ? 'Excellent' :
-                   clarity >= 0.4 ? 'Good' : 
-                   'Poor'} ({(clarity * 100).toFixed(0)}%)
+                  {(clarity * 100).toFixed(0)}%
                 </span>
               </div>
               <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-300 ${
-                    clarity >= 0.7 ? 'bg-emerald-500' :
-                    clarity >= 0.4 ? 'bg-amber-500' : 
+                    clarity >= 0.85 ? 'bg-emerald-500' :
+                    clarity >= 0.70 ? 'bg-amber-500' : 
                     'bg-red-500'
                   }`}
                   style={{ width: `${Math.min(100, clarity * 100)}%` }}
                 />
               </div>
-              {clarity < 0.3 && (
-                <p className="text-xs text-red-400 mt-1">Low signal quality - try playing louder or adjusting settings</p>
-              )}
             </div>
           )}
         </div>

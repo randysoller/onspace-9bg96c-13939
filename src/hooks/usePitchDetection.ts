@@ -1,12 +1,10 @@
 /**
- * Custom hook for pitch detection using audio worklet
- * 
- * Uses Audio Worklet for high-performance pitch detection in a separate thread.
- * Falls back to main thread processing if worklets are not supported.
+ * Custom hook for pitch detection using YIN algorithm
+ * Optimized for mobile browsers with proper AudioContext lifecycle management
  * 
  * @example
  * ```tsx
- * const { frequency, note, clarity, isDetecting } = usePitchDetection({
+ * const { frequency, note, cents, clarity, isDetecting } = usePitchDetection({
  *   enabled: true,
  *   onPitchDetected: (data) => console.log(data),
  * });
@@ -15,22 +13,18 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { logger } from '@/lib/logger';
-import { PitchDetectionWorklet } from '@/lib/audio/pitch-detection-worklet';
 import type { PitchData } from '@/lib/audio/pitch-detection-worklet';
-import { getGuitarTunerSettings, detectDeviceCapabilities } from '@/lib/audio/device-detection';
+import { detectDeviceCapabilities } from '@/lib/audio/device-detection';
 
 interface UsePitchDetectionOptions {
   enabled?: boolean;
   minFrequency?: number;
   maxFrequency?: number;
-  sampleRate?: number;
-  clarity?: number;
+  threshold?: number; // YIN threshold (0.1-0.3, lower = stricter)
   updateInterval?: number;
   onPitchDetected?: (data: PitchData) => void;
-  useWorklet?: boolean; // Option to force main thread processing
-  optimizeForGuitar?: boolean; // Use guitar-optimized settings
-  calibrationHz?: number; // A4 reference frequency (default 440)
-  noiseGateThreshold?: number; // RMS level threshold (0-1) for noise gate
+  calibrationHz?: number;
+  noiseGateThreshold?: number;
 }
 
 interface PitchDetectionResult {
@@ -45,36 +39,43 @@ interface PitchDetectionResult {
     avgProcessTime: number;
     processCount: number;
   } | null;
-  audioLevel: number; // Current RMS audio level (0-1)
-  isAboveNoiseGate: boolean; // Whether signal is above noise gate
+  audioLevel: number;
+  isAboveNoiseGate: boolean;
 }
 
 /**
- * Exponential moving average for smoothing
+ * Kalman Filter for optimal frequency smoothing
+ * Better than EMA for tracking with minimal lag
  */
-class ExponentialMovingAverage {
-  private value: number | null = null;
-  private readonly alpha: number;
+class KalmanFilter {
+  private x: number = 0; // Estimated frequency
+  private p: number = 1; // Estimation error covariance
+  private q: number = 0.01; // Process noise (how much we trust new measurements)
+  private r: number = 0.1; // Measurement noise (sensor accuracy)
+  private isInitialized: boolean = false;
 
-  constructor(smoothingFactor: number = 0.3) {
-    this.alpha = smoothingFactor; // Lower = smoother
-  }
-
-  update(newValue: number): number {
-    if (this.value === null) {
-      this.value = newValue;
-    } else {
-      this.value = this.alpha * newValue + (1 - this.alpha) * this.value;
+  update(measurement: number): number {
+    if (!this.isInitialized) {
+      this.x = measurement;
+      this.isInitialized = true;
+      return this.x;
     }
-    return this.value;
+
+    // Prediction
+    const p_pred = this.p + this.q;
+
+    // Update
+    const k = p_pred / (p_pred + this.r); // Kalman gain
+    this.x = this.x + k * (measurement - this.x);
+    this.p = (1 - k) * p_pred;
+
+    return this.x;
   }
 
   reset(): void {
-    this.value = null;
-  }
-
-  getValue(): number | null {
-    return this.value;
+    this.x = 0;
+    this.p = 1;
+    this.isInitialized = false;
   }
 }
 
@@ -95,7 +96,6 @@ class MedianFilter {
       this.buffer.shift();
     }
 
-    // Return median of buffer
     const sorted = [...this.buffer].sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 0
@@ -108,157 +108,137 @@ class MedianFilter {
   }
 }
 
-/**
- * Custom hook for real-time pitch detection
- */
 export function usePitchDetection(options: UsePitchDetectionOptions = {}): PitchDetectionResult {
   const {
     enabled = false,
-    minFrequency: userMinFreq,
-    maxFrequency: userMaxFreq,
-    sampleRate: userSampleRate,
-    clarity = 0.85,
-    updateInterval: userUpdateInterval,
+    minFrequency = 70,
+    maxFrequency = 400,
+    threshold = 0.15, // YIN default threshold
+    updateInterval = 50,
     onPitchDetected,
-    useWorklet = true,
-    optimizeForGuitar = false,
     calibrationHz = 440,
-    noiseGateThreshold = 0.01, // Very low default threshold (RMS 0.01 = ~1% of max)
+    noiseGateThreshold = 0.01,
   } = options;
 
-  // Get optimized settings if requested
-  const optimizedSettings = optimizeForGuitar ? getGuitarTunerSettings() : null;
+  // Device capabilities
   const deviceCaps = detectDeviceCapabilities();
-
-  // Use optimized settings or user settings
-  const minFrequency = userMinFreq ?? optimizedSettings?.minFrequency ?? 60;
-  const maxFrequency = userMaxFreq ?? optimizedSettings?.maxFrequency ?? 1400;
-  const sampleRate = userSampleRate ?? optimizedSettings?.sampleRate ?? 48000;
-  const updateInterval = userUpdateInterval ?? optimizedSettings?.updateInterval ?? 100;
-  const bufferSize = optimizedSettings?.bufferSize ?? (deviceCaps.isMobile ? 4096 : 8192);
-  const smoothingFactor = optimizedSettings?.smoothingFactor ?? (deviceCaps.isMobile ? 0.3 : 0.2);
 
   // State
   const [frequency, setFrequency] = useState(0);
   const [note, setNote] = useState('');
   const [octave, setOctave] = useState(0);
   const [cents, setCents] = useState(0);
-  const [detectedClarity, setDetectedClarity] = useState(0);
+  const [clarity, setClarity] = useState(0);
   const [isDetecting, setIsDetecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [performanceStats, setPerformanceStats] = useState<{
-    avgProcessTime: number;
-    processCount: number;
-  } | null>(null);
+  const [performanceStats, setPerformanceStats] = useState<any>(null);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isAboveNoiseGate, setIsAboveNoiseGate] = useState(false);
 
   // Refs
-  const workletRef = useRef<PitchDetectionWorklet | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const lastUpdateRef = useRef(0);
-  const frequencyMedian = useRef(new MedianFilter(3)); // Remove outliers first
-  const frequencySmoother = useRef(new ExponentialMovingAverage(smoothingFactor)); // Then smooth
+  
+  // Filters
+  const frequencyMedian = useRef(new MedianFilter(3));
+  const frequencyKalman = useRef(new KalmanFilter());
   const centsMedian = useRef(new MedianFilter(3));
-  const centsSmoother = useRef(new ExponentialMovingAverage(smoothingFactor * 1.2)); // Slightly more smoothing for cents
-  const isWorkletSupported = useRef(PitchDetectionWorklet.isSupported());
+  const centsKalman = useRef(new KalmanFilter());
 
-  // Handle audio level updates from worklet
+  /**
+   * Handle audio level updates
+   */
   const handleAudioLevelUpdate = useCallback((level: number) => {
     setAudioLevel(level);
     setIsAboveNoiseGate(level >= noiseGateThreshold);
   }, [noiseGateThreshold]);
 
-  // Debounced update handler with smoothing
+  /**
+   * Handle pitch updates with adaptive filtering
+   */
   const handlePitchUpdate = useCallback((data: PitchData & { audioLevel?: number }) => {
     const now = performance.now();
     
-    // Update audio level if provided
+    // Update audio level
     if (data.audioLevel !== undefined) {
       handleAudioLevelUpdate(data.audioLevel);
     }
     
-    // Throttle updates based on updateInterval
+    // Throttle updates
     if (now - lastUpdateRef.current < updateInterval) {
       return;
     }
-    
     lastUpdateRef.current = now;
 
-    // Noise gate: don't process if signal is too weak
+    // Noise gate check
     if (data.audioLevel !== undefined && data.audioLevel < noiseGateThreshold) {
-      // Clear display when below noise gate
       setFrequency(0);
       setNote('');
       setOctave(0);
       setCents(0);
-      setDetectedClarity(0);
+      setClarity(0);
       return;
     }
 
-    // Minimum clarity threshold - don't show unreliable detections
-    // Map clarity 0.1-1.0 to minimum threshold (mobile-friendly)
-    const minClarityThreshold = Math.max(0.1, clarity * 0.5);
-    
-    if (data.clarity < minClarityThreshold) {
-      // Low clarity - don't update display, but don't reset smoothers
-      return;
-    }
-
-    // Apply median filter first to remove outliers, then EMA smoothing
-    const medianFrequency = frequencyMedian.current.update(data.frequency);
-    const smoothedFrequency = frequencySmoother.current.update(medianFrequency);
+    // Apply median filter → Kalman filter for optimal smoothing
+    const medianFreq = frequencyMedian.current.update(data.frequency);
+    const smoothedFreq = frequencyKalman.current.update(medianFreq);
     
     const medianCents = centsMedian.current.update(data.note.cents);
-    const smoothedCents = centsSmoother.current.update(medianCents);
+    const smoothedCents = centsKalman.current.update(medianCents);
 
-    // Only update if values changed significantly (reduce jitter)
-    const freqDelta = Math.abs(smoothedFrequency - frequency);
-    const centsDelta = Math.abs(smoothedCents - cents);
-    
-    // Update frequency if changed by more than 0.5 Hz
-    if (freqDelta > 0.5 || frequency === 0) {
-      setFrequency(smoothedFrequency);
-    }
-    
-    // Update cents if changed by more than 1 cent
-    if (centsDelta > 1 || cents === 0) {
-      setCents(Math.round(smoothedCents)); // Round to integer cents
-    }
-    
-    // Always update note/octave/clarity
+    // Update state
+    setFrequency(smoothedFreq);
+    setCents(Math.round(smoothedCents));
     setNote(data.note.name);
     setOctave(data.note.octave);
-    setDetectedClarity(data.clarity);
+    setClarity(data.clarity);
 
-    // Call callback if provided
+    // Callback
     if (onPitchDetected) {
       onPitchDetected({
         ...data,
-        frequency: smoothedFrequency,
+        frequency: smoothedFreq,
         note: {
           ...data.note,
-          cents: smoothedCents,
+          cents: Math.round(smoothedCents),
         },
-        audioLevel: data.audioLevel,
       });
     }
-  }, [updateInterval, onPitchDetected, clarity, frequency, cents, noiseGateThreshold, handleAudioLevelUpdate]);
+  }, [updateInterval, noiseGateThreshold, onPitchDetected, handleAudioLevelUpdate]);
 
-  // Performance stats handler
+  /**
+   * Handle performance stats
+   */
   const handlePerformanceUpdate = useCallback((stats: any) => {
-    setPerformanceStats({
-      avgProcessTime: stats.avgProcessTime,
-      processCount: stats.processCount,
-    });
-    
+    setPerformanceStats(stats);
     logger.debug('Pitch detection performance', {
       avgProcessTime: `${stats.avgProcessTime.toFixed(2)}ms`,
       processCount: stats.processCount,
+      skipCount: stats.skipCount,
     });
   }, []);
 
-  // Initialize pitch detection
+  /**
+   * Resume suspended AudioContext (iOS Safari workaround)
+   */
+  const resumeAudioContext = useCallback(async () => {
+    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+      try {
+        await audioContextRef.current.resume();
+        logger.info('AudioContext resumed');
+      } catch (err) {
+        logger.error('Failed to resume AudioContext', err);
+      }
+    }
+  }, []);
+
+  /**
+   * Initialize pitch detection
+   */
   useEffect(() => {
     if (!enabled) {
       return;
@@ -268,13 +248,13 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
 
     const initialize = async () => {
       try {
-        // Request microphone access
+        // Request microphone with optimal settings
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: false,
             noiseSuppression: false,
             autoGainControl: false,
-            sampleRate: sampleRate,
+            sampleRate: deviceCaps.recommendedSampleRate,
           },
         });
 
@@ -285,46 +265,77 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
 
         streamRef.current = stream;
 
-        // Use Audio Worklet if supported and enabled
-        if (useWorklet && isWorkletSupported.current) {
-          logger.info('Using Audio Worklet for pitch detection');
-          
-          const worklet = new PitchDetectionWorklet();
-          workletRef.current = worklet;
+        // Create AudioContext
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+          sampleRate: deviceCaps.recommendedSampleRate,
+          latencyHint: 'interactive',
+        });
 
-          await worklet.initialize(stream, {
-            sampleRate,
+        audioContextRef.current = audioContext;
+
+        // Load YIN worklet
+        await audioContext.audioWorklet.addModule('/yin-pitch-detector.js');
+
+        // Create worklet node
+        const workletNode = new AudioWorkletNode(audioContext, 'yin-pitch-detector', {
+          numberOfInputs: 1,
+          numberOfOutputs: 0,
+          processorOptions: {
+            sampleRate: deviceCaps.recommendedSampleRate,
             minFrequency,
             maxFrequency,
-            clarity,
-            bufferSize, // Pass adaptive buffer size
-            calibrationHz, // Pass calibration offset
-            noiseGateThreshold, // Pass noise gate threshold
-          });
+            threshold,
+            bufferSize: deviceCaps.recommendedBufferSize,
+            calibrationHz,
+            noiseGateThreshold,
+          },
+        });
 
-          logger.info('Pitch detection initialized with adaptive settings', {
-            bufferSize,
-            sampleRate,
-            minFrequency,
-            maxFrequency,
-            isMobile: deviceCaps.isMobile,
-            updateInterval,
-            smoothingFactor,
-          });
+        workletNodeRef.current = workletNode;
 
-          worklet.addPitchListener(handlePitchUpdate);
-          worklet.addPerformanceListener(handlePerformanceUpdate);
+        // Listen for messages from worklet
+        workletNode.port.onmessage = (event) => {
+          if (event.data.type === 'pitch') {
+            handlePitchUpdate(event.data);
+          } else if (event.data.type === 'performance') {
+            handlePerformanceUpdate(event.data);
+          } else if (event.data.type === 'audioLevel') {
+            handleAudioLevelUpdate(event.data.level);
+          }
+        };
 
-          setIsDetecting(true);
-          setError(null);
-        } else {
-          // Fallback to main thread processing
-          logger.warn('Audio Worklets not supported, using main thread processing');
-          setError('Audio Worklets not supported in this browser. Performance may be reduced.');
-          
-          // TODO: Implement fallback to main thread processing
-          // For now, just log the warning
+        // Create source and connect
+        const source = audioContext.createMediaStreamSource(stream);
+        sourceNodeRef.current = source;
+        source.connect(workletNode);
+
+        // Resume context if suspended (iOS Safari)
+        if (audioContext.state === 'suspended') {
+          await audioContext.resume();
         }
+
+        setIsDetecting(true);
+        setError(null);
+
+        logger.info('YIN pitch detection initialized', {
+          sampleRate: audioContext.sampleRate,
+          bufferSize: deviceCaps.recommendedBufferSize,
+          isMobile: deviceCaps.isMobile,
+          threshold,
+        });
+
+        // Add visibility change listener to handle tab switching
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === 'visible') {
+            resumeAudioContext();
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Cleanup visibility listener
+        return () => {
+          document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
       } catch (err) {
         if (!mounted) return;
 
@@ -335,15 +346,27 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       }
     };
 
-    initialize();
+    const cleanup = initialize();
 
-    // Cleanup
+    // Cleanup on unmount
     return () => {
       mounted = false;
-      
-      if (workletRef.current) {
-        workletRef.current.cleanup();
-        workletRef.current = null;
+      cleanup?.then(cleanupFn => cleanupFn?.());
+
+      if (sourceNodeRef.current) {
+        sourceNodeRef.current.disconnect();
+        sourceNodeRef.current = null;
+      }
+
+      if (workletNodeRef.current) {
+        workletNodeRef.current.disconnect();
+        workletNodeRef.current.port.onmessage = null;
+        workletNodeRef.current = null;
+      }
+
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
       }
 
       if (streamRef.current) {
@@ -356,50 +379,51 @@ export function usePitchDetection(options: UsePitchDetectionOptions = {}): Pitch
       setNote('');
       setOctave(0);
       setCents(0);
-      setDetectedClarity(0);
+      setClarity(0);
       setAudioLevel(0);
       setIsAboveNoiseGate(false);
-      
-      // Reset filters and smoothers
+
+      // Reset filters
       frequencyMedian.current.reset();
-      frequencySmoother.current.reset();
+      frequencyKalman.current.reset();
       centsMedian.current.reset();
-      centsSmoother.current.reset();
+      centsKalman.current.reset();
     };
   }, [
     enabled,
-    sampleRate,
     minFrequency,
     maxFrequency,
-    clarity,
-    useWorklet,
-    bufferSize,
+    threshold,
     calibrationHz,
     noiseGateThreshold,
     handlePitchUpdate,
     handlePerformanceUpdate,
+    handleAudioLevelUpdate,
+    resumeAudioContext,
   ]);
 
-  // Update worklet config when parameters change
+  /**
+   * Update worklet config when parameters change
+   */
   useEffect(() => {
-    if (workletRef.current && isDetecting) {
-      workletRef.current.updateConfig({
+    if (workletNodeRef.current && isDetecting) {
+      workletNodeRef.current.port.postMessage({
+        type: 'config',
         minFrequency,
         maxFrequency,
-        clarity,
-        bufferSize,
+        threshold,
         calibrationHz,
         noiseGateThreshold,
       });
     }
-  }, [minFrequency, maxFrequency, clarity, bufferSize, calibrationHz, noiseGateThreshold, isDetecting]);
+  }, [minFrequency, maxFrequency, threshold, calibrationHz, noiseGateThreshold, isDetecting]);
 
   return {
     frequency,
     note,
     octave,
     cents,
-    clarity: detectedClarity,
+    clarity,
     isDetecting,
     error,
     performanceStats,

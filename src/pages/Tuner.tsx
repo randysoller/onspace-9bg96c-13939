@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-import { X, Music, Mic, Settings, Check, RotateCcw } from 'lucide-react';
+import { X, Music, Mic, Settings, Check, RotateCcw, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
 import { useReferenceTone } from '@/hooks/useReferenceTone';
-import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { useTunerStore, TUNING_PRESETS, TuningPreset } from '@/stores/tunerStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 export default function Tuner() {
   const navigate = useNavigate();
-  const { sensitivity, setSensitivity } = useDetectionSettingsStore();
   const { playTone, stopTone } = useReferenceTone();
   const { 
     tuning, 
@@ -24,54 +22,57 @@ export default function Tuner() {
     resetCalibration,
     clearCalibrationDetections,
   } = useTunerStore();
+  
   const [selectedString, setSelectedString] = useState<number | null>(null);
-  const [noiseGate, setNoiseGate] = useState(0.015); // Default noise gate threshold
+  const [noiseGate, setNoiseGate] = useState(0.015);
+  const [yinThreshold, setYinThreshold] = useState(0.15); // YIN threshold (0.1-0.3)
   const [showCalibrationPanel, setShowCalibrationPanel] = useState(false);
+  const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
-  // Map sensitivity 1-10 to clarity threshold with mobile-friendly range
-  // Low sensitivity (1-3): 0.1-0.3 (very lenient, good for noisy environments)
-  // Medium (4-7): 0.4-0.7 (balanced)
-  // High (8-10): 0.75-0.85 (strict, for clean signals)
-  const clarityThreshold = sensitivity <= 3 
-    ? 0.1 + (sensitivity - 1) * 0.1  // 1->0.1, 2->0.2, 3->0.3
-    : sensitivity <= 7
-    ? 0.3 + (sensitivity - 3) * 0.1  // 4->0.4, 5->0.5, 6->0.6, 7->0.7
-    : 0.7 + (sensitivity - 7) * 0.05; // 8->0.75, 9->0.8, 10->0.85
-
-  const { frequency, note, octave, cents, clarity, isDetecting, error, performanceStats, audioLevel, isAboveNoiseGate } = usePitchDetection({
+  // YIN pitch detection with optimal settings
+  const { 
+    frequency, 
+    note, 
+    octave, 
+    cents, 
+    clarity, 
+    isDetecting, 
+    error, 
+    performanceStats, 
+    audioLevel, 
+    isAboveNoiseGate 
+  } = usePitchDetection({
     enabled: true,
-    optimizeForGuitar: true, // Use guitar-optimized adaptive settings
-    clarity: clarityThreshold,
-    calibrationHz, // Pass current calibration
-    noiseGateThreshold: noiseGate, // Pass noise gate threshold
+    minFrequency: 70,
+    maxFrequency: 400,
+    threshold: yinThreshold,
+    calibrationHz,
+    noiseGateThreshold: noiseGate,
+    updateInterval: 50, // 20 Hz update rate for smooth display
   });
 
   const detectedFrequency = frequency > 0 ? frequency : null;
   const detectedNote = note && octave > 0 ? `${note}${octave}` : null;
 
-  // Calibration logic: collect detections when in calibration mode
+  // Calibration logic
   useEffect(() => {
     if (isCalibrating && detectedFrequency && note === 'A' && octave === 4) {
-      // Only collect A4 notes
       addCalibrationDetection(detectedFrequency);
     }
   }, [isCalibrating, detectedFrequency, note, octave, addCalibrationDetection]);
 
-  // Calculate average calibration from collected detections
   const averageCalibrationHz = useMemo(() => {
     if (calibrationDetections.length === 0) return calibrationHz;
     const sum = calibrationDetections.reduce((a, b) => a + b, 0);
-    return Math.round(sum / calibrationDetections.length * 10) / 10; // Round to 1 decimal
+    return Math.round(sum / calibrationDetections.length * 10) / 10;
   }, [calibrationDetections, calibrationHz]);
 
-  // Start calibration mode
   const handleStartCalibration = () => {
     setIsCalibrating(true);
     clearCalibrationDetections();
     toast.info('Calibration mode: Play an A4 note (440Hz)');
   };
 
-  // Confirm calibration
   const handleConfirmCalibration = () => {
     if (calibrationDetections.length < 3) {
       toast.error('Need at least 3 stable detections. Keep playing A4...');
@@ -83,22 +84,18 @@ export default function Tuner() {
     toast.success(`Calibration set to A${averageCalibrationHz}Hz`);
   };
 
-  // Cancel calibration
   const handleCancelCalibration = () => {
     setIsCalibrating(false);
     clearCalibrationDetections();
     toast.info('Calibration cancelled');
   };
 
-  // Hysteresis for in-tune detection to prevent flickering
-  // Use different thresholds for entering vs exiting in-tune state
-  const IN_TUNE_ENTER_THRESHOLD = 5;  // Must be within ±5 cents to enter
-  const IN_TUNE_EXIT_THRESHOLD = 10;  // Can drift to ±10 cents before exiting
+  // In-tune detection with hysteresis
+  const IN_TUNE_ENTER_THRESHOLD = 5;
+  const IN_TUNE_EXIT_THRESHOLD = 10;
   
   const [isInTuneState, setIsInTuneState] = useState(false);
-  const prevCentsRef = useRef(0);
   
-  // Update in-tune state with hysteresis
   useEffect(() => {
     if (!detectedFrequency) {
       setIsInTuneState(false);
@@ -108,44 +105,30 @@ export default function Tuner() {
     const absCents = Math.abs(cents);
     
     if (!isInTuneState) {
-      // Not in tune - need to be within tight threshold to enter
       if (absCents <= IN_TUNE_ENTER_THRESHOLD) {
         setIsInTuneState(true);
       }
     } else {
-      // Already in tune - allow wider threshold before exiting
       if (absCents > IN_TUNE_EXIT_THRESHOLD) {
         setIsInTuneState(false);
       }
     }
-    
-    prevCentsRef.current = cents;
   }, [cents, detectedFrequency, isInTuneState]);
   
   const isInTune = isInTuneState;
 
-  // Hold note display to prevent flashing when pitch dies out
+  // Display note with hold
   const [displayedNote, setDisplayedNote] = useState<string>('');
   const noteHoldTimeoutRef = useRef<number | null>(null);
 
-  // Hold in-tune circle to prevent flashing
-  const [showInTuneCircle, setShowInTuneCircle] = useState(false);
-  const inTuneHoldTimeoutRef = useRef<number | null>(null);
-  const wasInTuneRef = useRef(false);
-
-  // FIX #1 & #8: Refactored note display hold logic to avoid stale closures
   useEffect(() => {
     if (detectedNote) {
-      // Immediately update to new note
       setDisplayedNote(detectedNote);
-      
-      // Clear any existing timeout
       if (noteHoldTimeoutRef.current) {
         clearTimeout(noteHoldTimeoutRef.current);
         noteHoldTimeoutRef.current = null;
       }
     } else if (displayedNote) {
-      // When detection stops, hold the last note for 400ms before clearing
       if (!noteHoldTimeoutRef.current) {
         noteHoldTimeoutRef.current = window.setTimeout(() => {
           setDisplayedNote('');
@@ -155,22 +138,23 @@ export default function Tuner() {
     }
   }, [detectedNote, displayedNote]);
 
-  // FIX #1 & #8: Refactored in-tune circle logic to avoid setState in setState callback
+  // In-tune circle with hold
+  const [showInTuneCircle, setShowInTuneCircle] = useState(false);
+  const inTuneHoldTimeoutRef = useRef<number | null>(null);
+  const wasInTuneRef = useRef(false);
+
   useEffect(() => {
     if (isInTune) {
-      // Immediately show circle when in tune
       if (!wasInTuneRef.current) {
         setShowInTuneCircle(true);
         wasInTuneRef.current = true;
       }
       
-      // Clear any existing hide timeout
       if (inTuneHoldTimeoutRef.current) {
         clearTimeout(inTuneHoldTimeoutRef.current);
         inTuneHoldTimeoutRef.current = null;
       }
     } else if (wasInTuneRef.current) {
-      // When going out of tune, hold the circle for 400ms before hiding
       wasInTuneRef.current = false;
       
       if (!inTuneHoldTimeoutRef.current) {
@@ -182,15 +166,10 @@ export default function Tuner() {
     }
   }, [isInTune]);
 
-  // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (noteHoldTimeoutRef.current) {
-        clearTimeout(noteHoldTimeoutRef.current);
-      }
-      if (inTuneHoldTimeoutRef.current) {
-        clearTimeout(inTuneHoldTimeoutRef.current);
-      }
+      if (noteHoldTimeoutRef.current) clearTimeout(noteHoldTimeoutRef.current);
+      if (inTuneHoldTimeoutRef.current) clearTimeout(inTuneHoldTimeoutRef.current);
     };
   }, []);
 
@@ -204,10 +183,7 @@ export default function Tuner() {
   const stringTimeoutRef = useRef<number | null>(null);
 
   const handleStringClick = (stringData: typeof strings[0]) => {
-    // Stop any currently playing tone to prevent overlap
     stopTone();
-    
-    // Clear any existing timeout
     if (stringTimeoutRef.current) {
       clearTimeout(stringTimeoutRef.current);
     }
@@ -215,14 +191,12 @@ export default function Tuner() {
     setSelectedString(stringData.number);
     playTone(stringData.freq);
     
-    // Let the tone play its full 3-second duration naturally
     stringTimeoutRef.current = window.setTimeout(() => {
       setSelectedString(null);
       stringTimeoutRef.current = null;
     }, 3000);
   };
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (stringTimeoutRef.current) {
@@ -231,39 +205,29 @@ export default function Tuner() {
     };
   }, []);
 
-  // Generate frequency bars (showing pitch deviation) - Memoized for performance
+  // Frequency bars (pitch deviation display)
   const bars = useMemo(() => {
     const bars = [];
     const totalBars = 50;
     const centerBar = 25;
     
-    // Calculate which bar should be lit based on cents offset
-    // Map cents (-50 to +50) to bar position (0 to 50)
     const centPosition = Math.round((cents / 100) * totalBars + centerBar);
     
     for (let i = 0; i < totalBars; i++) {
       const distance = Math.abs(i - centerBar);
       let color = 'bg-emerald-500';
       
-      if (distance > 2) {
-        color = 'bg-yellow-500';
-      }
-      if (distance > 8) {
-        color = 'bg-red-500';
-      }
+      if (distance > 2) color = 'bg-yellow-500';
+      if (distance > 8) color = 'bg-red-500';
       
-      // Light up the bar if it's at the current cent position (only when frequency is detected)
       const isActive = detectedFrequency && Math.abs(i - centPosition) <= 1;
       
-      // Flying saucer shape: center bar sticks up 25% above and below the saucer
-      // Center bar: 94px (fixed), Saucer max: 70px (25% below center), Edge bars: 20px
-      const normalizedDistance = distance / centerBar; // 0 at center, 1 at edges
-      const heightMultiplier = 1 - (normalizedDistance * normalizedDistance * 0.85); // Steeper quadratic falloff
-      const centerBarHeight = 94; // Center bar height (fixed)
-      const maxSaucerHeight = 70; // Tallest saucer bars (25% below center bar)
-      const minHeight = 20; // Shortest bar height at edges
+      const normalizedDistance = distance / centerBar;
+      const heightMultiplier = 1 - (normalizedDistance * normalizedDistance * 0.85);
+      const centerBarHeight = 94;
+      const maxSaucerHeight = 70;
+      const minHeight = 20;
       
-      // Center bar gets full height, others follow saucer curve
       const barHeightPx = i === centerBar 
         ? centerBarHeight 
         : Math.round(minHeight + (maxSaucerHeight - minHeight) * heightMultiplier);
@@ -285,7 +249,6 @@ export default function Tuner() {
     return bars;
   }, [cents, detectedFrequency]);
 
-  // Get note color based on tuning accuracy
   const getNoteColor = () => {
     if (!detectedFrequency) return 'text-zinc-700';
     const absCents = Math.abs(cents);
@@ -294,7 +257,6 @@ export default function Tuner() {
     return 'text-red-500';
   };
   
-  // Extract just the note name without octave (use held note for display)
   const noteNameOnly = displayedNote ? displayedNote.replace(/[0-9]/g, '') : '';
 
   return (
@@ -317,13 +279,12 @@ export default function Tuner() {
           <div className="w-9" />
         </div>
 
-        {/* Title & Tuning Selector */}
+        {/* Title */}
         <div className="text-center mb-4">
           <h1 className="text-3xl md:text-4xl font-black mb-1">
             Tune Your <span className="text-amber-500">Guitar</span>
           </h1>
           
-          {/* Tuning Selector */}
           <div className="flex justify-center mb-0">
             <Select value={tuning} onValueChange={(value) => setTuning(value as TuningPreset)}>
               <SelectTrigger className="w-[280px] bg-zinc-900 border-zinc-800 text-white">
@@ -341,17 +302,15 @@ export default function Tuner() {
           </div>
         </div>
 
-        {/* Pitch Detection Display */}
+        {/* Main Display */}
         <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-6 mb-4">
-          {/* Note Name Display with Circle - Fixed height to prevent layout shift */}
+          {/* Note Display */}
           <div className="text-center mb-6 relative">
             <div className="relative inline-flex items-center justify-center bg-black rounded-2xl px-12 py-8" style={{ minHeight: '180px', minWidth: '200px' }}>
-              {/* Circle indicator when in tune */}
               {showInTuneCircle && (
                 <div className="absolute inset-4 border-4 border-emerald-500 rounded-full animate-pulse" />
               )}
               
-              {/* Note Name - always rendered with fixed height */}
               <div className={`text-8xl md:text-9xl font-black transition-colors duration-200 ${
                 getNoteColor()
               }`} style={{ minHeight: '120px', minWidth: '120px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -359,26 +318,26 @@ export default function Tuner() {
               </div>
             </div>
             
-            {/* Show errors (permission denied, worklet issues, etc.) */}
+            {/* Error Display */}
             {error && (
               <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
-                <div className="text-sm font-bold text-red-500">
+                <div className="flex items-center justify-center gap-2 text-red-500 text-sm font-bold mb-1">
+                  <AlertCircle className="w-4 h-4" />
                   {error.includes('denied') || error.includes('permission') 
-                    ? 'Microphone access denied' 
+                    ? 'Microphone Access Denied' 
                     : 'Detection Error'}
                 </div>
-                <div className="text-xs text-red-400 mt-1">
+                <div className="text-xs text-red-400 text-center">
                   {error.includes('denied') || error.includes('permission')
-                    ? 'Please allow microphone access in your browser settings'
+                    ? 'Please allow microphone access in your browser settings and reload the page'
                     : error}
                 </div>
               </div>
             )}
             
-            {/* Show detection status */}
+            {/* Detection Status */}
             {!error && isDetecting && (
               <div className="mt-2">
-                {/* Calibration Mode Banner */}
                 {isCalibrating && (
                   <div className="mb-2 px-4 py-2 bg-amber-500/20 border border-amber-500/40 rounded-lg">
                     <div className="flex items-center justify-center gap-2 text-amber-500 text-xs font-bold mb-1">
@@ -391,7 +350,6 @@ export default function Tuner() {
                   </div>
                 )}
                 
-                {/* Normal Listening Status */}
                 {!isCalibrating && (
                   <div className="flex items-center justify-center gap-2 text-emerald-500 text-xs">
                     <div className="flex gap-0.5">
@@ -399,14 +357,14 @@ export default function Tuner() {
                       <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '150ms' }} />
                       <div className="w-1 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '300ms' }} />
                     </div>
-                    <span className="font-medium">Listening...</span>
+                    <span className="font-medium">Listening with YIN...</span>
                   </div>
                 )}
               </div>
             )}          
           </div>
 
-          {/* Frequency Bars - Always visible with fixed height */}
+          {/* Frequency Bars */}
           <div className="flex items-center justify-center gap-0.5 mb-4" style={{ minHeight: '48px' }}>
             {bars}
           </div>
@@ -526,9 +484,6 @@ export default function Tuner() {
               </div>
               <span className="text-zinc-600">Less Sensitive</span>
             </div>
-            <p className="text-xs text-zinc-500 mt-1">
-              Adjust to prevent false detections from background noise. Increase if tuner is too jittery on mobile.
-            </p>
           </div>
 
           {/* Audio Level Meter */}
@@ -538,12 +493,10 @@ export default function Tuner() {
               <span className="text-xs font-bold text-white">{(audioLevel * 100).toFixed(1)}%</span>
             </div>
             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden relative">
-              {/* Noise gate threshold marker */}
               <div 
                 className="absolute top-0 bottom-0 w-0.5 bg-amber-500 z-10"
                 style={{ left: `${(noiseGate / 0.05) * 100}%` }}
               />
-              {/* Audio level bar */}
               <div 
                 className={`h-full transition-all duration-100 ${
                   audioLevel >= noiseGate ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-zinc-700'
@@ -552,79 +505,115 @@ export default function Tuner() {
               />
             </div>
             <p className="text-xs text-zinc-600 mt-1">
-              Play louder if the bar doesn't reach the orange line (noise gate threshold)
+              {isAboveNoiseGate 
+                ? 'Signal detected - tuner active' 
+                : 'Play louder or lower the noise gate threshold'}
             </p>
           </div>
 
-          {/* Mic Sensitivity & Detection Quality */}
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Mic className="w-6 h-6 text-amber-500" />
-                <span className="text-sm font-bold uppercase tracking-wider text-white">Detection Quality</span>
-                <span className="ml-auto text-sm font-bold text-white">{sensitivity}/10</span>
-              </div>
-              
-              <div className="relative">
+          {/* Advanced Settings Toggle */}
+          <button
+            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+            className="w-full mb-3 flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
+          >
+            <Settings className="w-3 h-3" />
+            {showAdvancedSettings ? 'Hide' : 'Show'} Advanced Settings
+          </button>
+
+          {/* Advanced Settings Panel */}
+          {showAdvancedSettings && (
+            <div className="space-y-4 mb-4 p-4 bg-zinc-800/50 border border-zinc-700 rounded-lg">
+              {/* YIN Threshold */}
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm font-bold uppercase tracking-wider text-white">Detection Strictness</span>
+                  <span className="ml-auto text-sm font-bold text-white">{yinThreshold.toFixed(2)}</span>
+                </div>
                 <input
                   type="range"
-                  min="1"
-                  max="10"
-                  value={sensitivity}
-                  onChange={(e) => setSensitivity(Number(e.target.value))}
+                  min="0.10"
+                  max="0.30"
+                  step="0.01"
+                  value={yinThreshold}
+                  onChange={(e) => setYinThreshold(Number(e.target.value))}
                   className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
                 />
+                <div className="flex justify-between text-xs text-zinc-600 mt-1">
+                  <span>Strict (0.10)</span>
+                  <span>Balanced</span>
+                  <span>Lenient (0.30)</span>
+                </div>
+                <p className="text-xs text-zinc-500 mt-1">
+                  Lower = more accurate but may miss quiet notes. Higher = picks up weaker signals but less accurate.
+                </p>
               </div>
-              <div className="flex justify-between text-xs text-zinc-600 mt-1">
-                <span>Lenient</span>
-                <span>Balanced</span>
-                <span>Strict</span>
-              </div>
+
+              {/* Calibration Button */}
+              <button
+                onClick={() => setShowCalibrationPanel(!showCalibrationPanel)}
+                className="w-full flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
+              >
+                <Settings className="w-3 h-3" />
+                {showCalibrationPanel ? 'Hide' : 'Show'} Calibration Settings
+              </button>
+
+              {/* Performance Stats */}
+              {isDetecting && performanceStats && (
+                <div className="pt-3 border-t border-zinc-700">
+                  <div className="text-xs text-zinc-500 mb-2">Performance Stats</div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Algorithm</div>
+                      <div className="text-white font-bold">YIN</div>
+                    </div>
+                    <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Processing</div>
+                      <div className="text-white font-bold">{performanceStats.avgProcessTime.toFixed(1)}ms</div>
+                    </div>
+                    <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Buffer Size</div>
+                      <div className="text-white font-bold">{(performanceStats as any).bufferSize || 4096}</div>
+                    </div>
+                    <div className="bg-zinc-900 rounded p-2">
+                      <div className="text-zinc-600">Calibration</div>
+                      <div className="text-white font-bold">A{calibrationHz}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-            
-            {/* Clarity indicator - always show when detecting */}
-            {isDetecting && (
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-zinc-500">Signal Quality</span>
-                  <span className={`text-xs font-bold ${
-                    clarity >= 0.7 ? 'text-emerald-500' :
-                    clarity >= 0.4 ? 'text-amber-500' : 
-                    'text-red-500'
-                  }`}>
-                    {clarity >= 0.7 ? 'Excellent' :
-                     clarity >= 0.4 ? 'Good' : 
-                     'Poor'} ({(clarity * 100).toFixed(0)}%)
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-300 ${
-                      clarity >= 0.7 ? 'bg-emerald-500' :
-                      clarity >= 0.4 ? 'bg-amber-500' : 
-                      'bg-red-500'
-                    }`}
-                    style={{ width: `${Math.min(100, clarity * 100)}%` }}
-                  />
-                </div>
-                {clarity < 0.3 && (
-                  <p className="text-xs text-red-400 mt-1">Low signal - try playing louder or adjusting sensitivity</p>
-                )}
-                {performanceStats && (
-                  <p className="text-xs text-zinc-600 mt-1">
-                    Buffer: {(performanceStats as any).bufferSize || 8192} samples • Processing: {performanceStats.avgProcessTime.toFixed(1)}ms • Calibration: A{calibrationHz}Hz
-                  </p>
-                )}
-                <button
-                  onClick={() => setShowCalibrationPanel(!showCalibrationPanel)}
-                  className="w-full mt-2 flex items-center justify-center gap-2 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg transition-colors text-xs font-medium"
-                >
-                  <Settings className="w-3 h-3" />
-                  {showCalibrationPanel ? 'Hide' : 'Show'} Calibration Settings
-                </button>
+          )}
+
+          {/* Clarity Indicator */}
+          {isDetecting && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-zinc-500">Signal Quality</span>
+                <span className={`text-xs font-bold ${
+                  clarity >= 0.7 ? 'text-emerald-500' :
+                  clarity >= 0.4 ? 'text-amber-500' : 
+                  'text-red-500'
+                }`}>
+                  {clarity >= 0.7 ? 'Excellent' :
+                   clarity >= 0.4 ? 'Good' : 
+                   'Poor'} ({(clarity * 100).toFixed(0)}%)
+                </span>
               </div>
-            )}
-          </div>
+              <div className="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-300 ${
+                    clarity >= 0.7 ? 'bg-emerald-500' :
+                    clarity >= 0.4 ? 'bg-amber-500' : 
+                    'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.min(100, clarity * 100)}%` }}
+                />
+              </div>
+              {clarity < 0.3 && (
+                <p className="text-xs text-red-400 mt-1">Low signal quality - try playing louder or adjusting settings</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Strings Section */}

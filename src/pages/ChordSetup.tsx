@@ -50,10 +50,10 @@ export default function ChordSetup() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black mb-3">
+          <h1 className="text-4xl md:text-5xl font-black mb-3">
             Master Every Chord.
           </h1>
-          <h2 className="text-5xl md:text-6xl font-black text-amber-500 mb-6">
+          <h2 className="text-4xl md:text-5xl font-black text-emerald-500 mb-6">
             One Fret at a Time.
           </h2>
           <p className="text-lg text-zinc-400 max-w-2xl mx-auto">
@@ -79,12 +79,12 @@ export default function ChordSetup() {
 
           {/* Chord Type Filter */}
           <div className="relative mb-3">
-            <div className="bg-zinc-900/50 border border-amber-500/30 rounded-lg px-4 py-3">
+            <div className="bg-zinc-900/50 border border-emerald-500/30 rounded-lg px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-amber-500" />
+                  <Filter className="w-4 h-4 text-emerald-500" />
                   <span className="text-sm font-medium text-zinc-300">Chord Types</span>
-                  <span className="bg-amber-500/20 text-amber-500 text-xs font-bold px-2 py-0.5 rounded">
+                  <span className="bg-emerald-500/20 text-emerald-500 text-xs font-bold px-2 py-0.5 rounded">
                     {chordFilterStore.allowedCategories.size}/6
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export default function ChordSetup() {
                         onClick={() => chordFilterStore.setPreset(preset)}
                         className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                           isActive
-                            ? 'bg-amber-500 text-black'
+                            ? 'bg-emerald-500 text-black'
                             : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                         }`}
                       >
@@ -180,8 +180,8 @@ export default function ChordSetup() {
         {filteredChords.length === 0 && (
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-8 mb-6 text-center">
             <div className="mb-4">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500/10 rounded-full mb-4">
-                <CheckSquare className="w-8 h-8 text-amber-500" />
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500/10 rounded-full mb-4">
+                <CheckSquare className="w-8 h-8 text-emerald-500" />
               </div>
               <h3 className="text-xl font-bold text-white mb-2">No Chords Match Your Filters</h3>
               <p className="text-sm text-zinc-400 max-w-md mx-auto mb-4">
@@ -190,7 +190,7 @@ export default function ChordSetup() {
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 max-w-sm mx-auto">
               <div className="flex items-start gap-3 text-left">
-                <MousePointer className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <MousePointer className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <div className="text-sm font-bold text-white mb-1">Quick Tip</div>
                   <div className="text-xs text-zinc-400">
@@ -205,15 +205,15 @@ export default function ChordSetup() {
         {/* Chords Available Count */}
         {filteredChords.length > 0 && (
           <div className="mb-6">
-            <span className="text-amber-500 font-bold text-sm">{filteredChords.length}</span>
+            <span className="text-emerald-500 font-bold text-sm">{filteredChords.length}</span>
             <span className="text-zinc-500 text-sm"> chords available</span>
           </div>
         )}
 
         {/* Ready to Practice Panel */}
-        <div className="bg-zinc-900/50 border-2 border-amber-500/30 rounded-lg p-6">
+        <div className="bg-zinc-900/50 border-2 border-emerald-500/30 rounded-lg p-6">
           <div className="flex items-center gap-2.5 mb-6">
-            <Play className="w-5 h-5 text-amber-500" />
+            <Play className="w-5 h-5 text-emerald-500" />
             <h2 className="text-xl font-bold uppercase tracking-wide">Ready to Practice</h2>
           </div>
 
@@ -236,7 +236,7 @@ export default function ChordSetup() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-500">Available chords</span>
-              <span className="text-amber-500 font-bold text-lg">{filteredChords.length}</span>
+              <span className="text-emerald-500 font-bold text-lg">{filteredChords.length}</span>
             </div>
             {chordFilterStore.allowedCategories.size < 6 && (
               <div className="bg-emerald-500/10 border border-emerald-500/20 rounded px-3 py-2">
@@ -250,7 +250,7 @@ export default function ChordSetup() {
           <button
             onClick={handleStartPractice}
             disabled={filteredChords.length === 0}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-amber-500/20 disabled:shadow-none"
+            className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:from-zinc-800 disabled:to-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-zinc-950 font-bold text-lg py-4 rounded-lg flex items-center justify-center gap-2.5 transition-all shadow-lg shadow-emerald-500/20 disabled:shadow-none"
           >
             <Play className="w-5 h-5" fill="currentColor" />
             START PRACTICE

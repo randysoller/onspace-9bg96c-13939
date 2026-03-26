@@ -7,6 +7,7 @@ import { SkipToContent } from '@/components/SkipToContent';
 import Index from '@/pages/Index';
 import ChordSetup from '@/pages/ChordSetup';
 import Practice from '@/pages/Practice';
+import PracticeTest from '@/pages/PracticeTest';
 import ProgressionSetup from '@/pages/ProgressionSetup';
 import ProgressionPractice from '@/pages/ProgressionPractice';
 import ChordEditor from '@/pages/ChordEditor';
@@ -41,6 +42,7 @@ function App() {
             <Route path="/" element={<Index />} />
             <Route path="/chord-setup" element={<ChordSetup />} />
             <Route path="/practice" element={<Practice />} />
+            <Route path="/practice-test" element={<PracticeTest />} />
             <Route path="/progression-setup" element={<ProgressionSetup />} />
             <Route path="/progression-practice" element={<ProgressionPractice />} />
             <Route path="/library" element={

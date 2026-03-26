@@ -69,7 +69,7 @@ function getMajorScaleIntervals(key: KeySignature): Set<number> {
 
 // Get effective chords (standard + custom)
 function getEffectiveChords(): ChordData[] {
-  const customChords = useCustomChordStore.getState().chords;
+  const customChords = useCustomChordStore.getState().chords || [];
   const customRoots = new Set(customChords.map(c => c.name));
   
   // Filter out standard chords replaced by custom chords

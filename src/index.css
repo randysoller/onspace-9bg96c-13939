@@ -110,6 +110,34 @@ body {
 
 @layer base {
   :root {
+    /* Tuner Design System - Section 3.1 specification */
+    /* Brand colors */
+    --color-primary: 38 75% 52%;       /* Amber gold — primary CTAs, active states */
+    --color-brand: 30 62% 44%;         /* Darker amber — hover states */
+    --color-emphasis: 43 83% 65%;      /* Light gold — highlights, calibration accent */
+
+    /* Text colors */
+    --text-default: 36 33% 93%;        /* Near-white warm */
+    --text-subtle: 33 14% 72%;         /* Medium gray warm */
+    --text-muted: 30 7% 47%;           /* Dim gray warm */
+
+    /* Background colors */
+    --bg-base: 30 25% 4%;              /* Near-black warm */
+    --bg-elevated: 28 20% 8%;          /* Cards, panels */
+    --bg-overlay: 28 17% 11%;          /* Hover states */
+    --bg-surface: 28 14% 15%;          /* Input fields, chips */
+
+    /* Border colors */
+    --border-default: 28 12% 21%;
+    --border-subtle: 28 10% 16%;
+
+    /* Semantic colors */
+    --semantic-success: 142 71% 45%;   /* Green — in tune */
+    --semantic-warning: 43 96% 56%;    /* Yellow-amber */
+    --semantic-error: 0 84% 60%;       /* Red */
+    --semantic-info: 217 91% 60%;      /* Blue */
+
+    /* Legacy shadcn compatibility */
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
     --card: 0 0% 5%;
@@ -141,6 +169,21 @@ body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer utilities {
+  /* Tuner gradient utilities */
+  .text-gradient {
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-image: linear-gradient(135deg, hsl(var(--color-emphasis)), hsl(var(--color-primary)), hsl(var(--color-brand)));
+  }
+
+  .stage-gradient {
+    background: radial-gradient(ellipse at 50% 0%, hsl(var(--color-primary) / 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 50%, hsl(var(--color-brand) / 0.05) 0%, transparent 50%),
+                hsl(var(--bg-base));
   }
 }
 

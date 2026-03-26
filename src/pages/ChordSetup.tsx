@@ -7,7 +7,13 @@ import { useChordTypeFilterStore, FILTER_PRESETS, type FilterPreset } from '@/st
 
 export default function ChordSetup() {
   const navigate = useNavigate();
-  const { setPracticeChords } = usePracticeStore();
+  const { 
+    setCategories,
+    setChordTypes,
+    setBarreRoots,
+    setKeyFilter,
+    startPractice
+  } = usePracticeStore();
   const chordFilterStore = useChordTypeFilterStore();
   
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
@@ -41,7 +47,47 @@ export default function ChordSetup() {
   }, [selectedKey, selectedShapes, selectedTypes]);
 
   const handleStartPractice = () => {
-    setPracticeChords(filteredChords);
+    // Update store filters based on current selections
+    const categories = new Set<any>();
+    if (selectedShapes === 'Open') categories.add('open');
+    if (selectedShapes === 'Barre') categories.add('barre');
+    if (selectedShapes === 'Movable') categories.add('movable');
+    if (selectedShapes === 'All Shapes') {
+      categories.add('open');
+      categories.add('barre');
+      categories.add('movable');
+    }
+    
+    const types = new Set<any>();
+    if (selectedTypes === 'Major') types.add('major');
+    if (selectedTypes === 'Minor') types.add('minor');
+    if (selectedTypes === '7th') {
+      types.add('7');
+      types.add('maj7');
+      types.add('m7');
+    }
+    if (selectedTypes === 'Suspended') {
+      types.add('sus4');
+      types.add('sus2');
+    }
+    if (selectedTypes === 'All Types') {
+      types.add('major');
+      types.add('minor');
+      types.add('7');
+      types.add('maj7');
+      types.add('m7');
+      types.add('sus4');
+      types.add('sus2');
+      types.add('dim');
+      types.add('aug');
+    }
+    
+    setCategories(categories);
+    setChordTypes(types);
+    setKeyFilter(selectedKey !== 'All' ? selectedKey as any : null);
+    
+    // Start practice with current filters
+    startPractice();
     navigate('/practice');
   };
 

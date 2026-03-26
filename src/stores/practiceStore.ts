@@ -98,22 +98,36 @@ function getEffectiveChords(): ChordData[] {
 function filterChords(state: Omit<PracticeState, 'startPractice' | 'stopPractice' | 'nextChord' | 'prevChord' | 'revealChord' | 'hideChord' | 'getCurrentChord' | 'setCategories' | 'setChordTypes' | 'setTimerDuration' | 'setBarreRoots' | 'setKeyFilter' | 'setActivePresetId'>): ChordData[] {
   const allChords = getEffectiveChords();
   
-  return allChords.filter(chord => {
-    // Category filter
-    if (state.categories.size > 0 && !state.categories.has(chord.category)) {
-      return false;
+  console.log('🔍 Filtering chords:', {
+    totalChords: allChords.length,
+    categories: Array.from(state.categories),
+    chordTypes: Array.from(state.chordTypes),
+    keyFilter: state.keyFilter,
+  });
+  
+  const filtered = allChords.filter(chord => {
+    // Category filter (if any categories selected)
+    if (state.categories.size > 0) {
+      if (!state.categories.has(chord.category as any)) {
+        return false;
+      }
     }
     
-    // Chord type filter
-    if (state.chordTypes.size > 0 && !state.chordTypes.has(chord.type)) {
-      return false;
+    // Chord type filter (if any types selected)
+    if (state.chordTypes.size > 0) {
+      if (!state.chordTypes.has(chord.type as any)) {
+        return false;
+      }
     }
     
     // Barre root filter
-    if (state.barreRoots.size > 0 && chord.category === 'barre') {
-      const rootString = chord.rootString;
-      if (rootString === undefined || !state.barreRoots.has(rootString as BarreRoot)) {
-        return false;
+    if (state.barreRoots.size > 0) {
+      const hasBarre = chord.barres && chord.barres.length > 0;
+      if (hasBarre) {
+        const rootString = chord.rootString;
+        if (rootString === undefined || !state.barreRoots.has(rootString as BarreRoot)) {
+          return false;
+        }
       }
     }
     
@@ -133,6 +147,9 @@ function filterChords(state: Omit<PracticeState, 'startPractice' | 'stopPractice
     
     return true;
   });
+  
+  console.log(`✅ Filtered ${filtered.length} chords`);
+  return filtered;
 }
 
 export const usePracticeStore = create<PracticeState>()(
@@ -161,9 +178,12 @@ export const usePracticeStore = create<PracticeState>()(
       setActivePresetId: (id) => set({ activePresetId: id }),
       
       startPractice: () => {
+        console.log('🎯 startPractice called');
         const state = get();
         const filtered = filterChords(state);
         const shuffled = shuffle(filtered);
+        
+        console.log(`🎲 Shuffled ${shuffled.length} chords`);
         
         set({
           isPracticing: true,
@@ -171,6 +191,8 @@ export const usePracticeStore = create<PracticeState>()(
           currentIndex: 0,
           isRevealed: false,
         });
+        
+        console.log('✅ Practice started, isPracticing:', get().isPracticing);
       },
       
       stopPractice: () => {

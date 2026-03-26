@@ -47,30 +47,45 @@ export default function ChordSetup() {
   }, [selectedKey, selectedShapes, selectedTypes]);
 
   const handleStartPractice = () => {
-    // Update store filters based on current selections
+    console.log('🎯 Starting practice with filters:', { selectedKey, selectedShapes, selectedTypes });
+    
+    // Set musical categories (Major, Minor, Dominant, Suspended)
     const categories = new Set<any>();
-    if (selectedShapes === 'Open') categories.add('open');
-    if (selectedShapes === 'Barre') categories.add('barre');
-    if (selectedShapes === 'Movable') categories.add('movable');
-    if (selectedShapes === 'All Shapes') {
-      categories.add('open');
-      categories.add('barre');
-      categories.add('movable');
+    if (selectedTypes === 'Major') {
+      categories.add('Major');
+    } else if (selectedTypes === 'Minor') {
+      categories.add('Minor');
+    } else if (selectedTypes === '7th') {
+      categories.add('Dominant');
+      categories.add('Major');
+      categories.add('Minor');
+    } else if (selectedTypes === 'Suspended') {
+      categories.add('Suspended');
+    } else if (selectedTypes === 'All Types') {
+      categories.add('Major');
+      categories.add('Minor');
+      categories.add('Dominant');
+      categories.add('Suspended');
+      categories.add('Augmented');
+      categories.add('Diminished');
     }
     
+    // Set chord types (major, minor, 7, maj7, etc.)
     const types = new Set<any>();
-    if (selectedTypes === 'Major') types.add('major');
-    if (selectedTypes === 'Minor') types.add('minor');
-    if (selectedTypes === '7th') {
+    if (selectedTypes === 'Major') {
+      types.add('major');
+      types.add('maj7');
+    } else if (selectedTypes === 'Minor') {
+      types.add('minor');
+      types.add('m7');
+    } else if (selectedTypes === '7th') {
       types.add('7');
       types.add('maj7');
       types.add('m7');
-    }
-    if (selectedTypes === 'Suspended') {
+    } else if (selectedTypes === 'Suspended') {
       types.add('sus4');
       types.add('sus2');
-    }
-    if (selectedTypes === 'All Types') {
+    } else if (selectedTypes === 'All Types') {
       types.add('major');
       types.add('minor');
       types.add('7');
@@ -82,12 +97,17 @@ export default function ChordSetup() {
       types.add('aug');
     }
     
+    console.log('📊 Setting store state:', { categories: Array.from(categories), types: Array.from(types) });
+    
     setCategories(categories);
     setChordTypes(types);
     setKeyFilter(selectedKey !== 'All' ? selectedKey as any : null);
     
     // Start practice with current filters
+    console.log('🚀 Calling startPractice()...');
     startPractice();
+    
+    console.log('📍 Navigating to /practice...');
     navigate('/practice');
   };
 

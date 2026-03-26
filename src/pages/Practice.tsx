@@ -467,75 +467,59 @@ export default function Practice() {
         </div>
       </div>
 
-      {/* Fixed Bottom Toolbar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated)/0.95)] backdrop-blur-md safe-area-inset-bottom">
-        <div className="flex items-stretch gap-2 px-3 py-3 pb-safe max-w-2xl mx-auto">
+      {/* Fixed Bottom Toolbar - Always Visible on Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
+        <div className="flex items-stretch gap-2 px-3 py-4 pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button
             onClick={handlePrev}
-            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation
-              bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
+            aria-label="Previous chord"
+            className="min-w-[56px] min-h-[56px] rounded-xl flex items-center justify-center touch-manipulation
+              bg-[hsl(var(--bg-surface))] border-2 border-[hsl(var(--border-subtle))]
               hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
           >
-            <SkipBack className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
-          </button>
-
-          {/* Restart */}
-          <button
-            onClick={handleRestart}
-            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation md:flex hidden
-              bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-              hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
-          >
-            <RotateCcw className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
-          </button>
-
-          {/* History */}
-          <button
-            onClick={() => navigate('/history')}
-            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation md:flex hidden
-              bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-              hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
-          >
-            <BarChart3 className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
+            <SkipBack className="w-6 h-6 text-[hsl(var(--text-subtle))]" />
           </button>
 
           {/* Reveal / Play Again */}
           {!isRevealed ? (
             <button
               onClick={handleReveal}
-              className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
-                bg-[hsl(var(--color-primary)/0.15)] border border-[hsl(var(--color-primary)/0.3)]
-                text-[hsl(var(--color-primary))] font-display font-bold text-base
+              aria-label="Reveal chord"
+              className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
+                bg-[hsl(var(--color-primary)/0.15)] border-2 border-[hsl(var(--color-primary)/0.4)]
+                text-[hsl(var(--color-primary))] font-display font-bold text-lg
                 hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
             >
-              <Eye className="w-5 h-5" />
-              <span>Reveal</span>
+              <Eye className="w-6 h-6" />
+              <span className="hidden sm:inline">Reveal</span>
             </button>
           ) : (
             <button
               onClick={handlePlayAgain}
-              className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
-                bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                text-[hsl(var(--text-default))] font-display font-semibold text-base
+              aria-label="Play chord"
+              className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
+                bg-[hsl(var(--bg-surface))] border-2 border-[hsl(var(--border-subtle))]
+                text-[hsl(var(--text-default))] font-display font-bold text-lg
                 hover:bg-[hsl(var(--bg-overlay))] active:scale-[0.97] transition-all"
             >
-              <Volume2 className="w-5 h-5" />
-              <span>Play</span>
+              <Volume2 className="w-6 h-6" />
+              <span className="hidden sm:inline">Play</span>
             </button>
           )}
 
-          {/* Next */}
+          {/* Next - Always Visible, Prominent */}
           <button
             onClick={handleNext}
-            className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
-              bg-[hsl(var(--color-primary))] text-[hsl(var(--bg-base))]
-              font-display font-bold text-base
+            aria-label="Next chord"
+            className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
+              bg-[hsl(var(--color-primary))] text-white
+              font-display font-bold text-lg
               hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
-              shadow-lg shadow-[hsl(var(--color-primary)/0.2)]"
+              shadow-lg shadow-[hsl(var(--color-primary)/0.3)]"
           >
             <span>Next</span>
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-6 h-6" />
           </button>
         </div>
       </div>

@@ -11,7 +11,14 @@
   }
   
   .pb-safe {
-    padding-bottom: max(env(safe-area-inset-bottom), 12px);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+}
+
+/* Ensure toolbar is always above mobile browser chrome */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
   }
 }
 

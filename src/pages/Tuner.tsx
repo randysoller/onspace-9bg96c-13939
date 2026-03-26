@@ -841,7 +841,7 @@ export default function TunerPanel() {
               <div ref={tuningDropdownRef} className="relative">
                 <button
                   onClick={() => setTuningDropdownOpen((o) => !o)}
-                  className="inline-flex items-center gap-3 rounded-lg border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm px-5 py-3 min-h-[48px] transition-all hover:bg-[hsl(var(--bg-overlay))] active:scale-95"
+                  className="inline-flex items-center gap-3 rounded-lg border border-zinc-700/50 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm px-5 py-3 min-h-[48px] transition-all hover:bg-[hsl(var(--bg-overlay))] active:scale-95"
                 >
                   <span className="font-display text-base font-bold text-[hsl(var(--text-default))]">
                     {selectedTuning.label}
@@ -857,7 +857,7 @@ export default function TunerPanel() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 w-72 rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated))] backdrop-blur-xl shadow-xl overflow-hidden"
+                    className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 w-72 rounded-xl border border-zinc-700/50 bg-[hsl(var(--bg-elevated))] backdrop-blur-xl shadow-xl overflow-hidden"
                   >
                     {TUNING_PRESETS.map((preset) => {
                       const isActive = selectedTuning.name === preset.name;
@@ -912,7 +912,7 @@ export default function TunerPanel() {
             )}
 
             {/* Main tuner display */}
-            <div className="rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6">
+            <div className="rounded-xl border border-zinc-700/40 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6">
               <div className="space-y-4">
                 {/* Detected note */}
                 <div className="text-center">
@@ -1065,7 +1065,7 @@ export default function TunerPanel() {
                 </div>
 
                 {/* Calibration shortcut */}
-                <div className="!mt-3 flex items-center justify-between rounded-lg border border-[hsl(var(--border-subtle)/0.5)] bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
+                <div className="!mt-3 flex items-center justify-between rounded-lg border border-zinc-700/30 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Crosshair className="size-3.5 text-[hsl(var(--color-emphasis))]" />
                     <span className="text-[10px] font-display font-bold text-[hsl(var(--text-subtle))] uppercase tracking-wider">Calibration</span>
@@ -1082,7 +1082,7 @@ export default function TunerPanel() {
             </div>
 
             {/* String selector + reference tones */}
-            <div className="rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-5">
+            <div className="rounded-xl border border-zinc-700/40 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-display text-sm font-semibold text-[hsl(var(--text-subtle))] uppercase tracking-wider">
                   Strings

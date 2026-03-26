@@ -16,6 +16,9 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+    // CRITICAL FIX: Force single React instance across all dependencies
+    // Prevents "dispatcher is null" error from duplicate React versions
+    dedupe: ['react', 'react-dom'],
   },
   build: {
     // Optimize bundle size

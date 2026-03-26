@@ -1,46 +1,61 @@
+/**
+ * Detection Settings Store - Sensitivity and advanced parameter overrides
+ * Persists to localStorage
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export interface AdvancedDetectionValues {
-  noiseGate: number;
-  harmonicBoost: number;
-  fluxTolerance: number;
+export interface AdvancedDetectionSettings {
+  noiseGate: number;       // 0-100
+  harmonicBoost: number;   // 0-100
+  fluxTolerance: number;   // 0-100
 }
 
-const DEFAULTS: AdvancedDetectionValues = {
+interface CalibrationProfile {
+  id: string;
+  name: string;
+  settings: AdvancedDetectionSettings;
+  createdAt: number;
+}
+
+interface DetectionSettingsState {
+  sensitivity: number;                    // 1-10
+  advancedEnabled: boolean;
+  advancedValues: AdvancedDetectionSettings;
+  
+  setSensitivity: (value: number) => void;
+  setAdvancedEnabled: (enabled: boolean) => void;
+  setAdvancedValues: (values: AdvancedDetectionSettings) => void;
+  resetAdvancedValues: () => void;
+  applyCalibrationProfile: (profile: CalibrationProfile) => void;
+}
+
+const DEFAULT_ADVANCED: AdvancedDetectionSettings = {
   noiseGate: 50,
   harmonicBoost: 50,
   fluxTolerance: 50,
 };
 
-interface DetectionSettingsState {
-  sensitivity: number;
-  advancedEnabled: boolean;
-  advancedValues: AdvancedDetectionValues;
-  setSensitivity: (v: number) => void;
-  setAdvancedEnabled: (v: boolean) => void;
-  setAdvancedValues: (v: AdvancedDetectionValues) => void;
-  updateAdvancedValue: (key: keyof AdvancedDetectionValues, val: number) => void;
-  resetAdvanced: () => void;
-  applyCalibrationProfile: (profile: AdvancedDetectionValues) => void;
-}
-
 export const useDetectionSettingsStore = create<DetectionSettingsState>()(
   persist(
     (set) => ({
-      sensitivity: 7,
+      sensitivity: 6,
       advancedEnabled: false,
-      advancedValues: DEFAULTS,
-      setSensitivity: (v) => set({ sensitivity: v }),
-      setAdvancedEnabled: (v) => set({ advancedEnabled: v }),
-      setAdvancedValues: (v) => set({ advancedValues: v }),
-      updateAdvancedValue: (key, val) =>
-        set((state) => ({
-          advancedValues: { ...state.advancedValues, [key]: val },
-        })),
-      resetAdvanced: () => set({ advancedValues: DEFAULTS }),
-      applyCalibrationProfile: (profile) =>
-        set({ advancedValues: profile, advancedEnabled: true }),
+      advancedValues: DEFAULT_ADVANCED,
+      
+      setSensitivity: (value) => set({ sensitivity: Math.max(1, Math.min(10, value)) }),
+      
+      setAdvancedEnabled: (enabled) => set({ advancedEnabled: enabled }),
+      
+      setAdvancedValues: (values) => set({ advancedValues: values }),
+      
+      resetAdvancedValues: () => set({ advancedValues: DEFAULT_ADVANCED }),
+      
+      applyCalibrationProfile: (profile) => set({
+        advancedEnabled: true,
+        advancedValues: profile.settings,
+      }),
     }),
     {
       name: 'fretmaster-detection-settings',

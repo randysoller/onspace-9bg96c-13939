@@ -1,27 +1,54 @@
-import { ChordData } from '@/types/chord';
+/**
+ * Chord Tablature Component
+ * 
+ * Monospace text representation of chord fret positions
+ * Reversed display order (high e on top, low E on bottom)
+ */
+
+import type { ChordData } from '@/types/chord';
 
 interface ChordTablatureProps {
   chord: ChordData;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
 }
 
-const TUNING = ['E', 'A', 'D', 'G', 'B', 'E'];
+const STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
 
-export const ChordTablature = ({ chord }: ChordTablatureProps) => {
+const SIZES = {
+  sm: { text: 'text-xs', gap: 'gap-1', padding: 'px-2 py-1.5' },
+  md: { text: 'text-sm', gap: 'gap-1.5', padding: 'px-3 py-2' },
+  lg: { text: 'text-base', gap: 'gap-2', padding: 'px-4 py-3' },
+};
+
+export function ChordTablature({ chord, size = 'md', className = '' }: ChordTablatureProps) {
+  const { text, gap, padding } = SIZES[size];
+  
   return (
-    <div className="font-mono text-sm bg-zinc-900/50 border border-zinc-800 rounded p-4">
-      {chord.frets.map((fret, index) => (
-        <div key={index} className="flex items-center gap-3 mb-1">
-          <span className="text-amber-500 font-bold w-4">{TUNING[index]}</span>
-          <span className="text-zinc-600">|--</span>
-          <span className="text-white font-bold">
-            {fret === -1 ? 'X' : fret === 0 ? '0' : fret}
-          </span>
-          <span className="text-zinc-600">--|</span>
-        </div>
-      ))}
-      <div className="mt-3 text-xs text-zinc-500">
-        {chord.root} {chord.type}
+    <div
+      className={`bg-white rounded-lg border border-neutral-200 ${padding} ${className}`}
+      role="img"
+      aria-label={`${chord.root} ${chord.type} chord tablature`}
+    >
+      <div className={`flex flex-col ${gap} font-mono ${text}`}>
+        {/* Reversed order: high e on top */}
+        {[...chord.frets].reverse().map((fret, idx) => {
+          const stringName = STRINGS[idx];
+          const isMuted = fret === -1;
+          const display = fret === -1 ? 'x' : fret === 0 ? '0' : String(fret);
+          
+          return (
+            <div key={stringName} className="flex items-center gap-2.5">
+              <span className="text-zinc-800 font-bold w-3">{stringName}</span>
+              <span className="text-zinc-400">—</span>
+              <span className={`font-bold w-3 text-center ${isMuted ? 'text-zinc-400' : 'text-zinc-900'}`}>
+                {display}
+              </span>
+              <span className="text-zinc-400">—</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
-};
+}

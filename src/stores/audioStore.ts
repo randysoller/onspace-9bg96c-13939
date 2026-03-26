@@ -1,60 +1,37 @@
+/**
+ * Audio Store - Global volume and mute state
+ * Persists to localStorage
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { shallow } from 'zustand/shallow';
-import { createShallowSelector } from '@/hooks/useZustandSelector';
 
-interface AudioStore {
-  masterVolume: number;
-  chordVolume: number;
-  metronomeVolume: number;
-  tunerVolume: number;
+interface AudioState {
+  volume: number;        // 0-1
+  muted: boolean;
   
-  setMasterVolume: (volume: number) => void;
-  setChordVolume: (volume: number) => void;
-  setMetronomeVolume: (volume: number) => void;
-  setTunerVolume: (volume: number) => void;
+  setVolume: (v: number) => void;
+  toggleMute: () => void;
+  getEffectiveVolume: () => number;
 }
 
-// Base store
-export const useAudioStore = create<AudioStore>()(  
+export const useAudioStore = create<AudioState>()(
   persist(
-    (set) => ({
-      masterVolume: 0.7,
-      chordVolume: 0.8,
-      metronomeVolume: 0.6,
-      tunerVolume: 0.5,
+    (set, get) => ({
+      volume: 0.7,
+      muted: false,
       
-      setMasterVolume: (volume) => set({ masterVolume: volume }),
-      setChordVolume: (volume) => set({ chordVolume: volume }),
-      setMetronomeVolume: (volume) => set({ metronomeVolume: volume }),
-      setTunerVolume: (volume) => set({ tunerVolume: volume }),
+      setVolume: (v) => set({ volume: Math.max(0, Math.min(1, v)) }),
+      
+      toggleMute: () => set((state) => ({ muted: !state.muted })),
+      
+      getEffectiveVolume: () => {
+        const state = get();
+        return state.muted ? 0 : state.volume;
+      },
     }),
     {
-      name: 'fretmaster-audio-settings',
+      name: 'fretmaster-audio',
     }
   )
-);
-
-// Optimized selectors to prevent unnecessary re-renders
-export const useShallowAudioStore = createShallowSelector(useAudioStore);
-
-// Specific selectors for common use cases
-export const useAudioVolumes = () => useAudioStore(
-  state => ({ 
-    masterVolume: state.masterVolume,
-    chordVolume: state.chordVolume,
-    metronomeVolume: state.metronomeVolume,
-    tunerVolume: state.tunerVolume
-  }),
-  shallow
-);
-
-export const useAudioActions = () => useAudioStore(
-  state => ({
-    setMasterVolume: state.setMasterVolume,
-    setChordVolume: state.setChordVolume,
-    setMetronomeVolume: state.setMetronomeVolume,
-    setTunerVolume: state.setTunerVolume,
-  }),
-  shallow
 );

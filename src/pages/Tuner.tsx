@@ -841,12 +841,12 @@ export default function TunerPanel() {
               <div ref={tuningDropdownRef} className="relative">
                 <button
                   onClick={() => setTuningDropdownOpen((o) => !o)}
-                  className="inline-flex items-center gap-3 rounded-lg border border-zinc-700/50 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm px-5 py-3 min-h-[48px] transition-all hover:bg-[hsl(var(--bg-overlay))] active:scale-95"
+                  className="inline-flex items-center gap-3 rounded-lg border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm px-5 py-3 min-h-[48px] transition-all hover:bg-[hsl(var(--bg-overlay))] active:scale-95"
                 >
-                  <span className="font-display text-base font-bold text-zinc-200">
+                  <span className="font-display text-base font-bold text-zinc-300">
                     {selectedTuning.label}
                   </span>
-                  <span className="text-sm font-body text-[hsl(var(--text-muted))]">
+                  <span className="text-sm font-body text-zinc-400">
                     {selectedTuning.strings.map((s) => s.display).join(' ')}
                   </span>
                   <ChevronDown className={`size-7 text-[hsl(var(--color-primary))] transition-transform duration-200 ${tuningDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={3} />
@@ -857,7 +857,7 @@ export default function TunerPanel() {
                     initial={{ opacity: 0, y: -4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 w-72 rounded-xl border border-zinc-700/50 bg-[hsl(var(--bg-elevated))] backdrop-blur-xl shadow-xl overflow-hidden"
+                    className="absolute z-50 top-full mt-1 left-1/2 -translate-x-1/2 w-72 rounded-xl border-2 border-zinc-700/70 bg-[hsl(var(--bg-elevated))] backdrop-blur-xl shadow-xl overflow-hidden"
                   >
                     {TUNING_PRESETS.map((preset) => {
                       const isActive = selectedTuning.name === preset.name;
@@ -877,11 +877,11 @@ export default function TunerPanel() {
                         >
                           <div className="text-left">
                             <p className={`font-display text-base font-bold ${
-                              isActive ? 'text-[hsl(var(--color-primary))]' : 'text-zinc-200'
+                              isActive ? 'text-[hsl(var(--color-primary))]' : 'text-zinc-300'
                             }`}>
                               {preset.label}
                             </p>
-                            <p className="text-sm font-body text-[hsl(var(--text-muted))]">
+                            <p className="text-sm font-body text-zinc-400">
                               {preset.strings.map((s) => s.note).join(' – ')}
                             </p>
                           </div>
@@ -896,7 +896,7 @@ export default function TunerPanel() {
               </div>
             </div>
 
-            <p className="mt-3 text-sm font-body text-[hsl(var(--text-muted))]">
+            <p className="mt-3 text-sm font-body text-zinc-400">
               Play a string and the tuner will detect the pitch.
             </p>
           </div>
@@ -912,7 +912,7 @@ export default function TunerPanel() {
             )}
 
             {/* Main tuner display */}
-            <div className="rounded-xl border border-zinc-700/40 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6">
+            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6">
               <div className="space-y-4">
                 {/* Detected note */}
                 <div className="text-center">
@@ -943,10 +943,10 @@ export default function TunerPanel() {
                       )}
                     </p>
                   </div>
-                  <p className="mt-2 text-sm font-body text-[hsl(var(--text-muted))] tabular-nums transition-opacity duration-300" style={{ opacity: shownFreq ? 1 : 0.3 }}>
+                  <p className="mt-2 text-sm font-body text-zinc-400 tabular-nums transition-opacity duration-300" style={{ opacity: shownFreq ? 1 : 0.3 }}>
                     {shownFreq ? `${shownFreq.toFixed(1)} Hz` : '— Hz'}
                   </p>
-                  <p className={`mt-1 text-sm font-body text-[hsl(var(--text-subtle))] h-5 transition-opacity duration-200 ${targetString && shownNote ? 'opacity-100' : 'opacity-0'}`}>
+                  <p className={`mt-1 text-sm font-body text-zinc-500 h-5 transition-opacity duration-200 ${targetString && shownNote ? 'opacity-100' : 'opacity-0'}`}>
                     {targetString ? `Target: ${targetString.note} (${targetString.freq.toFixed(1)} Hz)` : '\u00A0'}
                   </p>
                 </div>
@@ -996,7 +996,7 @@ export default function TunerPanel() {
                       );
                     })}
                   </div>
-                  <div className="flex justify-between items-center text-[12px] font-body text-[hsl(var(--text-subtle))]">
+                  <div className="flex justify-between items-center text-[12px] font-body text-zinc-500">
                     <span>♭ Flat</span>
                     <span className={`font-display text-sm font-bold tabular-nums transition-colors duration-300 ${
                       !shownNote ? 'text-[hsl(var(--text-muted)/0.4)]' : isTargetInTune ? 'text-[hsl(142_71%_45%)]' : isTargetClose ? 'text-[hsl(var(--color-emphasis))]' : 'text-zinc-300'
@@ -1019,7 +1019,7 @@ export default function TunerPanel() {
                       In Tune ✓
                     </motion.p>
                   ) : shownNote ? (
-                    <p className="font-body text-sm text-[hsl(var(--text-muted))]">
+                    <p className="font-body text-sm text-zinc-400">
                       {centsFromTarget < 0 ? 'Tune up ↑' : 'Tune down ↓'}
                     </p>
                   ) : null}
@@ -1038,7 +1038,7 @@ export default function TunerPanel() {
                           <Zap className="size-2.5" /> Calibrated
                         </span>
                       )}
-                      <span className="text-sm font-body tabular-nums text-[hsl(var(--text-subtle))]">{sensitivity}%</span>
+                      <span className="text-sm font-body tabular-nums text-zinc-400">{sensitivity}%</span>
                     </div>
                   </div>
                   <input
@@ -1058,17 +1058,17 @@ export default function TunerPanel() {
                       [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full
                       [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))] [&::-moz-range-thumb]:border-none"
                   />
-                  <div className="flex justify-between text-[12px] font-body text-[hsl(var(--text-muted))]">
+                  <div className="flex justify-between text-[12px] font-body text-zinc-500">
                     <span>Low</span>
                     <span>High</span>
                   </div>
                 </div>
 
                 {/* Calibration shortcut */}
-                <div className="!mt-3 flex items-center justify-between rounded-lg border border-zinc-700/30 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
+                <div className="!mt-3 flex items-center justify-between rounded-lg border-2 border-zinc-700/50 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Crosshair className="size-3.5 text-[hsl(var(--color-emphasis))]" />
-                    <span className="text-[10px] font-display font-bold text-[hsl(var(--text-subtle))] uppercase tracking-wider">Calibration</span>
+                    <span className="text-[10px] font-display font-bold text-zinc-400 uppercase tracking-wider">Calibration</span>
                   </div>
                   <button
                     onClick={() => setShowCalibration(true)}
@@ -1082,9 +1082,9 @@ export default function TunerPanel() {
             </div>
 
             {/* String selector + reference tones */}
-            <div className="rounded-xl border border-zinc-700/40 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-5">
+            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-display text-sm font-semibold text-[hsl(var(--text-subtle))] uppercase tracking-wider">
+                <h3 className="font-display text-sm font-semibold text-zinc-400 uppercase tracking-wider">
                   Strings
                 </h3>
                 <button
@@ -1092,7 +1092,7 @@ export default function TunerPanel() {
                   className={`rounded-lg px-4 py-2.5 text-sm font-display font-bold transition-all active:scale-95 min-h-[44px] ${
                     !selectedString
                       ? 'bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))] border border-[hsl(var(--color-primary)/0.3)]'
-                      : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))] hover:bg-[hsl(var(--bg-overlay))] border border-transparent'
+                      : 'bg-[hsl(var(--bg-surface))] text-zinc-400 hover:bg-[hsl(var(--bg-overlay))] border border-transparent'
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -1162,7 +1162,7 @@ export default function TunerPanel() {
                             : stringClose
                             ? 'text-[hsl(45_93%_47%)]'
                             : 'text-[rgb(220,38,38)]'
-                          : 'text-zinc-200'
+                          : 'text-zinc-300'
                       }`}>
                         <span className="sm:hidden">{gs.display}</span>
                         <span className="hidden sm:inline">{gs.note}</span>

@@ -26,6 +26,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { logger } from '@/lib/logger';
+import { logger } from '@/lib/logger';
 
 export type DetectionResult = 'correct' | 'wrong' | null;
 

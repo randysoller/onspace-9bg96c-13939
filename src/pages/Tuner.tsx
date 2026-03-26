@@ -104,6 +104,9 @@ const TUNING_PRESETS: TuningPreset[] = [
   },
 ];
 
+const FREQ_HISTORY_SIZE = 5;
+const minConfidence = 0.2;
+
 // ─── Pitch detection utilities ───────────────────────────
 
 function frequencyToNoteInfo(freq: number): { note: string; octave: number; cents: number; noteIndex: number } {
@@ -284,7 +287,6 @@ export default function TunerPanel() {
   // Frequency history buffer for median filtering / outlier rejection
   const freqHistoryRef = useRef<number[]>([]);
   const confidenceHistoryRef = useRef<number[]>([]);
-  const FREQ_HISTORY_SIZE = 5;
 
   useEffect(() => { selectedStringRef.current = selectedString; }, [selectedString]);
   useEffect(() => { selectedTuningRef.current = selectedTuning; }, [selectedTuning]);
@@ -430,8 +432,6 @@ export default function TunerPanel() {
         analyserRef.current.getFloatTimeDomainData(bufferRef.current);
         const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate);
 
-
-
         if (pitchResult) {
           const { frequency: rawFreq, confidence } = pitchResult;
 
@@ -536,7 +536,7 @@ export default function TunerPanel() {
               freqHistoryRef.current = [];
               confidenceHistoryRef.current = [];
               holdTimerRef.current = 0;
-            }, 800);
+            }, 400);
           }
         }
 

@@ -832,7 +832,7 @@ export default function TunerPanel() {
               <span className="text-xs font-body font-medium text-[hsl(var(--color-primary))]">Guitar Tuner</span>
             </div>
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight">
-              <span className="text-[hsl(var(--text-default))]">Tune Your </span>
+              <span className="text-zinc-300">Tune Your </span>
               <span className="text-gradient">Guitar</span>
             </h1>
 
@@ -843,7 +843,7 @@ export default function TunerPanel() {
                   onClick={() => setTuningDropdownOpen((o) => !o)}
                   className="inline-flex items-center gap-3 rounded-lg border border-zinc-700/50 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm px-5 py-3 min-h-[48px] transition-all hover:bg-[hsl(var(--bg-overlay))] active:scale-95"
                 >
-                  <span className="font-display text-base font-bold text-[hsl(var(--text-default))]">
+                  <span className="font-display text-base font-bold text-zinc-200">
                     {selectedTuning.label}
                   </span>
                   <span className="text-sm font-body text-[hsl(var(--text-muted))]">
@@ -877,7 +877,7 @@ export default function TunerPanel() {
                         >
                           <div className="text-left">
                             <p className={`font-display text-base font-bold ${
-                              isActive ? 'text-[hsl(var(--color-primary))]' : 'text-[hsl(var(--text-default))]'
+                              isActive ? 'text-[hsl(var(--color-primary))]' : 'text-zinc-200'
                             }`}>
                               {preset.label}
                             </p>
@@ -999,7 +999,7 @@ export default function TunerPanel() {
                   <div className="flex justify-between items-center text-[12px] font-body text-[hsl(var(--text-subtle))]">
                     <span>♭ Flat</span>
                     <span className={`font-display text-sm font-bold tabular-nums transition-colors duration-300 ${
-                      !shownNote ? 'text-[hsl(var(--text-muted)/0.4)]' : isTargetInTune ? 'text-[hsl(142_71%_45%)]' : isTargetClose ? 'text-[hsl(var(--color-emphasis))]' : 'text-[hsl(var(--text-default))]'
+                      !shownNote ? 'text-[hsl(var(--text-muted)/0.4)]' : isTargetInTune ? 'text-[hsl(142_71%_45%)]' : isTargetClose ? 'text-[hsl(var(--color-emphasis))]' : 'text-zinc-300'
                     }`}>
                       {shownNote ? `${centsFromTarget > 0 ? '+' : ''}${centsFromTarget} cents` : '0 cents'}
                     </span>
@@ -1149,7 +1149,7 @@ export default function TunerPanel() {
                           }}
                         />
                       </div>
-                      <span className="text-[12px] sm:text-[18px] font-body text-[hsl(var(--text-default)/0.65)] text-center leading-tight">
+                      <span className="text-[12px] sm:text-[18px] font-body text-zinc-400 text-center leading-tight">
                         <span className="block">String</span>
                         <span className="block">{gs.string}</span>
                       </span>
@@ -1162,7 +1162,7 @@ export default function TunerPanel() {
                             : stringClose
                             ? 'text-[hsl(45_93%_47%)]'
                             : 'text-[rgb(220,38,38)]'
-                          : 'text-[hsl(var(--text-default))]'
+                          : 'text-zinc-200'
                       }`}>
                         <span className="sm:hidden">{gs.display}</span>
                         <span className="hidden sm:inline">{gs.note}</span>

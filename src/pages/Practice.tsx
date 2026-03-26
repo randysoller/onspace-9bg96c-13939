@@ -77,7 +77,7 @@ export default function Practice() {
     }
   };
 
-  const { isListening, result, startListening, stopListening } = useChordDetection({
+  const { isListening, result, permissionDenied, startListening, stopListening } = useChordDetection({
     targetChord: currentChord,
     sensitivity,
     autoStart: false,
@@ -283,8 +283,16 @@ export default function Practice() {
 
   const toggleMic = () => {
     if (isListening) {
+      console.log('🎤 Stopping microphone...');
       stopListening();
     } else {
+      console.log('🎤 Starting microphone...');
+      console.log('📊 Current settings:', {
+        sensitivity,
+        advancedEnabled,
+        advancedValues,
+        targetChord: currentChord ? `${currentChord.root}${currentChord.type}` : 'none'
+      });
       startListening();
     }
   };
@@ -454,7 +462,13 @@ export default function Practice() {
                 <span className="font-bold">Try again</span>
               </div>
             )}
-            {!isListening && !result && (
+            {permissionDenied && (
+              <div className="flex items-center gap-2 text-red-500 text-sm">
+                <XCircle className="w-4 h-4" />
+                <span className="font-bold">Microphone access denied — please allow in browser settings</span>
+              </div>
+            )}
+            {!isListening && !result && !permissionDenied && (
               <div className="flex items-center gap-2 text-zinc-500 text-sm">
                 <Mic className="w-4 h-4" />
                 <span className="font-medium">Mic off — click mic to enable</span>

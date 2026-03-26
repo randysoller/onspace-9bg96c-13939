@@ -807,12 +807,17 @@ export function useChordDetection({
       setIsListening(true);
       setPermissionDenied(false);
       
-      logger.info('Chord detection started', {
+      logger.info('🎤 Chord detection started', {
         fftSize: analyser.fftSize,
         sampleRate: ctx.sampleRate,
         filterChain: '5-stage (highpass → notch×2 → peaking×2 → lowpass)',
         templates: ALL_CHORD_TEMPLATES.length,
+        sensitivity: sensitivityRef.current,
+        advancedSettings: advancedSettingsRef.current,
       });
+      
+      console.log('✅ Audio context state:', ctx.state);
+      console.log('✅ Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, muted: t.muted })));
       
       // Analysis loop at 70ms intervals (~14 Hz)
       intervalRef.current = window.setInterval(() => {
@@ -843,6 +848,11 @@ export function useChordDetection({
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
+        // DEBUG: Log RMS levels every 20 frames (~1.4s)
+        if (activeSignalFramesRef.current % 20 === 0) {
+          console.log(`📊 RMS: ${rms.toFixed(6)} (threshold: ${rmsThreshold.toFixed(6)})`, rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT');
+        }
+        
         if (rms < rmsThreshold) {
           consecutiveMatchesRef.current = 0;
           activeSignalFramesRef.current = 0;
@@ -861,6 +871,9 @@ export function useChordDetection({
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
         const maxFlatness = lerp(0.20, 0.40, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.08 : 0);
         if (spectralFlatness > maxFlatness) {
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`🔊 Spectral Flatness: ${spectralFlatness.toFixed(3)} (max: ${maxFlatness.toFixed(3)}) ❌ REJECTED - broadband noise`);
+          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -869,6 +882,9 @@ export function useChordDetection({
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
         const minCrest = lerp(3.0, 1.5, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.6 : 0);
         if (crestFactor < minCrest) {
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`📉 Spectral Crest: ${crestFactor.toFixed(2)} (min: ${minCrest.toFixed(2)}) ❌ REJECTED - voice-like spectrum`);
+          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -877,6 +893,9 @@ export function useChordDetection({
         const formantScore = computeFormantScore(freqBuf, analyser);
         const maxFormant = lerp(0.25, 0.55, tNoise);
         if (formantScore > maxFormant) {
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`🗣️ Formant Score: ${formantScore.toFixed(3)} (max: ${maxFormant.toFixed(3)}) ❌ REJECTED - voice detected`);
+          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -888,6 +907,9 @@ export function useChordDetection({
         if (spectralFlux >= 0) {
           const maxFlux = lerp(1.5, 3.5, tFlux);
           if (spectralFlux > maxFlux) {
+            if (activeSignalFramesRef.current % 20 === 0) {
+              console.log(`⚡ Spectral Flux: ${spectralFlux.toFixed(2)} (max: ${maxFlux.toFixed(2)}) ❌ REJECTED - rapid changes`);
+            }
             consecutiveMatchesRef.current = 0;
             return;
           }
@@ -899,8 +921,20 @@ export function useChordDetection({
         // Chroma extraction
         const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch);
         if (!chroma) {
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log('🎵 Chroma extraction: ❌ NULL - energy too low or no clear pitch classes');
+          }
           consecutiveMatchesRef.current = 0;
           return;
+        }
+        
+        // DEBUG: Log chroma values every 20 frames
+        if (activeSignalFramesRef.current % 20 === 0) {
+          const topPitches = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
+            .filter(p => p.value > 0.3)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 4);
+          console.log('🎵 Detected pitch classes:', topPitches.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', '));
         }
         
         lastDetectedChromaRef.current = chroma;
@@ -917,6 +951,12 @@ export function useChordDetection({
         const expectedPitchClasses = getChordPitchClasses(target);
         const isBarre = isBarreChord(target);
         const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre);
+        
+        // DEBUG: Log match attempts every 20 frames
+        if (activeSignalFramesRef.current % 20 === 0) {
+          const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
+          console.log(`🎯 Target: ${target.root}${target.type} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
+        }
         
         if (isMatch) {
           consecutiveMatchesRef.current++;

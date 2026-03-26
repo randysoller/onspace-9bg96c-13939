@@ -282,6 +282,8 @@ export default function Practice() {
   };
 
   const toggleMic = () => {
+    // ULTRA-BASIC TEST: This should ALWAYS show, even if everything else is broken
+    alert('MIC BUTTON CLICKED!');
     console.log('🔘 MIC BUTTON CLICKED!'); // Confirm button click registered
     console.log('📍 Current state:', { isListening, result, permissionDenied });
     

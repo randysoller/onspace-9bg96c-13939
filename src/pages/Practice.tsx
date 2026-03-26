@@ -468,86 +468,74 @@ export default function Practice() {
       </div>
 
       {/* Fixed Bottom Toolbar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated)/0.95)] backdrop-blur-md">
-        <div className="flex items-stretch gap-2 px-3 py-3 max-w-2xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated)/0.95)] backdrop-blur-md safe-area-inset-bottom">
+        <div className="flex items-stretch gap-2 px-3 py-3 pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button
             onClick={handlePrev}
-            className="size-12 rounded-xl flex items-center justify-center
+            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation
               bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
               hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
           >
-            <SkipBack className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+            <SkipBack className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
           </button>
 
           {/* Restart */}
           <button
             onClick={handleRestart}
-            className="size-12 rounded-xl flex items-center justify-center
+            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation md:flex hidden
               bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
               hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
           >
-            <RotateCcw className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+            <RotateCcw className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
           </button>
 
           {/* History */}
           <button
             onClick={() => navigate('/history')}
-            className="size-12 rounded-xl flex items-center justify-center
+            className="min-w-[48px] min-h-[48px] rounded-xl flex items-center justify-center touch-manipulation md:flex hidden
               bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
               hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
           >
-            <BarChart3 className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+            <BarChart3 className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
           </button>
 
           {/* Reveal / Play Again */}
           {!isRevealed ? (
             <button
               onClick={handleReveal}
-              className="flex-1 min-h-[48px] rounded-xl flex items-center justify-center gap-2
+              className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
                 bg-[hsl(var(--color-primary)/0.15)] border border-[hsl(var(--color-primary)/0.3)]
-                text-[hsl(var(--color-primary))] font-display font-bold
+                text-[hsl(var(--color-primary))] font-display font-bold text-base
                 hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-5 h-5" />
               <span>Reveal</span>
             </button>
           ) : (
-            <>
-              <button
-                onClick={handlePlayAgain}
-                className="flex-1 min-h-[48px] rounded-xl flex items-center justify-center gap-2
-                  bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--text-default))] font-display font-semibold
-                  hover:bg-[hsl(var(--bg-overlay))] active:scale-[0.97] transition-all"
-              >
-                <Volume2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Play Again</span>
-              </button>
-
-              <button
-                onClick={handlePlayAgain}
-                className="size-12 rounded-xl flex items-center justify-center
-                  bg-[hsl(var(--color-emphasis)/0.15)] border border-[hsl(var(--color-emphasis)/0.3)]
-                  text-[hsl(var(--color-emphasis))]
-                  hover:bg-[hsl(var(--color-emphasis)/0.25)] active:scale-95 transition-all"
-              >
-                <Headphones className="w-4 h-4" />
-              </button>
-            </>
+            <button
+              onClick={handlePlayAgain}
+              className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
+                bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
+                text-[hsl(var(--text-default))] font-display font-semibold text-base
+                hover:bg-[hsl(var(--bg-overlay))] active:scale-[0.97] transition-all"
+            >
+              <Volume2 className="w-5 h-5" />
+              <span>Play</span>
+            </button>
           )}
 
           {/* Next */}
           <button
             onClick={handleNext}
-            className="flex-1 min-h-[48px] rounded-xl flex items-center justify-center gap-2
+            className="flex-1 min-h-[52px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
               bg-[hsl(var(--color-primary))] text-[hsl(var(--bg-base))]
-              font-display font-bold
+              font-display font-bold text-base
               hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
               shadow-lg shadow-[hsl(var(--color-primary)/0.2)]"
           >
             <span>Next</span>
-            <SkipForward className="w-4 h-4" />
+            <SkipForward className="w-5 h-5" />
           </button>
         </div>
       </div>

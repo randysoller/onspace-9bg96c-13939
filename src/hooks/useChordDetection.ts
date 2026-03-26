@@ -51,11 +51,18 @@ interface UseChordDetectionOptions {
 
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
 const NOTE_STRINGS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const MATCH_THRESHOLD = 3;      // ~210ms to confirm correct
-const MISS_THRESHOLD = 2;       // ~140ms to confirm wrong
-const MIN_ACTIVE_FRAMES = 3;    // ~210ms of signal before matches count
+const MATCH_THRESHOLD = 2;      // ~140ms to confirm correct (reduced from 3)
+const MISS_THRESHOLD = 3;       // ~210ms to confirm wrong (increased from 2)
+const MIN_ACTIVE_FRAMES = 2;    // ~140ms of signal before matches count (reduced from 3)
 const SILENCE_RESET_FRAMES = 8; // ~560ms of silence to reset miss counter
 const FREQ_HISTORY_SIZE = 5;
+
+/**
+ * Detect if device is mobile
+ */
+function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
 
 /**
  * Linear interpolation
@@ -230,11 +237,13 @@ function extractChroma(
   freqData: Float32Array,
   analyser: AnalyserNode,
   sensitivity: number,
-  nsdfPitch: number
+  nsdfPitch: number,
+  isMobile: boolean = false
 ): Float64Array | null {
   const t = (sensitivity - 1) / 9;
-  const dbFloor = lerp(-40, -72, t);
-  const noiseGateEnergy = lerp(18, 4, t);
+  // Relaxed thresholds - work better at mid-range sensitivity
+  const dbFloor = lerp(-50, -80, t); // Lowered from -40/-72
+  const noiseGateEnergy = isMobile ? lerp(8, 2, t) : lerp(12, 3, t); // Significantly lowered, mobile even more
   
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -311,8 +320,9 @@ function extractChroma(
     }
   }
   
-  // Noise gate
-  if (totalEnergy < noiseGateEnergy) return null;
+  // Noise gate (relaxed)
+  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.6 : noiseGateEnergy * 0.8;
+  if (totalEnergy < effectiveNoiseGate) return null;
   
   // Harmonic series reinforcement
   for (let pc = 0; pc < 12; pc++) {
@@ -551,22 +561,27 @@ function matchChroma(
   chroma: Float64Array,
   expected: Set<number>,
   sensitivity: number,
-  isBarre: boolean = false
+  isBarre: boolean = false,
+  isMobile: boolean = false
 ): boolean {
   const t = (sensitivity - 1) / 9;
   
   // Size bonus: larger chords are harder to match perfectly
-  const sizeBonus = expected.size > 4 ? 0.04 : expected.size > 3 ? 0.02 : 0;
+  const sizeBonus = expected.size > 4 ? 0.06 : expected.size > 3 ? 0.04 : 0; // Increased
   
   // Barre chord threshold relaxation
-  const barreChromaReduction = isBarre ? 0.04 : 0;
-  const barreRatioReduction = isBarre ? 0.06 : 0;
-  const barreExtraIncrease = isBarre ? 1.5 : 0;
+  const barreChromaReduction = isBarre ? 0.06 : 0; // Increased from 0.04
+  const barreRatioReduction = isBarre ? 0.08 : 0; // Increased from 0.06
+  const barreExtraIncrease = isBarre ? 2.0 : 0; // Increased from 1.5
   
-  const chromaThreshold = lerp(0.25, 0.08, t) - sizeBonus - barreChromaReduction;
-  const matchRatioMin = lerp(0.70, 0.38, t) - barreRatioReduction;
-  const maxExtrasBase = lerp(2, 5, t) + barreExtraIncrease;
-  const extraPenaltyPerNote = lerp(0.08, 0.02, t);
+  // Mobile gets additional relaxation
+  const mobileBonus = isMobile ? 0.08 : 0;
+  const mobileRatioBonus = isMobile ? 0.12 : 0;
+  
+  const chromaThreshold = lerp(0.20, 0.06, t) - sizeBonus - barreChromaReduction - mobileBonus; // Lowered from 0.25/0.08
+  const matchRatioMin = lerp(0.60, 0.32, t) - barreRatioReduction - mobileRatioBonus; // Lowered from 0.70/0.38
+  const maxExtrasBase = lerp(3, 6, t) + barreExtraIncrease; // Increased from 2/5
+  const extraPenaltyPerNote = lerp(0.06, 0.015, t); // Lowered from 0.08/0.02
   
   // Count matches and extras
   let binaryMatches = 0;
@@ -617,7 +632,10 @@ function matchChroma(
   
   const finalRatio = effectiveRatio - extraPenalty;
   
-  return finalRatio >= matchRatioMin && binaryMatches >= Math.min(2, expected.size);
+  // Relaxed minimum binary matches requirement
+  const minBinaryMatches = expected.size <= 3 ? 1 : Math.min(2, expected.size);
+  
+  return finalRatio >= matchRatioMin && binaryMatches >= minBinaryMatches;
 }
 
 // ============================================================================
@@ -746,25 +764,46 @@ export function useChordDetection({
     }
     startedRef.current = true;
     
+    const isMobile = isMobileDevice();
+    console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop');
+    
     try {
       console.log('🎤 Requesting microphone access...');
       console.log('📞 Calling getUserMedia...');
+      
+      // Mobile-friendly audio constraints
+      const audioConstraints = isMobile ? {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        sampleRate: { ideal: 44100 }, // Lower for mobile compatibility
+        channelCount: { ideal: 1 },
+      } : {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        sampleRate: { ideal: 48000 },
+        channelCount: { ideal: 1 },
+      };
+      
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          sampleRate: { ideal: 48000 },
-          channelCount: { ideal: 1 },
-        },
+        audio: audioConstraints,
       });
       console.log('✅ Microphone permission granted!', {
         tracks: stream.getTracks().length,
         audioTrack: stream.getAudioTracks()[0]?.label
       });
       
-      const ctx = new AudioContext({ sampleRate: 48000 });
+      // Mobile-compatible sample rate (fallback to hardware default)
+      const sampleRate = isMobile ? undefined : 48000;
+      const ctx = new AudioContext(sampleRate ? { sampleRate } : {});
       if (ctx.state === 'suspended') await ctx.resume();
+      
+      console.log('🎵 Audio context created:', {
+        sampleRate: ctx.sampleRate,
+        state: ctx.state,
+        isMobile
+      });
       
       const source = ctx.createMediaStreamSource(stream);
       
@@ -848,6 +887,7 @@ export function useChordDetection({
         analyser.getFloatTimeDomainData(timeBuf);
         analyser.getFloatFrequencyData(freqBuf);
         
+        const isMobile = isMobileDevice();
         const sens = sensitivityRef.current;
         const advanced = advancedSettingsRef.current;
         const tNoise = advanced?.noiseGate ? advanced.noiseGate / 100 : (sens - 1) / 9;
@@ -857,8 +897,9 @@ export function useChordDetection({
         // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // LAYER 1: RMS Silence Gate
-        const rmsThreshold = 0.05 * Math.pow(0.02, tNoise);
+        // LAYER 1: RMS Silence Gate (relaxed, mobile even more)
+        const baseRmsThreshold = 0.05 * Math.pow(0.02, tNoise);
+        const rmsThreshold = isMobile ? baseRmsThreshold * 0.5 : baseRmsThreshold * 0.7; // Significantly lowered
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
@@ -883,9 +924,9 @@ export function useChordDetection({
         silenceFramesRef.current = 0;
         activeSignalFramesRef.current++;
         
-        // LAYER 2: Spectral Flatness Gate
+        // LAYER 2: Spectral Flatness Gate (relaxed for mobile)
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
-        const maxFlatness = lerp(0.20, 0.40, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.08 : 0);
+        const maxFlatness = lerp(0.25, 0.50, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.10 : 0) + (isMobile ? 0.15 : 0); // Increased
         if (spectralFlatness > maxFlatness) {
           if (activeSignalFramesRef.current % 20 === 0) {
             console.log(`🔊 Spectral Flatness: ${spectralFlatness.toFixed(3)} (max: ${maxFlatness.toFixed(3)}) ❌ REJECTED - broadband noise`);
@@ -894,9 +935,9 @@ export function useChordDetection({
           return;
         }
         
-        // LAYER 3: Spectral Crest Factor Gate
+        // LAYER 3: Spectral Crest Factor Gate (relaxed for mobile)
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
-        const minCrest = lerp(3.0, 1.5, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.6 : 0);
+        const minCrest = lerp(2.5, 1.2, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.8 : 0) - (isMobile ? 0.5 : 0); // Lowered
         if (crestFactor < minCrest) {
           if (activeSignalFramesRef.current % 20 === 0) {
             console.log(`📉 Spectral Crest: ${crestFactor.toFixed(2)} (min: ${minCrest.toFixed(2)}) ❌ REJECTED - voice-like spectrum`);
@@ -905,9 +946,9 @@ export function useChordDetection({
           return;
         }
         
-        // LAYER 4: Formant Detection Gate
+        // LAYER 4: Formant Detection Gate (relaxed for mobile)
         const formantScore = computeFormantScore(freqBuf, analyser);
-        const maxFormant = lerp(0.25, 0.55, tNoise);
+        const maxFormant = lerp(0.35, 0.70, tNoise) + (isMobile ? 0.15 : 0); // Increased
         if (formantScore > maxFormant) {
           if (activeSignalFramesRef.current % 20 === 0) {
             console.log(`🗣️ Formant Score: ${formantScore.toFixed(3)} (max: ${maxFormant.toFixed(3)}) ❌ REJECTED - voice detected`);
@@ -921,7 +962,7 @@ export function useChordDetection({
         prevFreqDataRef.current = new Float32Array(freqBuf);
         
         if (spectralFlux >= 0) {
-          const maxFlux = lerp(1.5, 3.5, tFlux);
+          const maxFlux = lerp(2.0, 4.5, tFlux) + (isMobile ? 1.0 : 0); // Increased, mobile bonus
           if (spectralFlux > maxFlux) {
             if (activeSignalFramesRef.current % 20 === 0) {
               console.log(`⚡ Spectral Flux: ${spectralFlux.toFixed(2)} (max: ${maxFlux.toFixed(2)}) ❌ REJECTED - rapid changes`);
@@ -935,7 +976,7 @@ export function useChordDetection({
         const nsdfPitch = autoCorrelateNSDF(timeBuf, audioContextRef.current.sampleRate, rmsThreshold);
         
         // Chroma extraction
-        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch);
+        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, isMobile);
         if (!chroma) {
           if (activeSignalFramesRef.current % 20 === 0) {
             console.log('🎵 Chroma extraction: ❌ NULL - energy too low or no clear pitch classes');
@@ -966,7 +1007,7 @@ export function useChordDetection({
         
         const expectedPitchClasses = getChordPitchClasses(target);
         const isBarre = isBarreChord(target);
-        const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre);
+        const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre, isMobile);
         
         // DEBUG: Log match attempts every 20 frames
         if (activeSignalFramesRef.current % 20 === 0) {

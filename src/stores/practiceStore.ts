@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CHORDS } from '@/constants/chords';
+import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordCategory, ChordType, KeySignature, BarreRoot } from '@/types/chord';
 import { useCustomChordStore } from './customChordStore';
 
@@ -73,7 +73,7 @@ function getEffectiveChords(): ChordData[] {
   const customRoots = new Set(customChords.map(c => c.name));
   
   // Filter out standard chords replaced by custom chords
-  const standardChords = CHORDS.filter(chord => {
+  const standardChords = CHORD_DATABASE.filter(chord => {
     const symbol = `${chord.root}${chord.type}`;
     return !customRoots.has(symbol);
   });

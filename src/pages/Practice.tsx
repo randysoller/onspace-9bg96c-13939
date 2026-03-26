@@ -79,6 +79,9 @@ export default function Practice() {
   const { playChord, stopCurrent } = useChordAudio();
   
   // Chord detection
+  console.log('🎯 Practice page rendering with chord:', chord ? `${chord.root}${chord.type}` : 'null');
+  console.log('🎤 Detection settings:', { sensitivity, advancedEnabled, advancedValues });
+  
   const { 
     isListening, 
     result, 
@@ -105,6 +108,8 @@ export default function Practice() {
       console.log('❌ Wrong chord detected:', detectedSymbol);
     },
   });
+  
+  console.log('🔍 Detection state:', { isListening, result, permissionDenied });
   
   // Initialize session on mount
   useEffect(() => {

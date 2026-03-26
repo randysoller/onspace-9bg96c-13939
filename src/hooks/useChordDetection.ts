@@ -1016,6 +1016,7 @@ export function useChordDetection({
     result,
     permissionDenied,
     toggleListening,
+    startListening,  // Add for backwards compatibility with Practice page
     stopListening,
     pauseDetection,
   };

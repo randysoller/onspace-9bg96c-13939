@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { usePracticeStore } from '@/stores/practiceStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
-import { usePracticeHistoryStore } from '@/stores/practiceHistoryStore';
+import { usePracticeHistoryStore, type ConfusionEntry } from '@/stores/practiceHistoryStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { useChordDetection } from '@/hooks/useChordDetection';
 import { useChordTypeFilterStore } from '@/stores/chordTypeFilterStore';
 import { useSessionStats } from '@/hooks/useSessionStats';
+import { logger } from '@/lib/logger';
 import { AdvancedDetectionPanel } from '@/components/features/AdvancedDetectionPanel';
 import { BeatSyncPanel } from '@/components/features/BeatSyncPanel';
 import { 
@@ -43,6 +44,7 @@ const STREAK_THRESHOLD = 3;
 export default function Practice() {
   const navigate = useNavigate();
   const { practiceChords, currentChordIndex, showDiagrams, nextChord, previousChord } = usePracticeStore();
+  const { recordConfusion } = usePracticeHistoryStore();
   const { chordVolume, setChordVolume } = useAudioStore();
   const { sensitivity, setSensitivity, advancedEnabled, advancedValues } = useDetectionSettingsStore();
   const { addSession } = usePracticeHistoryStore();
@@ -67,12 +69,20 @@ export default function Practice() {
 
   const currentChord = practiceChords[currentChordIndex];
 
+  const handleWrongDetected = (detectedSymbol: string) => {
+    if (currentChord) {
+      const expectedSymbol = `${currentChord.root}${currentChord.type}`;
+      recordConfusion(expectedSymbol, detectedSymbol);
+      logger.debug('Confusion recorded', { expected: expectedSymbol, detected: detectedSymbol });
+    }
+  };
+
   const { isListening, result, startListening, stopListening } = useChordDetection({
     targetChord: currentChord,
     sensitivity,
     autoStart: false,
     advancedSettings: advancedEnabled ? advancedValues : null,
-    allowedCategories: chordFilterStore.allowedCategories,
+    onWrongDetected: handleWrongDetected,
     onCorrect: () => {
       setIsRevealed(true);
       if (sessionActive && currentChord) {

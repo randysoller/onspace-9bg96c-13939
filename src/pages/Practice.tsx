@@ -282,18 +282,35 @@ export default function Practice() {
   };
 
   const toggleMic = () => {
-    if (isListening) {
-      console.log('🎤 Stopping microphone...');
-      stopListening();
-    } else {
-      console.log('🎤 Starting microphone...');
-      console.log('📊 Current settings:', {
-        sensitivity,
-        advancedEnabled,
-        advancedValues,
-        targetChord: currentChord ? `${currentChord.root}${currentChord.type}` : 'none'
-      });
-      startListening();
+    console.log('🔘 MIC BUTTON CLICKED!'); // Confirm button click registered
+    console.log('📍 Current state:', { isListening, result, permissionDenied });
+    
+    try {
+      if (isListening) {
+        console.log('🎤 Stopping microphone...');
+        stopListening();
+      } else {
+        console.log('🎤 Starting microphone...');
+        console.log('📊 Current settings:', {
+          sensitivity,
+          advancedEnabled,
+          advancedValues,
+          targetChord: currentChord ? `${currentChord.root}${currentChord.type}` : 'none',
+          hasStartListening: typeof startListening === 'function',
+          hasStopListening: typeof stopListening === 'function',
+        });
+        
+        if (typeof startListening !== 'function') {
+          console.error('❌ CRITICAL: startListening is not a function!', startListening);
+          return;
+        }
+        
+        startListening();
+        console.log('✅ startListening() called successfully');
+      }
+    } catch (error) {
+      console.error('❌ ERROR in toggleMic:', error);
+      console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack');
     }
   };
 
@@ -463,9 +480,9 @@ export default function Practice() {
               </div>
             )}
             {permissionDenied && (
-              <div className="flex items-center gap-2 text-red-500 text-sm">
+              <div className="flex items-center gap-2 text-red-500 text-sm animate-pulse">
                 <XCircle className="w-4 h-4" />
-                <span className="font-bold">Microphone access denied — please allow in browser settings</span>
+                <span className="font-bold">Microphone access denied — please allow in browser settings and refresh</span>
               </div>
             )}
             {!isListening && !result && !permissionDenied && (

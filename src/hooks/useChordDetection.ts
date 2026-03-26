@@ -733,10 +733,22 @@ export function useChordDetection({
   }, []);
   
   const startListening = useCallback(async () => {
-    if (isListeningRef.current || startedRef.current) return;
+    console.log('🎯 startListening function called');
+    console.log('📋 State check:', {
+      isListeningRef: isListeningRef.current,
+      startedRef: startedRef.current,
+      willProceed: !isListeningRef.current && !startedRef.current
+    });
+    
+    if (isListeningRef.current || startedRef.current) {
+      console.log('⚠️ Already listening or started, skipping');
+      return;
+    }
     startedRef.current = true;
     
     try {
+      console.log('🎤 Requesting microphone access...');
+      console.log('📞 Calling getUserMedia...');
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: false,
@@ -745,6 +757,10 @@ export function useChordDetection({
           sampleRate: { ideal: 48000 },
           channelCount: { ideal: 1 },
         },
+      });
+      console.log('✅ Microphone permission granted!', {
+        tracks: stream.getTracks().length,
+        audioTrack: stream.getAudioTracks()[0]?.label
       });
       
       const ctx = new AudioContext({ sampleRate: 48000 });
@@ -1008,9 +1024,29 @@ export function useChordDetection({
         }
       }, 70);
     } catch (error) {
+      console.error('❌ MICROPHONE ACCESS ERROR:', error);
+      console.error('Error details:', {
+        name: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : 'No stack'
+      });
+      
       logger.error('Microphone access denied', error);
       setPermissionDenied(true);
       startedRef.current = false;
+      
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          console.error('🚫 User denied microphone permission');
+        } else if (error.name === 'NotFoundError') {
+          console.error('🎤 No microphone found on device');
+        } else if (error.name === 'NotReadableError') {
+          console.error('🔒 Microphone is being used by another application');
+        } else {
+          console.error('⚠️ Unknown microphone error:', error.name);
+        }
+      }
     }
   }, []);
   

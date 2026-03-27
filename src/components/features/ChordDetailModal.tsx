@@ -96,9 +96,9 @@ export default function ChordDetailModal({
           </div>
 
           {/* Diagram Section */}
-          <div className="p-3 flex gap-4 items-start flex-shrink-0">
+          <div className="p-3 flex gap-3 items-start flex-shrink-0">
             {/* Chord Diagram */}
-            <div className="flex-1 flex-shrink-0">
+            <div className="flex-shrink-0">
               <svg width="244" height="320" viewBox="0 0 160 210" className="select-none">
                 {/* Nut (thick top line) */}
                 <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
@@ -274,13 +274,7 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div 
-              className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg relative"
-              style={{ 
-                transform: 'translate(-32px, 77px)',
-                WebkitTransform: 'translate(-32px, 77px)' 
-              }}
-            >
+            <div className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg flex-shrink-0 self-start">
               {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-1 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>

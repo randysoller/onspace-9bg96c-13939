@@ -92,12 +92,11 @@ function CheckboxIcon({
   color = 'primary',
 }: {
   checked: boolean;
-  color?: 'primary' | 'emerald' | 'violet';
+  color?: 'primary' | 'emerald';
 }) {
   const colorMap = {
     primary: { bg: 'bg-[hsl(var(--color-primary))]', border: 'border-[hsl(var(--color-primary))]' },
     emerald: { bg: 'bg-emerald-500', border: 'border-emerald-500' },
-    violet: { bg: 'bg-violet-500', border: 'border-violet-500' },
   };
   
   const colors = colorMap[color];
@@ -269,7 +268,7 @@ function CategorySheetContent({
                 onClick={() => onToggleBarreRoot(root)}
                 className={`flex-1 px-3 py-2 rounded-lg text-xs font-body font-medium transition-colors border ${
                   barreRoots.has(root)
-                    ? 'bg-[hsl(200_80%_62%/0.2)] text-[hsl(200_80%_62%)] border-[hsl(200_80%_62%/0.4)]'
+                    ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40'
                     : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-subtle))] border-transparent'
                 }`}
               >
@@ -306,7 +305,7 @@ function TypeSheetContent({
         onClick={onToggleAll}
         className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors`}
       >
-        <CheckboxIcon checked={chordTypes.size === ALL_CHORD_TYPES.length} color="violet" />
+        <CheckboxIcon checked={chordTypes.size === ALL_CHORD_TYPES.length} color="emerald" />
         <span className={`font-display font-semibold ${textSize} text-[hsl(var(--text-default))]`}>
           All Types
         </span>
@@ -327,16 +326,16 @@ function TypeSheetContent({
               <div
                 className={`size-5 rounded border flex items-center justify-center shrink-0 ${
                   allSelected
-                    ? 'bg-violet-500 border-violet-500'
+                    ? 'bg-emerald-500 border-emerald-500'
                     : someSelected
-                    ? 'border-violet-500 bg-violet-500/30'
+                    ? 'border-emerald-500 bg-emerald-500/30'
                     : 'border-[hsl(var(--border-default))]'
                 }`}
               >
                 {allSelected ? (
                   <Check className="size-3 text-white" />
                 ) : someSelected ? (
-                  <div className="size-2 bg-violet-500 rounded-sm" />
+                  <div className="size-2 bg-emerald-500 rounded-sm" />
                 ) : null}
               </div>
               <span className="font-display text-xs font-semibold text-[hsl(var(--text-muted))] uppercase tracking-widest">
@@ -350,10 +349,10 @@ function TypeSheetContent({
                 key={type}
                 onClick={() => onToggleType(type)}
                 className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
-                  chordTypes.has(type) ? 'bg-violet-500/8' : ''
+                  chordTypes.has(type) ? 'bg-emerald-500/8' : ''
                 }`}
               >
-                <CheckboxIcon checked={chordTypes.has(type)} color="violet" />
+                <CheckboxIcon checked={chordTypes.has(type)} color="emerald" />
                 <span className={`font-body font-medium ${textSize} text-[hsl(var(--text-default))]`}>
                   {CHORD_TYPE_LABELS[type]}
                 </span>
@@ -707,7 +706,7 @@ export default function ChordSetup() {
                   onClick={() => toggleSheet('type')}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
                     chordTypes.size > 0
-                      ? 'border-violet-500/50 bg-violet-500/10 text-violet-400'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
                       : activeSheet === 'type'
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'
                       : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
@@ -717,7 +716,7 @@ export default function ChordSetup() {
                   <span className="hidden sm:inline">{getTypeSummary()}</span>
                   <span className="sm:hidden">{getTypeSummaryMobile()}</span>
                   {chordTypes.size > 0 && (
-                    <span className="hidden sm:flex size-5 rounded-full bg-violet-500 text-[hsl(var(--bg-base))] items-center justify-center text-[10px] font-bold">
+                    <span className="hidden sm:flex size-5 rounded-full bg-emerald-500 text-[hsl(var(--bg-base))] items-center justify-center text-[10px] font-bold">
                       {chordTypes.size}
                     </span>
                   )}
@@ -771,7 +770,7 @@ export default function ChordSetup() {
                         onClick={() => toggleBarreRoot(root)}
                         className={`rounded-full px-3 py-1 text-[12px] sm:text-[11px] font-body font-medium border transition-colors ${
                           barreRoots.has(root)
-                            ? 'bg-[hsl(200_80%_62%/0.2)] text-[hsl(200_80%_62%)] border-[hsl(200_80%_62%/0.4)]'
+                            ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40'
                             : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-subtle))] border-transparent'
                         }`}
                       >
@@ -838,7 +837,7 @@ export default function ChordSetup() {
                       [...chordTypes].map((type) => (
                         <div
                           key={type}
-                          className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-violet-500/12 border border-violet-500/25 text-violet-400"
+                          className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500"
                         >
                           <span>{CHORD_TYPE_LABELS[type]}</span>
                           <button onClick={() => toggleChordType(type)} className="hover:opacity-70">
@@ -847,7 +846,7 @@ export default function ChordSetup() {
                         </div>
                       ))
                     ) : chordTypes.size > 3 ? (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-violet-500/12 border border-violet-500/25 text-violet-400">
+                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
                         <span>{chordTypes.size} types</span>
                         <button onClick={clearChordTypes} className="hover:opacity-70">
                           <X className="size-3" />
@@ -859,7 +858,7 @@ export default function ChordSetup() {
                     {[...barreRoots].map((root) => (
                       <div
                         key={root}
-                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-[hsl(200_80%_62%/0.12)] border border-[hsl(200_80%_62%/0.25)] text-[hsl(200_80%_62%)]"
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500"
                       >
                         <span>Root {root}th</span>
                         <button onClick={() => toggleBarreRoot(root)} className="hover:opacity-70">

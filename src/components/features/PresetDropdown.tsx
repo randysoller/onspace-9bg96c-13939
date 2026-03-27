@@ -1,6 +1,11 @@
+/**
+ * PresetDropdown Component — Preset selection, drag-and-drop reorder, delete confirmation
+ */
+
 import { useState, useRef, useEffect } from 'react';
-import { Bookmark, ChevronDown, Trash2, GripVertical, X } from 'lucide-react';
-import { ChordPreset } from '@/stores/presetStore';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bookmark, ChevronDown, GripVertical, Trash2, X } from 'lucide-react';
+import type { ChordPreset } from '@/stores/presetStore';
 
 interface PresetDropdownProps {
   presets: ChordPreset[];
@@ -20,301 +25,363 @@ export default function PresetDropdown({
   onReorder,
 }: PresetDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Drag state
-  const dragState = useRef<{
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [dragState, setDragState] = useState<{
     draggingIndex: number | null;
-    startY: number;
-    currentY: number;
-    offsetY: number;
-    startTime: number;
-    touchId: number | null;
-    activated: boolean;
+    currentOverIndex: number | null;
+    pointerStartY: number | null;
+    dragOffsetY: number;
+    longPressTimer: number | null;
+    hasMoved: boolean;
   }>({
     draggingIndex: null,
-    startY: 0,
-    currentY: 0,
-    offsetY: 0,
-    startTime: 0,
-    touchId: null,
-    activated: false,
+    currentOverIndex: null,
+    pointerStartY: null,
+    dragOffsetY: 0,
+    longPressTimer: null,
+    hasMoved: false,
   });
-
-  const [dragVisual, setDragVisual] = useState<{ from: number; over: number } | null>(null);
-
-  // Outside click
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  
+  const activePreset = presets.find((p) => p.id === activePresetId);
+  const isActive = !!activePreset;
+  
+  // Close on outside click
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    if (!isOpen) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
-    if (isOpen) {
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
-
-  const activePreset = presets.find((p) => p.id === activePresetId);
-
-  const handleToggle = (id: string) => {
-    if (activePresetId === id) {
-      onDeactivate();
-    } else {
-      onActivate(id);
-    }
-    setIsOpen(false);
-  };
-
-  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
+  
+  // Drag-and-drop handlers
+  const handlePointerDown = (e: React.PointerEvent, index: number, isGripHandle: boolean) => {
     e.stopPropagation();
-    setDeleteConfirm(id);
-  };
-
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      onDelete(deleteConfirm);
-      setDeleteConfirm(null);
-    }
-  };
-
-  // Drag handlers
-  const handlePointerDown = (e: React.PointerEvent, index: number) => {
-    const isMouse = e.pointerType === 'mouse';
-    const rect = dropdownRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    dragState.current = {
-      draggingIndex: index,
-      startY: e.clientY,
-      currentY: e.clientY,
-      offsetY: 0,
-      startTime: Date.now(),
-      touchId: e.pointerId,
-      activated: isMouse,
-    };
-
-    if (isMouse) {
-      setDragVisual({ from: index, over: index });
-      if (navigator.vibrate) navigator.vibrate(30);
-    } else {
-      // Touch: activate after 200ms if no vertical scroll
-      setTimeout(() => {
-        const state = dragState.current;
-        if (state.draggingIndex === index && !state.activated) {
-          const dy = Math.abs(state.currentY - state.startY);
-          if (dy < 8) {
-            state.activated = true;
-            setDragVisual({ from: index, over: index });
-            if (navigator.vibrate) navigator.vibrate(30);
-          }
+    
+    if (!isGripHandle) return; // Only grip handle can initiate drag
+    
+    const isTouchEvent = e.pointerType === 'touch';
+    
+    if (isTouchEvent) {
+      // Touch: 200ms long-press to activate
+      const timer = window.setTimeout(() => {
+        if (!dragState.hasMoved) {
+          activateDrag(index, e.clientY);
         }
       }, 200);
+      
+      setDragState((prev) => ({
+        ...prev,
+        pointerStartY: e.clientY,
+        longPressTimer: timer,
+        hasMoved: false,
+      }));
+    } else {
+      // Mouse: immediate activation
+      activateDrag(index, e.clientY);
     }
-
-    e.currentTarget.setPointerCapture(e.pointerId);
   };
-
+  
+  const activateDrag = (index: number, clientY: number) => {
+    if (navigator.vibrate) {
+      navigator.vibrate(30);
+    }
+    
+    setDragState((prev) => ({
+      ...prev,
+      draggingIndex: index,
+      currentOverIndex: index,
+      pointerStartY: clientY,
+      dragOffsetY: 0,
+    }));
+  };
+  
   const handlePointerMove = (e: React.PointerEvent) => {
-    const state = dragState.current;
-    if (state.draggingIndex === null) return;
-
-    state.currentY = e.clientY;
-    const dy = state.currentY - state.startY;
-
-    // Cancel touch drag if vertical scroll before activation
-    if (!state.activated && Math.abs(dy) > 10) {
-      dragState.current.draggingIndex = null;
-      return;
-    }
-
-    if (state.activated) {
-      state.offsetY = dy;
-      const itemHeight = 48;
-      const overIndex = state.draggingIndex + Math.round(dy / itemHeight);
-      const clampedOver = Math.max(0, Math.min(presets.length - 1, overIndex));
-      setDragVisual({ from: state.draggingIndex, over: clampedOver });
-    }
-  };
-
-  const handlePointerUp = () => {
-    const state = dragState.current;
-    if (state.draggingIndex !== null && state.activated && dragVisual) {
-      if (dragVisual.from !== dragVisual.over) {
-        onReorder(dragVisual.from, dragVisual.over);
+    if (dragState.longPressTimer && !dragState.hasMoved) {
+      const moved = Math.abs(e.clientY - (dragState.pointerStartY ?? 0)) > 8;
+      if (moved) {
+        // Cancel long-press
+        clearTimeout(dragState.longPressTimer);
+        setDragState((prev) => ({ ...prev, longPressTimer: null, hasMoved: true }));
       }
     }
-    dragState.current.draggingIndex = null;
-    dragState.current.activated = false;
-    setDragVisual(null);
+    
+    if (dragState.draggingIndex === null || !listRef.current) return;
+    
+    const offsetY = e.clientY - (dragState.pointerStartY ?? 0);
+    setDragState((prev) => ({ ...prev, dragOffsetY: offsetY }));
+    
+    // Calculate current over index
+    const listRect = listRef.current.getBoundingClientRect();
+    const itemHeight = 48; // py-3 ~ 12px * 2 + 24px content
+    const relativeY = e.clientY - listRect.top;
+    const overIndex = Math.floor(relativeY / itemHeight);
+    const clampedIndex = Math.max(0, Math.min(presets.length - 1, overIndex));
+    
+    setDragState((prev) => ({ ...prev, currentOverIndex: clampedIndex }));
   };
-
-  const getTransform = (index: number): string => {
-    if (!dragVisual) return 'translateY(0)';
-    if (index === dragVisual.from) {
-      return `translateY(${dragState.current.offsetY}px)`;
+  
+  const handlePointerUp = () => {
+    if (dragState.longPressTimer) {
+      clearTimeout(dragState.longPressTimer);
     }
-    if (dragVisual.from < dragVisual.over && index > dragVisual.from && index <= dragVisual.over) {
-      return 'translateY(-48px)';
+    
+    const { draggingIndex, currentOverIndex } = dragState;
+    
+    if (draggingIndex !== null && currentOverIndex !== null && draggingIndex !== currentOverIndex) {
+      onReorder(draggingIndex, currentOverIndex);
     }
-    if (dragVisual.from > dragVisual.over && index < dragVisual.from && index >= dragVisual.over) {
-      return 'translateY(48px)';
-    }
-    return 'translateY(0)';
+    
+    setDragState({
+      draggingIndex: null,
+      currentOverIndex: null,
+      pointerStartY: null,
+      dragOffsetY: 0,
+      longPressTimer: null,
+      hasMoved: false,
+    });
   };
-
-  const getVisualClass = (index: number): string => {
-    if (!dragVisual || index !== dragVisual.from) return '';
-    return 'bg-[hsl(var(--color-primary)/0.15)] scale-[1.02] shadow-lg opacity-85';
+  
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setDeleteConfirmId(id);
   };
-
+  
+  const handleConfirmDelete = () => {
+    if (deleteConfirmId) {
+      onDelete(deleteConfirmId);
+      setDeleteConfirmId(null);
+    }
+  };
+  
+  const getTranslateY = (index: number) => {
+    if (dragState.draggingIndex === null || dragState.currentOverIndex === null) return 0;
+    
+    if (index === dragState.draggingIndex) {
+      return dragState.dragOffsetY;
+    }
+    
+    if (dragState.draggingIndex < dragState.currentOverIndex) {
+      // Dragging downward
+      if (index > dragState.draggingIndex && index <= dragState.currentOverIndex) {
+        return -48;
+      }
+    } else {
+      // Dragging upward
+      if (index < dragState.draggingIndex && index >= dragState.currentOverIndex) {
+        return 48;
+      }
+    }
+    
+    return 0;
+  };
+  
   return (
-    <div ref={dropdownRef} className="relative">
+    <div className="relative" ref={dropdownRef}>
+      {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-full sm:w-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl
-          border-2 transition-all
+          w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg border font-body font-medium text-sm transition-all
           ${
-            activePresetId
-              ? 'border-[hsl(var(--color-primary)/0.4)] bg-[hsl(var(--color-primary)/0.08)] shadow-lg shadow-[hsl(var(--color-primary)/0.15)]'
-              : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] hover:bg-[hsl(var(--bg-overlay))]'
+            isActive
+              ? 'bg-[hsl(var(--color-primary)/0.12)] border-[hsl(var(--color-primary)/0.35)] text-[hsl(var(--color-primary))] shadow-lg shadow-[hsl(var(--color-primary)/0.15)]'
+              : isOpen
+              ? 'bg-[hsl(var(--bg-elevated))] border-[hsl(var(--color-primary))] text-[hsl(var(--text-default))]'
+              : 'bg-[hsl(var(--bg-elevated))] border-[hsl(var(--border-default))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
           }
         `}
       >
-        <div className="flex items-center gap-2.5">
-          <Bookmark
-            className={`size-4 ${
-              activePresetId ? 'text-[hsl(var(--color-primary))] fill-current' : 'text-[hsl(var(--text-muted))]'
-            }`}
-          />
-          <span className="text-sm font-display font-semibold text-[hsl(var(--text-default))]">
+        <div className="flex items-center gap-2">
+          <Bookmark className={`size-3.5 ${isActive ? 'fill-current' : ''}`} />
+          <span className="uppercase tracking-wide text-xs">
             {activePreset ? activePreset.name : 'EASY START - Presets'}
           </span>
-          {activePreset && (
-            <span className="px-2 py-0.5 bg-[hsl(var(--color-primary)/0.2)] text-[hsl(var(--color-primary))] text-[10px] font-bold rounded">
-              {activePreset.chordIds.length}
-            </span>
-          )}
+          <span className="flex items-center justify-center size-5 rounded-full bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))] text-[10px] font-bold tabular-nums">
+            {presets.length}
+          </span>
         </div>
-        <ChevronDown className={`size-4 text-[hsl(var(--text-subtle))] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          className={`size-3.5 text-[hsl(var(--text-muted))] transition-transform duration-200 ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+        />
       </button>
-
-      {isOpen && (
-        <div className="absolute left-0 top-full mt-1.5 w-full sm:w-80 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-xl shadow-2xl overflow-hidden z-50">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between">
-            <div className="text-xs font-display font-bold text-[hsl(var(--text-subtle))] uppercase tracking-wide">
-              EASY START - Presets
-            </div>
-            {activePresetId && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDeactivate();
-                  setIsOpen(false);
-                }}
-                className="text-xs text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-emphasis))] font-semibold"
-              >
-                Clear filter
-              </button>
-            )}
-          </div>
-
-          {/* Preset list */}
-          {presets.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <Bookmark className="size-10 mx-auto mb-3 text-[hsl(var(--text-muted))] opacity-40" />
-              <div className="text-sm font-medium text-[hsl(var(--text-subtle))] mb-1">No presets yet</div>
-              <div className="text-xs text-[hsl(var(--text-muted))]">
-                Save chord selections from the library to create your first preset
-              </div>
-            </div>
-          ) : (
-            <div className="max-h-[50vh] overflow-y-auto">
-              {presets.map((preset, index) => (
-                <div
-                  key={preset.id}
-                  onPointerDown={(e) => handlePointerDown(e, index)}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerCancel={handlePointerUp}
-                  style={{
-                    transform: getTransform(index),
-                    transition: dragVisual?.from === index ? 'none' : 'transform 0.2s ease-out',
-                  }}
-                  className={`
-                    flex items-center gap-3 px-3 py-3 border-b border-[hsl(var(--border-subtle))] last:border-0
-                    cursor-pointer hover:bg-[hsl(var(--bg-overlay))] transition-colors
-                    ${getVisualClass(index)}
-                  `}
-                  onClick={() => handleToggle(preset.id)}
+      
+      {/* Dropdown Panel */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute left-0 top-full mt-2 w-full sm:w-80 rounded-xl border border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] shadow-2xl shadow-black/50 overflow-hidden z-50 max-h-[50vh] overflow-y-auto"
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between">
+              <span className="text-xs font-body font-semibold text-[hsl(var(--text-muted))] uppercase tracking-widest">
+                EASY START - Presets
+              </span>
+              {isActive && (
+                <button
+                  onClick={onDeactivate}
+                  className="text-xs font-body text-[hsl(var(--color-primary))] hover:underline"
                 >
-                  <div className="touch-none cursor-grab active:cursor-grabbing text-[hsl(var(--text-muted))]">
-                    <GripVertical className="size-4" />
-                  </div>
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <Bookmark
-                      className={`size-3.5 ${
-                        activePresetId === preset.id
-                          ? 'text-[hsl(var(--color-primary))] fill-current'
-                          : 'text-[hsl(var(--text-muted))]'
-                      }`}
-                    />
-                    <span className="text-sm font-medium text-[hsl(var(--text-default))] truncate">{preset.name}</span>
-                    <span className="px-1.5 py-0.5 bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))] text-[10px] font-bold rounded">
-                      {preset.chordIds.length}
-                    </span>
-                  </div>
-                  <button
-                    onClick={(e) => handleDeleteClick(preset.id, e)}
-                    className="p-1.5 hover:bg-[hsl(var(--semantic-error)/0.1)] rounded transition-colors"
-                  >
-                    <Trash2 className="size-3.5 text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))]" />
-                  </button>
-                </div>
-              ))}
+                  Clear filter
+                </button>
+              )}
             </div>
-          )}
-
-          {/* Footer hint */}
-          <div className="px-4 py-2.5 border-t border-[hsl(var(--border-subtle))] text-[10px] text-[hsl(var(--text-muted))]">
+            
+            {/* Preset List */}
             {presets.length > 0 ? (
-              <>Drag the grip handle to reorder</>
+              <div
+                ref={listRef}
+                className="relative"
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+              >
+                {presets.map((preset, index) => (
+                  <div
+                    key={preset.id}
+                    className="relative"
+                    style={{
+                      transform: `translateY(${getTranslateY(index)}px)`,
+                      transition:
+                        dragState.draggingIndex === index ? 'none' : 'transform 0.2s ease-out',
+                      zIndex: dragState.draggingIndex === index ? 10 : 1,
+                    }}
+                  >
+                    <div
+                      className={`
+                        flex items-center gap-2 px-2 py-3 border-b border-[hsl(var(--border-subtle))]
+                        ${dragState.draggingIndex === index ? 'bg-[hsl(var(--color-primary)/0.15)] scale-[1.02] shadow-lg opacity-85' : ''}
+                        ${preset.id === activePresetId ? 'bg-[hsl(var(--color-primary)/0.08)]' : ''}
+                      `}
+                    >
+                      {/* Drag handle */}
+                      <div
+                        className="flex-shrink-0 size-7 flex items-center justify-center cursor-grab active:cursor-grabbing text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-default))] transition-colors"
+                        onPointerDown={(e) => handlePointerDown(e, index, true)}
+                      >
+                        <GripVertical className="size-4" />
+                      </div>
+                      
+                      {/* Preset info */}
+                      <button
+                        onClick={() => {
+                          onActivate(preset.id);
+                          setIsOpen(false);
+                        }}
+                        className="flex-1 flex items-center gap-2 text-left"
+                      >
+                        <Bookmark
+                          className={`size-3.5 flex-shrink-0 ${
+                            preset.id === activePresetId
+                              ? 'text-[hsl(var(--color-primary))] fill-current'
+                              : 'text-[hsl(var(--text-subtle))]'
+                          }`}
+                        />
+                        <span
+                          className={`font-body font-medium text-sm truncate ${
+                            preset.id === activePresetId
+                              ? 'text-[hsl(var(--color-primary))]'
+                              : 'text-[hsl(var(--text-default))]'
+                          }`}
+                        >
+                          {preset.name}
+                        </span>
+                        <span className="ml-auto flex-shrink-0 text-xs text-[hsl(var(--text-muted))] tabular-nums">
+                          {preset.chordIds.length}
+                        </span>
+                      </button>
+                      
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => handleDeleteClick(e, preset.id)}
+                        className="flex-shrink-0 size-7 flex items-center justify-center text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))] transition-colors"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <>Save more presets from the Chord Library</>
+              // Empty state
+              <div className="px-4 py-8 text-center">
+                <Bookmark className="size-6 mx-auto mb-2 text-[hsl(var(--text-muted))] opacity-50" />
+                <p className="text-sm text-[hsl(var(--text-muted))]">No presets yet</p>
+                <p className="text-xs text-[hsl(var(--text-subtle))] mt-1">
+                  Save presets from the Chord Library
+                </p>
+              </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Delete confirmation modal */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center px-4">
-          <div className="bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-2xl p-6 max-w-[280px] shadow-2xl">
-            <div className="text-lg font-display font-bold text-[hsl(var(--text-default))] mb-2">Delete Preset</div>
-            <div className="text-sm text-[hsl(var(--text-subtle))] mb-6">
-              Are you sure you want to delete "<strong>{presets.find((p) => p.id === deleteConfirm)?.name}</strong>"?
+            
+            {/* Footer hint */}
+            <div className="px-4 py-2 border-t border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-surface))]">
+              <p className="text-[10px] text-[hsl(var(--text-muted))] text-center">
+                {presets.length > 1
+                  ? 'Drag the grip handle to reorder'
+                  : 'Save more presets from the Chord Library'}
+              </p>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] text-[hsl(var(--text-default))] font-semibold transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-4 py-2.5 rounded-lg bg-[hsl(var(--semantic-error))] hover:bg-[hsl(var(--semantic-error)/0.9)] text-white font-semibold transition-colors"
-              >
-                Delete
-              </button>
-            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setDeleteConfirmId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.15 }}
+              className="relative bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-xl p-6 max-w-[280px] shadow-2xl"
+            >
+              <h3 className="font-display font-bold text-base text-[hsl(var(--text-default))] mb-2">
+                Delete preset?
+              </h3>
+              <p className="text-sm text-[hsl(var(--text-subtle))] mb-4">
+                "{presets.find((p) => p.id === deleteConfirmId)?.name}" will be permanently removed.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-default))] font-body font-medium text-sm hover:bg-[hsl(var(--bg-overlay))] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  className="flex-1 px-4 py-2 rounded-lg bg-[hsl(var(--semantic-error))] text-white font-body font-bold text-sm hover:bg-[hsl(var(--semantic-error)/0.9)] transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

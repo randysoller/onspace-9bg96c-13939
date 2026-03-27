@@ -629,7 +629,7 @@ export default function TunerPanel() {
   }, [getChimeCtx]);
 
   const playReferenceTone = useCallback((gs: GuitarString) => {
-    playGuitarString({ frequency: gs.freq, duration: 3.0, volume: 0.944 }); // -0.5 dB
+    playGuitarString({ frequency: gs.freq, duration: 3.0, volume: 0.891 }); // -1.0 dB
     setPlayingString(gs.string);
     setTimeout(() => setPlayingString((prev) => prev === gs.string ? null : prev), 2200);
   }, [playGuitarString]);

@@ -1,37 +1,58 @@
-/**
- * Audio Store - Global volume and mute state
- * Persists to localStorage
- */
-
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
-interface AudioState {
-  volume: number;        // 0-1
+const STORAGE_KEY = 'fretmaster-audio';
+
+interface AudioSettings {
+  volume: number;  // 0–1
   muted: boolean;
-  
+}
+
+function loadSettings(): AudioSettings {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        volume: typeof parsed.volume === 'number' ? Math.max(0, Math.min(1, parsed.volume)) : 0.7,
+        muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return { volume: 0.7, muted: false };
+}
+
+function persist(settings: AudioSettings) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+}
+
+interface AudioStore extends AudioSettings {
   setVolume: (v: number) => void;
   toggleMute: () => void;
   getEffectiveVolume: () => number;
 }
 
-export const useAudioStore = create<AudioState>()(
-  persist(
-    (set, get) => ({
-      volume: 0.7,
-      muted: false,
-      
-      setVolume: (v) => set({ volume: Math.max(0, Math.min(1, v)) }),
-      
-      toggleMute: () => set((state) => ({ muted: !state.muted })),
-      
-      getEffectiveVolume: () => {
-        const state = get();
-        return state.muted ? 0 : state.volume;
-      },
-    }),
-    {
-      name: 'fretmaster-audio',
-    }
-  )
-);
+export const useAudioStore = create<AudioStore>((set, get) => {
+  const initial = loadSettings();
+  return {
+    ...initial,
+
+    setVolume: (volume) => {
+      const clamped = Math.max(0, Math.min(1, volume));
+      set({ volume: clamped, muted: clamped === 0 });
+      persist({ volume: clamped, muted: clamped === 0 });
+    },
+
+    toggleMute: () => {
+      const next = !get().muted;
+      set({ muted: next });
+      persist({ volume: get().volume, muted: next });
+    },
+
+    getEffectiveVolume: () => {
+      const { volume, muted } = get();
+      return muted ? 0 : volume;
+    },
+  };
+});

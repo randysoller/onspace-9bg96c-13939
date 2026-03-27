@@ -78,7 +78,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
 
         {/* Chord Diagram */}
         <div className="flex-shrink-0 -ml-[19px]">
-          <svg width="100" height="135" viewBox="0 0 100 135" className="select-none">
+          <svg width="100" height="135" viewBox="-5 0 110 135" className="select-none">
             {/* Nut (thick top line) */}
             <rect x="10" y="20" width="80" height="3" fill="currentColor" className="text-zinc-600" />
 

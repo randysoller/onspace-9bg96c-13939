@@ -119,7 +119,7 @@ export default function Practice() {
   // Redirect if not practicing
   useEffect(() => {
     if (!isPracticing) {
-      navigate('/chord-practice');
+      navigate('/chord-setup');
     }
   }, [isPracticing, navigate]);
   

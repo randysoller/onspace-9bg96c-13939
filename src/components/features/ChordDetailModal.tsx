@@ -274,7 +274,10 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg mt-[66px] -ml-[56px] relative">
+            <div 
+              className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg relative"
+              style={{ marginTop: '66px', marginLeft: '-56px' }}
+            >
               {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-1 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>

@@ -280,6 +280,7 @@ export default function ChordLibrary() {
   const [showPresetMenu, setShowPresetMenu] = useState(false); // FIX #4: Show/hide preset menu
   const [newPresetName, setNewPresetName] = useState(''); // FIX #4: New preset name
   const { presets: userPresets, addPreset } = usePresetStore(); // FIX #4: Access preset store
+  const { playChord } = useChordAudio(); // Add chord audio playback
 
   // Filter chords based on search and category
   const filteredChords = CHORD_DATABASE.filter((chord) => {
@@ -625,6 +626,7 @@ export default function ChordLibrary() {
           chord={detailModalChord}
           isOpen={!!detailModalChord}
           onClose={() => setDetailModalChord(null)}
+          onPlay={() => playChord(detailModalChord)}
           onNext={handleNextChord}
           onPrevious={handlePreviousChord}
           currentIndex={detailModalIndex}

@@ -98,7 +98,7 @@ export default function ChordDetailModal({
           {/* Diagram Section */}
           <div className="p-4 flex gap-4 items-end flex-shrink-0">
             {/* Chord Diagram */}
-            <div className="flex-1 ml-12">
+            <div className="flex-1 ml-12 flex-shrink-0">
               <svg width="212" height="278" viewBox="0 0 160 210" className="select-none">
                 {/* Nut (thick top line) */}
                 <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
@@ -274,7 +274,7 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div className="bg-white rounded-lg px-3 py-2 pb-14 text-xs font-mono shadow-lg">
+            <div className="bg-white rounded-lg px-3 py-2 pb-14 text-xs font-mono shadow-lg -mt-6 -ml-[19px]">
               {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-2 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>
@@ -289,10 +289,10 @@ export default function ChordDetailModal({
           </div>
 
           {/* Action Buttons */}
-          <div className="px-4 pb-3 flex items-center gap-3 flex-shrink-0">
+          <div className="px-4 pb-3 flex flex-col items-center gap-3 flex-shrink-0">
             <button
               onClick={onPlay}
-              className="w-12 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 px-2 rounded-lg flex items-center justify-center transition-colors active:scale-95"
+              className="w-20 h-20 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold rounded-lg flex items-center justify-center transition-colors active:scale-95"
             >
               <Volume2 className="w-12 h-12" />
             </button>
@@ -300,7 +300,7 @@ export default function ChordDetailModal({
             {onEdit && (
               <button
                 onClick={onEdit}
-                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
+                className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
               >
                 <Edit className="w-4 h-4" />
                 Edit

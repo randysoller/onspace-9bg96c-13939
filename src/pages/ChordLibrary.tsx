@@ -57,7 +57,7 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               e.stopPropagation();
               playChord(chord);
             }}
-            className="flex-shrink-0 p-2 bg-zinc-800 hover:bg-amber-500 text-amber-500 hover:text-zinc-950 rounded-lg transition-all group border border-amber-500/25"
+            className="flex-shrink-0 p-2 bg-zinc-800 hover:bg-amber-500 text-amber-500 hover:text-zinc-950 rounded-lg transition-all group border border-amber-500/25 mt-[0.2in]"
           >
             <Volume2 className="w-4 h-4 stroke-[2.5]" />
           </button>

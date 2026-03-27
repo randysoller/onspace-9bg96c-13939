@@ -64,6 +64,16 @@ export default function Practice() {
   // Get current chord
   const chord = getCurrentChord();
   
+  // DEBUG: Log chord and practice state
+  console.log('🎸 Practice page render:', {
+    isPracticing,
+    chordExists: !!chord,
+    chord: chord ? `${chord.root}${chord.type}` : 'null',
+    chordId: chord?.id,
+    currentIndex: usePracticeStore.getState().currentIndex,
+    totalPracticeChords: usePracticeStore.getState().practiceChords.length,
+  });
+  
   // Session stats
   const { 
     startSession, 
@@ -142,13 +152,27 @@ export default function Practice() {
   }, [chord, resetChordTimer]);
   
   if (!chord) {
+    // DEBUG: Log why there's no chord
+    const state = usePracticeStore.getState();
+    console.error('❌ No chord available!', {
+      isPracticing: state.isPracticing,
+      practiceChords: state.practiceChords.length,
+      currentIndex: state.currentIndex,
+      categories: Array.from(state.categories),
+      chordTypes: Array.from(state.chordTypes),
+      keyFilter: state.keyFilter,
+    });
+    
     return (
-      <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold mb-4">No chords to practice</h2>
+          <p className="text-[hsl(var(--text-subtle))] mb-6">
+            The filter settings in Chord Setup resulted in no matching chords. Please adjust your filters and try again.
+          </p>
           <button
-            onClick={() => navigate('/chord-practice')}
-            className="text-[hsl(var(--color-primary))] hover:text-[hsl(var(--color-emphasis))]"
+            onClick={() => navigate('/chord-setup')}
+            className="bg-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-emphasis))] text-white px-6 py-3 rounded-lg font-bold transition-colors"
           >
             Go back to setup
           </button>
@@ -412,24 +436,28 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
-          {/* Chord Symbol */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${chord.id}-symbol`}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
-              className="mb-8"
-            >
-              <div className="text-8xl font-black text-white mb-2">
-                {chord.root}{chord.type === 'major' ? '' : chord.type}
-              </div>
-              <div className="text-lg text-[hsl(var(--text-subtle))]">
-                {chord.root} {chord.type === 'major' ? 'Major' : chord.type}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+          {/* Chord Name - Always Visible */}
+          <div className="mb-4">
+            <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
+              {isRevealed ? 'Current Chord' : 'Play This Chord'}
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${chord.id}-symbol`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-8xl font-black text-white mb-2 leading-none">
+                  {chord.root}{chord.type === 'major' ? '' : chord.type}
+                </div>
+                <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                  {chord.root} {chord.type === 'major' ? 'Major' : chord.type}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
           {/* Diagram & Tablature */}
           {showDiagrams && isRevealed && (

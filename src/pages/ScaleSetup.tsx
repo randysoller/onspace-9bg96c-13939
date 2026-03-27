@@ -2,17 +2,17 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { SCALES, NOTE_NAMES } from '@/constants/scales';
+import { SCALES, NOTE_NAMES, SCALE_INTERVALS } from '@/constants/scales';
 import { ScaleFretboard } from '@/components/features/ScaleFretboard';
 
 const SCALE_OPTIONS = [
-  { value: 'major', label: 'Major Scale', intervals: SCALES.major },
-  { value: 'minor', label: 'Natural Minor', intervals: SCALES.minor },
-  { value: 'pentatonicMajor', label: 'Major Pentatonic', intervals: SCALES.pentatonicMajor },
-  { value: 'pentatonicMinor', label: 'Minor Pentatonic', intervals: SCALES.pentatonicMinor },
-  { value: 'blues', label: 'Blues Scale', intervals: SCALES.blues },
-  { value: 'harmonicMinor', label: 'Harmonic Minor', intervals: SCALES.harmonicMinor },
-  { value: 'melodicMinor', label: 'Melodic Minor', intervals: SCALES.melodicMinor },
+  { value: 'major', label: 'Major Scale', intervals: SCALE_INTERVALS.major },
+  { value: 'minor', label: 'Natural Minor', intervals: SCALE_INTERVALS.minor },
+  { value: 'pentatonicMajor', label: 'Major Pentatonic', intervals: SCALE_INTERVALS.pentatonicMajor },
+  { value: 'pentatonicMinor', label: 'Minor Pentatonic', intervals: SCALE_INTERVALS.pentatonicMinor },
+  { value: 'blues', label: 'Blues Scale', intervals: SCALE_INTERVALS.blues },
+  { value: 'harmonicMinor', label: 'Harmonic Minor', intervals: SCALE_INTERVALS.harmonicMinor },
+  { value: 'melodicMinor', label: 'Melodic Minor', intervals: SCALE_INTERVALS.melodicMinor },
 ];
 
 export default function ScaleSetup() {

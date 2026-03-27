@@ -85,7 +85,19 @@ export const KEY_SIGNATURES: KeySignature[] = [
   { display: 'C♭', noteName: 'B', useFlats: true, type: 'flat', count: 7, notes: ['B♭', 'E♭', 'A♭', 'D♭', 'G♭', 'C♭', 'F♭'] },
 ];
 
-// ========== SCALE DEFINITIONS ==========
+// ========== SCALE INTERVAL PATTERNS (for fretboard visualization and playback) ==========
+
+export const SCALE_INTERVALS = {
+  major: [0, 2, 4, 5, 7, 9, 11],                    // W-W-H-W-W-W-H
+  minor: [0, 2, 3, 5, 7, 8, 10],                    // W-H-W-W-H-W-W (natural minor)
+  pentatonicMajor: [0, 2, 4, 7, 9],                 // Major pentatonic
+  pentatonicMinor: [0, 3, 5, 7, 10],                // Minor pentatonic
+  blues: [0, 3, 5, 6, 7, 10],                       // Minor pentatonic + blue note
+  harmonicMinor: [0, 2, 3, 5, 7, 8, 11],            // Natural minor with raised 7th
+  melodicMinor: [0, 2, 3, 5, 7, 9, 11],             // Natural minor with raised 6th and 7th
+} as const;
+
+// ========== SCALE DEFINITIONS (for chord progressions) ==========
 
 export interface ScaleDegree {
   interval: number;        // semitones from root (0–11)

@@ -142,6 +142,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       {chord.frets.map((fret, idx) => {
         const x = leftMargin + idx * stringSpacing;
         const y = nutY * 0.5;
+        const isRoot = idx === chord.rootNoteString;
         
         if (fret === -1) {
           // Muted string - X
@@ -159,9 +160,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
             </text>
           );
         } else if (fret === 0) {
-          // Open string - circle
-          const isRoot = idx === chord.rootString;
-          
+          // Open string
           if (isRoot) {
             // Root diamond
             const size = dotRadius * 0.95;
@@ -220,7 +219,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
               
               const dotX = leftMargin + stringIdx * stringSpacing;
               const finger = chord.fingers?.[stringIdx];
-              const isRoot = stringIdx === chord.rootString;
+              const isRoot = stringIdx === chord.rootNoteString;
               
               if (isRoot) {
                 // Root diamond
@@ -281,7 +280,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
         const fretY = nutY + (fret - baseFret + 0.5) * fretSpacing;
         const dotX = leftMargin + stringIdx * stringSpacing;
         const finger = chord.fingers?.[stringIdx];
-        const isRoot = stringIdx === chord.rootString;
+        const isRoot = stringIdx === chord.rootNoteString;
         
         if (isRoot) {
           // Root diamond

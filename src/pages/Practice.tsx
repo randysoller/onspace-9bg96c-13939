@@ -212,7 +212,7 @@ export default function Practice() {
   const sensitivityLabel = getSensitivityLabel(sensitivity);
   
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-24">
+    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-32 md:pb-24">
       {/* Top Bar */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
@@ -467,9 +467,9 @@ export default function Practice() {
         </div>
       </div>
 
-      {/* Fixed Bottom Toolbar - Always Visible on Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
-        <div className="flex items-stretch gap-2 px-3 py-4 pb-safe max-w-2xl mx-auto">
+      {/* Fixed Bottom Toolbar - Always Visible on Mobile, Above Tab Bar */}
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
+        <div className="flex items-stretch gap-2 px-3 py-4 md:pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button
             onClick={handlePrev}

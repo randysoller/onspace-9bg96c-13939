@@ -98,7 +98,7 @@ export default function ChordDetailModal({
           {/* Diagram Section */}
           <div className="p-3 flex gap-4 items-start flex-shrink-0">
             {/* Chord Diagram */}
-            <div className="flex-1 ml-6 flex-shrink-0">
+            <div className="flex-1 flex-shrink-0">
               <svg width="244" height="320" viewBox="0 0 160 210" className="select-none">
                 {/* Nut (thick top line) */}
                 <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
@@ -274,17 +274,21 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div className="bg-white rounded-lg px-3 py-2 pb-14 text-xs font-mono shadow-lg mt-[43px] -ml-[19px]">
+            <div className="bg-white rounded-lg px-3 py-2 pb-3 text-sm font-mono shadow-lg mt-[43px] -ml-[19px] relative">
               {[...chord.frets].reverse().map((fret, idx) => (
-                <div key={idx} className="flex gap-2 items-center py-0.5">
+                <div key={idx} className="flex gap-1 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>
                   <span className="text-zinc-400">—</span>
-                  <span className="text-zinc-900 font-bold w-4 text-center text-sm">
+                  <span className="text-zinc-900 font-bold w-4 text-center">
                     {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
                   </span>
                   <span className="text-zinc-400">—</span>
                 </div>
               ))}
+              {/* Tab Label */}
+              <div className="text-center text-zinc-400 font-bold mt-2" style={{ fontSize: '18px' }}>
+                Tab
+              </div>
             </div>
           </div>
 

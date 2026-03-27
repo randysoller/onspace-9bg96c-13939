@@ -12,6 +12,28 @@ export const NOTE_NAMES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A',
 export const FLAT_NOTE_NAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'Cb'] as const;
 export type NoteName = (typeof NOTE_NAMES)[number];
 
+// Note frequencies (Hz) for octave 1
+export const NOTE_FREQUENCIES: Record<string, number> = {
+  'C': 32.70,
+  'C#': 34.65,
+  'Db': 34.65,
+  'D': 36.71,
+  'D#': 38.89,
+  'Eb': 38.89,
+  'E': 41.20,
+  'F': 43.65,
+  'F#': 46.25,
+  'Gb': 46.25,
+  'G': 49.00,
+  'G#': 51.91,
+  'Ab': 51.91,
+  'A': 55.00,
+  'A#': 58.27,
+  'Bb': 58.27,
+  'B': 61.74,
+  'Cb': 61.74,
+};
+
 // ========== CHORD QUALITY SYSTEM ==========
 
 export type ChordQuality = 'maj' | 'min' | 'dim' | 'aug' | 'dom7' | 'maj7' | 'min7' | 'halfDim7' | 'dim7' | 'sus4';

@@ -266,8 +266,8 @@ export default function TunerPanel() {
   const globalSettings = useDetectionSettingsStore();
   const [sensitivity, setSensitivity] = useState(() => {
     // If advanced detection is enabled, derive tuner sensitivity from noise gate
-    if (globalSettings.advancedEnabled) {
-      return globalSettings.advancedValues.noiseGate;
+    if (globalSettings.advancedEnabled && globalSettings.advancedValues) {
+      return globalSettings.advancedValues.noiseGate ?? 60;
     }
     const saved = localStorage.getItem('tuner-mic-sensitivity');
     return saved !== null ? Number(saved) : 60;
@@ -297,10 +297,10 @@ export default function TunerPanel() {
 
   // Sync with global calibration settings when they change
   useEffect(() => {
-    if (globalSettings.advancedEnabled) {
+    if (globalSettings.advancedEnabled && globalSettings.advancedValues?.noiseGate != null) {
       setSensitivity(globalSettings.advancedValues.noiseGate);
     }
-  }, [globalSettings.advancedEnabled, globalSettings.advancedValues.noiseGate]);
+  }, [globalSettings.advancedEnabled, globalSettings.advancedValues?.noiseGate]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

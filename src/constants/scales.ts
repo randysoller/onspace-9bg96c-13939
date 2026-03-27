@@ -2,7 +2,7 @@
 // Complete circle of fifths, scales, progressions, and style categories
 
 import type { ChordData } from '@/types/chord';
-import { CHORDS } from './chords';
+import { CHORD_DATABASE } from './chords';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { customToLibraryChord } from '@/types/customChord';
 
@@ -420,7 +420,7 @@ export function findChordInLibrary(chordSymbol: string, quality: string): ChordD
   const converted = customChords.map(customToLibraryChord);
   const replacedIds = new Set(customChords.filter((c) => c.sourceChordId).map((c) => c.sourceChordId!));
 
-  const standardChords = CHORDS.filter((c) => !replacedIds.has(c.id) && !hiddenStandardChords.has(c.id));
+  const standardChords = CHORD_DATABASE.filter((c) => !replacedIds.has(c.id) && !hiddenStandardChords.has(c.id));
   const allChords = [...standardChords, ...converted] as ChordData[];
 
   // Quality to ChordType mapping

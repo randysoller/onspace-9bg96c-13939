@@ -613,7 +613,7 @@ export default function ChordSetup() {
                   onClick={() => toggleSheet('key')}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
                     keyFilter
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
                       : activeSheet === 'key'
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'
                       : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
@@ -657,7 +657,7 @@ export default function ChordSetup() {
                   onClick={() => toggleSheet('category')}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
                     categories.size > 0
-                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
                       : activeSheet === 'category'
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'
                       : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
@@ -812,7 +812,7 @@ export default function ChordSetup() {
                   <>
                     {/* Key Pill */}
                     {keyFilter && (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-400">
+                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
                         <span>{keyFilter.display} Major</span>
                         <button onClick={() => setKeyFilter(null)} className="hover:opacity-70">
                           <X className="size-3" />
@@ -824,7 +824,7 @@ export default function ChordSetup() {
                     {[...categories].map((cat) => (
                       <div
                         key={cat}
-                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-400"
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500"
                       >
                         <span>{CATEGORY_LABELS[cat].replace(' Chords', '')}</span>
                         <button onClick={() => toggleCategory(cat)} className="hover:opacity-70">

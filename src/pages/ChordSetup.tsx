@@ -546,9 +546,9 @@ export default function ChordSetup() {
         {/* Content */}
         <div className="relative px-4 sm:px-6 py-10 sm:py-16 md:py-24 text-center max-w-3xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--color-primary)/0.3)] bg-[hsl(var(--color-primary)/0.08)] px-4 py-1.5 mb-6">
-            <Music className="size-3.5 text-[hsl(var(--color-primary))]" />
-            <span className="text-xs font-body font-medium text-[hsl(var(--color-primary))]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/8 px-4 py-1.5 mb-6">
+            <Music className="size-3.5 text-emerald-500" />
+            <span className="text-xs font-body font-medium text-emerald-500">
               Guitar Chord Trainer
             </span>
           </div>
@@ -557,7 +557,7 @@ export default function ChordSetup() {
           <h1 className="font-display text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight text-balance">
             <span className="text-[hsl(var(--text-default))]">Master Every Chord.</span>
             <br />
-            <span className="text-gradient">One Fret at a Time.</span>
+            <span className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 bg-clip-text text-transparent">One Fret at a Time.</span>
           </h1>
           
           {/* Subtitle */}
@@ -585,15 +585,15 @@ export default function ChordSetup() {
             
             {/* Active Preset Banner */}
             {activePreset && (
-              <div className="flex items-center gap-2 rounded-lg bg-[hsl(var(--color-primary)/0.1)] border border-[hsl(var(--color-primary)/0.3)] px-3 py-2 -mt-1 mb-1">
-                <Bookmark className="size-3.5 text-[hsl(var(--color-primary))] fill-current shrink-0" />
-                <span className="text-sm font-body font-medium text-[hsl(var(--color-primary))] truncate">
+              <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-3 py-2 -mt-1 mb-1">
+                <Bookmark className="size-3.5 text-emerald-500 fill-current shrink-0" />
+                <span className="text-sm font-body font-medium text-emerald-500 truncate">
                   Using preset:{' '}
                   <span className="font-display font-bold">{activePreset.name}</span>
                 </span>
                 <button
                   onClick={() => setActivePreset(null)}
-                  className="ml-auto shrink-0 text-xs font-body text-[hsl(var(--color-primary))] hover:underline"
+                  className="ml-auto shrink-0 text-xs font-body text-emerald-500 hover:underline"
                 >
                   Use filters
                 </button>
@@ -787,7 +787,7 @@ export default function ChordSetup() {
           <div className="mb-4 sm:mb-6">
             {/* Chord Count */}
             <div className="text-sm font-body text-[hsl(var(--text-subtle))] mb-3">
-              <span className="text-[hsl(var(--color-primary))] font-display font-bold">
+              <span className="text-emerald-500 font-display font-bold">
                 {availableCount}
               </span>{' '}
               chord{availableCount !== 1 ? 's' : ''} available
@@ -798,7 +798,7 @@ export default function ChordSetup() {
               <div className="flex flex-wrap items-center gap-2">
                 {/* Preset Pill */}
                 {activePreset && (
-                  <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-[hsl(var(--color-primary)/0.12)] border border-[hsl(var(--color-primary)/0.25)] text-[hsl(var(--color-primary))]">
+                  <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
                     <Bookmark className="size-3 fill-current" />
                     <span>{activePreset.name}</span>
                     <button onClick={() => setActivePreset(null)} className="hover:opacity-70">
@@ -884,12 +884,12 @@ export default function ChordSetup() {
           <div className="max-w-md mx-auto lg:max-w-lg">
             <div className="relative rounded-xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6 space-y-4 sm:space-y-5">
               {/* Accent bar */}
-              <div className="absolute top-0 left-0 w-full h-[3px] rounded-t-xl bg-gradient-to-r from-[hsl(var(--color-brand))] via-[hsl(var(--color-primary))] to-[hsl(var(--color-emphasis)/0.3)]" />
+              <div className="absolute top-0 left-0 w-full h-[3px] rounded-t-xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600/30" />
               
               {/* Header */}
               <div className="flex items-center gap-2.5">
-                <div className="size-7 rounded-lg bg-[hsl(var(--color-primary)/0.15)] flex items-center justify-center">
-                  <Play className="size-4 text-[hsl(var(--color-primary))]" />
+                <div className="size-7 rounded-lg bg-emerald-500/15 flex items-center justify-center">
+                  <Play className="size-4 text-emerald-500" />
                 </div>
                 <h2 className="font-display text-base sm:text-lg font-semibold uppercase tracking-wider text-[hsl(var(--text-default))]">
                   Ready to Practice
@@ -967,7 +967,7 @@ export default function ChordSetup() {
                 <span
                   className={`font-display font-bold text-lg ${
                     availableCount > 0
-                      ? 'text-[hsl(var(--color-primary))]'
+                      ? 'text-emerald-500'
                       : 'text-[hsl(var(--semantic-error))]'
                   }`}
                 >
@@ -1001,7 +1001,7 @@ export default function ChordSetup() {
                 disabled={availableCount === 0}
                 className={`group/btn relative w-full flex items-center justify-center gap-3 rounded-xl py-4 font-display text-lg font-bold tracking-wide uppercase overflow-hidden transition-all duration-200 ${
                   availableCount > 0
-                    ? 'bg-gradient-to-r from-[hsl(var(--color-brand))] via-[hsl(var(--color-primary))] to-[hsl(var(--color-emphasis))] text-[hsl(var(--bg-base))] glow-primary hover:shadow-[0_0_30px_hsl(var(--color-primary)/0.4),0_0_80px_hsl(var(--color-primary)/0.15)] active:scale-[0.97]'
+                    ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.4),0_0_80px_rgba(16,185,129,0.15)] active:scale-[0.97]'
                     : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))] cursor-not-allowed'
                 }`}
               >
@@ -1117,7 +1117,7 @@ export default function ChordSetup() {
               <div className="px-4 py-3 border-t border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-surface))]">
                 <button
                   onClick={() => setActiveSheet(null)}
-                  className="w-full rounded-xl bg-[hsl(var(--color-primary))] text-white py-3 text-base font-display font-bold"
+                  className="w-full rounded-xl bg-emerald-500 text-white py-3 text-base font-display font-bold"
                 >
                   Show Results
                 </button>

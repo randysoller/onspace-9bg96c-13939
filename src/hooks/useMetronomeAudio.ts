@@ -77,7 +77,7 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
     setSubdivisionCounter,
   } = useMetronomeStore();
   
-  const { masterVolume, metronomeVolume } = useAudioStore();
+  const { volume: audioVolume, muted } = useAudioStore();
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
@@ -99,8 +99,9 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
 
   // Memoize expensive volume calculations to avoid recalculating on every render
   const volumeMultiplier = useMemo(() => {
-    return masterVolume * metronomeVolume;
-  }, [masterVolume, metronomeVolume]);
+    // If muted, return 0; otherwise use audio volume (0-1 range)
+    return muted ? 0 : (audioVolume ?? 0.7);
+  }, [audioVolume, muted]);
 
   const playClick = useCallback((isAccent: boolean = false, beatNumber?: number): void => {
     const context = audioContextRef.current;

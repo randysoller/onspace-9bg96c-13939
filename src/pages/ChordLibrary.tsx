@@ -28,29 +28,56 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
       onClick={onClick}
     >
       <div className="flex items-start gap-4">
-        {/* Checkbox */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-          className="mt-2 flex-shrink-0"
-        >
-          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-            isSelected 
-              ? 'bg-amber-500 border-amber-500' 
-              : 'border-zinc-700 hover:border-zinc-600'
-          }`}>
-            {isSelected && (
-              <svg className="w-3 h-3 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            )}
+        {/* Left column: Checkbox + Play button stacked */}
+        <div className="flex flex-col gap-2 flex-shrink-0">
+          {/* Checkbox */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleSelect();
+            }}
+            className="flex-shrink-0"
+          >
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+              isSelected 
+                ? 'bg-amber-500 border-amber-500' 
+                : 'border-zinc-700 hover:border-zinc-600'
+            }`}>
+              {isSelected && (
+                <svg className="w-3 h-3 text-zinc-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </button>
+
+          {/* Play Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              playChord(chord);
+            }}
+            className="flex-shrink-0 p-2 bg-zinc-800 hover:bg-amber-500 text-zinc-400 hover:text-zinc-950 rounded-lg transition-all group"
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Chord Info */}
+        <div className="flex-1 min-w-0 py-2">
+          <div className="text-3xl font-black text-white mb-0.5">
+            {chord.symbol}
           </div>
-        </button>
+          <div className="text-xs text-zinc-600 uppercase tracking-wide mb-1">
+            {chord.category === 'open' ? 'Open Chords' : chord.category === 'barre' ? 'Barre Chords' : chord.category === 'movable' ? 'Movable Chords' : 'Custom Chords'}
+          </div>
+          <div className="text-sm text-zinc-400">
+            {chord.name}
+          </div>
+        </div>
 
         {/* Chord Diagram */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 pl-1">
           <svg width="100" height="135" viewBox="0 0 100 135" className="select-none">
             {/* Nut (thick top line) */}
             <rect x="10" y="20" width="80" height="3" fill="currentColor" className="text-zinc-600" />
@@ -223,30 +250,6 @@ function ChordCard({ chord, isSelected, onToggleSelect, onClick }: ChordCardProp
               return null;
             })}
           </svg>
-        </div>
-
-        {/* Play Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            playChord(chord);
-          }}
-          className="flex-shrink-0 p-2 bg-zinc-800 hover:bg-amber-500 text-zinc-400 hover:text-zinc-950 rounded-lg transition-all group"
-        >
-          <Volume2 className="w-4 h-4" />
-        </button>
-
-        {/* Chord Info */}
-        <div className="flex-1 min-w-0 py-2">
-          <div className="text-3xl font-black text-white mb-0.5">
-            {chord.symbol}
-          </div>
-          <div className="text-xs text-zinc-600 uppercase tracking-wide mb-1">
-            {chord.category === 'open' ? 'Open Chords' : chord.category === 'barre' ? 'Barre Chords' : chord.category === 'movable' ? 'Movable Chords' : 'Custom Chords'}
-          </div>
-          <div className="text-sm text-zinc-400">
-            {chord.name}
-          </div>
         </div>
 
         {/* Tablature */}

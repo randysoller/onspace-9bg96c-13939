@@ -92,13 +92,12 @@ function CheckboxIcon({
   color = 'primary',
 }: {
   checked: boolean;
-  color?: 'primary' | 'emerald' | 'violet' | 'amber';
+  color?: 'primary' | 'emerald' | 'violet';
 }) {
   const colorMap = {
     primary: { bg: 'bg-[hsl(var(--color-primary))]', border: 'border-[hsl(var(--color-primary))]' },
     emerald: { bg: 'bg-emerald-500', border: 'border-emerald-500' },
     violet: { bg: 'bg-violet-500', border: 'border-violet-500' },
-    amber: { bg: 'bg-amber-500', border: 'border-amber-500' },
   };
   
   const colors = colorMap[color];
@@ -140,7 +139,7 @@ function KeySheetContent({
         <div
           className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
             keyFilter === null
-              ? 'border-amber-500 bg-amber-500'
+              ? 'border-emerald-500 bg-emerald-500'
               : 'border-[hsl(var(--border-default))]'
           }`}
         >
@@ -164,7 +163,7 @@ function KeySheetContent({
           <div
             className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
               keyFilter?.display === ks.display
-                ? 'border-amber-500 bg-amber-500'
+                ? 'border-emerald-500 bg-emerald-500'
                 : 'border-[hsl(var(--border-default))]'
             }`}
           >
@@ -614,7 +613,7 @@ export default function ChordSetup() {
                   onClick={() => toggleSheet('key')}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
                     keyFilter
-                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-400'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400'
                       : activeSheet === 'key'
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'
                       : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
@@ -813,7 +812,7 @@ export default function ChordSetup() {
                   <>
                     {/* Key Pill */}
                     {keyFilter && (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-amber-500/12 border border-amber-500/25 text-amber-400">
+                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-400">
                         <span>{keyFilter.display} Major</span>
                         <button onClick={() => setKeyFilter(null)} className="hover:opacity-70">
                           <X className="size-3" />

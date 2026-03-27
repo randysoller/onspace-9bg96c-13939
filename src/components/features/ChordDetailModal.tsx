@@ -296,7 +296,7 @@ export default function ChordDetailModal({
           <div className="px-3 pb-1 flex flex-col items-center gap-2 flex-shrink-0">
             <button
               onClick={onPlay}
-              className="w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold rounded-lg flex items-center justify-center transition-colors active:scale-95 border-2 border-amber-500"
+              className="w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold rounded-lg flex items-center justify-center transition-colors active:scale-95 border border-amber-500/25"
             >
               <Volume2 className="w-8 h-8 stroke-[2.5]" />
             </button>

@@ -49,26 +49,16 @@ export default function ChordSetup() {
   const handleStartPractice = () => {
     console.log('🎯 Starting practice with filters:', { selectedKey, selectedShapes, selectedTypes });
     
-    // Set musical categories (Major, Minor, Dominant, Suspended)
-    const categories = new Set<any>();
-    if (selectedTypes === 'Major') {
-      categories.add('Major');
-    } else if (selectedTypes === 'Minor') {
-      categories.add('Minor');
-    } else if (selectedTypes === '7th') {
-      categories.add('Dominant');
-      categories.add('Major');
-      categories.add('Minor');
-    } else if (selectedTypes === 'Suspended') {
-      categories.add('Suspended');
-    } else if (selectedTypes === 'All Types') {
-      categories.add('Major');
-      categories.add('Minor');
-      categories.add('Dominant');
-      categories.add('Suspended');
-      categories.add('Augmented');
-      categories.add('Diminished');
+    // Set chord shape categories (open, barre, movable)
+    const shapeCategories = new Set<any>();
+    if (selectedShapes === 'Open') {
+      shapeCategories.add('open');
+    } else if (selectedShapes === 'Barre') {
+      shapeCategories.add('barre');
+    } else if (selectedShapes === 'Movable') {
+      shapeCategories.add('movable');
     }
+    // If 'All Shapes', leave the set empty (no filter)
     
     // Set chord types (major, minor, 7, maj7, etc.)
     const types = new Set<any>();
@@ -85,21 +75,16 @@ export default function ChordSetup() {
     } else if (selectedTypes === 'Suspended') {
       types.add('sus4');
       types.add('sus2');
-    } else if (selectedTypes === 'All Types') {
-      types.add('major');
-      types.add('minor');
-      types.add('7');
-      types.add('maj7');
-      types.add('m7');
-      types.add('sus4');
-      types.add('sus2');
-      types.add('dim');
-      types.add('aug');
     }
+    // If 'All Types', leave the set empty (no filter)
     
-    console.log('📊 Setting store state:', { categories: Array.from(categories), types: Array.from(types) });
+    console.log('📊 Setting store state:', { 
+      categories: Array.from(shapeCategories), 
+      types: Array.from(types),
+      keyFilter: selectedKey !== 'All' ? selectedKey : null
+    });
     
-    setCategories(categories);
+    setCategories(shapeCategories);
     setChordTypes(types);
     setKeyFilter(selectedKey !== 'All' ? selectedKey as any : null);
     

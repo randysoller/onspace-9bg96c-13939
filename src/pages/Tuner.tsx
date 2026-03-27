@@ -1052,9 +1052,11 @@ export default function TunerPanel() {
                             : `${stringCents > 0 ? '+' : ''}${stringCents}c`
                           : '—'}
                       </span>
-                      {isPlaying && (
-                        <Volume2 className="size-3 mt-0.5 text-[hsl(var(--color-primary))] animate-pulse" />
-                      )}
+                      <Volume2 className={`size-3 mt-0.5 transition-colors ${
+                        isPlaying 
+                          ? 'text-amber-500 animate-pulse' 
+                          : 'text-amber-500/60'
+                      }`} />
                     </button>
                   );
                 })}

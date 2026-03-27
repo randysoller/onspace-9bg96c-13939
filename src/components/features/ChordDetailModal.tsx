@@ -96,7 +96,7 @@ export default function ChordDetailModal({
           </div>
 
           {/* Diagram Section */}
-          <div className="p-3 flex gap-4 items-end flex-shrink-0">
+          <div className="p-3 flex gap-4 items-start flex-shrink-0">
             {/* Chord Diagram */}
             <div className="flex-1 ml-6 flex-shrink-0">
               <svg width="244" height="320" viewBox="0 0 160 210" className="select-none">
@@ -274,7 +274,7 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div className="bg-white rounded-lg px-3 py-2 pb-14 text-xs font-mono shadow-lg -mt-6 -ml-[19px]">
+            <div className="bg-white rounded-lg px-3 py-2 pb-14 text-xs font-mono shadow-lg mt-[43px] -ml-[19px]">
               {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-2 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>
@@ -345,9 +345,10 @@ export default function ChordDetailModal({
             </div>
 
             <div className="space-y-0.5">
-              {stringStates.map((state, idx) => {
-                const stringName = STRINGS[idx];
-                const stringNumber = 6 - idx;
+              {[...stringStates].reverse().map((state, reversedIdx) => {
+                const idx = stringStates.length - 1 - reversedIdx; // Original index (5, 4, 3, 2, 1, 0)
+                const stringName = STRINGS[idx]; // e, B, G, D, A, E (high to low)
+                const stringNumber = reversedIdx + 1; // 1st, 2nd, 3rd, 4th, 5th, 6th string
                 const isRoot = idx === rootStringIndex;
 
                 return (

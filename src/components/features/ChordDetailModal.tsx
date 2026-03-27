@@ -292,10 +292,9 @@ export default function ChordDetailModal({
           <div className="px-4 pb-3 flex items-center gap-3 flex-shrink-0">
             <button
               onClick={onPlay}
-              className="flex-1 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors active:scale-95"
+              className="w-12 bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 px-2 rounded-lg flex items-center justify-center transition-colors active:scale-95"
             >
-              <Volume2 className="w-4 h-4" />
-              Play
+              <Volume2 className="w-12 h-12" />
             </button>
             {/* FIX #6: Only show Edit button if onEdit handler is provided */}
             {onEdit && (
@@ -339,7 +338,7 @@ export default function ChordDetailModal({
           )}
 
           {/* Finger Positions */}
-          <div className="px-4 pb-4 flex-1 overflow-y-auto">
+          <div className="px-4 pb-4 flex-1 overflow-y-auto -mt-6 -ml-5">
             <div className="flex items-center gap-2 mb-2 text-zinc-500 text-xs font-semibold uppercase tracking-wide sticky top-0 bg-zinc-950 py-2 z-10">
               <Hand className="w-4 h-4" />
               Finger Positions

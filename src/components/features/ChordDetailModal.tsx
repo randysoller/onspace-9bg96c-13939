@@ -277,8 +277,8 @@ export default function ChordDetailModal({
             <div 
               className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg relative"
               style={{ 
-                transform: 'translate(-56px, 66px)',
-                WebkitTransform: 'translate(-56px, 66px)' 
+                transform: 'translate(-32px, 77px)',
+                WebkitTransform: 'translate(-32px, 77px)' 
               }}
             >
               {[...chord.frets].reverse().map((fret, idx) => (

@@ -1,48 +1,72 @@
+/**
+ * Volume Control Component
+ * 
+ * Global audio volume slider with mute button
+ * Compact mode for practice page (no percentage label)
+ */
+
+import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useAudioStore } from '@/stores/audioStore';
-import { Volume2, Volume1, VolumeX } from 'lucide-react';
 
 interface VolumeControlProps {
   compact?: boolean;
+  className?: string;
 }
 
-export default function VolumeControl({ compact = false }: VolumeControlProps) {
+export function VolumeControl({ compact = false, className = '' }: VolumeControlProps) {
   const { volume, muted, setVolume, toggleMute } = useAudioStore();
 
-  const VolumeIcon = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const getVolumeIcon = () => {
+    if (muted) return VolumeX;
+    if (volume > 0.5) return Volume2;
+    return Volume1;
+  };
+
+  const VolumeIcon = getVolumeIcon();
 
   return (
-    <div className={`flex items-center ${compact ? 'gap-2' : 'gap-3'}`}>
+    <div className={`flex items-center gap-2 ${className}`}>
+      {/* Mute/Unmute Button */}
       <button
         onClick={toggleMute}
-        className={`
-          flex items-center justify-center rounded-md transition-colors
-          ${compact ? 'size-8' : 'size-9'}
-          ${muted
-            ? 'text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))] hover:bg-[hsl(var(--semantic-error)/0.08)]'
-            : 'text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary)/0.08)]'
-          }
-        `}
-        title={muted ? 'Unmute' : 'Mute'}
+        className="p-1.5 hover:bg-[hsl(var(--bg-surface))] rounded transition-colors"
+        aria-label={muted ? 'Unmute' : 'Mute'}
       >
-        <VolumeIcon className={compact ? 'size-4' : 'size-[18px]'} />
+        <VolumeIcon
+          className={`w-4 h-4 ${
+            muted ? 'text-[hsl(var(--text-muted))]' : 'text-[hsl(var(--text-subtle))]'
+          }`}
+        />
       </button>
 
-      <div className="relative flex items-center group">
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.01}
-          value={muted ? 0 : volume}
-          onChange={(e) => setVolume(parseFloat(e.target.value))}
-          className={`volume-slider ${compact ? 'w-28 sm:w-24' : 'w-28'}`}
-          aria-label="Volume"
-        />
-      </div>
+      {/* Volume Slider */}
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={volume}
+        onChange={(e) => setVolume(parseFloat(e.target.value))}
+        className="
+          w-20 h-1 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+          [&::-webkit-slider-thumb]:appearance-none 
+          [&::-webkit-slider-thumb]:w-3 
+          [&::-webkit-slider-thumb]:h-3
+          [&::-webkit-slider-thumb]:rounded-full 
+          [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]
+          [&::-moz-range-thumb]:w-3 
+          [&::-moz-range-thumb]:h-3
+          [&::-moz-range-thumb]:rounded-full 
+          [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))]
+          [&::-moz-range-thumb]:border-0
+        "
+        aria-label="Volume"
+      />
 
+      {/* Volume Percentage (hidden in compact mode) */}
       {!compact && (
-        <span className="min-w-[32px] text-right text-xs font-body text-[hsl(var(--text-muted))] tabular-nums">
-          {muted ? '0' : Math.round(volume * 100)}%
+        <span className="text-xs text-[hsl(var(--text-subtle))] font-medium min-w-[2.5rem] text-right">
+          {Math.round(volume * 100)}%
         </span>
       )}
     </div>

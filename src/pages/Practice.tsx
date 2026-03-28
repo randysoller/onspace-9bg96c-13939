@@ -410,8 +410,31 @@ export default function Practice() {
       {/* Main Practice Area */}
       <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4 -mt-8">
         <div className="text-center">
-          {/* Detection Feedback Pill */}
-          <div className="min-h-[40px] mb-2 flex items-center justify-center">
+          {/* Chord Name - Always Visible */}
+          <div className="mb-6">
+            <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
+              {isRevealed ? 'Current Chord' : 'Play This Chord'}
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${chord.id}-symbol`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-6xl font-black text-white mb-2 leading-none">
+                  {chord.symbol}
+                </div>
+                <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                  {chord.name}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Detection Feedback Pill - Positioned between name and diagram */}
+          <div className="min-h-[60px] mb-6 flex items-center justify-center">
             <AnimatePresence>
               {result && (
                 <motion.div
@@ -446,29 +469,6 @@ export default function Practice() {
                   </div>
                 </motion.div>
               )}
-            </AnimatePresence>
-          </div>
-
-          {/* Chord Name - Always Visible */}
-          <div className="mb-3">
-            <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
-              {isRevealed ? 'Current Chord' : 'Play This Chord'}
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={`${chord.id}-symbol`}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                <div className="text-6xl font-black text-white mb-2 leading-none">
-                  {chord.symbol}
-                </div>
-                <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                  {chord.name}
-                </div>
-              </motion.div>
             </AnimatePresence>
           </div>
 

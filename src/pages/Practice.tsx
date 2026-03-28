@@ -411,7 +411,7 @@ export default function Practice() {
       <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4 -mt-8">
         <div className="text-center">
           {/* Chord Name - Always Visible */}
-          <div className="mb-6 mt-6">
+          <div className="mb-6 mt-12">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${chord.id}-symbol`}

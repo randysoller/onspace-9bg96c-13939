@@ -28,6 +28,8 @@ import {
   Sliders,
   CheckCircle2,
   XCircle,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { usePracticeStore } from '@/stores/practiceStore';
 import { useAudioStore } from '@/stores/audioStore';
@@ -303,21 +305,27 @@ export default function Practice() {
           <div className="flex items-center gap-3">
             {/* Mic Sensitivity */}
             {isListening && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]">
+              <div className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]">
                 <Sliders className="w-3.5 h-3.5 text-[hsl(var(--text-muted))]" />
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={sensitivity}
-                  onChange={(e) => setSensitivity(Number(e.target.value))}
-                  className="w-20 h-2 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
-                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 
-                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
-                />
-                <span className="text-xs text-emerald-500 font-bold min-w-[1.25rem] text-center">
+                <button
+                  onClick={() => setSensitivity(Math.max(1, sensitivity - 1))}
+                  disabled={sensitivity <= 1}
+                  className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Decrease sensitivity"
+                >
+                  <Minus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                </button>
+                <span className="text-sm text-emerald-500 font-bold min-w-[1.5rem] text-center">
                   {sensitivity}
                 </span>
+                <button
+                  onClick={() => setSensitivity(Math.min(10, sensitivity + 1))}
+                  disabled={sensitivity >= 10}
+                  className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  aria-label="Increase sensitivity"
+                >
+                  <Plus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                </button>
               </div>
             )}
 
@@ -387,21 +395,27 @@ export default function Practice() {
             )}
 
             {/* Mobile Sensitivity (show on small screens) */}
-            <div className="md:hidden flex items-center gap-2">
+            <div className="md:hidden flex items-center gap-1.5">
               <Sliders className="w-3.5 h-3.5 text-[hsl(var(--text-muted))]" />
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={sensitivity}
-                onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-20 h-2 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 
-                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
-              />
-              <span className="text-xs text-emerald-500 font-bold min-w-[1rem]">
+              <button
+                onClick={() => setSensitivity(Math.max(1, sensitivity - 1))}
+                disabled={sensitivity <= 1}
+                className="p-2 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                aria-label="Decrease sensitivity"
+              >
+                <Minus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+              </button>
+              <span className="text-sm text-emerald-500 font-bold min-w-[1.5rem] text-center">
                 {sensitivity}
               </span>
+              <button
+                onClick={() => setSensitivity(Math.min(10, sensitivity + 1))}
+                disabled={sensitivity >= 10}
+                className="p-2 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                aria-label="Increase sensitivity"
+              >
+                <Plus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+              </button>
             </div>
           </div>
         </div>

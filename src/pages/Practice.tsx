@@ -1,3 +1,4 @@
+
 /**
  * Practice Page - Single Chord Practice with Real-Time Detection
  * 
@@ -320,9 +321,6 @@ export default function Practice() {
               </div>
             )}
 
-            {/* Show Diagrams Toggle */}
-            <ShowDiagramsToggle />
-
             {/* Mic Toggle */}
             <button 
               onClick={toggleListening}
@@ -474,6 +472,12 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
+          {/* Toggle Control - Always Visible */}
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Toggle diagrams on/off</span>
+            <ShowDiagramsToggle />
+          </div>
+
           {/* Diagram & Tablature - Show when toggle is ON */}
           {showDiagrams && (
             <AnimatePresence mode="wait">
@@ -495,11 +499,7 @@ export default function Practice() {
           {!showDiagrams && (
             <div className="text-[hsl(var(--text-muted))]">
               <EyeOff className="w-7 h-7 mx-auto mb-3 opacity-50" />
-              <div className="text-xl font-semibold mb-1">Diagram hidden</div>
-              <div className="text-lg flex items-center justify-center gap-2">
-                <span>Toggle diagrams on/off</span>
-                <Eye className="w-5 h-5" />
-              </div>
+              <div className="text-xl font-semibold">Diagram hidden</div>
             </div>
           )}
         </div>

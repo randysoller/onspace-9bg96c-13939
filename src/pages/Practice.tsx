@@ -257,16 +257,7 @@ export default function Practice() {
     <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-32 md:pb-24">
       {/* Top Bar */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
-        <div className="flex items-center justify-between max-w-5xl mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={handleBack}
-            className="flex items-center gap-2 text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-display">Back</span>
-          </button>
-
+        <div className="flex items-center justify-end max-w-5xl mx-auto">
           {/* Right Controls */}
           <div className="flex items-center gap-3">
             {/* Show Diagrams Toggle */}
@@ -429,8 +420,8 @@ export default function Practice() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="text-8xl font-black text-white mb-2 leading-none">
-                  {chord.root}{chord.type === 'major' ? '' : chord.type}
+                <div className="text-6xl font-black text-white mb-2 leading-none">
+                  {chord.root}
                 </div>
                 <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
                   {chord.root} {chord.type === 'major' ? 'Major' : chord.type}

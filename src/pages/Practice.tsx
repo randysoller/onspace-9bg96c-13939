@@ -31,11 +31,15 @@ import {
 import { usePracticeStore } from '@/stores/practiceStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
+import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useChordDetection } from '@/hooks/useChordDetection';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { useSessionStats } from '@/hooks/useSessionStats';
 import { ChordDiagram } from '@/components/features/ChordDiagram';
 import { ChordTablature } from '@/components/features/ChordTablature';
+import { BeatSyncControls } from '@/components/features/BeatSyncControls';
+import { ShowDiagramsToggle } from '@/components/features/ShowDiagramsToggle';
+import { VolumeControl } from '@/components/features/VolumeControl';
 
 export default function Practice() {
   const navigate = useNavigate();
@@ -52,8 +56,9 @@ export default function Practice() {
     stopPractice,
   } = usePracticeStore();
   
-  const { volume, muted, setVolume, toggleMute, getEffectiveVolume } = useAudioStore();
+  const { getEffectiveVolume } = useAudioStore();
   const { sensitivity, setSensitivity, advancedEnabled, advancedValues } = useDetectionSettingsStore();
+  const { resetBeatCounter, beatsUntilAdvance, syncEnabled, isPlaying: metronomeIsPlaying } = useMetronomeStore();
   
   // Local state
   const [showDiagrams, setShowDiagrams] = useState(() => {
@@ -146,6 +151,16 @@ export default function Practice() {
     localStorage.setItem('fretmaster-show-diagrams', JSON.stringify(showDiagrams));
   }, [showDiagrams]);
   
+  // Beat-sync chord advance handler
+  useEffect(() => {
+    if (!syncEnabled || !metronomeIsPlaying) return;
+    
+    // Check if it's time to advance
+    if (beatsUntilAdvance <= 0) {
+      handleNext();
+    }
+  }, [beatsUntilAdvance, syncEnabled, metronomeIsPlaying]);
+  
   // Reset chord timer when chord changes
   useEffect(() => {
     resetChordTimer();
@@ -200,18 +215,21 @@ export default function Practice() {
     }
     hideChord();
     resetChordTimer();
+    resetBeatCounter();
     nextChord();
   };
   
   const handlePrev = () => {
     hideChord();
     resetChordTimer();
+    resetBeatCounter();
     prevChord();
   };
   
   const handleRestart = () => {
     hideChord();
     resetChordTimer();
+    resetBeatCounter();
     stopPractice();
     navigate('/chord-practice');
   };
@@ -252,29 +270,7 @@ export default function Practice() {
           {/* Right Controls */}
           <div className="flex items-center gap-3">
             {/* Show Diagrams Toggle */}
-            <button
-              onClick={() => setShowDiagrams(!showDiagrams)}
-              className={`
-                px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-semibold transition-all
-                active:scale-95
-                ${showDiagrams 
-                  ? 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40' 
-                  : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-subtle))] border border-[hsl(var(--border-subtle))]'
-                }
-              `}
-            >
-              {showDiagrams ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">Chord Diagram {showDiagrams ? 'On' : 'Off'}</span>
-              <div className={`
-                w-8 h-[18px] rounded-full relative transition-colors
-                ${showDiagrams ? 'bg-emerald-500' : 'bg-zinc-600'}
-              `}>
-                <div className={`
-                  absolute w-[14px] h-[14px] bg-white rounded-full top-0.5 transition-transform
-                  ${showDiagrams ? 'translate-x-4' : 'translate-x-0.5'}
-                `} />
-              </div>
-            </button>
+            <ShowDiagramsToggle />
 
             {/* Mic Toggle */}
             <button 
@@ -291,31 +287,7 @@ export default function Practice() {
             </button>
 
             {/* Volume Control */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleMute}
-                className="p-1.5 hover:bg-[hsl(var(--bg-surface))] rounded transition-colors"
-              >
-                {muted ? (
-                  <MicOff className="w-4 h-4 text-[hsl(var(--text-muted))]" />
-                ) : volume > 0.5 ? (
-                  <Volume2 className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
-                ) : (
-                  <Volume2 className="w-4 h-4 text-[hsl(var(--text-muted))]" />
-                )}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-20 h-1 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
-                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]"
-              />
-            </div>
+            <VolumeControl compact />
           </div>
         </div>
       </div>
@@ -329,6 +301,14 @@ export default function Practice() {
           </div>
         </div>
       )}
+
+      {/* Beat Sync Controls */}
+      <div className="max-w-5xl mx-auto px-4 py-4">
+        <BeatSyncControls
+          onChordAdvance={handleNext}
+          onAutoReveal={handleReveal}
+        />
+      </div>
 
       {/* Listening Status Bar */}
       {isListening && (

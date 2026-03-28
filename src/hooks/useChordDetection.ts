@@ -1136,17 +1136,19 @@ export function useChordDetection({
         
         // DEBUG: Comprehensive match logging every 20 frames
         if (frameCounter % 20 === 0) {
+          // Use a simple threshold for logging (actual matching uses precise thresholds inside matchChroma)
+          const logThreshold = 0.15;
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
           const detectedNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
-            .filter(p => p.value >= chromaThreshold && expectedPitchClasses.has(p.pc))
+            .filter(p => p.value >= logThreshold && expectedPitchClasses.has(p.pc))
             .map(p => p.note);
           const extraNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
-            .filter(p => p.value >= chromaThreshold && !expectedPitchClasses.has(p.pc))
+            .filter(p => p.value >= logThreshold && !expectedPitchClasses.has(p.pc))
             .map(p => p.note);
           
           console.log(`\n🎯 TARGET: ${target.symbol} requires [${expectedNotes}]`);
           console.log(`✓ Detected: [${detectedNotes.join(', ') || 'none'}] | ✗ Extra: [${extraNotes.join(', ') || 'none'}]`);
-          console.log(`📊 Match Stats: ratio=${(detectedNotes.length / expectedPitchClasses.size * 100).toFixed(0)}% (need ≥${(matchRatioMin * 100).toFixed(0)}%), binary=${detectedNotes.length}/${expectedPitchClasses.size} (need ≥${minBinaryMatches})`);
+          console.log(`📊 Match Stats: detected ${detectedNotes.length}/${expectedPitchClasses.size} expected notes`);
           console.log(`${isMatch ? '✅ MATCH' : '❌ NO MATCH'} | Counters: ✓${consecutiveMatchesRef.current}/${MATCH_THRESHOLD} ✗${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
         }
         

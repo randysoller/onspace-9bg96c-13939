@@ -385,7 +385,7 @@ export default function Practice() {
       )}
 
       {/* Main Practice Area */}
-      <div className="flex-1 flex items-center justify-center py-12 px-4">
+      <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4">
         <div className="text-center">
           {/* Detection Feedback Pill */}
           <div className="min-h-[40px] mb-4 flex items-center justify-center">

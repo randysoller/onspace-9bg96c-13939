@@ -408,10 +408,10 @@ export default function Practice() {
       )}
 
       {/* Main Practice Area */}
-      <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4">
+      <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4 -mt-8">
         <div className="text-center">
           {/* Detection Feedback Pill */}
-          <div className="min-h-[40px] mb-4 flex items-center justify-center">
+          <div className="min-h-[40px] mb-2 flex items-center justify-center">
             <AnimatePresence>
               {result && (
                 <motion.div
@@ -450,7 +450,7 @@ export default function Practice() {
           </div>
 
           {/* Chord Name - Always Visible */}
-          <div className="mb-6">
+          <div className="mb-3">
             <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
               {isRevealed ? 'Current Chord' : 'Play This Chord'}
             </div>
@@ -481,7 +481,7 @@ export default function Practice() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center gap-6 mb-6"
+                className="flex items-center justify-center gap-6 mb-3"
               >
                 <ChordDiagram chord={chord} size="lg" />
                 <ChordTablature chord={chord} size="md" />
@@ -491,7 +491,7 @@ export default function Practice() {
 
           {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
-            <div className="text-[hsl(var(--text-muted))] mb-6">
+            <div className="text-[hsl(var(--text-muted))] mb-3">
               <EyeOff className="w-7 h-7 mx-auto mb-3 opacity-50" />
               <div className="text-xl font-semibold">Diagram hidden</div>
             </div>

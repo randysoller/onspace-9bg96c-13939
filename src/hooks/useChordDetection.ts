@@ -11,12 +11,10 @@
  * - Consecutive frame debouncing with cooldown (Section 14)
  * 
  * COMPREHENSIVE FIXES:
- * - Tightened thresholds to prevent false positives on mobile
- * - Increased minimum binary matches requirement (60% of notes)
- * - Reduced cosine similarity boost (1.05x vs 1.15x)
- * - Enhanced early diagnostic logging (first 50 frames + every 20)
- * - Improved audio context state management
- * - Faster autoStart (100ms vs 400ms)
+ * - UNIFIED web/mobile thresholds for better desktop microphone support
+ * - Strong wrong note penalty system (prevents C major matching C minor)
+ * - Balanced 70% minimum match requirement
+ * - Enhanced diagnostic logging with wrong note detection
  * 
  * @example
  * ```tsx
@@ -327,12 +325,12 @@ function extractChroma(
     }
   }
   
-  // Noise gate (relaxed to detect guitar signals)
-  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.15 : noiseGateEnergy * 0.4;
+  // UNIFIED noise gate for both platforms (use same low threshold)
+  const effectiveNoiseGate = noiseGateEnergy * 0.12;
   if (totalEnergy < effectiveNoiseGate) {
     // Log occasionally to avoid spam
     if (Math.random() < 0.05) {
-      console.log(`⚠️ Chroma energy too low: ${totalEnergy.toFixed(2)} < ${effectiveNoiseGate.toFixed(2)}`);
+      console.log(`⚠️ Chroma energy too low: ${totalEnergy.toFixed(2)} < ${effectiveNoiseGate.toFixed(2)} (platform: ${isMobile ? 'mobile' : 'desktop'})`);
     }
     return null;
   }
@@ -562,14 +560,14 @@ function computeSpectralFlux(
 }
 
 // ============================================================================
-// SECTION 12: TRIPLE-METRIC CHORD MATCHING
+// SECTION 12: TRIPLE-METRIC CHORD MATCHING WITH WRONG NOTE PENALTY
 // ============================================================================
 
 /**
  * Match chromagram against expected pitch classes
  * Returns true if match, false otherwise
  * 
- * FIXED: Tightened thresholds to prevent false positives on mobile
+ * FIXED: Added strong wrong note penalty to prevent false positives
  */
 function matchChroma(
   chroma: Float64Array,
@@ -587,26 +585,28 @@ function matchChroma(
   const barreChromaReduction = isBarre ? 0.03 : 0;
   const barreRatioReduction = isBarre ? 0.05 : 0;
   
-  // Mobile gets NO special treatment to prevent false positives
-  const mobileChromaBonus = 0;  // Disabled
-  const mobileRatioBonus = 0;   // Disabled
+  // Balanced thresholds for both platforms
+  const mobileChromaBonus = 0;
+  const mobileRatioBonus = 0;
   
-  // STRICTER Chroma threshold: note must have this much energy to count (0.18-0.32 range)
-  const rawChromaThreshold = lerp(0.32, 0.18, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
-  const chromaThreshold = Math.max(0.18, rawChromaThreshold); // Floor at 0.18 (much stricter)
+  // Chroma threshold: note must have this much energy to count (0.15-0.28 range)
+  const rawChromaThreshold = lerp(0.28, 0.15, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
+  const chromaThreshold = Math.max(0.15, rawChromaThreshold); // Balanced floor
   
-  // STRICTER Match ratio: percentage of expected notes that must be present (0.55-0.80 range)
-  const rawMatchRatioMin = lerp(0.80, 0.55, t) - barreRatioReduction - mobileRatioBonus;
-  const matchRatioMin = Math.max(0.55, rawMatchRatioMin); // Floor at 0.55 (strict)
+  // Match ratio: percentage of expected notes that must be present (0.50-0.75 range)
+  const rawMatchRatioMin = lerp(0.75, 0.50, t) - barreRatioReduction - mobileRatioBonus;
+  const matchRatioMin = Math.max(0.50, rawMatchRatioMin); // Balanced floor
   
-  // STRICTER Extra notes tolerance
-  const maxExtrasBase = lerp(1, 4, t) + (isBarre ? 1.0 : 0); // Reduced significantly
-  const extraPenaltyPerNote = lerp(0.12, 0.05, t); // Stronger penalty
+  // Extra notes tolerance with WRONG NOTE penalty
+  const maxExtrasBase = lerp(1, 4, t) + (isBarre ? 1.0 : 0);
+  const extraPenaltyPerNote = lerp(0.15, 0.06, t); // Strong penalty for extras
+  const wrongNotePenalty = lerp(0.25, 0.10, t); // Additional penalty for strong wrong notes
   
-  // Count matches and extras
+  // Count matches, extras, and strong wrong notes
   let binaryMatches = 0;
   let weightedCredit = 0;
   let extras = 0;
+  let strongWrongNotes = 0; // Track wrong notes with high energy
   
   const chromaTemplate = new Float64Array(12);
   for (const pc of expected) chromaTemplate[pc] = 1.0;
@@ -627,6 +627,10 @@ function matchChroma(
       // Extra note (not in expected chord)
       if (chroma[pc] >= chromaThreshold) {
         extras++;
+        // Track if this wrong note is particularly strong (>0.5 normalized)
+        if (chroma[pc] > 0.5) {
+          strongWrongNotes++;
+        }
       }
     }
   }
@@ -649,21 +653,28 @@ function matchChroma(
   // Weight: binary=40%, weighted=35%, cosine=25%
   const consensusRatio = (binaryRatio * 0.40) + (weightedRatio * 0.35) + (cosineSim * 0.25);
   
-  // STRONGER extra notes penalty
+  // COMPREHENSIVE penalty system
   const maxExtras = Math.floor(maxExtrasBase);
   const extraPenalty = extras > maxExtras ? (extras - maxExtras) * extraPenaltyPerNote : 0;
+  const wrongPenalty = strongWrongNotes * wrongNotePenalty; // Heavily penalize strong wrong notes
   
-  const finalRatio = consensusRatio - extraPenalty;
+  const finalRatio = consensusRatio - extraPenalty - wrongPenalty;
   
-  // STRICTER Minimum binary matches: require at least 75% of notes, minimum 2
-  // For 3-note chord: ceil(3 * 0.75) = 3 (all notes required)
-  // For 4-note chord: ceil(4 * 0.75) = 3
-  // For 5-note chord: ceil(5 * 0.75) = 4
-  // For 6-note chord: ceil(6 * 0.75) = 5
-  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.75));
+  // Balanced minimum binary matches: require at least 70% of notes, minimum 2
+  // For 3-note chord: ceil(3 * 0.70) = 3 (all notes required)
+  // For 4-note chord: ceil(4 * 0.70) = 3
+  // For 5-note chord: ceil(5 * 0.70) = 4
+  // For 6-note chord: ceil(6 * 0.70) = 5
+  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.70));
+  
+  // CRITICAL: Reject if strong wrong notes present (prevents C major matching C minor)
+  const maxStrongWrongNotes = expected.size <= 3 ? 0 : 1; // Triads cannot have ANY strong wrong notes
+  if (strongWrongNotes > maxStrongWrongNotes) {
+    return false; // Hard reject
+  }
   
   // ADDITIONAL VALIDATION: Cosine similarity must be reasonable
-  const minCosineSim = 0.4; // Raw cosine must be at least 0.4
+  const minCosineSim = 0.35; // Raw cosine must be at least 0.35
   
   return finalRatio >= matchRatioMin && 
          binaryMatches >= minBinaryMatches && 
@@ -1019,9 +1030,19 @@ export function useChordDetection({
         // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // LAYER 1: RMS Silence Gate
+        // DIAGNOSTIC: Log device type once per 200 frames
+        if (frameCounter === 200) {
+          console.log('\n🔍 PLATFORM DETECTION:', {
+            isMobile,
+            userAgent: navigator.userAgent.substring(0, 80),
+            sensitivity: sens
+          });
+        }
+        
+        // LAYER 1: RMS Silence Gate (UNIFIED for web/mobile)
         const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise);
-        const rmsThreshold = isMobile ? baseRmsThreshold * 0.15 : baseRmsThreshold * 0.35;
+        // Use same low threshold for both platforms - desktop mics are quieter
+        const rmsThreshold = baseRmsThreshold * 0.12; // Unified at mobile level
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
@@ -1048,9 +1069,9 @@ export function useChordDetection({
         silenceFramesRef.current = 0;
         activeSignalFramesRef.current++;
         
-        // LAYER 2: Spectral Flatness Gate
+        // LAYER 2: Spectral Flatness Gate (UNIFIED threshold)
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
-        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + (isMobile ? 0.40 : 0.10);
+        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + 0.35; // Unified relaxed threshold
         if (spectralFlatness > maxFlatness) {
           consecutiveMatchesRef.current = 0;
           if (frameCounter <= 50 || frameCounter % 20 === 0) {
@@ -1059,8 +1080,8 @@ export function useChordDetection({
           return;
         }
         
-        // LAYER 3: Spectral Crest Factor Gate
-        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - (isMobile ? 1.2 : 0.3);
+        // LAYER 3: Spectral Crest Factor Gate (UNIFIED threshold)
+        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - 1.0; // Unified relaxed threshold
         const minCrest = Math.max(0.3, minCrestRaw);
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
         if (crestFactor < minCrest) {
@@ -1071,9 +1092,9 @@ export function useChordDetection({
           return;
         }
         
-        // LAYER 4: Formant Detection Gate
+        // LAYER 4: Formant Detection Gate (UNIFIED threshold)
         const formantScore = computeFormantScore(freqBuf, analyser);
-        const maxFormant = lerp(0.40, 0.80, tNoise) + (isMobile ? 0.35 : 0.10);
+        const maxFormant = lerp(0.40, 0.80, tNoise) + 0.30; // Unified relaxed threshold
         if (formantScore > maxFormant) {
           consecutiveMatchesRef.current = 0;
           if (frameCounter <= 50 || frameCounter % 20 === 0) {
@@ -1082,12 +1103,12 @@ export function useChordDetection({
           return;
         }
         
-        // LAYER 5: Spectral Flux Gate
+        // LAYER 5: Spectral Flux Gate (UNIFIED threshold)
         const spectralFlux = computeSpectralFlux(freqBuf, prevFreqDataRef.current, analyser);
         prevFreqDataRef.current = new Float32Array(freqBuf);
         
         if (spectralFlux >= 0) {
-          const maxFlux = lerp(2.5, 5.5, tFlux) + (isMobile ? 3.0 : 0.5);
+          const maxFlux = lerp(2.5, 5.5, tFlux) + 2.5; // Unified relaxed threshold
           if (spectralFlux > maxFlux) {
             consecutiveMatchesRef.current = 0;
             if (frameCounter <= 50 || frameCounter % 20 === 0) {
@@ -1146,8 +1167,17 @@ export function useChordDetection({
           
           console.log(`\n🎯 TARGET: ${target.symbol} requires [${expectedNotes}]`);
           console.log(`✓ Detected: [${detectedNotes.join(', ') || 'none'}] | ✗ Extra: [${extraNotes.join(', ') || 'none'}]`);
-          console.log(`📊 Match Stats: detected ${detectedNotes.length}/${expectedPitchClasses.size} expected notes`);
+          console.log(`📊 Match Stats: detected ${detectedNotes.length}/${expectedPitchClasses.size} expected notes, ${extraNotes.length} extras`);
           console.log(`${isMatch ? '✅ MATCH' : '❌ NO MATCH'} | Counters: ✓${consecutiveMatchesRef.current}/${MATCH_THRESHOLD} ✗${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
+          
+          // Additional diagnostic for wrong note detection
+          if (extraNotes.length > 0) {
+            const strongExtras = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
+              .filter(p => !expectedPitchClasses.has(p.pc) && p.value > 0.5);
+            if (strongExtras.length > 0) {
+              console.log(`⚠️ STRONG WRONG NOTES: [${strongExtras.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', ')}] - should reject match`);
+            }
+          }
         }
         
         if (isMatch) {

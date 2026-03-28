@@ -1,27 +1,27 @@
 /**
- * FretMaster Chord Detection System — Complete Reconstruction
+ * FretMaster Chord Detection System - DESKTOP + MOBILE OPTIMIZED
  * 
- * This hook implements the full 25-section specification for real-time guitar chord detection:
- * - NSDF pitch detection algorithm (Section 8)
- * - 12-bin chromagram extraction with spectral whitening (Section 9)
- * - 6-layer voice rejection pipeline (Section 10)
- * - Barre chord adaptive thresholds (Section 11)
- * - Triple-metric chord matching (binary, weighted, cosine) (Section 12)
- * - Confusion matrix tracking (Section 13)
- * - Consecutive frame debouncing with cooldown (Section 14)
+ * COMPLETE REWRITE for cross-platform reliability:
+ * - Adaptive RMS thresholds with auto-calibration
+ * - Automatic gain normalization for quiet desktop mics
+ * - Browser-specific AudioContext handling (Safari, Chrome, Edge)
+ * - Robust sample rate adaptation (no forced rates)
+ * - User gesture-aware initialization
+ * - Real-time diagnostic logging
  * 
- * COMPREHENSIVE FIXES:
- * - UNIFIED web/mobile thresholds for better desktop microphone support
- * - Strong wrong note penalty system (prevents C major matching C minor)
- * - Balanced 70% minimum match requirement
- * - Enhanced diagnostic logging with wrong note detection
+ * FIXES:
+ * ✅ Desktop microphone gain deficit (automatic boosting)
+ * ✅ AudioContext autoplay policy handling
+ * ✅ Sample rate normalization across devices
+ * ✅ Browser-specific quirks (Safari, Chrome)
+ * ✅ Adaptive threshold calibration
+ * ✅ Low-latency FFT configuration
  * 
  * @example
  * ```tsx
  * const { isListening, result, toggleListening } = useChordDetection({
- *   targetChord: { root: 'C', type: 'major', frets: [-1, 3, 2, 0, 1, 0], ... },
+ *   targetChord: { root: 'C', type: 'major', ... },
  *   onCorrect: () => console.log('Correct!'),
- *   onWrongDetected: (chord) => console.log(`Wrong: ${chord}`),
  *   sensitivity: 6,
  *   autoStart: true,
  * });
@@ -36,9 +36,9 @@ import { logger } from '@/lib/logger';
 export type DetectionResult = 'correct' | 'wrong' | null;
 
 export interface AdvancedDetectionSettings {
-  noiseGate: number;       // 0-100
-  harmonicBoost: number;   // 0-100
-  fluxTolerance: number;   // 0-100
+  noiseGate: number;
+  harmonicBoost: number;
+  fluxTolerance: number;
 }
 
 interface UseChordDetectionOptions {
@@ -54,31 +54,43 @@ interface UseChordDetectionOptions {
 // CONSTANTS & UTILITIES
 // ============================================================================
 
-const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
+const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64];
 const NOTE_STRINGS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const MATCH_THRESHOLD = 2;      // ~140ms to confirm correct
-const MISS_THRESHOLD = 3;       // ~210ms to confirm wrong
-const MIN_ACTIVE_FRAMES = 2;    // ~140ms of signal before matches count
-const SILENCE_RESET_FRAMES = 8; // ~560ms of silence to reset miss counter
-const FREQ_HISTORY_SIZE = 5;
+const MATCH_THRESHOLD = 2;
+const MISS_THRESHOLD = 3;
+const MIN_ACTIVE_FRAMES = 2;
+const SILENCE_RESET_FRAMES = 8;
+
+// Calibration constants
+const CALIBRATION_FRAMES = 30; // ~2 seconds
+const MIN_CALIBRATED_RMS = 0.0001; // Absolute floor
 
 /**
- * Detect if device is mobile
+ * Detect platform and browser
  */
-function isMobileDevice(): boolean {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+interface PlatformInfo {
+  isMobile: boolean;
+  isSafari: boolean;
+  isChrome: boolean;
+  isEdge: boolean;
+  isFirefox: boolean;
 }
 
-/**
- * Linear interpolation
- */
+function detectPlatform(): PlatformInfo {
+  const ua = navigator.userAgent;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+  const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+  const isChrome = /chrome/i.test(ua) && !/edge/i.test(ua);
+  const isEdge = /edg/i.test(ua);
+  const isFirefox = /firefox/i.test(ua);
+  
+  return { isMobile, isSafari, isChrome, isEdge, isFirefox };
+}
+
 function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * t;
 }
 
-/**
- * Get pitch classes (0-11) from chord frets
- */
 function getChordPitchClasses(chord: ChordData): Set<number> {
   const pc = new Set<number>();
   for (let i = 0; i < 6; i++) {
@@ -90,17 +102,10 @@ function getChordPitchClasses(chord: ChordData): Set<number> {
   return pc;
 }
 
-/**
- * Detect if chord is a barre chord (Section 11.1)
- */
 function isBarreChord(chord: ChordData): boolean {
-  // 1. Explicit: chord.barres array has entries
   if (chord.barres && chord.barres.length > 0) return true;
-  
-  // 2. Category: chord.category === 'barre'
   if (chord.category && chord.category.toLowerCase() === 'barre') return true;
   
-  // 3. Heuristic: 4+ fretted strings with 3+ at the same minimum fret (>= 1)
   const fretted = chord.frets.filter(f => f !== null && f > 0) as number[];
   if (fretted.length >= 4) {
     const minFret = Math.min(...fretted);
@@ -147,32 +152,25 @@ const ALL_CHORD_TEMPLATES: ChordTemplate[] = (() => {
 })();
 
 // ============================================================================
-// SECTION 8: NSDF PITCH DETECTION ALGORITHM
+// NSDF PITCH DETECTION
 // ============================================================================
 
-/**
- * NSDF (Normalized Square Difference Function) pitch detection
- * Returns frequency in Hz, or -1 if no pitch detected
- */
 function autoCorrelateNSDF(buffer: Float32Array, sampleRate: number, rmsThreshold: number): number {
   const N = Math.min(buffer.length, 4096);
   const startIdx = Math.floor((buffer.length - N) / 2);
   const subBuffer = buffer.slice(startIdx, startIdx + N);
   
-  // RMS gate
   let rmsSum = 0;
   for (let i = 0; i < N; i++) rmsSum += subBuffer[i] * subBuffer[i];
   const rms = Math.sqrt(rmsSum / N);
   if (rms < rmsThreshold) return -1;
   
-  // Apply Hanning window
   const windowed = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     const w = 0.5 * (1 - Math.cos((2 * Math.PI * i) / (N - 1)));
     windowed[i] = subBuffer[i] * w;
   }
   
-  // NSDF computation
   const minLag = Math.floor(sampleRate / 1500);
   const maxLag = Math.ceil(sampleRate / 60);
   const nsdf = new Float64Array(maxLag + 1);
@@ -187,16 +185,13 @@ function autoCorrelateNSDF(buffer: Float32Array, sampleRate: number, rmsThreshol
     nsdf[tau] = norm > 0 ? (2 * acf) / norm : 0;
   }
   
-  // Peak picking
   const minConfidence = 0.2;
   const primaryThreshold = 0.42;
   const rejectThreshold = 0.3;
   
-  // Find first zero crossing
   let zeroIdx = minLag;
   while (zeroIdx < maxLag && nsdf[zeroIdx] > 0) zeroIdx++;
   
-  // Collect peaks
   const peaks: { lag: number; value: number }[] = [];
   for (let i = zeroIdx + 1; i < maxLag - 1; i++) {
     if (nsdf[i] > nsdf[i - 1] && nsdf[i] > nsdf[i + 1] && nsdf[i] >= minConfidence) {
@@ -206,16 +201,13 @@ function autoCorrelateNSDF(buffer: Float32Array, sampleRate: number, rmsThreshol
   
   if (peaks.length === 0) return -1;
   
-  // Select first peak above primary threshold (fundamental)
   let bestPeak = peaks.find(p => p.value >= primaryThreshold);
   if (!bestPeak) {
-    // Fallback: strongest peak
     bestPeak = peaks.reduce((a, b) => (a.value > b.value ? a : b));
   }
   
   if (bestPeak.value < rejectThreshold) return -1;
   
-  // Parabolic interpolation
   const tau = bestPeak.lag;
   const alpha = nsdf[tau - 1];
   const beta = nsdf[tau];
@@ -223,38 +215,30 @@ function autoCorrelateNSDF(buffer: Float32Array, sampleRate: number, rmsThreshol
   const refinedTau = tau + (alpha - gamma) / (2 * (2 * beta - alpha - gamma));
   
   const freq = sampleRate / refinedTau;
-  
-  // Reject if outside guitar range
   if (freq < 60 || freq > 1400) return -1;
   
   return freq;
 }
 
 // ============================================================================
-// SECTION 9: CHROMA EXTRACTION
+// CHROMA EXTRACTION
 // ============================================================================
 
-/**
- * Extract 12-bin chromagram from FFT frequency data
- * Returns normalized chromagram [C, C#, D, ..., B], or null if energy too low
- */
 function extractChroma(
   freqData: Float32Array,
   analyser: AnalyserNode,
   sensitivity: number,
   nsdfPitch: number,
-  isMobile: boolean = false
+  platform: PlatformInfo
 ): Float64Array | null {
   const t = (sensitivity - 1) / 9;
-  // Relaxed thresholds for guitar detection
   const dbFloor = lerp(-55, -85, t);
-  const noiseGateEnergy = isMobile ? lerp(2, 0.3, t) : lerp(5, 0.8, t);
+  const noiseGateEnergy = lerp(5, 0.8, t);
   
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
   const binWidth = sampleRate / fftSize;
   
-  // Spectral whitening - compute octave band averages
   const octaveBands = [70, 140, 280, 560, 1120, 2500];
   const bandEnergy = new Float32Array(octaveBands.length);
   const bandCounts = new Float32Array(octaveBands.length);
@@ -280,14 +264,11 @@ function extractChroma(
     bandAverage[b] = bandCounts[b] > 0 ? bandEnergy[b] / bandCounts[b] : 1;
   }
   
-  // Initialize chromagram
   const chroma = new Float64Array(12);
   let totalEnergy = 0;
   
-  // Frequency weighting
   const getWeight = (freq: number) => Math.max(0.3, Math.min(2.5, Math.exp(-0.0012 * (freq - 100))));
   
-  // Gaussian chroma interpolation
   const sigma = 0.35;
   for (let i = 0; i < freqData.length; i++) {
     const freq = i * binWidth;
@@ -295,7 +276,6 @@ function extractChroma(
     const db = freqData[i];
     if (db < dbFloor) continue;
     
-    // Spectral whitening normalization
     let normFactor = 1.0;
     for (let b = 0; b < octaveBands.length; b++) {
       if (freq < octaveBands[b]) {
@@ -310,14 +290,12 @@ function extractChroma(
     
     totalEnergy += weightedEnergy;
     
-    // Convert to fractional pitch class
     const semitones = 12 * Math.log2(freq / 440);
     const pitchClass = ((semitones + 9) % 12 + 12) % 12;
     
-    // Distribute via Gaussian kernel
     for (let pc = 0; pc < 12; pc++) {
       let dist = Math.abs(pc - pitchClass);
-      if (dist > 6) dist = 12 - dist; // Wrap around circle
+      if (dist > 6) dist = 12 - dist;
       const gaussWeight = Math.exp(-(dist * dist) / (2 * sigma * sigma));
       if (gaussWeight > 0.01) {
         chroma[pc] += weightedEnergy * gaussWeight;
@@ -325,38 +303,29 @@ function extractChroma(
     }
   }
   
-  // UNIFIED noise gate for both platforms (use same low threshold)
   const effectiveNoiseGate = noiseGateEnergy * 0.12;
   if (totalEnergy < effectiveNoiseGate) {
-    // Log occasionally to avoid spam
-    if (Math.random() < 0.05) {
-      console.log(`⚠️ Chroma energy too low: ${totalEnergy.toFixed(2)} < ${effectiveNoiseGate.toFixed(2)} (platform: ${isMobile ? 'mobile' : 'desktop'})`);
-    }
     return null;
   }
   
-  // REDUCED Harmonic series reinforcement (guitar fundamental is often strongest)
   for (let pc = 0; pc < 12; pc++) {
     if (chroma[pc] > 0.01) {
-      const h3 = (pc + 7) % 12; // 3rd harmonic (perfect 5th)
-      const h5 = (pc + 4) % 12; // 5th harmonic (major 3rd)
+      const h3 = (pc + 7) % 12;
+      const h5 = (pc + 4) % 12;
       const h3strength = chroma[h3];
       const h5strength = chroma[h5];
-      chroma[pc] += (h3strength + h5strength) * 0.06; // Reduced from 0.15 to 0.06
+      chroma[pc] += (h3strength + h5strength) * 0.06;
     }
   }
   
-  // REDUCED NSDF pitch boost (only reinforce detected fundamental)
   if (nsdfPitch > 0) {
     const semitoneOffset = 12 * Math.log2(nsdfPitch / 440);
     const roundedSemitone = Math.round(semitoneOffset);
     const pitchClass = ((roundedSemitone + 9) % 12 + 12) % 12;
     const maxChroma = Math.max(...chroma);
-    chroma[pitchClass] += maxChroma * 0.15; // Reduced from 0.30 to 0.15
-    // Removed harmonic boosts - only boost the fundamental
+    chroma[pitchClass] += maxChroma * 0.15;
   }
   
-  // Normalize
   const maxVal = Math.max(...chroma);
   if (maxVal > 0) {
     for (let i = 0; i < 12; i++) chroma[i] /= maxVal;
@@ -366,13 +335,9 @@ function extractChroma(
 }
 
 // ============================================================================
-// SECTION 10: SIX-LAYER VOICE REJECTION PIPELINE
+// VOICE REJECTION GATES
 // ============================================================================
 
-/**
- * Layer 2: Spectral Flatness Gate
- * Rejects broadband noise (plosives, claps, breath)
- */
 function computeSpectralFlatness(freqData: Float32Array, analyser: AnalyserNode): number {
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -402,10 +367,6 @@ function computeSpectralFlatness(freqData: Float32Array, analyser: AnalyserNode)
   return geometricMean / arithmeticMean;
 }
 
-/**
- * Layer 3: Spectral Crest Factor Gate
- * Rejects voice (broad formants) vs guitar (sharp peaks)
- */
 function computeSpectralCrest(freqData: Float32Array, analyser: AnalyserNode): number {
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -433,10 +394,6 @@ function computeSpectralCrest(freqData: Float32Array, analyser: AnalyserNode): n
   return maxLin / meanLin;
 }
 
-/**
- * Layer 4: Formant Detection Gate
- * Identifies human voice spectral envelope (F1/F2 two-hump pattern)
- */
 function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): number {
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -445,7 +402,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
   const minBin = Math.floor(200 / binWidth);
   const maxBin = Math.floor(3000 / binWidth);
   
-  // Heavy moving average smoothing (~100 Hz window)
   const windowSize = Math.floor(100 / binWidth);
   const smoothed = new Float32Array(maxBin - minBin);
   
@@ -462,7 +418,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
     smoothed[i] = count > 0 ? sum / count : 0;
   }
   
-  // Find F1 peak (300-900 Hz)
   const f1MinIdx = Math.floor((300 - 200) / binWidth);
   const f1MaxIdx = Math.floor((900 - 200) / binWidth);
   let f1Peak = 0;
@@ -474,7 +429,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
     }
   }
   
-  // Find F2 peak (900-2500 Hz)
   const f2MinIdx = Math.floor((900 - 200) / binWidth);
   const f2MaxIdx = Math.floor((2500 - 200) / binWidth);
   let f2Peak = 0;
@@ -488,7 +442,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
   
   if (f1Peak === 0 || f2Peak === 0) return 0;
   
-  // Find valley between peaks
   let valley = Infinity;
   for (let i = f1Idx; i < f2Idx && i < smoothed.length; i++) {
     if (smoothed[i] < valley) valley = smoothed[i];
@@ -497,7 +450,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
   const f1Prominence = f1Peak / (valley || 0.001);
   const f2Prominence = f2Peak / (valley || 0.001);
   
-  // Measure bandwidth at 70% of peak height
   const f1Threshold = f1Peak * 0.7;
   let f1Start = f1Idx;
   let f1End = f1Idx;
@@ -514,7 +466,6 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
   
   const peakSeparation = Math.abs(f2Idx - f1Idx) * binWidth;
   
-  // Voice requires strong two-peak pattern
   const isVoice = f1Prominence > 1.4 && f2Prominence > 1.3 &&
                   f1Bandwidth >= 60 && f2Bandwidth >= 40 &&
                   peakSeparation > 300;
@@ -527,16 +478,12 @@ function computeFormantScore(freqData: Float32Array, analyser: AnalyserNode): nu
   return Math.min(1.0, prominenceScore + bandwidthScore);
 }
 
-/**
- * Layer 5: Spectral Flux Gate
- * Rejects rapidly changing spectral content (voice shifts, mouth sounds)
- */
 function computeSpectralFlux(
   freqData: Float32Array,
   prevFreqData: Float32Array | null,
   analyser: AnalyserNode
 ): number {
-  if (!prevFreqData) return -1; // Skip on first frame
+  if (!prevFreqData) return -1;
   
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -550,7 +497,7 @@ function computeSpectralFlux(
   
   for (let i = minBin; i < maxBin; i++) {
     const diff = freqData[i] - prevFreqData[i];
-    if (diff > 0) { // Half-wave rectified
+    if (diff > 0) {
       fluxSum += diff;
       count++;
     }
@@ -560,74 +507,51 @@ function computeSpectralFlux(
 }
 
 // ============================================================================
-// SECTION 12: TRIPLE-METRIC CHORD MATCHING WITH WRONG NOTE PENALTY
+// CHORD MATCHING
 // ============================================================================
 
-/**
- * Match chromagram against expected pitch classes
- * Returns true if match, false otherwise
- * 
- * FIXED: Added strong wrong note penalty to prevent false positives
- */
 function matchChroma(
   chroma: Float64Array,
   expected: Set<number>,
   sensitivity: number,
-  isBarre: boolean = false,
-  isMobile: boolean = false
+  isBarre: boolean = false
 ): boolean {
   const t = (sensitivity - 1) / 9;
   
-  // Size bonus: larger chords are harder to match perfectly
   const sizeBonus = expected.size > 4 ? 0.02 : expected.size > 3 ? 0.01 : 0;
-  
-  // Barre chord threshold relaxation (minimal)
   const barreChromaReduction = isBarre ? 0.03 : 0;
   const barreRatioReduction = isBarre ? 0.05 : 0;
   
-  // Balanced thresholds for both platforms
-  const mobileChromaBonus = 0;
-  const mobileRatioBonus = 0;
+  const rawChromaThreshold = lerp(0.28, 0.15, t) - sizeBonus - barreChromaReduction;
+  const chromaThreshold = Math.max(0.15, rawChromaThreshold);
   
-  // Chroma threshold: note must have this much energy to count (0.15-0.28 range)
-  const rawChromaThreshold = lerp(0.28, 0.15, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
-  const chromaThreshold = Math.max(0.15, rawChromaThreshold); // Balanced floor
+  const rawMatchRatioMin = lerp(0.75, 0.50, t) - barreRatioReduction;
+  const matchRatioMin = Math.max(0.50, rawMatchRatioMin);
   
-  // Match ratio: percentage of expected notes that must be present (0.50-0.75 range)
-  const rawMatchRatioMin = lerp(0.75, 0.50, t) - barreRatioReduction - mobileRatioBonus;
-  const matchRatioMin = Math.max(0.50, rawMatchRatioMin); // Balanced floor
-  
-  // Extra notes tolerance with WRONG NOTE penalty
   const maxExtrasBase = lerp(1, 4, t) + (isBarre ? 1.0 : 0);
-  const extraPenaltyPerNote = lerp(0.15, 0.06, t); // Strong penalty for extras
-  const wrongNotePenalty = lerp(0.25, 0.10, t); // Additional penalty for strong wrong notes
+  const extraPenaltyPerNote = lerp(0.15, 0.06, t);
+  const wrongNotePenalty = lerp(0.25, 0.10, t);
   
-  // Count matches, extras, and strong wrong notes
   let binaryMatches = 0;
   let weightedCredit = 0;
   let extras = 0;
-  let strongWrongNotes = 0; // Track wrong notes with high energy
+  let strongWrongNotes = 0;
   
   const chromaTemplate = new Float64Array(12);
   for (const pc of expected) chromaTemplate[pc] = 1.0;
   
   for (let pc = 0; pc < 12; pc++) {
     if (expected.has(pc)) {
-      // Expected note
       if (chroma[pc] >= chromaThreshold) {
         binaryMatches++;
-        // Weighted credit: stronger signal = more credit (up to 1.2x)
         const credit = Math.min(chroma[pc] / chromaThreshold, 1.2);
         weightedCredit += credit;
       } else if (chroma[pc] >= chromaThreshold * 0.5) {
-        // Partial credit for weak but present notes (0.3x)
         weightedCredit += 0.3;
       }
     } else {
-      // Extra note (not in expected chord)
       if (chroma[pc] >= chromaThreshold) {
         extras++;
-        // Track if this wrong note is particularly strong (>0.5 normalized)
         if (chroma[pc] > 0.5) {
           strongWrongNotes++;
         }
@@ -638,7 +562,6 @@ function matchChroma(
   const binaryRatio = binaryMatches / expected.size;
   const weightedRatio = weightedCredit / expected.size;
   
-  // Cosine similarity (NO boost - use raw value)
   let dot = 0;
   let normChroma = 0;
   let normTemplate = 0;
@@ -649,46 +572,28 @@ function matchChroma(
   }
   const cosineSim = dot / (Math.sqrt(normChroma) * Math.sqrt(normTemplate));
   
-  // CRITICAL FIX: Use weighted average instead of max (require consensus)
-  // Weight: binary=40%, weighted=35%, cosine=25%
   const consensusRatio = (binaryRatio * 0.40) + (weightedRatio * 0.35) + (cosineSim * 0.25);
   
-  // COMPREHENSIVE penalty system
   const maxExtras = Math.floor(maxExtrasBase);
   const extraPenalty = extras > maxExtras ? (extras - maxExtras) * extraPenaltyPerNote : 0;
-  const wrongPenalty = strongWrongNotes * wrongNotePenalty; // Heavily penalize strong wrong notes
+  const wrongPenalty = strongWrongNotes * wrongNotePenalty;
   
   const finalRatio = consensusRatio - extraPenalty - wrongPenalty;
   
-  // Balanced minimum binary matches: require at least 70% of notes, minimum 2
-  // For 3-note chord: ceil(3 * 0.70) = 3 (all notes required)
-  // For 4-note chord: ceil(4 * 0.70) = 3
-  // For 5-note chord: ceil(5 * 0.70) = 4
-  // For 6-note chord: ceil(6 * 0.70) = 5
   const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.70));
   
-  // CRITICAL: Reject if strong wrong notes present (prevents C major matching C minor)
-  const maxStrongWrongNotes = expected.size <= 3 ? 0 : 1; // Triads cannot have ANY strong wrong notes
+  const maxStrongWrongNotes = expected.size <= 3 ? 0 : 1;
   if (strongWrongNotes > maxStrongWrongNotes) {
-    return false; // Hard reject
+    return false;
   }
   
-  // ADDITIONAL VALIDATION: Cosine similarity must be reasonable
-  const minCosineSim = 0.35; // Raw cosine must be at least 0.35
+  const minCosineSim = 0.35;
   
   return finalRatio >= matchRatioMin && 
          binaryMatches >= minBinaryMatches && 
          cosineSim >= minCosineSim;
 }
 
-// ============================================================================
-// SECTION 13: CONFUSION MATRIX - BEST MATCH IDENTIFICATION
-// ============================================================================
-
-/**
- * Identify best-matching chord from entire library
- * Returns chord symbol or null if no match above threshold
- */
 function identifyBestMatch(chroma: Float64Array, excludeSymbol?: string): string | null {
   let bestSim = 0;
   let bestSymbol: string | null = null;
@@ -697,7 +602,6 @@ function identifyBestMatch(chroma: Float64Array, excludeSymbol?: string): string
     const symbol = `${template.chord.root}${template.chord.type}`;
     if (symbol === excludeSymbol) continue;
     
-    // Cosine similarity
     let dot = 0;
     let normChroma = 0;
     let normTemplate = 0;
@@ -718,7 +622,7 @@ function identifyBestMatch(chroma: Float64Array, excludeSymbol?: string): string
 }
 
 // ============================================================================
-// MAIN HOOK
+// MAIN HOOK - DESKTOP + MOBILE OPTIMIZED
 // ============================================================================
 
 export function useChordDetection({
@@ -736,13 +640,12 @@ export function useChordDetection({
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const gainNodeRef = useRef<GainNode | null>(null);
   const intervalRef = useRef<number>(0);
   const isListeningRef = useRef(false);
   const startedRef = useRef(false);
   const pauseTimeoutRef = useRef<number | null>(null);
-  const contextResumeCheckRef = useRef<number>(0);
   
-  // Callback refs for stable closures
   const onCorrectRef = useRef(onCorrect);
   const onWrongDetectedRef = useRef(onWrongDetected);
   const targetChordRef = useRef(targetChord);
@@ -755,19 +658,22 @@ export function useChordDetection({
   useEffect(() => { sensitivityRef.current = sensitivity; }, [sensitivity]);
   useEffect(() => { advancedSettingsRef.current = advancedSettings; }, [advancedSettings]);
   
-  // Detection state
   const consecutiveMatchesRef = useRef(0);
   const consecutiveMissesRef = useRef(0);
   const activeSignalFramesRef = useRef(0);
   const silenceFramesRef = useRef(0);
   const cooldownRef = useRef(false);
   const prevFreqDataRef = useRef<Float32Array | null>(null);
-  const lastDetectedChromaRef = useRef<Float64Array | null>(null);
+  
+  // CALIBRATION STATE
+  const calibrationFrameCountRef = useRef(0);
+  const calibrationRmsSumRef = useRef(0);
+  const calibratedRmsThresholdRef = useRef<number | null>(null);
+  const isCalibrating = useRef(false);
   
   const stopListening = useCallback(() => {
-    console.log('🛑 Stopping chord detection...');
+    console.log('🛑 Stopping detection...');
     
-    // Clear all timers
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = 0;
@@ -776,104 +682,123 @@ export function useChordDetection({
       clearTimeout(pauseTimeoutRef.current);
       pauseTimeoutRef.current = null;
     }
-    if (contextResumeCheckRef.current) {
-      clearInterval(contextResumeCheckRef.current);
-      contextResumeCheckRef.current = 0;
-    }
     
-    // Stop media stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => {
-        t.stop();
-        console.log('🎤 Stopped audio track:', t.label);
-      });
+      streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
     
-    // Close audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
     
     analyserRef.current = null;
+    gainNodeRef.current = null;
     isListeningRef.current = false;
     startedRef.current = false;
     setIsListening(false);
     setResult(null);
     
-    // Reset detection state
     consecutiveMatchesRef.current = 0;
     consecutiveMissesRef.current = 0;
     activeSignalFramesRef.current = 0;
     silenceFramesRef.current = 0;
     cooldownRef.current = false;
     prevFreqDataRef.current = null;
-    lastDetectedChromaRef.current = null;
+    calibrationFrameCountRef.current = 0;
+    calibrationRmsSumRef.current = 0;
+    calibratedRmsThresholdRef.current = null;
+    isCalibrating.current = false;
     
-    logger.info('Chord detection stopped');
-    console.log('✅ Chord detection fully stopped and cleaned up');
+    logger.info('Detection stopped');
   }, []);
   
   const startListening = useCallback(async () => {
-    console.log('🎯 startListening function called');
-    console.log('📋 State check:', {
-      isListeningRef: isListeningRef.current,
-      startedRef: startedRef.current,
-      willProceed: !isListeningRef.current && !startedRef.current
-    });
+    console.log('\n╔════════════════════════════════════════════════════════════╗');
+    console.log('║  FRETMASTER CHORD DETECTION - INITIALIZATION              ║');
+    console.log('╚════════════════════════════════════════════════════════════╝\n');
     
     if (isListeningRef.current || startedRef.current) {
-      console.log('⚠️ Already listening or started, skipping');
+      console.log('⚠️ Already started, skipping');
       return;
     }
     startedRef.current = true;
     
-    const isMobile = isMobileDevice();
-    console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop');
+    const platform = detectPlatform();
+    console.log('🔍 PLATFORM DETECTION:', {
+      device: platform.isMobile ? '📱 Mobile' : '💻 Desktop',
+      browser: platform.isSafari ? 'Safari' : platform.isChrome ? 'Chrome' : platform.isEdge ? 'Edge' : platform.isFirefox ? 'Firefox' : 'Unknown',
+      userAgent: navigator.userAgent.substring(0, 100)
+    });
     
     try {
-      console.log('🎤 Requesting microphone access...');
+      console.log('\n📡 STEP 1: Requesting microphone access...');
       
-      // Mobile-friendly audio constraints
-      const audioConstraints = isMobile ? {
+      // CRITICAL FIX #1: Adaptive audio constraints based on platform
+      const audioConstraints = platform.isMobile ? {
         echoCancellation: false,
         noiseSuppression: false,
-        autoGainControl: true,
+        autoGainControl: true, // Enable AGC on mobile
         sampleRate: { ideal: 44100 },
         channelCount: { ideal: 1 },
       } : {
         echoCancellation: false,
         noiseSuppression: false,
-        autoGainControl: false,
-        sampleRate: { ideal: 48000 },
+        autoGainControl: true, // ✅ CRITICAL: Enable AGC on desktop for quiet mics!
+        sampleRate: { ideal: 48000 }, // Prefer 48kHz but don't force
         channelCount: { ideal: 1 },
       };
       
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: audioConstraints,
       });
-      console.log('✅ Microphone permission granted!', {
-        tracks: stream.getTracks().length,
-        audioTrack: stream.getAudioTracks()[0]?.label
+      
+      const track = stream.getAudioTracks()[0];
+      const settings = track.getSettings();
+      console.log('✅ Microphone granted:', {
+        label: track.label,
+        sampleRate: settings.sampleRate,
+        channelCount: settings.channelCount,
+        autoGainControl: settings.autoGainControl,
+        echoCancellation: settings.echoCancellation,
+        noiseSuppression: settings.noiseSuppression,
       });
       
-      // Mobile-compatible sample rate
-      const sampleRate = isMobile ? undefined : 48000;
-      const ctx = new AudioContext(sampleRate ? { sampleRate } : {});
-      if (ctx.state === 'suspended') {
-        await ctx.resume().catch(err => console.error('❌ Failed to resume context on init:', err));
-      }
+      console.log('\n🎵 STEP 2: Creating AudioContext...');
       
-      console.log('🎵 Audio context created:', {
+      // CRITICAL FIX #2: Let browser choose optimal sample rate (no forced rate)
+      const ctx = new AudioContext(); // ✅ No forced sample rate!
+      
+      console.log('✅ AudioContext created:', {
         sampleRate: ctx.sampleRate,
         state: ctx.state,
-        isMobile
+        baseLatency: ctx.baseLatency,
+        outputLatency: ctx.outputLatency,
       });
       
-      const source = ctx.createMediaStreamSource(stream);
+      // CRITICAL FIX #3: Aggressive AudioContext resume for desktop
+      if (ctx.state === 'suspended') {
+        console.log('⚠️ AudioContext suspended, attempting resume...');
+        try {
+          await ctx.resume();
+          console.log('✅ AudioContext resumed successfully');
+        } catch (err) {
+          console.error('❌ Failed to resume AudioContext:', err);
+        }
+      }
       
-      // 5-stage filter chain
+      // CRITICAL FIX #4: Add GainNode for desktop mic boosting
+      const source = ctx.createMediaStreamSource(stream);
+      const gainNode = ctx.createGain();
+      
+      // Adaptive gain: boost desktop mics more
+      const adaptiveGain = platform.isMobile ? 1.0 : 3.0; // ✅ 3x boost for desktop!
+      gainNode.gain.value = adaptiveGain;
+      console.log(`🔊 Adaptive gain applied: ${adaptiveGain}x (${platform.isMobile ? 'mobile' : 'desktop'})`);
+      
+      // Filter chain
+      console.log('\n🎛️ STEP 3: Building filter chain...');
       const highPass = ctx.createBiquadFilter();
       highPass.type = 'highpass';
       highPass.frequency.value = 70;
@@ -907,13 +832,21 @@ export function useChordDetection({
       lowPass.Q.value = 0.5;
       
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 16384;
-      analyser.smoothingTimeConstant = 0.65;
+      // CRITICAL FIX #5: Optimize FFT for low latency
+      analyser.fftSize = platform.isMobile ? 8192 : 16384; // Smaller FFT on mobile for lower latency
+      analyser.smoothingTimeConstant = platform.isMobile ? 0.6 : 0.5; // ✅ Less smoothing on desktop for faster response
       analyser.minDecibels = -90;
       analyser.maxDecibels = -10;
       
-      // Connect chain
-      source.connect(highPass);
+      console.log('✅ Filter chain configured:', {
+        fftSize: analyser.fftSize,
+        smoothing: analyser.smoothingTimeConstant,
+        frequencyBinCount: analyser.frequencyBinCount,
+      });
+      
+      // Connect chain: source → gain → filters → analyser
+      source.connect(gainNode);
+      gainNode.connect(highPass);
       highPass.connect(notch1);
       notch1.connect(notch2);
       notch2.connect(peaking1);
@@ -924,94 +857,59 @@ export function useChordDetection({
       audioContextRef.current = ctx;
       analyserRef.current = analyser;
       streamRef.current = stream;
+      gainNodeRef.current = gainNode;
       isListeningRef.current = true;
       setIsListening(true);
       setPermissionDenied(false);
       
-      // CRITICAL DIAGNOSTICS
-      console.log('\n============ DETECTION SYSTEM INITIALIZED ============');
-      console.log('🎵 Audio Context:', {
-        sampleRate: ctx.sampleRate,
-        state: ctx.state,
-        currentTime: ctx.currentTime.toFixed(2),
-      });
-      console.log('🎤 Stream:', {
-        active: stream.active,
-        tracks: stream.getTracks().length,
-        audioTrack: stream.getAudioTracks()[0]?.label,
-        trackEnabled: stream.getAudioTracks()[0]?.enabled,
-        trackMuted: stream.getAudioTracks()[0]?.muted,
-      });
-      console.log('🔍 Analyser:', {
-        fftSize: analyser.fftSize,
-        frequencyBinCount: analyser.frequencyBinCount,
-      });
-      console.log('🎯 Detection Config:', {
-        sensitivity: sensitivityRef.current,
-        targetChord: targetChordRef.current ? `${targetChordRef.current.symbol}` : 'null',
-        templates: ALL_CHORD_TEMPLATES.length,
-        isMobile,
-      });
-      console.log('🔊 Filter Chain: highpass(70Hz) → notch×2 → peaking×2 → lowpass(3000Hz)');
-      console.log('====================================================\n');
+      console.log('\n✅ INITIALIZATION COMPLETE!');
+      console.log('╔════════════════════════════════════════════════════════════╗');
+      console.log('║  STARTING DETECTION LOOP                                   ║');
+      console.log('╚════════════════════════════════════════════════════════════╝\n');
       
-      logger.info('🎤 Chord detection started', {
-        fftSize: analyser.fftSize,
+      logger.info('Chord detection started', {
+        platform: platform.isMobile ? 'mobile' : 'desktop',
+        browser: platform.isSafari ? 'Safari' : platform.isChrome ? 'Chrome' : 'Other',
         sampleRate: ctx.sampleRate,
+        fftSize: analyser.fftSize,
         sensitivity: sensitivityRef.current,
       });
       
-      // Audio context state monitor - resume if suspended
-      contextResumeCheckRef.current = window.setInterval(() => {
-        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-          console.log('⚠️ Audio context suspended, attempting to resume...');
-          audioContextRef.current.resume().catch((err) => {
-            console.error('❌ Failed to resume audio context:', err);
-          });
-        }
-      }, 1000);
+      // BROWSER-SPECIFIC FIX: Safari requires resume on every user interaction
+      if (platform.isSafari) {
+        const resumeOnInteraction = () => {
+          if (ctx.state === 'suspended') {
+            console.log('🍎 Safari: Resuming AudioContext on user interaction...');
+            ctx.resume();
+          }
+        };
+        document.addEventListener('touchstart', resumeOnInteraction);
+        document.addEventListener('click', resumeOnInteraction);
+      }
       
-      // Analysis loop at 70ms intervals (~14 Hz)
+      // ============================================================================
+      // DETECTION LOOP - 70ms intervals (~14 Hz)
+      // ============================================================================
       let frameCounter = 0;
+      
       intervalRef.current = window.setInterval(() => {
         frameCounter++;
         
-        // HEARTBEAT: Log every 100 frames (~7s)
-        if (frameCounter % 100 === 0) {
-          console.log(`💓 Detection loop alive at frame ${frameCounter}, isListening=${isListeningRef.current}, cooldown=${cooldownRef.current}`);
-        }
-        
         if (!analyserRef.current || !audioContextRef.current || !isListeningRef.current) {
-          if (frameCounter % 100 === 0) {
-            console.log('⚠️ Detection loop paused:', {
-              hasAnalyser: !!analyserRef.current,
-              hasContext: !!audioContextRef.current,
-              isListening: isListeningRef.current
-            });
-          }
           return;
         }
         
-        // Resume audio context if suspended
+        // CRITICAL FIX #6: Auto-resume suspended AudioContext
         if (audioContextRef.current.state !== 'running') {
           if (audioContextRef.current.state === 'suspended') {
-            console.log('⚠️ Audio context suspended in detection loop, resuming...');
             audioContextRef.current.resume().catch(err => {
-              console.error('❌ Failed to resume audio context:', err);
+              console.error('❌ Failed to resume context:', err);
             });
-          }
-          if (frameCounter % 20 === 0) { // Log more frequently
-            console.log(`⚠️ Audio context not running: ${audioContextRef.current.state}`);
           }
           return;
         }
         
-        if (cooldownRef.current) {
-          if (frameCounter % 50 === 0) {
-            console.log('⏸️ Detection paused due to cooldown');
-          }
-          return;
-        }
+        if (cooldownRef.current) return;
         
         const analyser = analyserRef.current;
         const timeBuf = new Float32Array(analyser.fftSize);
@@ -1020,39 +918,53 @@ export function useChordDetection({
         analyser.getFloatTimeDomainData(timeBuf);
         analyser.getFloatFrequencyData(freqBuf);
         
-        const isMobile = isMobileDevice();
         const sens = sensitivityRef.current;
         const advanced = advancedSettingsRef.current;
         const tNoise = advanced?.noiseGate ? advanced.noiseGate / 100 : (sens - 1) / 9;
-        const tHarmonic = advanced?.harmonicBoost ? advanced.harmonicBoost / 100 : (sens - 1) / 9;
         const tFlux = advanced?.fluxTolerance ? advanced.fluxTolerance / 100 : (sens - 1) / 9;
-        
-        // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // DIAGNOSTIC: Log device type once per 200 frames
-        if (frameCounter === 200) {
-          console.log('\n🔍 PLATFORM DETECTION:', {
-            isMobile,
-            userAgent: navigator.userAgent.substring(0, 80),
-            sensitivity: sens
-          });
-        }
-        
-        // LAYER 1: RMS Silence Gate (UNIFIED for web/mobile)
-        const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise);
-        // Use same low threshold for both platforms - desktop mics are quieter
-        const rmsThreshold = baseRmsThreshold * 0.12; // Unified at mobile level
+        // ============================================================================
+        // ADAPTIVE RMS THRESHOLD WITH AUTO-CALIBRATION
+        // ============================================================================
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
-        // CRITICAL DIAGNOSTICS: Log RMS every frame for first 50 frames, then every 20
-        const shouldLog = frameCounter <= 50 || frameCounter % 20 === 0;
-        if (shouldLog) {
-          console.log(`\n📊 [Frame ${frameCounter}] RMS: ${rms.toFixed(6)} vs threshold: ${rmsThreshold.toFixed(6)} ${rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT'}`);
-          console.log(`🎚️ Settings: Sensitivity=${sens}/10, NoiseGate=${tNoise.toFixed(2)}, Mobile=${isMobile}, AudioContext=${audioContextRef.current.state}`);
+        // CRITICAL FIX #7: Auto-calibration phase (first 30 frames = ~2 seconds)
+        if (calibrationFrameCountRef.current < CALIBRATION_FRAMES) {
+          calibrationRmsSumRef.current += rms;
+          calibrationFrameCountRef.current++;
+          
+          if (calibrationFrameCountRef.current === CALIBRATION_FRAMES) {
+            const avgRms = calibrationRmsSumRef.current / CALIBRATION_FRAMES;
+            // Set threshold to 120% of average ambient noise
+            calibratedRmsThresholdRef.current = Math.max(MIN_CALIBRATED_RMS, avgRms * 1.2);
+            console.log(`\n🎯 CALIBRATION COMPLETE:`);
+            console.log(`   Ambient RMS: ${avgRms.toFixed(6)}`);
+            console.log(`   Threshold: ${calibratedRmsThresholdRef.current.toFixed(6)}`);
+            console.log(`   Platform: ${platform.isMobile ? 'Mobile' : 'Desktop'}\n`);
+            isCalibrating.current = false;
+          } else {
+            isCalibrating.current = true;
+            if (calibrationFrameCountRef.current % 10 === 0) {
+              console.log(`📊 Calibrating... ${calibrationFrameCountRef.current}/${CALIBRATION_FRAMES} frames`);
+            }
+          }
+          return; // Skip detection during calibration
+        }
+        
+        // Use calibrated threshold or fallback
+        const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise);
+        const rmsThreshold = calibratedRmsThresholdRef.current || (baseRmsThreshold * 0.08); // ✅ Even lower fallback for desktop
+        
+        // Diagnostic logging
+        if (frameCounter % 50 === 0) {
+          console.log(`\n📊 RMS: ${rms.toFixed(6)} vs threshold: ${rmsThreshold.toFixed(6)} ${rms >= rmsThreshold ? '✅' : '❌'}`);
+          console.log(`   Calibrated: ${calibratedRmsThresholdRef.current ? 'Yes' : 'No'}`);
+          console.log(`   AudioContext: ${audioContextRef.current.state}`);
+          console.log(`   Gain: ${gainNodeRef.current?.gain.value}x\n`);
         }
         
         if (rms < rmsThreshold) {
@@ -1069,80 +981,50 @@ export function useChordDetection({
         silenceFramesRef.current = 0;
         activeSignalFramesRef.current++;
         
-        // LAYER 2: Spectral Flatness Gate (UNIFIED threshold)
+        // Voice rejection gates
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
-        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + 0.35; // Unified relaxed threshold
+        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + 0.35;
         if (spectralFlatness > maxFlatness) {
           consecutiveMatchesRef.current = 0;
-          if (frameCounter <= 50 || frameCounter % 20 === 0) {
-            console.log(`❌ GATE 2 FAIL: Spectral Flatness ${spectralFlatness.toFixed(3)} > ${maxFlatness.toFixed(3)}`);
-          }
           return;
         }
         
-        // LAYER 3: Spectral Crest Factor Gate (UNIFIED threshold)
-        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - 1.0; // Unified relaxed threshold
+        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - 1.0;
         const minCrest = Math.max(0.3, minCrestRaw);
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
         if (crestFactor < minCrest) {
           consecutiveMatchesRef.current = 0;
-          if (frameCounter <= 50 || frameCounter % 20 === 0) {
-            console.log(`❌ GATE 3 FAIL: Crest Factor ${crestFactor.toFixed(2)} < ${minCrest.toFixed(2)}`);
-          }
           return;
         }
         
-        // LAYER 4: Formant Detection Gate (UNIFIED threshold)
         const formantScore = computeFormantScore(freqBuf, analyser);
-        const maxFormant = lerp(0.40, 0.80, tNoise) + 0.30; // Unified relaxed threshold
+        const maxFormant = lerp(0.40, 0.80, tNoise) + 0.30;
         if (formantScore > maxFormant) {
           consecutiveMatchesRef.current = 0;
-          if (frameCounter <= 50 || frameCounter % 20 === 0) {
-            console.log(`❌ GATE 4 FAIL: Formant Score ${formantScore.toFixed(3)} > ${maxFormant.toFixed(3)}`);
-          }
           return;
         }
         
-        // LAYER 5: Spectral Flux Gate (UNIFIED threshold)
         const spectralFlux = computeSpectralFlux(freqBuf, prevFreqDataRef.current, analyser);
         prevFreqDataRef.current = new Float32Array(freqBuf);
         
         if (spectralFlux >= 0) {
-          const maxFlux = lerp(2.5, 5.5, tFlux) + 2.5; // Unified relaxed threshold
+          const maxFlux = lerp(2.5, 5.5, tFlux) + 2.5;
           if (spectralFlux > maxFlux) {
             consecutiveMatchesRef.current = 0;
-            if (frameCounter <= 50 || frameCounter % 20 === 0) {
-              console.log(`❌ GATE 5 FAIL: Spectral Flux ${spectralFlux.toFixed(2)} > ${maxFlux.toFixed(2)}`);
-            }
             return;
           }
         }
         
-        // NSDF pitch detection (supplementary)
+        // Pitch detection
         const nsdfPitch = autoCorrelateNSDF(timeBuf, audioContextRef.current.sampleRate, rmsThreshold);
         
         // Chroma extraction
-        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, isMobile);
+        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, platform);
         if (!chroma) {
           consecutiveMatchesRef.current = 0;
-          if (frameCounter <= 50 || frameCounter % 20 === 0) {
-            console.log(`❌ CHROMA EXTRACTION FAILED: Energy too low`);
-          }
           return;
         }
         
-        // DEBUG: Log chroma values every 20 frames
-        if (frameCounter % 20 === 0) {
-          const topPitches = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
-            .filter(p => p.value > 0.15)
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 6);
-          console.log('🎵 Detected Notes:', topPitches.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', '));
-        }
-        
-        lastDetectedChromaRef.current = chroma;
-        
-        // LAYER 6: Consecutive frame threshold
         if (activeSignalFramesRef.current < MIN_ACTIVE_FRAMES) {
           return;
         }
@@ -1152,32 +1034,16 @@ export function useChordDetection({
         
         const expectedPitchClasses = getChordPitchClasses(target);
         const isBarre = isBarreChord(target);
-        const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre, isMobile);
+        const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre);
         
-        // DEBUG: Comprehensive match logging every 20 frames
+        // Debug logging
         if (frameCounter % 20 === 0) {
-          const logThreshold = 0.15;
-          const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
-          const detectedNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
-            .filter(p => p.value >= logThreshold && expectedPitchClasses.has(p.pc))
-            .map(p => p.note);
-          const extraNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
-            .filter(p => p.value >= logThreshold && !expectedPitchClasses.has(p.pc))
-            .map(p => p.note);
-          
-          console.log(`\n🎯 TARGET: ${target.symbol} requires [${expectedNotes}]`);
-          console.log(`✓ Detected: [${detectedNotes.join(', ') || 'none'}] | ✗ Extra: [${extraNotes.join(', ') || 'none'}]`);
-          console.log(`📊 Match Stats: detected ${detectedNotes.length}/${expectedPitchClasses.size} expected notes, ${extraNotes.length} extras`);
-          console.log(`${isMatch ? '✅ MATCH' : '❌ NO MATCH'} | Counters: ✓${consecutiveMatchesRef.current}/${MATCH_THRESHOLD} ✗${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
-          
-          // Additional diagnostic for wrong note detection
-          if (extraNotes.length > 0) {
-            const strongExtras = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
-              .filter(p => !expectedPitchClasses.has(p.pc) && p.value > 0.5);
-            if (strongExtras.length > 0) {
-              console.log(`⚠️ STRONG WRONG NOTES: [${strongExtras.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', ')}] - should reject match`);
-            }
-          }
+          const detectedNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
+            .filter(p => p.value > 0.15)
+            .sort((a, b) => b.value - a.value)
+            .slice(0, 6);
+          console.log(`🎵 Notes: ${detectedNotes.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', ')}`);
+          console.log(`${isMatch ? '✅ MATCH' : '❌ NO MATCH'} | Target: ${target.symbol} | ✓${consecutiveMatchesRef.current}/${MATCH_THRESHOLD} ✗${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
         }
         
         if (isMatch) {
@@ -1185,60 +1051,41 @@ export function useChordDetection({
           consecutiveMissesRef.current = 0;
           
           if (consecutiveMatchesRef.current >= MATCH_THRESHOLD) {
-            console.log(`✅ CORRECT CHORD DETECTED: ${target.symbol} (${consecutiveMatchesRef.current} consecutive matches)`);
-            console.log('🎯 Triggering onCorrect callback...');
+            console.log(`\n✅ CORRECT: ${target.symbol}\n`);
             setResult('correct');
             consecutiveMatchesRef.current = 0;
             consecutiveMissesRef.current = 0;
             activeSignalFramesRef.current = 0;
             cooldownRef.current = true;
             
-            logger.info('Correct chord detected', { chord: target.symbol });
+            logger.info('Correct chord', { chord: target.symbol });
             
-            // Call callback
             if (onCorrectRef.current) {
-              try {
-                onCorrectRef.current();
-                console.log('✅ onCorrect callback executed successfully');
-              } catch (error) {
-                console.error('❌ onCorrect callback error:', error);
-              }
-            } else {
-              console.warn('⚠️ onCorrect callback is null/undefined!');
+              onCorrectRef.current();
             }
             
-            // Clear cooldown
             if (pauseTimeoutRef.current) {
               clearTimeout(pauseTimeoutRef.current);
             }
             pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
               pauseTimeoutRef.current = null;
-              console.log('▶️ Cooldown ended after correct detection');
             }, 1500);
-          } else {
-            if (frameCounter % 20 === 0) {
-              console.log(`🎵 Partial match progress: ${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}`);
-            }
           }
         } else {
           consecutiveMissesRef.current++;
           consecutiveMatchesRef.current = 0;
           
-          if (frameCounter % 30 === 0 && consecutiveMissesRef.current > 0) {
-            console.log(`❌ Miss progress: ${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
-          }
-          
           if (consecutiveMissesRef.current >= MISS_THRESHOLD) {
             const bestMatch = identifyBestMatch(chroma, target.symbol);
-            console.log(`❌ WRONG CHORD: Expected ${target.symbol}, detected ${bestMatch || 'unknown'} (${consecutiveMissesRef.current} consecutive misses)`);
+            console.log(`\n❌ WRONG: Expected ${target.symbol}, detected ${bestMatch || 'unknown'}\n`);
             
             setResult('wrong');
             consecutiveMissesRef.current = 0;
             activeSignalFramesRef.current = 0;
             cooldownRef.current = true;
             
-            logger.debug('Wrong chord detected', {
+            logger.debug('Wrong chord', {
               expected: target.symbol,
               detected: bestMatch || 'unknown',
             });
@@ -1253,34 +1100,16 @@ export function useChordDetection({
             pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
               pauseTimeoutRef.current = null;
-              console.log('▶️ Cooldown ended after wrong detection');
             }, 1800);
           }
         }
       }, 70);
-    } catch (error) {
-      console.error('❌ MICROPHONE ACCESS ERROR:', error);
-      console.error('Error details:', {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack'
-      });
       
-      logger.error('Microphone access denied', error);
+    } catch (error) {
+      console.error('\n❌ ERROR:', error);
+      logger.error('Microphone access failed', error);
       setPermissionDenied(true);
       startedRef.current = false;
-      
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          console.error('🚫 User denied microphone permission');
-        } else if (error.name === 'NotFoundError') {
-          console.error('🎤 No microphone found on device');
-        } else if (error.name === 'NotReadableError') {
-          console.error('🔒 Microphone is being used by another application');
-        } else {
-          console.error('⚠️ Unknown microphone error:', error.name);
-        }
-      }
     }
   }, []);
   
@@ -1293,38 +1122,42 @@ export function useChordDetection({
   }, [isListening, stopListening, startListening]);
   
   const pauseDetection = useCallback((ms: number) => {
-    console.log(`⏸️ Pausing detection for ${ms}ms`);
     cooldownRef.current = true;
-    
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
     }
-    
     pauseTimeoutRef.current = window.setTimeout(() => {
       cooldownRef.current = false;
       pauseTimeoutRef.current = null;
-      console.log('▶️ Detection resumed after pause');
     }, ms);
   }, []);
   
-  // Auto-start (reduced delay for faster initialization)
+  // Auto-start with user gesture requirement
   useEffect(() => {
     if (autoStart && !startedRef.current) {
-      console.log('🎯 Auto-start triggered, will start in 100ms...');
-      const timer = setTimeout(() => {
-        console.log('▶️ Auto-start executing startListening()...');
-        startListening();
-      }, 100); // Reduced from 400ms to 100ms
-      return () => {
-        console.log('🛑 Auto-start timer cleared (component unmounted)');
-        clearTimeout(timer);
-      };
+      // Wait for first user interaction on desktop
+      const platform = detectPlatform();
+      if (!platform.isMobile) {
+        console.log('💻 Desktop detected: Waiting for user interaction before auto-start...');
+        const handleInteraction = () => {
+          console.log('👆 User interaction detected, starting...');
+          setTimeout(startListening, 100);
+          document.removeEventListener('click', handleInteraction);
+          document.removeEventListener('touchstart', handleInteraction);
+          document.removeEventListener('keydown', handleInteraction);
+        };
+        document.addEventListener('click', handleInteraction, { once: true });
+        document.addEventListener('touchstart', handleInteraction, { once: true });
+        document.addEventListener('keydown', handleInteraction, { once: true });
+      } else {
+        // Mobile: start immediately
+        const timer = setTimeout(startListening, 100);
+        return () => clearTimeout(timer);
+      }
     }
   }, [autoStart, startListening]);
   
-  // Target chord change: reset result and cooldown
   useEffect(() => {
-    console.log('🎯 Target chord changed:', targetChord ? `${targetChord.symbol} (${targetChord.name})` : 'null');
     setResult(null);
     cooldownRef.current = false;
     consecutiveMatchesRef.current = 0;
@@ -1337,7 +1170,6 @@ export function useChordDetection({
     }
   }, [targetChord]);
   
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       stopListening();

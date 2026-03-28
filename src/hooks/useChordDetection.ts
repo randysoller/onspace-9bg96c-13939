@@ -577,28 +577,31 @@ function matchChroma(
 ): boolean {
   const t = (sensitivity - 1) / 9;
   
+  // BALANCED THRESHOLDS: Strict enough to avoid false positives, relaxed enough to detect real chords
+  
   // Size bonus: larger chords are harder to match perfectly
-  const sizeBonus = expected.size > 4 ? 0.04 : expected.size > 3 ? 0.02 : 0; // Reduced from 0.06/0.04
+  const sizeBonus = expected.size > 4 ? 0.03 : expected.size > 3 ? 0.015 : 0;
   
-  // Barre chord threshold relaxation
-  const barreChromaReduction = isBarre ? 0.08 : 0; // Increased from 0.06
-  const barreRatioReduction = isBarre ? 0.12 : 0; // Increased from 0.08
-  const barreExtraIncrease = isBarre ? 3.0 : 0; // Increased from 2.0
+  // Barre chord threshold relaxation (moderate)
+  const barreChromaReduction = isBarre ? 0.05 : 0;
+  const barreRatioReduction = isBarre ? 0.08 : 0;
+  const barreExtraIncrease = isBarre ? 2.0 : 0;
   
-  // Mobile gets MAJOR relaxation - very permissive matching
-  const mobileBonus = isMobile ? 0.10 : 0; // Reduced from 0.15 to prevent negative thresholds
-  const mobileRatioBonus = isMobile ? 0.25 : 0; // Increased from 0.20
+  // Mobile gets moderate relaxation (NOT extreme)
+  const mobileChromaBonus = isMobile ? 0.06 : 0;
+  const mobileRatioBonus = isMobile ? 0.12 : 0;
   
-  // CRITICAL FIX: Ensure chromaThreshold never goes below 0.02 (absolute minimum)
-  const rawChromaThreshold = lerp(0.18, 0.04, t) - sizeBonus - barreChromaReduction - mobileBonus; // Reduced base from 0.20->0.18, 0.06->0.04
-  const chromaThreshold = Math.max(0.02, rawChromaThreshold); // Safety floor
+  // Chroma threshold: note must have this much energy to count (0.08-0.25 range)
+  const rawChromaThreshold = lerp(0.25, 0.08, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
+  const chromaThreshold = Math.max(0.08, rawChromaThreshold); // Floor at 0.08 (was 0.02 - way too low!)
   
-  // CRITICAL FIX: Ensure matchRatioMin never goes below 0.08 (absolute minimum)
-  const rawMatchRatioMin = lerp(0.55, 0.28, t) - barreRatioReduction - mobileRatioBonus; // Reduced base from 0.60->0.55, 0.32->0.28
-  const matchRatioMin = Math.max(0.08, rawMatchRatioMin); // Safety floor - mobile can go as low as 0.08
+  // Match ratio: percentage of expected notes that must be present (0.35-0.70 range)
+  const rawMatchRatioMin = lerp(0.70, 0.35, t) - barreRatioReduction - mobileRatioBonus;
+  const matchRatioMin = Math.max(0.30, rawMatchRatioMin); // Floor at 0.30 (was 0.08 - absurdly low!)
   
-  const maxExtrasBase = lerp(4, 8, t) + barreExtraIncrease + (isMobile ? 3 : 0); // Increased base from 3->4, 6->8; Mobile: +3 extra notes
-  const extraPenaltyPerNote = lerp(0.05, 0.01, t) * (isMobile ? 0.3 : 1.0); // Mobile: 70% penalty reduction
+  // Extra notes tolerance
+  const maxExtrasBase = lerp(2, 6, t) + barreExtraIncrease + (isMobile ? 2 : 0);
+  const extraPenaltyPerNote = lerp(0.08, 0.02, t) * (isMobile ? 0.5 : 1.0);
   
   // Count matches and extras
   let binaryMatches = 0;
@@ -613,13 +616,15 @@ function matchChroma(
       // Expected note
       if (chroma[pc] >= chromaThreshold) {
         binaryMatches++;
-      }
-      if (chroma[pc] >= chromaThreshold * 0.6) {
-        const credit = Math.min(chroma[pc] / chromaThreshold, 1.5);
+        // Weighted credit: stronger signal = more credit (up to 1.2x)
+        const credit = Math.min(chroma[pc] / chromaThreshold, 1.2);
         weightedCredit += credit;
+      } else if (chroma[pc] >= chromaThreshold * 0.5) {
+        // Partial credit for weak but present notes (0.3x)
+        weightedCredit += 0.3;
       }
     } else {
-      // Extra note
+      // Extra note (not in expected chord)
       if (chroma[pc] >= chromaThreshold) {
         extras++;
       }
@@ -649,8 +654,8 @@ function matchChroma(
   
   const finalRatio = effectiveRatio - extraPenalty;
   
-  // Relaxed minimum binary matches requirement
-  const minBinaryMatches = expected.size <= 3 ? 1 : Math.min(2, expected.size);
+  // Minimum binary matches: require at least 50% of notes for small chords, 60% for large chords
+  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.5));
   
   return finalRatio >= matchRatioMin && binaryMatches >= minBinaryMatches;
 }
@@ -1015,18 +1020,18 @@ export function useChordDetection({
         // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // LAYER 1: RMS Silence Gate (ULTRA relaxed - detect ANY sound)
-        const baseRmsThreshold = 0.05 * Math.pow(0.01, tNoise); // Changed from 0.02 to 0.01 for more sensitivity
-        const rmsThreshold = isMobile ? baseRmsThreshold * 0.1 : baseRmsThreshold * 0.3; // Mobile: 90% reduction, Desktop: 70% reduction
+        // LAYER 1: RMS Silence Gate (Balanced - detect guitar but not total silence)
+        const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise); // Balanced sensitivity
+        const rmsThreshold = isMobile ? baseRmsThreshold * 0.15 : baseRmsThreshold * 0.35; // Mobile: 85% reduction, Desktop: 65% reduction
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
-        // DEBUG: Log RMS levels every 20 frames (~1.4s) for faster diagnosis
-        if (activeSignalFramesRef.current % 20 === 0) {
-          console.log(`📊 RMS: ${rms.toFixed(6)} (threshold: ${rmsThreshold.toFixed(6)})`, rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT');
-          console.log(`🎚️ Sensitivity: ${sens}/10, Noise Gate T: ${tNoise.toFixed(2)}, Mobile: ${isMobile}`);
+        // DEBUG: Log RMS levels every 20 frames (~1.4s)
+        if (frameCounter % 20 === 0) {
+          console.log(`\n📊 [Frame ${frameCounter}] RMS: ${rms.toFixed(6)} vs threshold: ${rmsThreshold.toFixed(6)} ${rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT'}`);
+          console.log(`🎚️ Settings: Sensitivity=${sens}/10, NoiseGate=${tNoise.toFixed(2)}, Mobile=${isMobile}`);
         }
         
         if (rms < rmsThreshold) {
@@ -1106,12 +1111,12 @@ export function useChordDetection({
         }
         
         // DEBUG: Log chroma values every 20 frames
-        if (activeSignalFramesRef.current % 20 === 0) {
+        if (frameCounter % 20 === 0) {
           const topPitches = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
-            .filter(p => p.value > 0.2) // Lower threshold from 0.3 to 0.2
+            .filter(p => p.value > 0.15)
             .sort((a, b) => b.value - a.value)
-            .slice(0, 5); // Show top 5 instead of 4
-          console.log('🎵 Detected pitch classes:', topPitches.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', '));
+            .slice(0, 6);
+          console.log('🎵 Detected Notes:', topPitches.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', '));
         }
         
         lastDetectedChromaRef.current = chroma;
@@ -1129,12 +1134,20 @@ export function useChordDetection({
         const isBarre = isBarreChord(target);
         const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre, isMobile);
         
-        // DEBUG: Log match attempts every 20 frames (more frequent for faster diagnosis)
-        if (activeSignalFramesRef.current % 20 === 0) {
+        // DEBUG: Comprehensive match logging every 20 frames
+        if (frameCounter % 20 === 0) {
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
-          console.log(`🎯 Target: ${target.symbol} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
-          console.log(`📈 Counters: matches=${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}, misses=${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
-          console.log(`🔧 Settings: sens=${sens}/10, isBarre=${isBarre}, isMobile=${isMobile}`);
+          const detectedNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
+            .filter(p => p.value >= chromaThreshold && expectedPitchClasses.has(p.pc))
+            .map(p => p.note);
+          const extraNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
+            .filter(p => p.value >= chromaThreshold && !expectedPitchClasses.has(p.pc))
+            .map(p => p.note);
+          
+          console.log(`\n🎯 TARGET: ${target.symbol} requires [${expectedNotes}]`);
+          console.log(`✓ Detected: [${detectedNotes.join(', ') || 'none'}] | ✗ Extra: [${extraNotes.join(', ') || 'none'}]`);
+          console.log(`📊 Match Stats: ratio=${(detectedNotes.length / expectedPitchClasses.size * 100).toFixed(0)}% (need ≥${(matchRatioMin * 100).toFixed(0)}%), binary=${detectedNotes.length}/${expectedPitchClasses.size} (need ≥${minBinaryMatches})`);
+          console.log(`${isMatch ? '✅ MATCH' : '❌ NO MATCH'} | Counters: ✓${consecutiveMatchesRef.current}/${MATCH_THRESHOLD} ✗${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
         }
         
         if (isMatch) {

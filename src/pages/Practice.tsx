@@ -144,7 +144,18 @@ export default function Practice() {
     };
   }, [stopListening, stopCurrent]);
   
-  // Save show diagrams preference
+  // Listen for show diagrams changes from toggle component
+  useEffect(() => {
+    const handleDiagramsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ showDiagrams: boolean }>;
+      setShowDiagrams(customEvent.detail.showDiagrams);
+    };
+
+    window.addEventListener('show-diagrams-changed', handleDiagramsChange);
+    return () => window.removeEventListener('show-diagrams-changed', handleDiagramsChange);
+  }, []);
+  
+  // Save show diagrams preference when it changes
   useEffect(() => {
     localStorage.setItem('fretmaster-show-diagrams', JSON.stringify(showDiagrams));
   }, [showDiagrams]);

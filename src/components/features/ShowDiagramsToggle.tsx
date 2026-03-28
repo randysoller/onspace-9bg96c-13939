@@ -29,7 +29,13 @@ export function ShowDiagramsToggle({ className = '' }: ShowDiagramsToggleProps) 
   }, [showDiagrams]);
 
   const handleToggle = () => {
-    setShowDiagrams(!showDiagrams);
+    const newValue = !showDiagrams;
+    setShowDiagrams(newValue);
+    
+    // Dispatch custom event for other components to listen to
+    window.dispatchEvent(new CustomEvent('show-diagrams-changed', { 
+      detail: { showDiagrams: newValue } 
+    }));
   };
 
   return (
@@ -82,6 +88,13 @@ export function useShowDiagrams() {
   });
 
   useEffect(() => {
+    // Listen for changes from other components in the same window
+    const handleDiagramsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ showDiagrams: boolean }>;
+      setShowDiagrams(customEvent.detail.showDiagrams);
+    };
+
+    // Listen for storage changes from other tabs
     const handleStorageChange = () => {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -89,8 +102,13 @@ export function useShowDiagrams() {
       } catch {}
     };
 
+    window.addEventListener('show-diagrams-changed', handleDiagramsChange);
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('show-diagrams-changed', handleDiagramsChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return showDiagrams;

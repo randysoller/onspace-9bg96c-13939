@@ -311,8 +311,8 @@ export default function Practice() {
                   max="10"
                   value={sensitivity}
                   onChange={(e) => setSensitivity(Number(e.target.value))}
-                  className="w-20 h-1 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
-                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+                  className="w-20 h-2 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 
                     [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
                 />
                 <span className="text-xs text-emerald-500 font-bold min-w-[1.25rem] text-center">
@@ -395,8 +395,8 @@ export default function Practice() {
                 max="10"
                 value={sensitivity}
                 onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-20 h-1 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
-                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+                className="w-20 h-2 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
+                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 
                   [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
               />
               <span className="text-xs text-emerald-500 font-bold min-w-[1rem]">
@@ -412,9 +412,6 @@ export default function Practice() {
         <div className="text-center">
           {/* Chord Name - Always Visible */}
           <div className="mb-6 mt-6">
-            <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
-              {isRevealed ? 'Current Chord' : 'Play This Chord'}
-            </div>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${chord.id}-symbol`}
@@ -434,7 +431,7 @@ export default function Practice() {
           </div>
 
           {/* Diagram Section Container - Moved up */}
-          <div className="-mt-28">
+          <div className="-mt-[152px]">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
           <div className="min-h-[60px] mb-6 mt-[134px] flex items-center justify-center">
             <AnimatePresence>

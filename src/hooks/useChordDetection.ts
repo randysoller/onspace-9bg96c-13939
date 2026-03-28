@@ -337,26 +337,25 @@ function extractChroma(
     return null;
   }
   
-  // Harmonic series reinforcement
+  // REDUCED Harmonic series reinforcement (guitar fundamental is often strongest)
   for (let pc = 0; pc < 12; pc++) {
     if (chroma[pc] > 0.01) {
       const h3 = (pc + 7) % 12; // 3rd harmonic (perfect 5th)
       const h5 = (pc + 4) % 12; // 5th harmonic (major 3rd)
       const h3strength = chroma[h3];
       const h5strength = chroma[h5];
-      chroma[pc] += (h3strength + h5strength) * 0.15;
+      chroma[pc] += (h3strength + h5strength) * 0.06; // Reduced from 0.15 to 0.06
     }
   }
   
-  // NSDF pitch boost
+  // REDUCED NSDF pitch boost (only reinforce detected fundamental)
   if (nsdfPitch > 0) {
     const semitoneOffset = 12 * Math.log2(nsdfPitch / 440);
     const roundedSemitone = Math.round(semitoneOffset);
     const pitchClass = ((roundedSemitone + 9) % 12 + 12) % 12;
     const maxChroma = Math.max(...chroma);
-    chroma[pitchClass] += maxChroma * 0.30;
-    chroma[(pitchClass + 7) % 12] += maxChroma * 0.10; // 3rd harmonic
-    chroma[(pitchClass + 4) % 12] += maxChroma * 0.08; // 5th harmonic
+    chroma[pitchClass] += maxChroma * 0.15; // Reduced from 0.30 to 0.15
+    // Removed harmonic boosts - only boost the fundamental
   }
   
   // Normalize
@@ -582,28 +581,27 @@ function matchChroma(
   const t = (sensitivity - 1) / 9;
   
   // Size bonus: larger chords are harder to match perfectly
-  const sizeBonus = expected.size > 4 ? 0.03 : expected.size > 3 ? 0.015 : 0;
+  const sizeBonus = expected.size > 4 ? 0.02 : expected.size > 3 ? 0.01 : 0;
   
-  // Barre chord threshold relaxation (moderate)
-  const barreChromaReduction = isBarre ? 0.05 : 0;
-  const barreRatioReduction = isBarre ? 0.08 : 0;
-  const barreExtraIncrease = isBarre ? 2.0 : 0;
+  // Barre chord threshold relaxation (minimal)
+  const barreChromaReduction = isBarre ? 0.03 : 0;
+  const barreRatioReduction = isBarre ? 0.05 : 0;
   
-  // Mobile gets MINIMAL relaxation to prevent false positives
-  const mobileChromaBonus = isMobile ? 0.03 : 0;  // Reduced from 0.06
-  const mobileRatioBonus = isMobile ? 0.05 : 0;   // Reduced from 0.12
+  // Mobile gets NO special treatment to prevent false positives
+  const mobileChromaBonus = 0;  // Disabled
+  const mobileRatioBonus = 0;   // Disabled
   
-  // Chroma threshold: note must have this much energy to count (0.12-0.28 range)
-  const rawChromaThreshold = lerp(0.28, 0.12, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
-  const chromaThreshold = Math.max(0.12, rawChromaThreshold); // Floor at 0.12 (stricter)
+  // STRICTER Chroma threshold: note must have this much energy to count (0.18-0.32 range)
+  const rawChromaThreshold = lerp(0.32, 0.18, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
+  const chromaThreshold = Math.max(0.18, rawChromaThreshold); // Floor at 0.18 (much stricter)
   
-  // Match ratio: percentage of expected notes that must be present (0.45-0.75 range)
-  const rawMatchRatioMin = lerp(0.75, 0.45, t) - barreRatioReduction - mobileRatioBonus;
-  const matchRatioMin = Math.max(0.45, rawMatchRatioMin); // Floor at 0.45 (much stricter)
+  // STRICTER Match ratio: percentage of expected notes that must be present (0.55-0.80 range)
+  const rawMatchRatioMin = lerp(0.80, 0.55, t) - barreRatioReduction - mobileRatioBonus;
+  const matchRatioMin = Math.max(0.55, rawMatchRatioMin); // Floor at 0.55 (strict)
   
-  // Extra notes tolerance
-  const maxExtrasBase = lerp(2, 6, t) + barreExtraIncrease + (isMobile ? 2 : 0);
-  const extraPenaltyPerNote = lerp(0.08, 0.02, t) * (isMobile ? 0.5 : 1.0);
+  // STRICTER Extra notes tolerance
+  const maxExtrasBase = lerp(1, 4, t) + (isBarre ? 1.0 : 0); // Reduced significantly
+  const extraPenaltyPerNote = lerp(0.12, 0.05, t); // Stronger penalty
   
   // Count matches and extras
   let binaryMatches = 0;
@@ -636,7 +634,7 @@ function matchChroma(
   const binaryRatio = binaryMatches / expected.size;
   const weightedRatio = weightedCredit / expected.size;
   
-  // Cosine similarity (reduced boost to prevent false positives)
+  // Cosine similarity (NO boost - use raw value)
   let dot = 0;
   let normChroma = 0;
   let normTemplate = 0;
@@ -646,24 +644,30 @@ function matchChroma(
     normTemplate += chromaTemplate[i] * chromaTemplate[i];
   }
   const cosineSim = dot / (Math.sqrt(normChroma) * Math.sqrt(normTemplate));
-  const effectiveCosineSim = cosineSim * 1.05; // Minimal boost (was 1.15 - too permissive)
   
-  // Take best of three metrics
-  const effectiveRatio = Math.max(weightedRatio, binaryRatio, effectiveCosineSim);
+  // CRITICAL FIX: Use weighted average instead of max (require consensus)
+  // Weight: binary=40%, weighted=35%, cosine=25%
+  const consensusRatio = (binaryRatio * 0.40) + (weightedRatio * 0.35) + (cosineSim * 0.25);
   
+  // STRONGER extra notes penalty
   const maxExtras = Math.floor(maxExtrasBase);
   const extraPenalty = extras > maxExtras ? (extras - maxExtras) * extraPenaltyPerNote : 0;
   
-  const finalRatio = effectiveRatio - extraPenalty;
+  const finalRatio = consensusRatio - extraPenalty;
   
-  // Minimum binary matches: require at least 60% of notes, minimum 2
-  // For 3-note chord: ceil(3 * 0.6) = 2
-  // For 4-note chord: ceil(4 * 0.6) = 3
-  // For 5-note chord: ceil(5 * 0.6) = 3
-  // For 6-note chord: ceil(6 * 0.6) = 4
-  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.6));
+  // STRICTER Minimum binary matches: require at least 75% of notes, minimum 2
+  // For 3-note chord: ceil(3 * 0.75) = 3 (all notes required)
+  // For 4-note chord: ceil(4 * 0.75) = 3
+  // For 5-note chord: ceil(5 * 0.75) = 4
+  // For 6-note chord: ceil(6 * 0.75) = 5
+  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.75));
   
-  return finalRatio >= matchRatioMin && binaryMatches >= minBinaryMatches;
+  // ADDITIONAL VALIDATION: Cosine similarity must be reasonable
+  const minCosineSim = 0.4; // Raw cosine must be at least 0.4
+  
+  return finalRatio >= matchRatioMin && 
+         binaryMatches >= minBinaryMatches && 
+         cosineSim >= minCosineSim;
 }
 
 // ============================================================================

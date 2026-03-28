@@ -10,6 +10,12 @@
  * - Confusion matrix tracking (Section 13)
  * - Consecutive frame debouncing with cooldown (Section 14)
  * 
+ * MOBILE FIXES:
+ * - Audio context state monitoring and auto-resume
+ * - Proper cleanup of all timers and resources
+ * - Guaranteed pause/resume with timeout tracking
+ * - Detection state reset on chord changes
+ * 
  * @example
  * ```tsx
  * const { isListening, result, toggleListening } = useChordDetection({
@@ -695,6 +701,8 @@ export function useChordDetection({
   const intervalRef = useRef<number>(0);
   const isListeningRef = useRef(false);
   const startedRef = useRef(false);
+  const pauseTimeoutRef = useRef<number | null>(null);
+  const contextResumeCheckRef = useRef<number>(0);
   
   // Callback refs for stable closures
   const onCorrectRef = useRef(onCorrect);
@@ -719,18 +727,37 @@ export function useChordDetection({
   const lastDetectedChromaRef = useRef<Float64Array | null>(null);
   
   const stopListening = useCallback(() => {
+    console.log('🛑 Stopping chord detection...');
+    
+    // Clear all timers
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = 0;
     }
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
+    if (contextResumeCheckRef.current) {
+      clearInterval(contextResumeCheckRef.current);
+      contextResumeCheckRef.current = 0;
+    }
+    
+    // Stop media stream
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current.getTracks().forEach(t => {
+        t.stop();
+        console.log('🎤 Stopped audio track:', t.label);
+      });
       streamRef.current = null;
     }
+    
+    // Close audio context
     if (audioContextRef.current) {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
+    
     analyserRef.current = null;
     isListeningRef.current = false;
     startedRef.current = false;
@@ -747,6 +774,7 @@ export function useChordDetection({
     lastDetectedChromaRef.current = null;
     
     logger.info('Chord detection stopped');
+    console.log('✅ Chord detection fully stopped and cleaned up');
   }, []);
   
   const startListening = useCallback(async () => {
@@ -873,11 +901,36 @@ export function useChordDetection({
       console.log('✅ Audio context state:', ctx.state);
       console.log('✅ Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, muted: t.muted })));
       
+      // Audio context state monitor - resume if suspended (CRITICAL FOR MOBILE)
+      contextResumeCheckRef.current = window.setInterval(() => {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          console.log('⚠️ Audio context suspended, attempting to resume...');
+          audioContextRef.current.resume().then(() => {
+            console.log('✅ Audio context resumed successfully');
+          }).catch((err) => {
+            console.error('❌ Failed to resume audio context:', err);
+          });
+        }
+      }, 1000);
+      
       // Analysis loop at 70ms intervals (~14 Hz)
       intervalRef.current = window.setInterval(() => {
-        if (!analyserRef.current || !audioContextRef.current || !isListeningRef.current) return;
-        if (audioContextRef.current.state !== 'running') return;
-        if (cooldownRef.current) return;
+        if (!analyserRef.current || !audioContextRef.current || !isListeningRef.current) {
+          return;
+        }
+        
+        // Resume audio context if suspended (mobile browsers can suspend it)
+        if (audioContextRef.current.state !== 'running') {
+          if (audioContextRef.current.state === 'suspended') {
+            console.log('⚠️ Audio context suspended in detection loop, resuming...');
+            audioContextRef.current.resume();
+          }
+          return;
+        }
+        
+        if (cooldownRef.current) {
+          return;
+        }
         
         const analyser = analyserRef.current;
         const timeBuf = new Float32Array(analyser.fftSize);
@@ -904,8 +957,8 @@ export function useChordDetection({
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
-        // DEBUG: Log RMS levels every 20 frames (~1.4s)
-        if (activeSignalFramesRef.current % 20 === 0) {
+        // DEBUG: Log RMS levels every 50 frames (~3.5s) to reduce console spam
+        if (activeSignalFramesRef.current % 50 === 0) {
           console.log(`📊 RMS: ${rms.toFixed(6)} (threshold: ${rmsThreshold.toFixed(6)})`, rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT');
         }
         
@@ -927,9 +980,6 @@ export function useChordDetection({
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
         const maxFlatness = lerp(0.25, 0.50, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.10 : 0) + (isMobile ? 0.30 : 0); // Mobile: +0.30
         if (spectralFlatness > maxFlatness) {
-          if (activeSignalFramesRef.current % 20 === 0) {
-            console.log(`🔊 Spectral Flatness: ${spectralFlatness.toFixed(3)} (max: ${maxFlatness.toFixed(3)}) ❌ REJECTED - broadband noise`);
-          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -938,9 +988,6 @@ export function useChordDetection({
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
         const minCrest = lerp(2.5, 1.2, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.8 : 0) - (isMobile ? 1.0 : 0); // Mobile: -1.0
         if (crestFactor < minCrest) {
-          if (activeSignalFramesRef.current % 20 === 0) {
-            console.log(`📉 Spectral Crest: ${crestFactor.toFixed(2)} (min: ${minCrest.toFixed(2)}) ❌ REJECTED - voice-like spectrum`);
-          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -949,9 +996,6 @@ export function useChordDetection({
         const formantScore = computeFormantScore(freqBuf, analyser);
         const maxFormant = lerp(0.35, 0.70, tNoise) + (isMobile ? 0.25 : 0); // Mobile: +0.25
         if (formantScore > maxFormant) {
-          if (activeSignalFramesRef.current % 20 === 0) {
-            console.log(`🗣️ Formant Score: ${formantScore.toFixed(3)} (max: ${maxFormant.toFixed(3)}) ❌ REJECTED - voice detected`);
-          }
           consecutiveMatchesRef.current = 0;
           return;
         }
@@ -963,9 +1007,6 @@ export function useChordDetection({
         if (spectralFlux >= 0) {
           const maxFlux = lerp(2.0, 4.5, tFlux) + (isMobile ? 2.0 : 0); // Mobile: +2.0 bonus
           if (spectralFlux > maxFlux) {
-            if (activeSignalFramesRef.current % 20 === 0) {
-              console.log(`⚡ Spectral Flux: ${spectralFlux.toFixed(2)} (max: ${maxFlux.toFixed(2)}) ❌ REJECTED - rapid changes`);
-            }
             consecutiveMatchesRef.current = 0;
             return;
           }
@@ -977,15 +1018,12 @@ export function useChordDetection({
         // Chroma extraction
         const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, isMobile);
         if (!chroma) {
-          if (activeSignalFramesRef.current % 20 === 0) {
-            console.log('🎵 Chroma extraction: ❌ NULL - energy too low or no clear pitch classes');
-          }
           consecutiveMatchesRef.current = 0;
           return;
         }
         
-        // DEBUG: Log chroma values every 20 frames
-        if (activeSignalFramesRef.current % 20 === 0) {
+        // DEBUG: Log chroma values every 50 frames
+        if (activeSignalFramesRef.current % 50 === 0) {
           const topPitches = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
             .filter(p => p.value > 0.3)
             .sort((a, b) => b.value - a.value)
@@ -1008,10 +1046,11 @@ export function useChordDetection({
         const isBarre = isBarreChord(target);
         const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre, isMobile);
         
-        // DEBUG: Log match attempts every 20 frames
-        if (activeSignalFramesRef.current % 20 === 0) {
+        // DEBUG: Log match attempts every 50 frames
+        if (activeSignalFramesRef.current % 50 === 0) {
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
-          console.log(`🎯 Target: ${target.root}${target.type} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
+          console.log(`🎯 Target: ${target.symbol} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
+          console.log(`📈 Counters: matches=${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}, misses=${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
         }
         
         if (isMatch) {
@@ -1019,20 +1058,27 @@ export function useChordDetection({
           consecutiveMissesRef.current = 0;
           
           if (consecutiveMatchesRef.current >= MATCH_THRESHOLD) {
+            console.log(`✅ CORRECT CHORD DETECTED: ${target.symbol} (${consecutiveMatchesRef.current} consecutive matches)`);
             setResult('correct');
             consecutiveMatchesRef.current = 0;
             consecutiveMissesRef.current = 0;
             activeSignalFramesRef.current = 0;
             cooldownRef.current = true;
             
-            logger.info('Correct chord detected', { chord: `${target.root}${target.type}` });
+            logger.info('Correct chord detected', { chord: target.symbol });
             
             if (onCorrectRef.current) {
               onCorrectRef.current();
             }
             
-            setTimeout(() => {
+            // Clear cooldown with guaranteed resume
+            if (pauseTimeoutRef.current) {
+              clearTimeout(pauseTimeoutRef.current);
+            }
+            pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
+              pauseTimeoutRef.current = null;
+              console.log('▶️ Cooldown ended after correct detection');
             }, 1500);
           }
         } else {
@@ -1040,16 +1086,17 @@ export function useChordDetection({
           consecutiveMatchesRef.current = 0;
           
           if (consecutiveMissesRef.current >= MISS_THRESHOLD) {
+            // Identify best match for confusion tracking
+            const bestMatch = identifyBestMatch(chroma, target.symbol);
+            console.log(`❌ WRONG CHORD: Expected ${target.symbol}, detected ${bestMatch || 'unknown'} (${consecutiveMissesRef.current} consecutive misses)`);
+            
             setResult('wrong');
             consecutiveMissesRef.current = 0;
             activeSignalFramesRef.current = 0;
             cooldownRef.current = true;
             
-            // Identify best match for confusion tracking
-            const bestMatch = identifyBestMatch(chroma, `${target.root}${target.type}`);
-            
             logger.debug('Wrong chord detected', {
-              expected: `${target.root}${target.type}`,
+              expected: target.symbol,
               detected: bestMatch || 'unknown',
             });
             
@@ -1057,8 +1104,14 @@ export function useChordDetection({
               onWrongDetectedRef.current(bestMatch);
             }
             
-            setTimeout(() => {
+            // Clear cooldown with guaranteed resume
+            if (pauseTimeoutRef.current) {
+              clearTimeout(pauseTimeoutRef.current);
+            }
+            pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
+              pauseTimeoutRef.current = null;
+              console.log('▶️ Cooldown ended after wrong detection');
             }, 1800);
           }
         }
@@ -1099,9 +1152,18 @@ export function useChordDetection({
   }, [isListening, stopListening, startListening]);
   
   const pauseDetection = useCallback((ms: number) => {
+    console.log(`⏸️ Pausing detection for ${ms}ms`);
     cooldownRef.current = true;
-    setTimeout(() => {
+    
+    // Clear any existing timeout to prevent multiple timers
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+    }
+    
+    pauseTimeoutRef.current = window.setTimeout(() => {
       cooldownRef.current = false;
+      pauseTimeoutRef.current = null;
+      console.log('▶️ Detection resumed after pause');
     }, ms);
   }, []);
   
@@ -1117,8 +1179,18 @@ export function useChordDetection({
   
   // Target chord change: reset result and cooldown
   useEffect(() => {
+    console.log('🎯 Target chord changed:', targetChord ? `${targetChord.symbol} (${targetChord.name})` : 'null');
     setResult(null);
     cooldownRef.current = false;
+    consecutiveMatchesRef.current = 0;
+    consecutiveMissesRef.current = 0;
+    activeSignalFramesRef.current = 0;
+    
+    // Clear any pause timeout when chord changes
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
   }, [targetChord]);
   
   // Cleanup on unmount
@@ -1133,7 +1205,7 @@ export function useChordDetection({
     result,
     permissionDenied,
     toggleListening,
-    startListening,  // Add for backwards compatibility with Practice page
+    startListening,
     stopListening,
     pauseDetection,
   };

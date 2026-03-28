@@ -149,7 +149,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               <div className="font-display font-semibold text-[hsl(var(--text-default))]">
                 Beat Sync
               </div>
-              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none">
+              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none -ml-5">
                 {getSummaryText()}
               </div>
             </div>

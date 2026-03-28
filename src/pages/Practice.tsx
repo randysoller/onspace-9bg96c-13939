@@ -449,8 +449,8 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
-          {/* Diagram & Tablature */}
-          {showDiagrams && isRevealed && (
+          {/* Diagram & Tablature - Show when toggle is ON */}
+          {showDiagrams && (
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${chord.id}-diagram`}
@@ -466,15 +466,7 @@ export default function Practice() {
             </AnimatePresence>
           )}
 
-          {/* Hidden Diagram State */}
-          {!isRevealed && showDiagrams && (
-            <div className="text-[hsl(var(--text-muted))] text-sm">
-              <div className="mb-2">🙈</div>
-              <div>Diagram hidden</div>
-              <div className="text-xs">Hit reveal to display diagram</div>
-            </div>
-          )}
-
+          {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
             <div className="text-[hsl(var(--text-muted))] text-sm">
               <EyeOff className="w-6 h-6 mx-auto mb-2 opacity-50" />

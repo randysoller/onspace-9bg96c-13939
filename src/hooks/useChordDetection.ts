@@ -63,7 +63,7 @@ const SILENCE_RESET_FRAMES = 8;
 
 // Calibration constants
 const CALIBRATION_FRAMES = 30; // ~2 seconds
-const MIN_CALIBRATED_RMS = 0.0001; // Absolute floor
+const MIN_CALIBRATED_RMS = 0.00005; // Absolute floor (lowered for better mobile sensitivity)
 
 /**
  * Detect platform and browser
@@ -303,7 +303,7 @@ function extractChroma(
     }
   }
   
-  const effectiveNoiseGate = noiseGateEnergy * 0.12;
+  const effectiveNoiseGate = noiseGateEnergy * 0.08; // ✅ Lowered from 0.12 for better sensitivity
   if (totalEnergy < effectiveNoiseGate) {
     return null;
   }
@@ -792,8 +792,8 @@ export function useChordDetection({
       const source = ctx.createMediaStreamSource(stream);
       const gainNode = ctx.createGain();
       
-      // Adaptive gain: boost desktop mics more
-      const adaptiveGain = platform.isMobile ? 1.0 : 3.0; // ✅ 3x boost for desktop!
+      // Adaptive gain: boost both platforms (mobile mics need help too!)
+      const adaptiveGain = platform.isMobile ? 2.0 : 3.0; // ✅ 2x mobile, 3x desktop!
       gainNode.gain.value = adaptiveGain;
       console.log(`🔊 Adaptive gain applied: ${adaptiveGain}x (${platform.isMobile ? 'mobile' : 'desktop'})`);
       
@@ -939,8 +939,8 @@ export function useChordDetection({
           
           if (calibrationFrameCountRef.current === CALIBRATION_FRAMES) {
             const avgRms = calibrationRmsSumRef.current / CALIBRATION_FRAMES;
-            // Set threshold to 120% of average ambient noise
-            calibratedRmsThresholdRef.current = Math.max(MIN_CALIBRATED_RMS, avgRms * 1.2);
+            // Set threshold to 105% of average ambient noise (more sensitive)
+            calibratedRmsThresholdRef.current = Math.max(MIN_CALIBRATED_RMS, avgRms * 1.05);
             console.log(`\n🎯 CALIBRATION COMPLETE:`);
             console.log(`   Ambient RMS: ${avgRms.toFixed(6)}`);
             console.log(`   Threshold: ${calibratedRmsThresholdRef.current.toFixed(6)}`);
@@ -955,9 +955,10 @@ export function useChordDetection({
           return; // Skip detection during calibration
         }
         
-        // Use calibrated threshold or fallback
+        // Use calibrated threshold or fallback (platform-specific)
         const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise);
-        const rmsThreshold = calibratedRmsThresholdRef.current || (baseRmsThreshold * 0.08); // ✅ Even lower fallback for desktop
+        const rmsFallbackMultiplier = platform.isMobile ? 0.04 : 0.08; // ✅ Mobile gets 0.04x (more sensitive!)
+        const rmsThreshold = calibratedRmsThresholdRef.current || (baseRmsThreshold * rmsFallbackMultiplier);
         
         // Diagnostic logging
         if (frameCounter % 50 === 0) {
@@ -1068,6 +1069,7 @@ export function useChordDetection({
               clearTimeout(pauseTimeoutRef.current);
             }
             pauseTimeoutRef.current = window.setTimeout(() => {
+              setResult(null); // ✅ Clear visual feedback after cooldown
               cooldownRef.current = false;
               pauseTimeoutRef.current = null;
             }, 1500);
@@ -1098,6 +1100,7 @@ export function useChordDetection({
               clearTimeout(pauseTimeoutRef.current);
             }
             pauseTimeoutRef.current = window.setTimeout(() => {
+              setResult(null); // ✅ Clear "wrong" message after cooldown
               cooldownRef.current = false;
               pauseTimeoutRef.current = null;
             }, 1800);

@@ -411,7 +411,7 @@ export default function Practice() {
       <div className="flex-1 flex items-center justify-center pt-0 pb-12 px-4 -mt-8">
         <div className="text-center">
           {/* Chord Name - Always Visible */}
-          <div className="mb-6">
+          <div className="mb-6 mt-6">
             <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
               {isRevealed ? 'Current Chord' : 'Play This Chord'}
             </div>
@@ -433,6 +433,8 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
+          {/* Diagram Section Container - Moved up */}
+          <div className="-mt-9">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
           <div className="min-h-[60px] mb-6 flex items-center justify-center">
             <AnimatePresence>
@@ -501,6 +503,7 @@ export default function Practice() {
           <div className="flex items-center justify-center gap-3 mt-10">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
             <ShowDiagramsToggle />
+          </div>
           </div>
         </div>
       </div>

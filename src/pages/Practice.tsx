@@ -434,7 +434,7 @@ export default function Practice() {
           </div>
 
           {/* Diagram Section Container - Moved up */}
-          <div className="-mt-9">
+          <div className="-mt-16">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
           <div className="min-h-[60px] mb-6 flex items-center justify-center">
             <AnimatePresence>

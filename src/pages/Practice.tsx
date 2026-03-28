@@ -450,7 +450,7 @@ export default function Practice() {
           </div>
 
           {/* Chord Name - Always Visible */}
-          <div className="mb-4">
+          <div className="mb-6">
             <div className="text-xs uppercase tracking-wider text-[hsl(var(--text-muted))] mb-2">
               {isRevealed ? 'Current Chord' : 'Play This Chord'}
             </div>
@@ -472,12 +472,6 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
-          {/* Toggle Control - Always Visible */}
-          <div className="mb-6 flex items-center justify-center gap-3">
-            <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Toggle diagrams on/off</span>
-            <ShowDiagramsToggle />
-          </div>
-
           {/* Diagram & Tablature - Show when toggle is ON */}
           {showDiagrams && (
             <AnimatePresence mode="wait">
@@ -487,7 +481,7 @@ export default function Practice() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center gap-6"
+                className="flex items-center justify-center gap-6 mb-6"
               >
                 <ChordDiagram chord={chord} size="lg" />
                 <ChordTablature chord={chord} size="md" />
@@ -497,11 +491,17 @@ export default function Practice() {
 
           {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
-            <div className="text-[hsl(var(--text-muted))]">
+            <div className="text-[hsl(var(--text-muted))] mb-6">
               <EyeOff className="w-7 h-7 mx-auto mb-3 opacity-50" />
               <div className="text-xl font-semibold">Diagram hidden</div>
             </div>
           )}
+
+          {/* Toggle Control - Always Visible, Below Diagram */}
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Toggle diagrams on/off</span>
+            <ShowDiagramsToggle />
+          </div>
         </div>
       </div>
 

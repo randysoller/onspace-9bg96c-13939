@@ -1080,7 +1080,7 @@ export function useChordDetection({
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
           console.log(`🎯 Target: ${target.symbol} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
           console.log(`📈 Counters: matches=${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}, misses=${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
-          console.log(`🔧 Thresholds: chromaT=${chromaThreshold.toFixed(3)}, ratioMin=${matchRatioMin.toFixed(3)}, isBarre=${isBarre}`);
+          console.log(`🔧 Settings: sens=${sens}/10, isBarre=${isBarre}, isMobile=${isMobile}`);
         }
         
         if (isMatch) {

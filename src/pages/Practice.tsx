@@ -362,7 +362,7 @@ export default function Practice() {
       {/* Listening Status Bar */}
       {isListening && (
         <div className={`
-          border-b px-4 py-[7px]
+          border-b px-4 py-1.5
           ${result === 'correct' 
             ? 'bg-emerald-900/20 border-emerald-500/30' 
             : result === 'wrong'

@@ -50,7 +50,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       viewBox={`0 0 ${width} ${height}`}
       className={`chord-diagram ${className}`}
       role="img"
-      aria-label={`${chord.root} ${chord.type} chord diagram`}
+      aria-label={`${chord.symbol} chord diagram`}
     >
       {/* Fret position label */}
       {!isNut && (

@@ -28,7 +28,7 @@ export function ChordTablature({ chord, size = 'md', className = '' }: ChordTabl
     <div
       className={`bg-white rounded-lg border border-neutral-200 ${padding} ${className}`}
       role="img"
-      aria-label={`${chord.root} ${chord.type} chord tablature`}
+      aria-label={`${chord.symbol} chord tablature`}
     >
       <div className={`flex flex-col ${gap} font-mono ${text}`}>
         {/* Reversed order: high e on top */}

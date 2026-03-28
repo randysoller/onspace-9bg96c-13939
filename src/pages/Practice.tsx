@@ -493,12 +493,12 @@ export default function Practice() {
 
           {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
-            <div className="text-[hsl(var(--text-muted))] text-base">
-              <EyeOff className="w-6 h-6 mx-auto mb-2 opacity-50" />
-              <div>Diagram hidden</div>
-              <div className="text-sm flex items-center justify-center gap-2">
+            <div className="text-[hsl(var(--text-muted))]">
+              <EyeOff className="w-7 h-7 mx-auto mb-3 opacity-50" />
+              <div className="text-xl font-semibold mb-1">Diagram hidden</div>
+              <div className="text-lg flex items-center justify-center gap-2">
                 <span>Toggle diagrams on/off</span>
-                <Eye className="w-4 h-4" />
+                <Eye className="w-5 h-5" />
               </div>
             </div>
           )}

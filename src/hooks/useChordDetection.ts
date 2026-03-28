@@ -246,9 +246,9 @@ function extractChroma(
   isMobile: boolean = false
 ): Float64Array | null {
   const t = (sensitivity - 1) / 9;
-  // Very relaxed thresholds for mobile compatibility
-  const dbFloor = lerp(-50, -80, t);
-  const noiseGateEnergy = isMobile ? lerp(4, 1, t) : lerp(10, 2.5, t); // Mobile: 50% of desktop threshold
+  // ULTRA relaxed thresholds for maximum sensitivity
+  const dbFloor = lerp(-55, -85, t); // Increased range from -50->-55, -80->-85
+  const noiseGateEnergy = isMobile ? lerp(2, 0.3, t) : lerp(5, 0.8, t); // Mobile: 50% reduction from previous, Desktop: 50% reduction
   
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -325,9 +325,15 @@ function extractChroma(
     }
   }
   
-  // Noise gate (very relaxed for mobile)
-  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.3 : noiseGateEnergy * 0.7; // Mobile: 70% reduction
-  if (totalEnergy < effectiveNoiseGate) return null;
+  // Noise gate (ULTRA relaxed - detect ANY guitar signal)
+  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.15 : noiseGateEnergy * 0.4; // Mobile: 85% reduction, Desktop: 60% reduction
+  if (totalEnergy < effectiveNoiseGate) {
+    // Log why chroma failed (only occasionally to avoid spam)
+    if (Math.random() < 0.05) { // 5% sample rate
+      console.log(`⚠️ Chroma energy too low: ${totalEnergy.toFixed(2)} < ${effectiveNoiseGate.toFixed(2)}`);
+    }
+    return null;
+  }
   
   // Harmonic series reinforcement
   for (let pc = 0; pc < 12; pc++) {
@@ -572,21 +578,27 @@ function matchChroma(
   const t = (sensitivity - 1) / 9;
   
   // Size bonus: larger chords are harder to match perfectly
-  const sizeBonus = expected.size > 4 ? 0.06 : expected.size > 3 ? 0.04 : 0;
+  const sizeBonus = expected.size > 4 ? 0.04 : expected.size > 3 ? 0.02 : 0; // Reduced from 0.06/0.04
   
   // Barre chord threshold relaxation
-  const barreChromaReduction = isBarre ? 0.06 : 0;
-  const barreRatioReduction = isBarre ? 0.08 : 0;
-  const barreExtraIncrease = isBarre ? 2.0 : 0;
+  const barreChromaReduction = isBarre ? 0.08 : 0; // Increased from 0.06
+  const barreRatioReduction = isBarre ? 0.12 : 0; // Increased from 0.08
+  const barreExtraIncrease = isBarre ? 3.0 : 0; // Increased from 2.0
   
   // Mobile gets MAJOR relaxation - very permissive matching
-  const mobileBonus = isMobile ? 0.15 : 0; // Increased from 0.08
-  const mobileRatioBonus = isMobile ? 0.20 : 0; // Increased from 0.12
+  const mobileBonus = isMobile ? 0.10 : 0; // Reduced from 0.15 to prevent negative thresholds
+  const mobileRatioBonus = isMobile ? 0.25 : 0; // Increased from 0.20
   
-  const chromaThreshold = lerp(0.20, 0.06, t) - sizeBonus - barreChromaReduction - mobileBonus;
-  const matchRatioMin = lerp(0.60, 0.32, t) - barreRatioReduction - mobileRatioBonus; // Mobile can go as low as 0.12
-  const maxExtrasBase = lerp(3, 6, t) + barreExtraIncrease + (isMobile ? 2 : 0); // Mobile: +2 extra notes allowed
-  const extraPenaltyPerNote = lerp(0.06, 0.015, t) * (isMobile ? 0.5 : 1.0); // Mobile: 50% penalty reduction
+  // CRITICAL FIX: Ensure chromaThreshold never goes below 0.02 (absolute minimum)
+  const rawChromaThreshold = lerp(0.18, 0.04, t) - sizeBonus - barreChromaReduction - mobileBonus; // Reduced base from 0.20->0.18, 0.06->0.04
+  const chromaThreshold = Math.max(0.02, rawChromaThreshold); // Safety floor
+  
+  // CRITICAL FIX: Ensure matchRatioMin never goes below 0.08 (absolute minimum)
+  const rawMatchRatioMin = lerp(0.55, 0.28, t) - barreRatioReduction - mobileRatioBonus; // Reduced base from 0.60->0.55, 0.32->0.28
+  const matchRatioMin = Math.max(0.08, rawMatchRatioMin); // Safety floor - mobile can go as low as 0.08
+  
+  const maxExtrasBase = lerp(4, 8, t) + barreExtraIncrease + (isMobile ? 3 : 0); // Increased base from 3->4, 6->8; Mobile: +3 extra notes
+  const extraPenaltyPerNote = lerp(0.05, 0.01, t) * (isMobile ? 0.3 : 1.0); // Mobile: 70% penalty reduction
   
   // Count matches and extras
   let binaryMatches = 0;
@@ -949,17 +961,18 @@ export function useChordDetection({
         // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // LAYER 1: RMS Silence Gate (extremely relaxed for mobile)
-        const baseRmsThreshold = 0.05 * Math.pow(0.02, tNoise);
-        const rmsThreshold = isMobile ? baseRmsThreshold * 0.2 : baseRmsThreshold * 0.6; // Mobile: 80% reduction
+        // LAYER 1: RMS Silence Gate (ULTRA relaxed - detect ANY sound)
+        const baseRmsThreshold = 0.05 * Math.pow(0.01, tNoise); // Changed from 0.02 to 0.01 for more sensitivity
+        const rmsThreshold = isMobile ? baseRmsThreshold * 0.1 : baseRmsThreshold * 0.3; // Mobile: 90% reduction, Desktop: 70% reduction
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
-        // DEBUG: Log RMS levels every 50 frames (~3.5s) to reduce console spam
-        if (activeSignalFramesRef.current % 50 === 0) {
+        // DEBUG: Log RMS levels every 20 frames (~1.4s) for faster diagnosis
+        if (activeSignalFramesRef.current % 20 === 0) {
           console.log(`📊 RMS: ${rms.toFixed(6)} (threshold: ${rmsThreshold.toFixed(6)})`, rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT');
+          console.log(`🎚️ Sensitivity: ${sens}/10, Noise Gate T: ${tNoise.toFixed(2)}, Mobile: ${isMobile}`);
         }
         
         if (rms < rmsThreshold) {
@@ -976,27 +989,37 @@ export function useChordDetection({
         silenceFramesRef.current = 0;
         activeSignalFramesRef.current++;
         
-        // LAYER 2: Spectral Flatness Gate (very relaxed for mobile)
+        // LAYER 2: Spectral Flatness Gate (ULTRA relaxed)
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
-        const maxFlatness = lerp(0.25, 0.50, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.10 : 0) + (isMobile ? 0.30 : 0); // Mobile: +0.30
+        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + (isMobile ? 0.40 : 0.10); // Increased all thresholds
         if (spectralFlatness > maxFlatness) {
           consecutiveMatchesRef.current = 0;
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`❌ GATE 2 FAIL: Spectral Flatness ${spectralFlatness.toFixed(3)} > ${maxFlatness.toFixed(3)}`);
+          }
           return;
         }
         
-        // LAYER 3: Spectral Crest Factor Gate (very relaxed for mobile)
+        // LAYER 3: Spectral Crest Factor Gate (ULTRA relaxed)
+        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - (isMobile ? 1.2 : 0.3); // Reduced base from 2.5->2.2, 1.2->0.8
+        const minCrest = Math.max(0.3, minCrestRaw); // Safety floor - must be at least 0.3
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
-        const minCrest = lerp(2.5, 1.2, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.8 : 0) - (isMobile ? 1.0 : 0); // Mobile: -1.0
         if (crestFactor < minCrest) {
           consecutiveMatchesRef.current = 0;
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`❌ GATE 3 FAIL: Crest Factor ${crestFactor.toFixed(2)} < ${minCrest.toFixed(2)}`);
+          }
           return;
         }
         
-        // LAYER 4: Formant Detection Gate (very relaxed for mobile)
+        // LAYER 4: Formant Detection Gate (ULTRA relaxed)
         const formantScore = computeFormantScore(freqBuf, analyser);
-        const maxFormant = lerp(0.35, 0.70, tNoise) + (isMobile ? 0.25 : 0); // Mobile: +0.25
+        const maxFormant = lerp(0.40, 0.80, tNoise) + (isMobile ? 0.35 : 0.10); // Increased all thresholds
         if (formantScore > maxFormant) {
           consecutiveMatchesRef.current = 0;
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`❌ GATE 4 FAIL: Formant Score ${formantScore.toFixed(3)} > ${maxFormant.toFixed(3)}`);
+          }
           return;
         }
         
@@ -1005,9 +1028,12 @@ export function useChordDetection({
         prevFreqDataRef.current = new Float32Array(freqBuf);
         
         if (spectralFlux >= 0) {
-          const maxFlux = lerp(2.0, 4.5, tFlux) + (isMobile ? 2.0 : 0); // Mobile: +2.0 bonus
+          const maxFlux = lerp(2.5, 5.5, tFlux) + (isMobile ? 3.0 : 0.5); // Increased base from 2.0->2.5, 4.5->5.5; Mobile: +3.0
           if (spectralFlux > maxFlux) {
             consecutiveMatchesRef.current = 0;
+            if (activeSignalFramesRef.current % 20 === 0) {
+              console.log(`❌ GATE 5 FAIL: Spectral Flux ${spectralFlux.toFixed(2)} > ${maxFlux.toFixed(2)}`);
+            }
             return;
           }
         }
@@ -1019,15 +1045,18 @@ export function useChordDetection({
         const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, isMobile);
         if (!chroma) {
           consecutiveMatchesRef.current = 0;
+          if (activeSignalFramesRef.current % 20 === 0) {
+            console.log(`❌ CHROMA EXTRACTION FAILED: Energy too low`);
+          }
           return;
         }
         
-        // DEBUG: Log chroma values every 50 frames
-        if (activeSignalFramesRef.current % 50 === 0) {
+        // DEBUG: Log chroma values every 20 frames
+        if (activeSignalFramesRef.current % 20 === 0) {
           const topPitches = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val }))
-            .filter(p => p.value > 0.3)
+            .filter(p => p.value > 0.2) // Lower threshold from 0.3 to 0.2
             .sort((a, b) => b.value - a.value)
-            .slice(0, 4);
+            .slice(0, 5); // Show top 5 instead of 4
           console.log('🎵 Detected pitch classes:', topPitches.map(p => `${p.note}(${p.value.toFixed(2)})`).join(', '));
         }
         
@@ -1046,11 +1075,12 @@ export function useChordDetection({
         const isBarre = isBarreChord(target);
         const isMatch = matchChroma(chroma, expectedPitchClasses, sens, isBarre, isMobile);
         
-        // DEBUG: Log match attempts every 50 frames
-        if (activeSignalFramesRef.current % 50 === 0) {
+        // DEBUG: Log match attempts every 20 frames (more frequent for faster diagnosis)
+        if (activeSignalFramesRef.current % 20 === 0) {
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
           console.log(`🎯 Target: ${target.symbol} [${expectedNotes}] - Match: ${isMatch ? '✅ YES' : '❌ NO'}`);
           console.log(`📈 Counters: matches=${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}, misses=${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
+          console.log(`🔧 Thresholds: chromaT=${chromaThreshold.toFixed(3)}, ratioMin=${matchRatioMin.toFixed(3)}, isBarre=${isBarre}`);
         }
         
         if (isMatch) {

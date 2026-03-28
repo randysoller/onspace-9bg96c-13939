@@ -93,6 +93,9 @@ export default function Practice() {
   // Audio hooks
   const { playChord, stopCurrent } = useChordAudio();
   
+  // Auto-advance timeout ref
+  const autoAdvanceTimeoutRef = useRef<number | null>(null);
+  
   // Chord detection
   console.log('🎯 Practice page rendering with chord:', chord ? `${chord.root}${chord.type}` : 'null');
   console.log('🎤 Detection settings:', { sensitivity, advancedEnabled, advancedValues });
@@ -110,11 +113,22 @@ export default function Practice() {
     autoStart: true,
     advancedSettings: advancedEnabled ? advancedValues : null,
     onCorrect: () => {
-      console.log('✅ Correct chord detected!');
+      console.log('✅ Correct chord detected in Practice page!');
       if (chord) {
         recordAttempt(chord.symbol, chord.name, 'correct');
         revealChord();
         resetChordTimer();
+        
+        // Auto-advance to next chord after 1.5 seconds
+        console.log('⏱️ Setting auto-advance timer for 1.5 seconds...');
+        if (autoAdvanceTimeoutRef.current) {
+          clearTimeout(autoAdvanceTimeoutRef.current);
+        }
+        autoAdvanceTimeoutRef.current = window.setTimeout(() => {
+          console.log('⏭️ Auto-advancing to next chord...');
+          handleNext();
+          autoAdvanceTimeoutRef.current = null;
+        }, 1500);
       }
     },
     onWrongDetected: (detectedSymbol) => {
@@ -141,6 +155,11 @@ export default function Practice() {
     return () => {
       stopListening();
       stopCurrent();
+      // Clear auto-advance timeout
+      if (autoAdvanceTimeoutRef.current) {
+        clearTimeout(autoAdvanceTimeoutRef.current);
+        autoAdvanceTimeoutRef.current = null;
+      }
     };
   }, [stopListening, stopCurrent]);
   
@@ -217,6 +236,12 @@ export default function Practice() {
   };
   
   const handleNext = () => {
+    // Clear any pending auto-advance
+    if (autoAdvanceTimeoutRef.current) {
+      clearTimeout(autoAdvanceTimeoutRef.current);
+      autoAdvanceTimeoutRef.current = null;
+    }
+    
     if (!isRevealed) {
       recordAttempt(chord.symbol, chord.name, 'skipped');
     }

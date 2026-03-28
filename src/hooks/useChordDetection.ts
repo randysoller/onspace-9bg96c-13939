@@ -901,6 +901,37 @@ export function useChordDetection({
       setIsListening(true);
       setPermissionDenied(false);
       
+      // CRITICAL DIAGNOSTICS
+      console.log('\n============ DETECTION SYSTEM INITIALIZED ============');
+      console.log('🎵 Audio Context:', {
+        sampleRate: ctx.sampleRate,
+        state: ctx.state,
+        currentTime: ctx.currentTime.toFixed(2),
+      });
+      console.log('🎤 Stream:', {
+        active: stream.active,
+        tracks: stream.getTracks().length,
+        audioTrack: stream.getAudioTracks()[0]?.label,
+        trackEnabled: stream.getAudioTracks()[0]?.enabled,
+        trackMuted: stream.getAudioTracks()[0]?.muted,
+      });
+      console.log('🔍 Analyser:', {
+        fftSize: analyser.fftSize,
+        frequencyBinCount: analyser.frequencyBinCount,
+        smoothingTimeConstant: analyser.smoothingTimeConstant,
+        minDecibels: analyser.minDecibels,
+        maxDecibels: analyser.maxDecibels,
+      });
+      console.log('🎯 Detection Config:', {
+        sensitivity: sensitivityRef.current,
+        advancedSettings: advancedSettingsRef.current,
+        targetChord: targetChordRef.current ? `${targetChordRef.current.symbol}` : 'null',
+        templates: ALL_CHORD_TEMPLATES.length,
+        isMobile,
+      });
+      console.log('🔊 Filter Chain: highpass(70Hz) → notch(50Hz) → notch(60Hz) → peaking(200Hz) → peaking(500Hz) → lowpass(3000Hz) → analyser');
+      console.log('====================================================\n');
+      
       logger.info('🎤 Chord detection started', {
         fftSize: analyser.fftSize,
         sampleRate: ctx.sampleRate,
@@ -911,7 +942,9 @@ export function useChordDetection({
       });
       
       console.log('✅ Audio context state:', ctx.state);
-      console.log('✅ Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, muted: t.muted })));
+      console.log('✅ Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, muted: t.muted, label: t.label })));
+      console.log('🔴 Detection loop will start in next interval (70ms)...');
+      console.log('📊 Expected logging: Heartbeat every ~7s, RMS every ~1.4s, Match attempts every ~1.4s');
       
       // Audio context state monitor - resume if suspended (CRITICAL FOR MOBILE)
       contextResumeCheckRef.current = window.setInterval(() => {
@@ -926,8 +959,23 @@ export function useChordDetection({
       }, 1000);
       
       // Analysis loop at 70ms intervals (~14 Hz)
+      let frameCounter = 0;
       intervalRef.current = window.setInterval(() => {
+        frameCounter++;
+        
+        // HEARTBEAT: Log every 100 frames (~7 seconds) to confirm loop is alive
+        if (frameCounter % 100 === 0) {
+          console.log(`💓 Detection loop alive at frame ${frameCounter}, isListening=${isListeningRef.current}, cooldown=${cooldownRef.current}`);
+        }
+        
         if (!analyserRef.current || !audioContextRef.current || !isListeningRef.current) {
+          if (frameCounter % 100 === 0) {
+            console.log('⚠️ Detection loop paused:', {
+              hasAnalyser: !!analyserRef.current,
+              hasContext: !!audioContextRef.current,
+              isListening: isListeningRef.current
+            });
+          }
           return;
         }
         
@@ -937,10 +985,16 @@ export function useChordDetection({
             console.log('⚠️ Audio context suspended in detection loop, resuming...');
             audioContextRef.current.resume();
           }
+          if (frameCounter % 100 === 0) {
+            console.log(`⚠️ Audio context not running: ${audioContextRef.current.state}`);
+          }
           return;
         }
         
         if (cooldownRef.current) {
+          if (frameCounter % 50 === 0) {
+            console.log('⏸️ Detection paused due to cooldown');
+          }
           return;
         }
         
@@ -1089,6 +1143,7 @@ export function useChordDetection({
           
           if (consecutiveMatchesRef.current >= MATCH_THRESHOLD) {
             console.log(`✅ CORRECT CHORD DETECTED: ${target.symbol} (${consecutiveMatchesRef.current} consecutive matches)`);
+            console.log('🎯 Triggering onCorrect callback...');
             setResult('correct');
             consecutiveMatchesRef.current = 0;
             consecutiveMissesRef.current = 0;
@@ -1097,23 +1152,40 @@ export function useChordDetection({
             
             logger.info('Correct chord detected', { chord: target.symbol });
             
+            // CRITICAL: Call callback BEFORE setting timeout to ensure it fires
             if (onCorrectRef.current) {
-              onCorrectRef.current();
+              try {
+                onCorrectRef.current();
+                console.log('✅ onCorrect callback executed successfully');
+              } catch (error) {
+                console.error('❌ onCorrect callback error:', error);
+              }
+            } else {
+              console.warn('⚠️ onCorrect callback is null/undefined!');
             }
             
             // Clear cooldown with guaranteed resume
             if (pauseTimeoutRef.current) {
               clearTimeout(pauseTimeoutRef.current);
+              console.log('🔄 Cleared existing cooldown timeout');
             }
             pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
               pauseTimeoutRef.current = null;
               console.log('▶️ Cooldown ended after correct detection');
             }, 1500);
+          } else {
+            if (activeSignalFramesRef.current % 20 === 0) {
+              console.log(`🎵 Partial match progress: ${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}`);
+            }
           }
         } else {
           consecutiveMissesRef.current++;
           consecutiveMatchesRef.current = 0;
+          
+          if (activeSignalFramesRef.current % 30 === 0 && consecutiveMissesRef.current > 0) {
+            console.log(`❌ Miss progress: ${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
+          }
           
           if (consecutiveMissesRef.current >= MISS_THRESHOLD) {
             // Identify best match for confusion tracking

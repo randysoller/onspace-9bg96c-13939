@@ -400,10 +400,10 @@ export default function Practice() {
               <button
                 onClick={() => setSensitivity(Math.max(1, sensitivity - 1))}
                 disabled={sensitivity <= 1}
-                className="p-2 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                className="p-1.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Decrease sensitivity"
               >
-                <Minus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                <Minus className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
               </button>
               <span className="text-sm text-emerald-500 font-bold min-w-[1.5rem] text-center">
                 {sensitivity}
@@ -411,10 +411,10 @@ export default function Practice() {
               <button
                 onClick={() => setSensitivity(Math.min(10, sensitivity + 1))}
                 disabled={sensitivity >= 10}
-                className="p-2 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                className="p-1.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Increase sensitivity"
               >
-                <Plus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                <Plus className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
               </button>
             </div>
           </div>

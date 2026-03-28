@@ -112,9 +112,7 @@ export default function Practice() {
     onCorrect: () => {
       console.log('✅ Correct chord detected!');
       if (chord) {
-        const chordSymbol = `${chord.root}${chord.type !== 'major' ? chord.type : ''}`;
-        const chordName = `${chord.root} ${chord.category}`;
-        recordAttempt(chordSymbol, chordName, 'correct');
+        recordAttempt(chord.symbol, chord.name, 'correct');
         revealChord();
         resetChordTimer();
       }
@@ -209,9 +207,7 @@ export default function Practice() {
   
   const handleNext = () => {
     if (!isRevealed) {
-      const chordSymbol = `${chord.root}${chord.type !== 'major' ? chord.type : ''}`;
-      const chordName = `${chord.root} ${chord.category}`;
-      recordAttempt(chordSymbol, chordName, 'skipped');
+      recordAttempt(chord.symbol, chord.name, 'skipped');
     }
     hideChord();
     resetChordTimer();
@@ -255,11 +251,39 @@ export default function Practice() {
   
   return (
     <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-32 md:pb-24">
-      {/* Top Bar */}
+      {/* Top Toolbar */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
-        <div className="flex items-center justify-end max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto">
+          {/* Left: Beat Sync (collapsed by default) */}
+          <div className="flex-shrink-0">
+            <BeatSyncControls
+              onChordAdvance={handleNext}
+              onAutoReveal={handleReveal}
+            />
+          </div>
+
           {/* Right Controls */}
           <div className="flex items-center gap-3">
+            {/* Mic Sensitivity */}
+            {isListening && (
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]">
+                <Sliders className="w-3.5 h-3.5 text-[hsl(var(--text-muted))]" />
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={sensitivity}
+                  onChange={(e) => setSensitivity(Number(e.target.value))}
+                  className="w-20 h-1 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
+                    [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
+                    [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
+                />
+                <span className="text-xs text-emerald-500 font-bold min-w-[1.25rem] text-center">
+                  {sensitivity}
+                </span>
+              </div>
+            )}
+
             {/* Show Diagrams Toggle */}
             <ShowDiagramsToggle />
 
@@ -293,18 +317,10 @@ export default function Practice() {
         </div>
       )}
 
-      {/* Beat Sync Controls */}
-      <div className="max-w-5xl mx-auto px-4 py-4">
-        <BeatSyncControls
-          onChordAdvance={handleNext}
-          onAutoReveal={handleReveal}
-        />
-      </div>
-
       {/* Listening Status Bar */}
       {isListening && (
         <div className={`
-          border-b px-4 py-3
+          border-b px-4 py-2.5
           ${result === 'correct' 
             ? 'bg-emerald-900/20 border-emerald-500/30' 
             : result === 'wrong'
@@ -312,53 +328,45 @@ export default function Practice() {
             : 'bg-[hsl(var(--bg-surface))]'
           }
         `}>
-          <div className="flex items-center justify-between max-w-5xl mx-auto">
-            <div className="flex items-center gap-3">
-              {!result && (
-                <>
-                  <div className="flex gap-0.5">
-                    <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
-                    <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
-                    <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
-                  </div>
-                  <span className="text-emerald-500 text-sm font-medium">Listening — play the chord</span>
-                </>
-              )}
-              {result === 'correct' && (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                  <span className="text-emerald-500 text-sm font-bold">Correct!</span>
-                </>
-              )}
-              {result === 'wrong' && (
-                <>
-                  <XCircle className="w-4 h-4 text-red-500" />
-                  <span className="text-red-500 text-sm font-bold">Try again</span>
-                </>
-              )}
-            </div>
+          <div className="flex items-center justify-center gap-3 max-w-5xl mx-auto">
+            {!result && (
+              <>
+                <div className="flex gap-0.5">
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
+                  <div className="w-0.5 h-3 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
+                </div>
+                <span className="text-emerald-500 text-sm font-medium">Listening — play the chord</span>
+              </>
+            )}
+            {result === 'correct' && (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <span className="text-emerald-500 text-sm font-bold">Correct!</span>
+              </>
+            )}
+            {result === 'wrong' && (
+              <>
+                <XCircle className="w-4 h-4 text-red-500" />
+                <span className="text-red-500 text-sm font-bold">Try again</span>
+              </>
+            )}
 
-            {/* Sensitivity Slider */}
-            <div className="flex items-center gap-3">
-              <Sliders className="w-4 h-4 text-[hsl(var(--text-muted))]" />
-              <span className="text-xs text-[hsl(var(--text-subtle))] uppercase tracking-wide hidden sm:inline">
-                Mic Sensitivity
-              </span>
+            {/* Mobile Sensitivity (show on small screens) */}
+            <div className="md:hidden flex items-center gap-2">
+              <Sliders className="w-3.5 h-3.5 text-[hsl(var(--text-muted))]" />
               <input
                 type="range"
                 min="1"
                 max="10"
                 value={sensitivity}
                 onChange={(e) => setSensitivity(Number(e.target.value))}
-                className="w-28 h-1 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+                className="w-20 h-1 bg-[hsl(var(--bg-base))] rounded-lg appearance-none cursor-pointer
                   [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 
-                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]"
+                  [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-emerald-500"
               />
-              <span className="text-[hsl(var(--color-primary))] font-bold text-sm min-w-[1.5rem] text-center">
+              <span className="text-xs text-emerald-500 font-bold min-w-[1rem]">
                 {sensitivity}
-              </span>
-              <span className={`text-xs font-medium ${sensitivityLabel.color}`}>
-                {sensitivityLabel.label}
               </span>
             </div>
           </div>
@@ -421,10 +429,10 @@ export default function Practice() {
                 transition={{ duration: 0.3 }}
               >
                 <div className="text-6xl font-black text-white mb-2 leading-none">
-                  {chord.root}
+                  {chord.symbol}
                 </div>
                 <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                  {chord.root} {chord.type === 'major' ? 'Major' : chord.type}
+                  {chord.name}
                 </div>
               </motion.div>
             </AnimatePresence>

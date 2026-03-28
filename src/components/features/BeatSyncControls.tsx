@@ -130,26 +130,26 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
       </AnimatePresence>
 
       {/* Beat Sync Panel */}
-      <div className="border border-[hsl(var(--border-subtle))] rounded-xl bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm overflow-hidden">
+      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden">
         {/* Header Row */}
-        <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border-subtle))]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border-subtle))]">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setSyncEnabled(!syncEnabled)}
-              className="p-2 hover:bg-[hsl(var(--bg-surface))] rounded-lg transition-colors"
+              className="p-1 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
             >
               {syncEnabled ? (
-                <Link2 className="w-5 h-5 text-emerald-500" />
+                <Link2 className="w-4 h-4 text-emerald-500" />
               ) : (
-                <Link2Off className="w-5 h-5 text-[hsl(var(--text-muted))]" />
+                <Link2Off className="w-4 h-4 text-[hsl(var(--text-muted))]" />
               )}
             </button>
             
-            <div>
+            <div className="text-xs">
               <div className="font-display font-semibold text-[hsl(var(--text-default))]">
                 Beat Sync
               </div>
-              <div className="text-xs text-[hsl(var(--text-subtle))]">
+              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none">
                 {getSummaryText()}
               </div>
             </div>
@@ -160,7 +160,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             <button
               onClick={handleStartStop}
               className={`
-                px-4 py-2 rounded-lg flex items-center gap-2 font-display font-semibold text-sm
+                px-2 py-1 rounded flex items-center gap-1.5 font-display font-semibold text-xs
                 transition-all active:scale-95
                 ${isPlaying
                   ? 'bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500/30'
@@ -170,13 +170,13 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             >
               {isPlaying ? (
                 <>
-                  <Square className="w-4 h-4" />
-                  <span>Stop</span>
+                  <Square className="w-3 h-3" />
+                  <span className="hidden sm:inline">Stop</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4" />
-                  <span>Start</span>
+                  <Play className="w-3 h-3" />
+                  <span className="hidden sm:inline">Start</span>
                 </>
               )}
             </button>
@@ -184,12 +184,12 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             {/* Expand/Collapse Toggle */}
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 hover:bg-[hsl(var(--bg-surface))] rounded-lg transition-colors"
+              className="p-1 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
             >
               {isExpanded ? (
-                <ChevronUp className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                <ChevronUp className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
               ) : (
-                <ChevronDown className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
+                <ChevronDown className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
               )}
             </button>
           </div>

@@ -445,7 +445,7 @@ export default function Practice() {
           </div>
 
           {/* Diagram Section Container - Moved up */}
-          <div className="-mt-[188px]">
+          <div className="-mt-[220px]">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
           <div className="min-h-[60px] mb-6 mt-[180px] flex items-center justify-center">
             <AnimatePresence>
@@ -505,13 +505,13 @@ export default function Practice() {
           {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
             <div className="text-[hsl(var(--text-muted))] mb-3">
-              <EyeOff className="w-7 h-7 mx-auto mb-3 opacity-50" />
+              <EyeOff className="w-7 h-7 mx-auto mb-2 opacity-50" />
               <div className="text-xl font-semibold">Diagram hidden</div>
             </div>
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="flex items-center justify-center gap-3 mt-10">
+          <div className="flex items-center justify-center gap-3 mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
             <ShowDiagramsToggle />
           </div>

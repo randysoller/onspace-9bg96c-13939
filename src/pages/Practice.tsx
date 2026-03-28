@@ -425,7 +425,7 @@ export default function Practice() {
       <div className="flex-1 flex items-center justify-center pt-0 pb-16 px-4 -mt-12">
         <div className="text-center">
           {/* Chord Name - Always Visible */}
-          <div className="mb-6 mt-12">
+          <div className="mb-6 mt-[50px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${chord.id}-symbol`}
@@ -447,7 +447,7 @@ export default function Practice() {
           {/* Diagram Section Container - Moved up */}
           <div className="-mt-[271px]">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
-          <div className="min-h-[60px] mb-4 mt-[230px] flex items-center justify-center">
+          <div className="min-h-[60px] mb-4 mt-[238px] flex items-center justify-center">
             <AnimatePresence>
               {result && (
                 <motion.div

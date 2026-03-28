@@ -499,7 +499,7 @@ export default function Practice() {
 
           {/* Toggle Control - Always Visible, Below Diagram */}
           <div className="flex items-center justify-center gap-3">
-            <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Turn Chord Diagrams On/Off</span>
+            <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Chord Diagrams On/Off</span>
             <ShowDiagramsToggle />
           </div>
         </div>

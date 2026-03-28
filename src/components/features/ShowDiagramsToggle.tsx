@@ -53,9 +53,6 @@ export function ShowDiagramsToggle({ className = '' }: ShowDiagramsToggleProps) 
       `}
     >
       {showDiagrams ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-      <span className="hidden sm:inline">
-        Chord Diagram {showDiagrams ? 'On' : 'Off'}
-      </span>
       {/* Toggle pill indicator */}
       <div
         className={`

@@ -10,11 +10,13 @@
  * - Confusion matrix tracking (Section 13)
  * - Consecutive frame debouncing with cooldown (Section 14)
  * 
- * MOBILE FIXES:
- * - Audio context state monitoring and auto-resume
- * - Proper cleanup of all timers and resources
- * - Guaranteed pause/resume with timeout tracking
- * - Detection state reset on chord changes
+ * COMPREHENSIVE FIXES:
+ * - Tightened thresholds to prevent false positives on mobile
+ * - Increased minimum binary matches requirement (60% of notes)
+ * - Reduced cosine similarity boost (1.05x vs 1.15x)
+ * - Enhanced early diagnostic logging (first 50 frames + every 20)
+ * - Improved audio context state management
+ * - Faster autoStart (100ms vs 400ms)
  * 
  * @example
  * ```tsx
@@ -56,9 +58,9 @@ interface UseChordDetectionOptions {
 
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
 const NOTE_STRINGS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const MATCH_THRESHOLD = 2;      // ~140ms to confirm correct (reduced from 3)
-const MISS_THRESHOLD = 3;       // ~210ms to confirm wrong (increased from 2)
-const MIN_ACTIVE_FRAMES = 2;    // ~140ms of signal before matches count (reduced from 3)
+const MATCH_THRESHOLD = 2;      // ~140ms to confirm correct
+const MISS_THRESHOLD = 3;       // ~210ms to confirm wrong
+const MIN_ACTIVE_FRAMES = 2;    // ~140ms of signal before matches count
 const SILENCE_RESET_FRAMES = 8; // ~560ms of silence to reset miss counter
 const FREQ_HISTORY_SIZE = 5;
 
@@ -246,9 +248,9 @@ function extractChroma(
   isMobile: boolean = false
 ): Float64Array | null {
   const t = (sensitivity - 1) / 9;
-  // ULTRA relaxed thresholds for maximum sensitivity
-  const dbFloor = lerp(-55, -85, t); // Increased range from -50->-55, -80->-85
-  const noiseGateEnergy = isMobile ? lerp(2, 0.3, t) : lerp(5, 0.8, t); // Mobile: 50% reduction from previous, Desktop: 50% reduction
+  // Relaxed thresholds for guitar detection
+  const dbFloor = lerp(-55, -85, t);
+  const noiseGateEnergy = isMobile ? lerp(2, 0.3, t) : lerp(5, 0.8, t);
   
   const sampleRate = analyser.context.sampleRate;
   const fftSize = analyser.fftSize;
@@ -325,11 +327,11 @@ function extractChroma(
     }
   }
   
-  // Noise gate (ULTRA relaxed - detect ANY guitar signal)
-  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.15 : noiseGateEnergy * 0.4; // Mobile: 85% reduction, Desktop: 60% reduction
+  // Noise gate (relaxed to detect guitar signals)
+  const effectiveNoiseGate = isMobile ? noiseGateEnergy * 0.15 : noiseGateEnergy * 0.4;
   if (totalEnergy < effectiveNoiseGate) {
-    // Log why chroma failed (only occasionally to avoid spam)
-    if (Math.random() < 0.05) { // 5% sample rate
+    // Log occasionally to avoid spam
+    if (Math.random() < 0.05) {
       console.log(`⚠️ Chroma energy too low: ${totalEnergy.toFixed(2)} < ${effectiveNoiseGate.toFixed(2)}`);
     }
     return null;
@@ -567,6 +569,8 @@ function computeSpectralFlux(
 /**
  * Match chromagram against expected pitch classes
  * Returns true if match, false otherwise
+ * 
+ * FIXED: Tightened thresholds to prevent false positives on mobile
  */
 function matchChroma(
   chroma: Float64Array,
@@ -577,8 +581,6 @@ function matchChroma(
 ): boolean {
   const t = (sensitivity - 1) / 9;
   
-  // BALANCED THRESHOLDS: Strict enough to avoid false positives, relaxed enough to detect real chords
-  
   // Size bonus: larger chords are harder to match perfectly
   const sizeBonus = expected.size > 4 ? 0.03 : expected.size > 3 ? 0.015 : 0;
   
@@ -587,17 +589,17 @@ function matchChroma(
   const barreRatioReduction = isBarre ? 0.08 : 0;
   const barreExtraIncrease = isBarre ? 2.0 : 0;
   
-  // Mobile gets moderate relaxation (NOT extreme)
-  const mobileChromaBonus = isMobile ? 0.06 : 0;
-  const mobileRatioBonus = isMobile ? 0.12 : 0;
+  // Mobile gets MINIMAL relaxation to prevent false positives
+  const mobileChromaBonus = isMobile ? 0.03 : 0;  // Reduced from 0.06
+  const mobileRatioBonus = isMobile ? 0.05 : 0;   // Reduced from 0.12
   
-  // Chroma threshold: note must have this much energy to count (0.08-0.25 range)
-  const rawChromaThreshold = lerp(0.25, 0.08, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
-  const chromaThreshold = Math.max(0.08, rawChromaThreshold); // Floor at 0.08 (was 0.02 - way too low!)
+  // Chroma threshold: note must have this much energy to count (0.12-0.28 range)
+  const rawChromaThreshold = lerp(0.28, 0.12, t) - sizeBonus - barreChromaReduction - mobileChromaBonus;
+  const chromaThreshold = Math.max(0.12, rawChromaThreshold); // Floor at 0.12 (stricter)
   
-  // Match ratio: percentage of expected notes that must be present (0.35-0.70 range)
-  const rawMatchRatioMin = lerp(0.70, 0.35, t) - barreRatioReduction - mobileRatioBonus;
-  const matchRatioMin = Math.max(0.30, rawMatchRatioMin); // Floor at 0.30 (was 0.08 - absurdly low!)
+  // Match ratio: percentage of expected notes that must be present (0.45-0.75 range)
+  const rawMatchRatioMin = lerp(0.75, 0.45, t) - barreRatioReduction - mobileRatioBonus;
+  const matchRatioMin = Math.max(0.45, rawMatchRatioMin); // Floor at 0.45 (much stricter)
   
   // Extra notes tolerance
   const maxExtrasBase = lerp(2, 6, t) + barreExtraIncrease + (isMobile ? 2 : 0);
@@ -634,7 +636,7 @@ function matchChroma(
   const binaryRatio = binaryMatches / expected.size;
   const weightedRatio = weightedCredit / expected.size;
   
-  // Cosine similarity
+  // Cosine similarity (reduced boost to prevent false positives)
   let dot = 0;
   let normChroma = 0;
   let normTemplate = 0;
@@ -644,7 +646,7 @@ function matchChroma(
     normTemplate += chromaTemplate[i] * chromaTemplate[i];
   }
   const cosineSim = dot / (Math.sqrt(normChroma) * Math.sqrt(normTemplate));
-  const effectiveCosineSim = cosineSim * 1.15; // Scale up
+  const effectiveCosineSim = cosineSim * 1.05; // Minimal boost (was 1.15 - too permissive)
   
   // Take best of three metrics
   const effectiveRatio = Math.max(weightedRatio, binaryRatio, effectiveCosineSim);
@@ -654,8 +656,12 @@ function matchChroma(
   
   const finalRatio = effectiveRatio - extraPenalty;
   
-  // Minimum binary matches: require at least 50% of notes for small chords, 60% for large chords
-  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.5));
+  // Minimum binary matches: require at least 60% of notes, minimum 2
+  // For 3-note chord: ceil(3 * 0.6) = 2
+  // For 4-note chord: ceil(4 * 0.6) = 3
+  // For 5-note chord: ceil(5 * 0.6) = 3
+  // For 6-note chord: ceil(6 * 0.6) = 4
+  const minBinaryMatches = Math.max(2, Math.ceil(expected.size * 0.6));
   
   return finalRatio >= matchRatioMin && binaryMatches >= minBinaryMatches;
 }
@@ -813,13 +819,12 @@ export function useChordDetection({
     
     try {
       console.log('🎤 Requesting microphone access...');
-      console.log('📞 Calling getUserMedia...');
       
-      // Mobile-friendly audio constraints - very permissive for compatibility
+      // Mobile-friendly audio constraints
       const audioConstraints = isMobile ? {
         echoCancellation: false,
         noiseSuppression: false,
-        autoGainControl: true, // Enable on mobile for better level control
+        autoGainControl: true,
         sampleRate: { ideal: 44100 },
         channelCount: { ideal: 1 },
       } : {
@@ -838,10 +843,12 @@ export function useChordDetection({
         audioTrack: stream.getAudioTracks()[0]?.label
       });
       
-      // Mobile-compatible sample rate (fallback to hardware default)
+      // Mobile-compatible sample rate
       const sampleRate = isMobile ? undefined : 48000;
       const ctx = new AudioContext(sampleRate ? { sampleRate } : {});
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended') {
+        await ctx.resume().catch(err => console.error('❌ Failed to resume context on init:', err));
+      }
       
       console.log('🎵 Audio context created:', {
         sampleRate: ctx.sampleRate,
@@ -851,7 +858,7 @@ export function useChordDetection({
       
       const source = ctx.createMediaStreamSource(stream);
       
-      // 5-stage filter chain (Section 7)
+      // 5-stage filter chain
       const highPass = ctx.createBiquadFilter();
       highPass.type = 'highpass';
       highPass.frequency.value = 70;
@@ -923,41 +930,27 @@ export function useChordDetection({
       console.log('🔍 Analyser:', {
         fftSize: analyser.fftSize,
         frequencyBinCount: analyser.frequencyBinCount,
-        smoothingTimeConstant: analyser.smoothingTimeConstant,
-        minDecibels: analyser.minDecibels,
-        maxDecibels: analyser.maxDecibels,
       });
       console.log('🎯 Detection Config:', {
         sensitivity: sensitivityRef.current,
-        advancedSettings: advancedSettingsRef.current,
         targetChord: targetChordRef.current ? `${targetChordRef.current.symbol}` : 'null',
         templates: ALL_CHORD_TEMPLATES.length,
         isMobile,
       });
-      console.log('🔊 Filter Chain: highpass(70Hz) → notch(50Hz) → notch(60Hz) → peaking(200Hz) → peaking(500Hz) → lowpass(3000Hz) → analyser');
+      console.log('🔊 Filter Chain: highpass(70Hz) → notch×2 → peaking×2 → lowpass(3000Hz)');
       console.log('====================================================\n');
       
       logger.info('🎤 Chord detection started', {
         fftSize: analyser.fftSize,
         sampleRate: ctx.sampleRate,
-        filterChain: '5-stage (highpass → notch×2 → peaking×2 → lowpass)',
-        templates: ALL_CHORD_TEMPLATES.length,
         sensitivity: sensitivityRef.current,
-        advancedSettings: advancedSettingsRef.current,
       });
       
-      console.log('✅ Audio context state:', ctx.state);
-      console.log('✅ Stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, muted: t.muted, label: t.label })));
-      console.log('🔴 Detection loop will start in next interval (70ms)...');
-      console.log('📊 Expected logging: Heartbeat every ~7s, RMS every ~1.4s, Match attempts every ~1.4s');
-      
-      // Audio context state monitor - resume if suspended (CRITICAL FOR MOBILE)
+      // Audio context state monitor - resume if suspended
       contextResumeCheckRef.current = window.setInterval(() => {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           console.log('⚠️ Audio context suspended, attempting to resume...');
-          audioContextRef.current.resume().then(() => {
-            console.log('✅ Audio context resumed successfully');
-          }).catch((err) => {
+          audioContextRef.current.resume().catch((err) => {
             console.error('❌ Failed to resume audio context:', err);
           });
         }
@@ -968,7 +961,7 @@ export function useChordDetection({
       intervalRef.current = window.setInterval(() => {
         frameCounter++;
         
-        // HEARTBEAT: Log every 100 frames (~7 seconds) to confirm loop is alive
+        // HEARTBEAT: Log every 100 frames (~7s)
         if (frameCounter % 100 === 0) {
           console.log(`💓 Detection loop alive at frame ${frameCounter}, isListening=${isListeningRef.current}, cooldown=${cooldownRef.current}`);
         }
@@ -984,13 +977,15 @@ export function useChordDetection({
           return;
         }
         
-        // Resume audio context if suspended (mobile browsers can suspend it)
+        // Resume audio context if suspended
         if (audioContextRef.current.state !== 'running') {
           if (audioContextRef.current.state === 'suspended') {
             console.log('⚠️ Audio context suspended in detection loop, resuming...');
-            audioContextRef.current.resume();
+            audioContextRef.current.resume().catch(err => {
+              console.error('❌ Failed to resume audio context:', err);
+            });
           }
-          if (frameCounter % 100 === 0) {
+          if (frameCounter % 20 === 0) { // Log more frequently
             console.log(`⚠️ Audio context not running: ${audioContextRef.current.state}`);
           }
           return;
@@ -1020,18 +1015,19 @@ export function useChordDetection({
         // Effective sensitivity for chroma extraction
         const effectiveSens = advanced?.harmonicBoost ? 1 + (advanced.harmonicBoost / 100) * 9 : sens;
         
-        // LAYER 1: RMS Silence Gate (Balanced - detect guitar but not total silence)
-        const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise); // Balanced sensitivity
-        const rmsThreshold = isMobile ? baseRmsThreshold * 0.15 : baseRmsThreshold * 0.35; // Mobile: 85% reduction, Desktop: 65% reduction
+        // LAYER 1: RMS Silence Gate
+        const baseRmsThreshold = 0.05 * Math.pow(0.015, tNoise);
+        const rmsThreshold = isMobile ? baseRmsThreshold * 0.15 : baseRmsThreshold * 0.35;
         const N = Math.min(timeBuf.length, 4096);
         let rmsSum = 0;
         for (let i = 0; i < N; i++) rmsSum += timeBuf[i] * timeBuf[i];
         const rms = Math.sqrt(rmsSum / N);
         
-        // DEBUG: Log RMS levels every 20 frames (~1.4s)
-        if (frameCounter % 20 === 0) {
+        // CRITICAL DIAGNOSTICS: Log RMS every frame for first 50 frames, then every 20
+        const shouldLog = frameCounter <= 50 || frameCounter % 20 === 0;
+        if (shouldLog) {
           console.log(`\n📊 [Frame ${frameCounter}] RMS: ${rms.toFixed(6)} vs threshold: ${rmsThreshold.toFixed(6)} ${rms >= rmsThreshold ? '✅ PASS' : '❌ SILENT'}`);
-          console.log(`🎚️ Settings: Sensitivity=${sens}/10, NoiseGate=${tNoise.toFixed(2)}, Mobile=${isMobile}`);
+          console.log(`🎚️ Settings: Sensitivity=${sens}/10, NoiseGate=${tNoise.toFixed(2)}, Mobile=${isMobile}, AudioContext=${audioContextRef.current.state}`);
         }
         
         if (rms < rmsThreshold) {
@@ -1048,35 +1044,35 @@ export function useChordDetection({
         silenceFramesRef.current = 0;
         activeSignalFramesRef.current++;
         
-        // LAYER 2: Spectral Flatness Gate (ULTRA relaxed)
+        // LAYER 2: Spectral Flatness Gate
         const spectralFlatness = computeSpectralFlatness(freqBuf, analyser);
-        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + (isMobile ? 0.40 : 0.10); // Increased all thresholds
+        const maxFlatness = lerp(0.30, 0.60, tNoise) + (targetChordRef.current && isBarreChord(targetChordRef.current) ? 0.15 : 0) + (isMobile ? 0.40 : 0.10);
         if (spectralFlatness > maxFlatness) {
           consecutiveMatchesRef.current = 0;
-          if (activeSignalFramesRef.current % 20 === 0) {
+          if (frameCounter <= 50 || frameCounter % 20 === 0) {
             console.log(`❌ GATE 2 FAIL: Spectral Flatness ${spectralFlatness.toFixed(3)} > ${maxFlatness.toFixed(3)}`);
           }
           return;
         }
         
-        // LAYER 3: Spectral Crest Factor Gate (ULTRA relaxed)
-        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - (isMobile ? 1.2 : 0.3); // Reduced base from 2.5->2.2, 1.2->0.8
-        const minCrest = Math.max(0.3, minCrestRaw); // Safety floor - must be at least 0.3
+        // LAYER 3: Spectral Crest Factor Gate
+        const minCrestRaw = lerp(2.2, 0.8, tNoise) - (targetChordRef.current && isBarreChord(targetChordRef.current) ? 1.0 : 0) - (isMobile ? 1.2 : 0.3);
+        const minCrest = Math.max(0.3, minCrestRaw);
         const crestFactor = computeSpectralCrest(freqBuf, analyser);
         if (crestFactor < minCrest) {
           consecutiveMatchesRef.current = 0;
-          if (activeSignalFramesRef.current % 20 === 0) {
+          if (frameCounter <= 50 || frameCounter % 20 === 0) {
             console.log(`❌ GATE 3 FAIL: Crest Factor ${crestFactor.toFixed(2)} < ${minCrest.toFixed(2)}`);
           }
           return;
         }
         
-        // LAYER 4: Formant Detection Gate (ULTRA relaxed)
+        // LAYER 4: Formant Detection Gate
         const formantScore = computeFormantScore(freqBuf, analyser);
-        const maxFormant = lerp(0.40, 0.80, tNoise) + (isMobile ? 0.35 : 0.10); // Increased all thresholds
+        const maxFormant = lerp(0.40, 0.80, tNoise) + (isMobile ? 0.35 : 0.10);
         if (formantScore > maxFormant) {
           consecutiveMatchesRef.current = 0;
-          if (activeSignalFramesRef.current % 20 === 0) {
+          if (frameCounter <= 50 || frameCounter % 20 === 0) {
             console.log(`❌ GATE 4 FAIL: Formant Score ${formantScore.toFixed(3)} > ${maxFormant.toFixed(3)}`);
           }
           return;
@@ -1087,10 +1083,10 @@ export function useChordDetection({
         prevFreqDataRef.current = new Float32Array(freqBuf);
         
         if (spectralFlux >= 0) {
-          const maxFlux = lerp(2.5, 5.5, tFlux) + (isMobile ? 3.0 : 0.5); // Increased base from 2.0->2.5, 4.5->5.5; Mobile: +3.0
+          const maxFlux = lerp(2.5, 5.5, tFlux) + (isMobile ? 3.0 : 0.5);
           if (spectralFlux > maxFlux) {
             consecutiveMatchesRef.current = 0;
-            if (activeSignalFramesRef.current % 20 === 0) {
+            if (frameCounter <= 50 || frameCounter % 20 === 0) {
               console.log(`❌ GATE 5 FAIL: Spectral Flux ${spectralFlux.toFixed(2)} > ${maxFlux.toFixed(2)}`);
             }
             return;
@@ -1104,7 +1100,7 @@ export function useChordDetection({
         const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, isMobile);
         if (!chroma) {
           consecutiveMatchesRef.current = 0;
-          if (activeSignalFramesRef.current % 20 === 0) {
+          if (frameCounter <= 50 || frameCounter % 20 === 0) {
             console.log(`❌ CHROMA EXTRACTION FAILED: Energy too low`);
           }
           return;
@@ -1123,7 +1119,6 @@ export function useChordDetection({
         
         // LAYER 6: Consecutive frame threshold
         if (activeSignalFramesRef.current < MIN_ACTIVE_FRAMES) {
-          // Signal present but not sustained enough yet
           return;
         }
         
@@ -1136,7 +1131,6 @@ export function useChordDetection({
         
         // DEBUG: Comprehensive match logging every 20 frames
         if (frameCounter % 20 === 0) {
-          // Use a simple threshold for logging (actual matching uses precise thresholds inside matchChroma)
           const logThreshold = 0.15;
           const expectedNotes = Array.from(expectedPitchClasses).map(pc => NOTE_STRINGS[pc]).join(', ');
           const detectedNotes = chroma.map((val, i) => ({ note: NOTE_STRINGS[i], value: val, pc: i }))
@@ -1167,7 +1161,7 @@ export function useChordDetection({
             
             logger.info('Correct chord detected', { chord: target.symbol });
             
-            // CRITICAL: Call callback BEFORE setting timeout to ensure it fires
+            // Call callback
             if (onCorrectRef.current) {
               try {
                 onCorrectRef.current();
@@ -1179,10 +1173,9 @@ export function useChordDetection({
               console.warn('⚠️ onCorrect callback is null/undefined!');
             }
             
-            // Clear cooldown with guaranteed resume
+            // Clear cooldown
             if (pauseTimeoutRef.current) {
               clearTimeout(pauseTimeoutRef.current);
-              console.log('🔄 Cleared existing cooldown timeout');
             }
             pauseTimeoutRef.current = window.setTimeout(() => {
               cooldownRef.current = false;
@@ -1190,7 +1183,7 @@ export function useChordDetection({
               console.log('▶️ Cooldown ended after correct detection');
             }, 1500);
           } else {
-            if (activeSignalFramesRef.current % 20 === 0) {
+            if (frameCounter % 20 === 0) {
               console.log(`🎵 Partial match progress: ${consecutiveMatchesRef.current}/${MATCH_THRESHOLD}`);
             }
           }
@@ -1198,12 +1191,11 @@ export function useChordDetection({
           consecutiveMissesRef.current++;
           consecutiveMatchesRef.current = 0;
           
-          if (activeSignalFramesRef.current % 30 === 0 && consecutiveMissesRef.current > 0) {
+          if (frameCounter % 30 === 0 && consecutiveMissesRef.current > 0) {
             console.log(`❌ Miss progress: ${consecutiveMissesRef.current}/${MISS_THRESHOLD}`);
           }
           
           if (consecutiveMissesRef.current >= MISS_THRESHOLD) {
-            // Identify best match for confusion tracking
             const bestMatch = identifyBestMatch(chroma, target.symbol);
             console.log(`❌ WRONG CHORD: Expected ${target.symbol}, detected ${bestMatch || 'unknown'} (${consecutiveMissesRef.current} consecutive misses)`);
             
@@ -1221,7 +1213,6 @@ export function useChordDetection({
               onWrongDetectedRef.current(bestMatch);
             }
             
-            // Clear cooldown with guaranteed resume
             if (pauseTimeoutRef.current) {
               clearTimeout(pauseTimeoutRef.current);
             }
@@ -1245,7 +1236,6 @@ export function useChordDetection({
       setPermissionDenied(true);
       startedRef.current = false;
       
-      // Show user-friendly error message
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
           console.error('🚫 User denied microphone permission');
@@ -1272,7 +1262,6 @@ export function useChordDetection({
     console.log(`⏸️ Pausing detection for ${ms}ms`);
     cooldownRef.current = true;
     
-    // Clear any existing timeout to prevent multiple timers
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
     }
@@ -1284,13 +1273,18 @@ export function useChordDetection({
     }, ms);
   }, []);
   
-  // Auto-start
+  // Auto-start (reduced delay for faster initialization)
   useEffect(() => {
     if (autoStart && !startedRef.current) {
+      console.log('🎯 Auto-start triggered, will start in 100ms...');
       const timer = setTimeout(() => {
+        console.log('▶️ Auto-start executing startListening()...');
         startListening();
-      }, 400);
-      return () => clearTimeout(timer);
+      }, 100); // Reduced from 400ms to 100ms
+      return () => {
+        console.log('🛑 Auto-start timer cleared (component unmounted)');
+        clearTimeout(timer);
+      };
     }
   }, [autoStart, startListening]);
   
@@ -1303,7 +1297,6 @@ export function useChordDetection({
     consecutiveMissesRef.current = 0;
     activeSignalFramesRef.current = 0;
     
-    // Clear any pause timeout when chord changes
     if (pauseTimeoutRef.current) {
       clearTimeout(pauseTimeoutRef.current);
       pauseTimeoutRef.current = null;

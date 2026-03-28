@@ -445,9 +445,9 @@ export default function Practice() {
           </div>
 
           {/* Diagram Section Container - Moved up */}
-          <div className="-mt-[270px]">
+          <div className="-mt-[300px]">
           {/* Detection Feedback Pill - Positioned between name and diagram */}
-          <div className="min-h-[60px] mb-6 mt-[230px] flex items-center justify-center">
+          <div className="min-h-[60px] mb-4 mt-[230px] flex items-center justify-center">
             <AnimatePresence>
               {result && (
                 <motion.div
@@ -494,10 +494,11 @@ export default function Practice() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-center justify-center gap-6 mb-3"
+                className="flex items-center justify-center gap-6 mb-2"
+                style={{ transform: 'scale(1.15)' }}
               >
                 <ChordDiagram chord={chord} size="lg" />
-                <ChordTablature chord={chord} size="md" />
+                <ChordTablature chord={chord} size="lg" />
               </motion.div>
             </AnimatePresence>
           )}
@@ -511,7 +512,7 @@ export default function Practice() {
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="flex items-center justify-center gap-3 mt-2">
+          <div className="flex items-center justify-center gap-3 mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
             <ShowDiagramsToggle />
           </div>

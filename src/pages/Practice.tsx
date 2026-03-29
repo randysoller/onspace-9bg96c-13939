@@ -42,6 +42,7 @@ import { ChordDiagram } from '@/components/features/ChordDiagram';
 import { ChordTablature } from '@/components/features/ChordTablature';
 import { BeatSyncControls } from '@/components/features/BeatSyncControls';
 import { ShowDiagramsToggle } from '@/components/features/ShowDiagramsToggle';
+import { ShowChordNameToggle } from '@/components/features/ShowChordNameToggle';
 import { VolumeControl } from '@/components/features/VolumeControl';
 
 export default function Practice() {
@@ -180,6 +181,17 @@ export default function Practice() {
 
     window.addEventListener('show-diagrams-changed', handleDiagramsChange);
     return () => window.removeEventListener('show-diagrams-changed', handleDiagramsChange);
+  }, []);
+  
+  // Listen for show chord name changes from toggle component
+  useEffect(() => {
+    const handleChordNameChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ showChordName: boolean }>;
+      setShowChordName(customEvent.detail.showChordName);
+    };
+
+    window.addEventListener('show-chord-name-changed', handleChordNameChange);
+    return () => window.removeEventListener('show-chord-name-changed', handleChordNameChange);
   }, []);
   
   // Save show diagrams preference when it changes
@@ -447,33 +459,19 @@ export default function Practice() {
                   {chord.symbol}
                 </div>
                 
-                {/* Chord Name - Toggleable */}
-                {showChordName ? (
-                  <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                    {chord.name}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center gap-3">
+                {/* Chord Name - Toggleable with Toggle Button */}
+                <div className="flex items-center justify-center gap-3">
+                  {showChordName ? (
+                    <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                      {chord.name}
+                    </span>
+                  ) : (
                     <span className="text-lg text-[hsl(var(--text-muted))] italic">
                       Chord name hidden
                     </span>
-                    <button
-                      onClick={() => setShowChordName(!showChordName)}
-                      className={`
-                        w-12 h-7 rounded-full relative transition-colors
-                        ${showChordName ? 'bg-emerald-500' : 'bg-zinc-600'}
-                      `}
-                      aria-label={showChordName ? 'Hide chord name' : 'Show chord name'}
-                    >
-                      <div
-                        className={`
-                          absolute w-5 h-5 bg-white rounded-full top-1 transition-transform
-                          ${showChordName ? 'translate-x-6' : 'translate-x-1'}
-                        `}
-                      />
-                    </button>
-                  </div>
-                )}
+                  )}
+                  <ShowChordNameToggle />
+                </div>
               </motion.div>
             </AnimatePresence>
           </div>

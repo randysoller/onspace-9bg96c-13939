@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { useAudioStore } from '@/stores/audioStore';
 
@@ -88,13 +88,27 @@ export function useChordAudio() {
   const activeOscillators = useRef<OscillatorNode[]>([]);
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
-  const getContext = useCallback(() => {
+  const getContext = useCallback(async () => {
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext();
+      console.log('🎵 AudioContext created:', {
+        state: ctxRef.current.state,
+        sampleRate: ctxRef.current.sampleRate,
+      });
     }
+    
+    // CRITICAL FIX: Await resume if suspended
     if (ctxRef.current.state === 'suspended') {
-      ctxRef.current.resume();
+      console.log('⏸️ AudioContext suspended, resuming...');
+      try {
+        await ctxRef.current.resume();
+        console.log('✅ AudioContext resumed successfully');
+      } catch (err) {
+        console.error('❌ Failed to resume AudioContext:', err);
+        throw new Error('Audio playback unavailable - context resume failed');
+      }
     }
+    
     return ctxRef.current;
   }, []);
 
@@ -105,12 +119,20 @@ export function useChordAudio() {
     activeOscillators.current = [];
   }, []);
 
-  const playChord = useCallback((chord: ChordData) => {
+  const playChord = useCallback(async (chord: ChordData) => {
     const masterVol = getEffectiveVolume();
     if (masterVol === 0) return;   // muted — skip playback entirely
 
     stopCurrent();
-    const ctx = getContext();
+    
+    // CRITICAL FIX: Await context initialization and resume
+    let ctx: AudioContext;
+    try {
+      ctx = await getContext();
+    } catch (err) {
+      console.error('❌ Cannot play chord - AudioContext unavailable:', err);
+      return;
+    }
 
     // Master gain: applies volume with boost curve
     // Formula: v^1.2 * 6.3 (reduced from 8 to prevent clipping)
@@ -141,6 +163,33 @@ export function useChordAudio() {
 
     activeOscillators.current = allOscs;
   }, [getContext, stopCurrent, getEffectiveVolume]);
+
+  // Page Visibility API: Resume AudioContext when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && ctxRef.current) {
+        if (ctxRef.current.state === 'suspended') {
+          console.log('👁️ Tab visible - resuming AudioContext...');
+          ctxRef.current.resume()
+            .then(() => console.log('✅ AudioContext resumed on visibility change'))
+            .catch((err) => console.error('❌ Failed to resume on visibility change:', err));
+        }
+      } else if (document.visibilityState === 'hidden') {
+        console.log('🙈 Tab hidden - AudioContext may suspend');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Cleanup: Stop all oscillators and close context
+      stopCurrent();
+      if (ctxRef.current && ctxRef.current.state !== 'closed') {
+        ctxRef.current.close();
+      }
+    };
+  }, [stopCurrent]);
 
   return { playChord, stopCurrent };
 }

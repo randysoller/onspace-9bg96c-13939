@@ -362,7 +362,7 @@ export default function Practice() {
       {/* Listening Status Bar */}
       {isListening && (
         <div className={`
-          border-b px-4 py-1
+          border-b px-4 py-0 md:py-1
           ${result === 'correct' 
             ? 'bg-emerald-900/20 border-emerald-500/30' 
             : result === 'wrong'
@@ -370,51 +370,51 @@ export default function Practice() {
             : 'bg-[hsl(var(--bg-surface))]'
           }
         `}>
-          <div className="flex items-center justify-center gap-3 max-w-5xl mx-auto">
+          <div className="flex items-center justify-center gap-1 md:gap-3 max-w-5xl mx-auto">
             {!result && (
               <>
                 <div className="flex gap-0.5">
-                  <div className="w-0.5 h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
-                  <div className="w-0.5 h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
-                  <div className="w-0.5 h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
+                  <div className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '0ms' }} />
+                  <div className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
+                  <div className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
                 </div>
-                <span className="text-emerald-500 text-xs font-medium">Listening — play the chord</span>
+                <span className="text-emerald-500 text-[10px] md:text-xs font-medium leading-none py-0.5 md:py-0">Listening — play the chord</span>
               </>
             )}
             {result === 'correct' && (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-emerald-500 text-xs font-bold">Correct!</span>
+                <CheckCircle2 className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-emerald-500" />
+                <span className="text-emerald-500 text-[10px] md:text-xs font-bold leading-none py-0.5 md:py-0">Correct!</span>
               </>
             )}
             {result === 'wrong' && (
               <>
-                <XCircle className="w-3.5 h-3.5 text-red-500" />
-                <span className="text-red-500 text-xs font-bold">Try again</span>
+                <XCircle className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-red-500" />
+                <span className="text-red-500 text-[10px] md:text-xs font-bold leading-none py-0.5 md:py-0">Try again</span>
               </>
             )}
 
             {/* Mobile Sensitivity (show on small screens) */}
-            <div className="md:hidden flex items-center gap-1.5">
-              <Sliders className="w-3 h-3 text-[hsl(var(--text-muted))]" />
+            <div className="md:hidden flex items-center gap-1">
+              <Sliders className="w-2.5 h-2.5 text-[hsl(var(--text-muted))]" />
               <button
                 onClick={() => setSensitivity(Math.max(1, sensitivity - 1))}
                 disabled={sensitivity <= 1}
-                className="p-1 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Decrease sensitivity"
               >
-                <Minus className="w-3 h-3 text-[hsl(var(--text-subtle))]" />
+                <Minus className="w-2.5 h-2.5 text-[hsl(var(--text-subtle))]" />
               </button>
-              <span className="text-xs text-emerald-500 font-bold min-w-[1.5rem] text-center">
+              <span className="text-[10px] text-emerald-500 font-bold min-w-[1rem] text-center leading-none">
                 {sensitivity}
               </span>
               <button
                 onClick={() => setSensitivity(Math.min(10, sensitivity + 1))}
                 disabled={sensitivity >= 10}
-                className="p-1 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+                className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Increase sensitivity"
               >
-                <Plus className="w-3 h-3 text-[hsl(var(--text-subtle))]" />
+                <Plus className="w-2.5 h-2.5 text-[hsl(var(--text-subtle))]" />
               </button>
             </div>
           </div>

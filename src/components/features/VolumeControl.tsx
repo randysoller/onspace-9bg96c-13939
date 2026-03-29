@@ -61,8 +61,12 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               className="
-                w-1 h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+                w-[6px] h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
                 [writing-mode:vertical-lr] [direction:rtl]
+                [&::-webkit-slider-runnable-track]:w-[6px]
+                [&::-webkit-slider-runnable-track]:h-32
+                [&::-webkit-slider-runnable-track]:bg-[hsl(var(--bg-surface))]
+                [&::-webkit-slider-runnable-track]:rounded-lg
                 [&::-webkit-slider-thumb]:appearance-none 
                 [&::-webkit-slider-thumb]:w-5
                 [&::-webkit-slider-thumb]:h-5
@@ -70,6 +74,11 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
                 [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]
                 [&::-webkit-slider-thumb]:cursor-pointer
                 [&::-webkit-slider-thumb]:shadow-md
+                [&::-moz-range-track]:w-[6px]
+                [&::-moz-range-track]:h-32
+                [&::-moz-range-track]:bg-[hsl(var(--bg-surface))]
+                [&::-moz-range-track]:rounded-lg
+                [&::-moz-range-track]:border-0
                 [&::-moz-range-thumb]:w-5
                 [&::-moz-range-thumb]:h-5
                 [&::-moz-range-thumb]:rounded-full 

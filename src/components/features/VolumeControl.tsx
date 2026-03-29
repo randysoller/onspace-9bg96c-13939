@@ -77,6 +77,7 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
                 [&::-webkit-slider-thumb]:shadow-lg
                 [&::-webkit-slider-thumb]:border-[3px]
                 [&::-webkit-slider-thumb]:border-white
+                [&::-webkit-slider-thumb]:ml-[-9px]
                 [&::-webkit-slider-thumb]:transition-none
                 [&::-webkit-slider-thumb]:active:scale-100
                 [&::-moz-range-track]:w-[8px]
@@ -90,6 +91,7 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
                 [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))]
                 [&::-moz-range-thumb]:border-[3px]
                 [&::-moz-range-thumb]:border-white
+                [&::-moz-range-thumb]:ml-[-9px]
                 [&::-moz-range-thumb]:cursor-pointer
                 [&::-moz-range-thumb]:shadow-lg
                 [&::-moz-range-thumb]:transition-none

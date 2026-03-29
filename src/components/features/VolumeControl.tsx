@@ -61,31 +61,38 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               className="
-                w-[6px] h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+                w-[8px] h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
                 [writing-mode:vertical-lr] [direction:rtl]
-                [&::-webkit-slider-runnable-track]:w-[6px]
+                [&::-webkit-slider-runnable-track]:w-[8px]
                 [&::-webkit-slider-runnable-track]:h-32
                 [&::-webkit-slider-runnable-track]:bg-[hsl(var(--bg-surface))]
                 [&::-webkit-slider-runnable-track]:rounded-lg
+                [&::-webkit-slider-runnable-track]:border-0
                 [&::-webkit-slider-thumb]:appearance-none 
-                [&::-webkit-slider-thumb]:w-5
-                [&::-webkit-slider-thumb]:h-5
+                [&::-webkit-slider-thumb]:w-[26px]
+                [&::-webkit-slider-thumb]:h-[26px]
                 [&::-webkit-slider-thumb]:rounded-full 
                 [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]
                 [&::-webkit-slider-thumb]:cursor-pointer
-                [&::-webkit-slider-thumb]:shadow-md
-                [&::-moz-range-track]:w-[6px]
+                [&::-webkit-slider-thumb]:shadow-lg
+                [&::-webkit-slider-thumb]:border-[3px]
+                [&::-webkit-slider-thumb]:border-white
+                [&::-webkit-slider-thumb]:transition-none
+                [&::-webkit-slider-thumb]:active:scale-100
+                [&::-moz-range-track]:w-[8px]
                 [&::-moz-range-track]:h-32
                 [&::-moz-range-track]:bg-[hsl(var(--bg-surface))]
                 [&::-moz-range-track]:rounded-lg
                 [&::-moz-range-track]:border-0
-                [&::-moz-range-thumb]:w-5
-                [&::-moz-range-thumb]:h-5
+                [&::-moz-range-thumb]:w-[26px]
+                [&::-moz-range-thumb]:h-[26px]
                 [&::-moz-range-thumb]:rounded-full 
                 [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))]
-                [&::-moz-range-thumb]:border-0
+                [&::-moz-range-thumb]:border-[3px]
+                [&::-moz-range-thumb]:border-white
                 [&::-moz-range-thumb]:cursor-pointer
-                [&::-moz-range-thumb]:shadow-md
+                [&::-moz-range-thumb]:shadow-lg
+                [&::-moz-range-thumb]:transition-none
               "
               aria-label="Volume"
             />

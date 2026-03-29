@@ -69,6 +69,11 @@ export default function Practice() {
     return saved !== null ? JSON.parse(saved) : true;
   });
   
+  const [showChordName, setShowChordName] = useState(() => {
+    const saved = localStorage.getItem('fretmaster-show-chord-name');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  
   // Get current chord
   const chord = getCurrentChord();
   
@@ -181,6 +186,11 @@ export default function Practice() {
   useEffect(() => {
     localStorage.setItem('fretmaster-show-diagrams', JSON.stringify(showDiagrams));
   }, [showDiagrams]);
+  
+  // Save show chord name preference when it changes
+  useEffect(() => {
+    localStorage.setItem('fretmaster-show-chord-name', JSON.stringify(showChordName));
+  }, [showChordName]);
   
   // Beat-sync chord advance handler
   useEffect(() => {
@@ -423,7 +433,7 @@ export default function Practice() {
       {/* Main Practice Area */}
       <div className="flex-1 flex items-center justify-center pt-0 pb-16 px-4 -mt-12">
         <div className="text-center">
-          {/* Chord Name - Always Visible */}
+          {/* Chord Symbol - Always Visible */}
           <div className="mb-6 mt-[64px]">
             <AnimatePresence mode="wait">
               <motion.div
@@ -436,11 +446,39 @@ export default function Practice() {
                 <div className="text-[58px] font-black text-white mb-2 leading-none">
                   {chord.symbol}
                 </div>
-                <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                  {chord.name}
-                </div>
+                
+                {/* Chord Name - Toggleable */}
+                {showChordName ? (
+                  <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                    {chord.name}
+                  </div>
+                ) : (
+                  <div className="text-lg text-[hsl(var(--text-muted))] italic">
+                    Chord name hidden
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
+            
+            {/* Chord Name Toggle Control */}
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Chord Name On/Off</span>
+              <button
+                onClick={() => setShowChordName(!showChordName)}
+                className={`
+                  w-12 h-7 rounded-full relative transition-colors
+                  ${showChordName ? 'bg-emerald-500' : 'bg-zinc-600'}
+                `}
+                aria-label={showChordName ? 'Hide chord name' : 'Show chord name'}
+              >
+                <div
+                  className={`
+                    absolute w-5 h-5 bg-white rounded-full top-1 transition-transform
+                    ${showChordName ? 'translate-x-6' : 'translate-x-1'}
+                  `}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Diagram Section Container - Moved up */}

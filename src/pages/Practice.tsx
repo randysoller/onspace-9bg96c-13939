@@ -453,32 +453,29 @@ export default function Practice() {
                     {chord.name}
                   </div>
                 ) : (
-                  <div className="text-lg text-[hsl(var(--text-muted))] italic">
-                    Chord name hidden
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-lg text-[hsl(var(--text-muted))] italic">
+                      Chord name hidden
+                    </span>
+                    <button
+                      onClick={() => setShowChordName(!showChordName)}
+                      className={`
+                        w-12 h-7 rounded-full relative transition-colors
+                        ${showChordName ? 'bg-emerald-500' : 'bg-zinc-600'}
+                      `}
+                      aria-label={showChordName ? 'Hide chord name' : 'Show chord name'}
+                    >
+                      <div
+                        className={`
+                          absolute w-5 h-5 bg-white rounded-full top-1 transition-transform
+                          ${showChordName ? 'translate-x-6' : 'translate-x-1'}
+                        `}
+                      />
+                    </button>
                   </div>
                 )}
               </motion.div>
             </AnimatePresence>
-            
-            {/* Chord Name Toggle Control */}
-            <div className="flex items-center justify-center gap-3 mt-4">
-              <span className="text-[hsl(var(--text-subtle))] text-base font-medium">Chord Name On/Off</span>
-              <button
-                onClick={() => setShowChordName(!showChordName)}
-                className={`
-                  w-12 h-7 rounded-full relative transition-colors
-                  ${showChordName ? 'bg-emerald-500' : 'bg-zinc-600'}
-                `}
-                aria-label={showChordName ? 'Hide chord name' : 'Show chord name'}
-              >
-                <div
-                  className={`
-                    absolute w-5 h-5 bg-white rounded-full top-1 transition-transform
-                    ${showChordName ? 'translate-x-6' : 'translate-x-1'}
-                  `}
-                />
-              </button>
-            </div>
           </div>
 
           {/* Diagram Section Container - Moved up */}

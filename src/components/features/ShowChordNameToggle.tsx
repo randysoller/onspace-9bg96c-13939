@@ -42,7 +42,7 @@ export function ShowChordNameToggle({ className = '' }: ShowChordNameToggleProps
     <button
       onClick={handleToggle}
       className={`
-        px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs font-semibold transition-all
+        px-2 py-1.5 rounded-lg flex items-center gap-2 text-xs font-semibold transition-all
         active:scale-95
         ${
           showChordName

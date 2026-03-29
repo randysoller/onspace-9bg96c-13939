@@ -378,7 +378,7 @@ export default function Practice() {
                   <div className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '100ms' }} />
                   <div className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: '200ms' }} />
                 </div>
-                <span className="text-emerald-500 text-[10px] md:text-xs font-medium leading-none py-0.5 md:py-0">Listening — play the chord</span>
+                <span className="text-emerald-500 text-[18px] md:text-xl font-medium leading-none py-0.5 md:py-0">Listening — play the chord</span>
               </>
             )}
             {result === 'correct' && (
@@ -396,7 +396,6 @@ export default function Practice() {
 
             {/* Mobile Sensitivity (show on small screens) */}
             <div className="md:hidden flex items-center gap-1">
-              <Sliders className="w-2.5 h-2.5 text-[hsl(var(--text-muted))]" />
               <button
                 onClick={() => setSensitivity(Math.max(1, sensitivity - 1))}
                 disabled={sensitivity <= 1}
@@ -405,7 +404,7 @@ export default function Practice() {
               >
                 <Minus className="w-2.5 h-2.5 text-[hsl(var(--text-subtle))]" />
               </button>
-              <span className="text-[10px] text-emerald-500 font-bold min-w-[1rem] text-center leading-none">
+              <span className="text-[18px] text-emerald-500 font-bold min-w-[1.5rem] text-center leading-none">
                 {sensitivity}
               </span>
               <button
@@ -544,7 +543,7 @@ export default function Practice() {
                 text-[hsl(var(--color-primary))] font-display font-bold text-lg
                 hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
             >
-              <Eye className="w-6 h-6" />
+              <Volume2 className="w-6 h-6" />
               <span className="hidden sm:inline">Reveal</span>
             </button>
           ) : (

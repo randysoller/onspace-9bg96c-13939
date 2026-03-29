@@ -2,9 +2,10 @@
  * Volume Control Component
  * 
  * Global audio volume slider with mute button
- * Compact mode for practice page (no percentage label)
+ * Compact mode shows vertical slider on toggle
  */
 
+import { useState } from 'react';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 import { useAudioStore } from '@/stores/audioStore';
 
@@ -15,6 +16,7 @@ interface VolumeControlProps {
 
 export function VolumeControl({ compact = false, className = '' }: VolumeControlProps) {
   const { volume, muted, setVolume, toggleMute } = useAudioStore();
+  const [showSlider, setShowSlider] = useState(false);
 
   const getVolumeIcon = () => {
     if (muted) return VolumeX;
@@ -24,6 +26,65 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
 
   const VolumeIcon = getVolumeIcon();
 
+  if (compact) {
+    // Compact mode: vertical slider on toggle
+    return (
+      <div className={`relative ${className}`}>
+        {/* Volume Button */}
+        <button
+          onClick={() => setShowSlider(!showSlider)}
+          className="p-2 rounded-lg transition-all active:scale-95 bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] border border-[hsl(var(--border-subtle))]"
+          aria-label={muted ? 'Unmute' : 'Adjust volume'}
+        >
+          <VolumeIcon
+            className={`w-5 h-5 ${
+              muted ? 'text-[hsl(var(--text-muted))]' : 'text-[hsl(var(--text-subtle))]'
+            }`}
+          />
+        </button>
+
+        {/* Vertical Slider Popup */}
+        {showSlider && (
+          <div className="absolute bottom-full right-0 mb-2 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-lg shadow-lg p-3 flex flex-col items-center gap-2">
+            {/* Vertical Slider */}
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={(e) => setVolume(parseFloat(e.target.value))}
+              className="
+                w-1 h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+                [writing-mode:vertical-lr] [direction:rtl]
+                [&::-webkit-slider-thumb]:appearance-none 
+                [&::-webkit-slider-thumb]:w-5
+                [&::-webkit-slider-thumb]:h-5
+                [&::-webkit-slider-thumb]:rounded-full 
+                [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]
+                [&::-webkit-slider-thumb]:cursor-pointer
+                [&::-webkit-slider-thumb]:shadow-md
+                [&::-moz-range-thumb]:w-5
+                [&::-moz-range-thumb]:h-5
+                [&::-moz-range-thumb]:rounded-full 
+                [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))]
+                [&::-moz-range-thumb]:border-0
+                [&::-moz-range-thumb]:cursor-pointer
+                [&::-moz-range-thumb]:shadow-md
+              "
+              aria-label="Volume"
+            />
+            {/* Volume Percentage */}
+            <span className="text-xs text-[hsl(var(--text-subtle))] font-medium">
+              {Math.round(volume * 100)}%
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Non-compact mode: horizontal slider always visible
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       {/* Mute/Unmute Button */}
@@ -63,12 +124,10 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
         aria-label="Volume"
       />
 
-      {/* Volume Percentage (hidden in compact mode) */}
-      {!compact && (
-        <span className="text-xs text-[hsl(var(--text-subtle))] font-medium min-w-[2.5rem] text-right">
-          {Math.round(volume * 100)}%
-        </span>
-      )}
+      {/* Volume Percentage */}
+      <span className="text-xs text-[hsl(var(--text-subtle))] font-medium min-w-[2.5rem] text-right">
+        {Math.round(volume * 100)}%
+      </span>
     </div>
   );
 }

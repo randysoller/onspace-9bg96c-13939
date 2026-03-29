@@ -460,17 +460,24 @@ export default function Practice() {
                 </div>
                 
                 {/* Chord Name - Toggleable with Toggle Button */}
-                <div className="flex items-center justify-center gap-3">
-                  {showChordName ? (
-                    <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                      {chord.name}
-                    </span>
-                  ) : (
-                    <span className="text-lg text-[hsl(var(--text-muted))] italic">
-                      Chord name hidden
-                    </span>
-                  )}
-                  <ShowChordNameToggle />
+                <div className="relative">
+                  {/* Centered chord name text */}
+                  <div className="text-center">
+                    {showChordName ? (
+                      <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                        {chord.name}
+                      </span>
+                    ) : (
+                      <span className="text-lg text-[hsl(var(--text-muted))] italic">
+                        Chord name hidden
+                      </span>
+                    )}
+                  </div>
+                  
+                  {/* Toggle positioned to the right */}
+                  <div className="absolute top-0 left-1/2 ml-2" style={{ transform: 'translateX(calc(50% + 0.5rem))' }}>
+                    <ShowChordNameToggle />
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>

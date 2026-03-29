@@ -355,7 +355,7 @@ export default function Practice() {
             <button 
               onClick={toggleListening}
               className={`
-                p-2 rounded-lg transition-all active:scale-95
+                p-2 rounded-lg transition-all active:scale-95 h-[40px] w-[40px] flex items-center justify-center
                 ${isListening 
                   ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500' 
                   : 'bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] border border-[hsl(var(--border-subtle))]'
@@ -460,7 +460,7 @@ export default function Practice() {
                 </div>
                 
                 {/* Chord Name - Toggleable with Toggle Button */}
-                <div className="relative">
+                <div className="relative flex justify-center items-center">
                   {/* Centered chord name text */}
                   <div className="text-center">
                     {showChordName ? (
@@ -474,8 +474,8 @@ export default function Practice() {
                     )}
                   </div>
                   
-                  {/* Toggle positioned to the right */}
-                  <div className="absolute top-0 left-1/2 ml-2" style={{ transform: 'translateX(calc(50% + 0.5rem))' }}>
+                  {/* Toggle positioned absolutely to align with tab box right edge */}
+                  <div className="absolute" style={{ right: 'calc(50% - 120px)' }}>
                     <ShowChordNameToggle />
                   </div>
                 </div>
@@ -551,9 +551,12 @@ export default function Practice() {
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="flex items-center justify-center gap-3 mt-4">
+          <div className="relative flex items-center justify-center gap-3 mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
-            <ShowDiagramsToggle />
+            {/* Toggle positioned absolutely to align with tab box right edge */}
+            <div className="absolute" style={{ right: 'calc(50% - 120px)' }}>
+              <ShowDiagramsToggle />
+            </div>
           </div>
           </div>
         </div>

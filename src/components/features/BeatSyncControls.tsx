@@ -129,10 +129,10 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
         )}
       </AnimatePresence>
 
-      {/* Beat Sync Panel - Lengthened horizontally by 24px */}
-      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden min-w-[224px]">
+      {/* Beat Sync Panel - Lengthened horizontally by 24px, matched height with mic/volume buttons */}
+      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden min-w-[224px] h-[40px] flex flex-col">
         {/* Header Row */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border-subtle))]">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setSyncEnabled(!syncEnabled)}
@@ -149,7 +149,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               <div className="font-display font-semibold text-[hsl(var(--text-default))]">
                 Beat Sync
               </div>
-              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none">
+              <div className="text-[20px] text-[hsl(var(--text-subtle))] leading-none">
                 {getSummaryText()}
               </div>
             </div>

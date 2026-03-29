@@ -65,7 +65,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   };
 
   const getSummaryText = () => {
-    if (!syncEnabled) return 'Disabled';
+    if (!syncEnabled) return '';
     const unit = syncUnit === 'beats' ? 'beat' : 'measure';
     const plural = beatsPerChord === 1 ? '' : 's';
     return `Every ${beatsPerChord} ${unit}${plural}`;
@@ -134,19 +134,8 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSyncEnabled(!syncEnabled)}
-              className="p-1 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
-            >
-              {syncEnabled ? (
-                <Link2 className="w-4 h-4 text-emerald-500" />
-              ) : (
-                <Link2Off className="w-4 h-4 text-[hsl(var(--text-muted))]" />
-              )}
-            </button>
-            
             <div className="text-xs">
-              <div className="font-display font-semibold text-[hsl(var(--text-default))]">
+              <div className="font-display font-semibold text-[hsl(var(--text-default))] text-[20px]">
                 Beat Sync
               </div>
               <div className="text-[20px] text-[hsl(var(--text-subtle))] leading-none">

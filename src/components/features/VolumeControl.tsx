@@ -61,10 +61,11 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
               className="
-                w-[8px] h-32 bg-[hsl(var(--bg-surface))] rounded-lg appearance-none cursor-pointer
+                w-[32px] h-32 bg-transparent appearance-none cursor-pointer
                 [writing-mode:vertical-lr] [direction:rtl]
                 [&::-webkit-slider-runnable-track]:w-[8px]
                 [&::-webkit-slider-runnable-track]:h-32
+                [&::-webkit-slider-runnable-track]:ml-[12px]
                 [&::-webkit-slider-runnable-track]:bg-[hsl(var(--bg-surface))]
                 [&::-webkit-slider-runnable-track]:rounded-lg
                 [&::-webkit-slider-runnable-track]:border-0
@@ -82,6 +83,7 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
                 [&::-webkit-slider-thumb]:active:scale-100
                 [&::-moz-range-track]:w-[8px]
                 [&::-moz-range-track]:h-32
+                [&::-moz-range-track]:ml-[12px]
                 [&::-moz-range-track]:bg-[hsl(var(--bg-surface))]
                 [&::-moz-range-track]:rounded-lg
                 [&::-moz-range-track]:border-0

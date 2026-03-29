@@ -551,12 +551,9 @@ export default function Practice() {
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="relative flex items-center justify-center gap-3 mt-4">
+          <div className="flex items-center justify-center gap-6 mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
-            {/* Toggle positioned absolutely to align with tab box right edge */}
-            <div className="absolute" style={{ right: 'calc(50% - 70px)' }}>
-              <ShowDiagramsToggle />
-            </div>
+            <ShowDiagramsToggle />
           </div>
           </div>
         </div>

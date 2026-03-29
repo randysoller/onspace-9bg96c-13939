@@ -51,7 +51,7 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
 
         {/* Vertical Slider Popup - Below button */}
         {showSlider && (
-          <div className="absolute top-full right-0 mt-2 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-lg shadow-lg p-3 flex flex-col items-center gap-2">
+          <div className="absolute top-full right-0 mt-2 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-lg shadow-lg p-3 flex flex-col items-center gap-2 z-50">
             {/* Vertical Slider */}
             <input
               type="range"

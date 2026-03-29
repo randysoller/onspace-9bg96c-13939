@@ -130,7 +130,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
       </AnimatePresence>
 
       {/* Beat Sync Panel - Lengthened horizontally by 24px */}
-      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible min-w-[224px] h-[56px] flex flex-col">
+      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible min-w-[248px] h-[56px] flex flex-col">
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
           <div className="flex items-center gap-2">

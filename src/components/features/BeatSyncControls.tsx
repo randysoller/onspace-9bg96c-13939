@@ -10,7 +10,7 @@
  * - Count-in visual overlay (fullscreen with beat numbers)
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link2, Link2Off, Play, Square, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
@@ -22,6 +22,9 @@ interface BeatSyncControlsProps {
 
 export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncControlsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [rapidIncrement, setRapidIncrement] = useState<'up' | 'down' | null>(null);
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const rapidIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
     isPlaying,
@@ -37,6 +40,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     countInBeat,
     countInMeasures,
     setIsPlaying,
+    setBPM,
     setSyncEnabled,
     setSyncUnit,
     setBeatsPerChord,
@@ -63,6 +67,67 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   const decrementCount = () => {
     setBeatsPerChord(Math.max(1, beatsPerChord - 1));
   };
+
+  const incrementBPM = () => {
+    setBPM(Math.min(260, bpm + 1));
+  };
+
+  const decrementBPM = () => {
+    setBPM(Math.max(20, bpm - 1));
+  };
+
+  const handleBPMButtonPress = (direction: 'up' | 'down') => {
+    // Immediate single increment
+    if (direction === 'up') {
+      incrementBPM();
+    } else {
+      decrementBPM();
+    }
+    
+    // After 2 seconds, start rapid increment
+    holdTimeoutRef.current = setTimeout(() => {
+      setRapidIncrement(direction);
+    }, 2000);
+  };
+
+  const handleBPMButtonRelease = () => {
+    // Clear timeout if released before 2 seconds
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+    
+    // Stop rapid increment
+    setRapidIncrement(null);
+  };
+
+  // Handle rapid increment
+  useEffect(() => {
+    if (!rapidIncrement) return;
+    
+    rapidIntervalRef.current = setInterval(() => {
+      if (rapidIncrement === 'up') {
+        incrementBPM();
+      } else {
+        decrementBPM();
+      }
+    }, 100); // 10 increments per second
+    
+    return () => {
+      if (rapidIntervalRef.current) {
+        clearInterval(rapidIntervalRef.current);
+        rapidIntervalRef.current = null;
+      }
+    };
+  }, [rapidIncrement, bpm]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+      if (rapidIntervalRef.current) clearInterval(rapidIntervalRef.current);
+    };
+  }, []);
 
   const getSummaryText = () => {
     if (!syncEnabled) return '';
@@ -145,11 +210,11 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Start/Stop Button - Moved further right */}
+            {/* Start/Stop Button */}
             <button
               onClick={handleStartStop}
               className={`
-                px-2 py-1 rounded flex items-center gap-1.5 font-display font-semibold text-xs
+                px-3 py-1 rounded flex items-center gap-1.5 font-display font-semibold text-xs
                 transition-all active:scale-95 ml-6
                 ${isPlaying
                   ? 'bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500/30'
@@ -160,12 +225,12 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               {isPlaying ? (
                 <>
                   <Square className="w-3 h-3" />
-                  <span className="hidden sm:inline">Stop</span>
+                  <span>Stop</span>
                 </>
               ) : (
                 <>
                   <Play className="w-3 h-3" />
-                  <span className="hidden sm:inline">Start</span>
+                  <span>Start</span>
                 </>
               )}
             </button>
@@ -261,30 +326,45 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
                   </div>
                 </div>
 
-                {/* Auto-Reveal Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--bg-surface))]">
-                  <div>
-                    <div className="font-display font-semibold text-sm text-[hsl(var(--text-default))]">
-                      Auto-reveal before advancing
+                {/* BPM Control */}
+                <div>
+                  <label className="text-xs uppercase tracking-wide text-[hsl(var(--text-muted))] mb-2 block">
+                    Metronome BPM
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onMouseDown={() => handleBPMButtonPress('down')}
+                      onMouseUp={handleBPMButtonRelease}
+                      onMouseLeave={handleBPMButtonRelease}
+                      onTouchStart={() => handleBPMButtonPress('down')}
+                      onTouchEnd={handleBPMButtonRelease}
+                      disabled={bpm <= 20}
+                      className="p-2 rounded-lg bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    
+                    <div className="flex-1 text-center">
+                      <div className="text-2xl font-black text-[hsl(var(--color-primary))]">
+                        {bpm}
+                      </div>
+                      <div className="text-xs text-[hsl(var(--text-subtle))]">
+                        BPM
+                      </div>
                     </div>
-                    <div className="text-xs text-[hsl(var(--text-subtle))]">
-                      Show chord 2 beats early
-                    </div>
+                    
+                    <button
+                      onMouseDown={() => handleBPMButtonPress('up')}
+                      onMouseUp={handleBPMButtonRelease}
+                      onMouseLeave={handleBPMButtonRelease}
+                      onTouchStart={() => handleBPMButtonPress('up')}
+                      onTouchEnd={handleBPMButtonRelease}
+                      disabled={bpm >= 260}
+                      className="p-2 rounded-lg bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setAutoRevealBeforeAdvance(!autoRevealBeforeAdvance)}
-                    className={`
-                      w-12 h-7 rounded-full relative transition-colors
-                      ${autoRevealBeforeAdvance ? 'bg-emerald-500' : 'bg-zinc-600'}
-                    `}
-                  >
-                    <div
-                      className={`
-                        absolute w-5 h-5 bg-white rounded-full top-1 transition-transform
-                        ${autoRevealBeforeAdvance ? 'translate-x-6' : 'translate-x-1'}
-                      `}
-                    />
-                  </button>
                 </div>
 
                 {/* Count-In Length */}

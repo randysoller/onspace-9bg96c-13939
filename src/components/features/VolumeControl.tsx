@@ -30,22 +30,28 @@ export function VolumeControl({ compact = false, className = '' }: VolumeControl
     // Compact mode: vertical slider on toggle
     return (
       <div className={`relative ${className}`}>
-        {/* Volume Button */}
+        {/* Volume Button - Green when active */}
         <button
           onClick={() => setShowSlider(!showSlider)}
-          className="p-2 rounded-lg transition-all active:scale-95 bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] border border-[hsl(var(--border-subtle))]"
+          className={`
+            p-2 rounded-lg transition-all active:scale-95 border
+            ${showSlider
+              ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-500'
+              : 'bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] border-[hsl(var(--border-subtle))]'
+            }
+          `}
           aria-label={muted ? 'Unmute' : 'Adjust volume'}
         >
           <VolumeIcon
             className={`w-5 h-5 ${
-              muted ? 'text-[hsl(var(--text-muted))]' : 'text-[hsl(var(--text-subtle))]'
+              showSlider ? 'text-emerald-500' : muted ? 'text-[hsl(var(--text-muted))]' : 'text-[hsl(var(--text-subtle))]'
             }`}
           />
         </button>
 
-        {/* Vertical Slider Popup */}
+        {/* Vertical Slider Popup - Below button */}
         {showSlider && (
-          <div className="absolute bottom-full right-0 mb-2 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-lg shadow-lg p-3 flex flex-col items-center gap-2">
+          <div className="absolute top-full right-0 mt-2 bg-[hsl(var(--bg-elevated))] border border-[hsl(var(--border-default))] rounded-lg shadow-lg p-3 flex flex-col items-center gap-2">
             {/* Vertical Slider */}
             <input
               type="range"

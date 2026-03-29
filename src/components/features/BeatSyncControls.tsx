@@ -129,8 +129,8 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
         )}
       </AnimatePresence>
 
-      {/* Beat Sync Panel */}
-      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden">
+      {/* Beat Sync Panel - Lengthened horizontally by 24px */}
+      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden min-w-[224px]">
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-1.5 border-b border-[hsl(var(--border-subtle))]">
           <div className="flex items-center gap-2">
@@ -149,13 +149,13 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               <div className="font-display font-semibold text-[hsl(var(--text-default))]">
                 Beat Sync
               </div>
-              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none -ml-5">
+              <div className="text-[10px] text-[hsl(var(--text-subtle))] leading-none">
                 {getSummaryText()}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {/* Start/Stop Button */}
             <button
               onClick={handleStartStop}

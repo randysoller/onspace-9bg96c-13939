@@ -329,7 +329,7 @@ export default function Practice() {
               </div>
             )}
 
-            {/* Mic Toggle */}
+            {/* Mic Toggle - Green when listening, no pulse */}
             <button 
               onClick={toggleListening}
               className={`
@@ -340,7 +340,7 @@ export default function Practice() {
                 }
               `}
             >
-              <Mic className={`w-4 h-4 ${isListening ? 'text-emerald-500 animate-pulse' : 'text-[hsl(var(--text-subtle))]'}`} />
+              <Mic className={`w-4 h-4 ${isListening ? 'text-emerald-500' : 'text-[hsl(var(--text-subtle))]'}`} />
             </button>
 
             {/* Volume Control */}

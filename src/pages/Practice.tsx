@@ -493,7 +493,7 @@ export default function Practice() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                className="flex items-end justify-center gap-6 mb-2 -mt-[28px]"
+                className="flex items-end justify-center gap-6 mb-2 mt-0"
                 style={{ transform: 'scale(1.38)' }}
               >
                 <ChordDiagram chord={chord} size="lg" />
@@ -504,7 +504,7 @@ export default function Practice() {
 
           {/* Hidden Diagram State - Show when toggle is OFF */}
           {!showDiagrams && (
-            <div className="text-[hsl(var(--text-muted))] mb-3 -mt-[28px]">
+            <div className="text-[hsl(var(--text-muted))] mb-3 mt-0">
               <EyeOff className="w-7 h-7 mx-auto mb-2 opacity-50" />
               <div className="text-xl font-semibold">Diagram hidden</div>
             </div>

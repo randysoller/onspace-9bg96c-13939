@@ -187,9 +187,9 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               className="p-1 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
             >
               {isExpanded ? (
-                <ChevronUp className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
+                <ChevronUp className="w-[26px] h-[26px] text-[hsl(var(--text-subtle))]" strokeWidth={3} />
               ) : (
-                <ChevronDown className="w-3.5 h-3.5 text-[hsl(var(--text-subtle))]" />
+                <ChevronDown className="w-[26px] h-[26px] text-[hsl(var(--text-subtle))]" strokeWidth={3} />
               )}
             </button>
           </div>

@@ -402,7 +402,7 @@ export default function Practice() {
                 className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Decrease sensitivity"
               >
-                <Minus className="w-2.5 h-2.5 text-[hsl(var(--text-subtle))]" />
+                <Minus className="w-[18px] h-[18px] text-[hsl(var(--text-subtle))]" />
               </button>
               <span className="text-[18px] text-emerald-500 font-bold min-w-[1.5rem] text-center leading-none">
                 {sensitivity}
@@ -413,7 +413,7 @@ export default function Practice() {
                 className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Increase sensitivity"
               >
-                <Plus className="w-2.5 h-2.5 text-[hsl(var(--text-subtle))]" />
+                <Plus className="w-[18px] h-[18px] text-[hsl(var(--text-subtle))]" />
               </button>
             </div>
           </div>

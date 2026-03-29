@@ -156,12 +156,12 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Start/Stop Button */}
+            {/* Start/Stop Button - Moved further right */}
             <button
               onClick={handleStartStop}
               className={`
                 px-2 py-1 rounded flex items-center gap-1.5 font-display font-semibold text-xs
-                transition-all active:scale-95
+                transition-all active:scale-95 ml-6
                 ${isPlaying
                   ? 'bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500/30'
                   : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 hover:bg-emerald-500/30'

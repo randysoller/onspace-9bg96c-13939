@@ -460,7 +460,7 @@ export default function Practice() {
                 </div>
                 
                 {/* Chord Name - Toggleable with Toggle Button */}
-                <div className="flex items-center justify-center gap-6">
+                <div className="relative flex items-center justify-center">
                   {showChordName ? (
                     <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
                       {chord.name}
@@ -470,7 +470,9 @@ export default function Practice() {
                       Chord name hidden
                     </span>
                   )}
-                  <ShowChordNameToggle />
+                  <div className="absolute right-0">
+                    <ShowChordNameToggle />
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>
@@ -544,9 +546,11 @@ export default function Practice() {
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="flex items-center justify-center gap-6 mt-4">
+          <div className="relative flex items-center justify-center mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
-            <ShowDiagramsToggle />
+            <div className="absolute right-0">
+              <ShowDiagramsToggle />
+            </div>
           </div>
           </div>
         </div>

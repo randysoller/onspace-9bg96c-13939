@@ -494,7 +494,7 @@ export default function Practice() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
                 className="flex items-end justify-center gap-6 mb-2"
-                style={{ transform: 'scale(1.15)' }}
+                style={{ transform: 'scale(1.38)' }}
               >
                 <ChordDiagram chord={chord} size="lg" />
                 <ChordTablature chord={chord} size="lg" />

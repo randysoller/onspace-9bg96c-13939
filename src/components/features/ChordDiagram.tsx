@@ -20,9 +20,9 @@ interface ChordDiagramProps {
 }
 
 const SIZES = {
-  sm: { width: 100, height: 130, dotRadius: 7, fontSize: 14 },
-  md: { width: 140, height: 175, dotRadius: 9.5, fontSize: 18 },
-  lg: { width: 200, height: 250, dotRadius: 13, fontSize: 24 },
+  sm: { width: 100, height: 130, dotRadius: 7, fontSize: 14, fretTextSize: 20 },
+  md: { width: 140, height: 175, dotRadius: 9.5, fontSize: 18, fretTextSize: 22 },
+  lg: { width: 200, height: 250, dotRadius: 13, fontSize: 24, fretTextSize: 28 },
 };
 
 const STRING_THICKNESSES = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7]; // Low E → High E
@@ -30,7 +30,7 @@ const FRET_INLAY_POSITIONS = [3, 5, 7, 9, 15, 17, 19, 21]; // Single dot
 const DOUBLE_DOT_POSITIONS = [12, 24]; // Double dot
 
 export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagramProps) {
-  const { width, height, dotRadius, fontSize } = SIZES[size];
+  const { width, height, dotRadius, fontSize, fretTextSize } = SIZES[size];
   
   const nutY = height * 0.2;
   const fretSpacing = (height - nutY) / 5;
@@ -57,7 +57,8 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
         <text
           x={leftMargin * 0.3}
           y={nutY + fretSpacing * 0.5}
-          className="fill-zinc-500 text-xs font-display"
+          className="fill-zinc-500 font-display"
+          style={{ fontSize: fretTextSize }}
         >
           {baseFret}fr
         </text>

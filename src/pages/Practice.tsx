@@ -460,22 +460,17 @@ export default function Practice() {
                 </div>
                 
                 {/* Chord Name - Toggleable with Toggle Button */}
-                <div className="grid grid-cols-3 items-center gap-3">
-                  <div className="flex justify-end">
-                    <ShowChordNameToggle />
-                  </div>
-                  <div className="text-center">
-                    {showChordName ? (
-                      <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
-                        {chord.name}
-                      </span>
-                    ) : (
-                      <span className="text-lg text-[hsl(var(--text-muted))] italic">
-                        Chord name hidden
-                      </span>
-                    )}
-                  </div>
-                  <div></div>
+                <div className="flex items-center justify-center gap-3">
+                  {showChordName ? (
+                    <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                      {chord.name}
+                    </span>
+                  ) : (
+                    <span className="text-lg text-[hsl(var(--text-muted))] italic">
+                      Chord name hidden
+                    </span>
+                  )}
+                  <ShowChordNameToggle />
                 </div>
               </motion.div>
             </AnimatePresence>

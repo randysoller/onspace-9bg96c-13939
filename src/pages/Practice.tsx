@@ -546,11 +546,9 @@ export default function Practice() {
           )}
 
           {/* Toggle Control - Always Visible, Below Diagram */}
-          <div className="relative flex items-center justify-center mt-4">
+          <div className="flex items-center justify-between gap-6 mt-4 max-w-md mx-auto">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
-            <div className="absolute right-0">
-              <ShowDiagramsToggle />
-            </div>
+            <ShowDiagramsToggle />
           </div>
           </div>
         </div>

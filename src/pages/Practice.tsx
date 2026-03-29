@@ -475,7 +475,7 @@ export default function Practice() {
                   </div>
                   
                   {/* Toggle positioned absolutely to align with tab box right edge */}
-                  <div className="absolute" style={{ right: 'calc(50% - 120px)' }}>
+                  <div className="absolute" style={{ right: 'calc(50% - 70px)' }}>
                     <ShowChordNameToggle />
                   </div>
                 </div>
@@ -554,7 +554,7 @@ export default function Practice() {
           <div className="relative flex items-center justify-center gap-3 mt-4">
             <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
             {/* Toggle positioned absolutely to align with tab box right edge */}
-            <div className="absolute" style={{ right: 'calc(50% - 120px)' }}>
+            <div className="absolute" style={{ right: 'calc(50% - 70px)' }}>
               <ShowDiagramsToggle />
             </div>
           </div>

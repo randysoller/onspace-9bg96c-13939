@@ -433,7 +433,7 @@ export default function Practice() {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="text-6xl font-black text-white mb-2 leading-none">
+                <div className="text-[58px] font-black text-white mb-2 leading-none">
                   {chord.symbol}
                 </div>
                 <div className="text-2xl font-medium text-[hsl(var(--text-subtle))]">

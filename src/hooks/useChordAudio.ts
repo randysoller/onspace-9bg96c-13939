@@ -135,9 +135,9 @@ export function useChordAudio() {
     }
 
     // Master gain: applies volume with boost curve
-    // Formula: v^1.2 * 6.3 (reduced from 8 to prevent clipping)
+    // Formula: v^1.2 * 7.93 (+2 dB from previous 6.3)
     const masterGain = ctx.createGain();
-    const gain = Math.pow(masterVol, 1.2) * 6.3;
+    const gain = Math.pow(masterVol, 1.2) * 7.93;
     masterGain.gain.value = gain;
     masterGain.connect(ctx.destination);
 

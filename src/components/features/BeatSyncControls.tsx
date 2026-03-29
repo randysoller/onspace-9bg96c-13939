@@ -130,7 +130,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
       </AnimatePresence>
 
       {/* Beat Sync Panel - Lengthened horizontally by 24px, matched height with mic/volume buttons */}
-      <div className="border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-hidden min-w-[224px] h-[40px] flex flex-col">
+      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible min-w-[224px] h-[40px] flex flex-col">
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
           <div className="flex items-center gap-2">
@@ -192,7 +192,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden"
+              className="absolute top-full left-0 right-0 mt-1 overflow-hidden z-[60] border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] shadow-xl"
             >
               <div className="p-4 space-y-4">
                 {/* Sync Unit Toggle */}

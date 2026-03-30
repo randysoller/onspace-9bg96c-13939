@@ -249,13 +249,7 @@ export default function Practice() {
     );
   }
   
-  const handleReveal = () => {
-    revealChord();
-    pauseDetection(2000);
-    playChord(chord);
-  };
-  
-  const handlePlayAgain = () => {
+  const handlePlayChord = () => {
     pauseDetection(2000);
     playChord(chord);
   };
@@ -319,7 +313,7 @@ export default function Practice() {
           <div className="flex-shrink-0">
             <BeatSyncControls
               onChordAdvance={handleNext}
-              onAutoReveal={handleReveal}
+              onAutoReveal={handlePlayChord}
             />
           </div>
 
@@ -568,32 +562,18 @@ export default function Practice() {
             <SkipBack className="w-6 h-6 text-[hsl(var(--text-subtle))]" />
           </button>
 
-          {/* Reveal / Play Again */}
-          {!isRevealed ? (
-            <button
-              onClick={handleReveal}
-              aria-label="Reveal chord"
-              className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
-                bg-[hsl(var(--color-primary)/0.15)] border-2 border-[hsl(var(--color-primary)/0.4)]
-                text-[hsl(var(--color-primary))] font-display font-bold text-lg
-                hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
-            >
-              <Volume2 className="w-6 h-6" />
-              <span className="hidden sm:inline">Reveal</span>
-            </button>
-          ) : (
-            <button
-              onClick={handlePlayAgain}
-              aria-label="Play chord"
-              className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
-                bg-[hsl(var(--bg-surface))] border-2 border-[hsl(var(--border-subtle))]
-                text-[hsl(var(--text-default))] font-display font-bold text-lg
-                hover:bg-[hsl(var(--bg-overlay))] active:scale-[0.97] transition-all"
-            >
-              <Volume2 className="w-6 h-6" />
-              <span className="hidden sm:inline">Play</span>
-            </button>
-          )}
+          {/* Play Chord */}
+          <button
+            onClick={handlePlayChord}
+            aria-label="Play chord"
+            className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
+              bg-[hsl(var(--color-primary)/0.15)] border-2 border-[hsl(var(--color-primary)/0.4)]
+              text-[hsl(var(--color-primary))] font-display font-bold text-lg
+              hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
+          >
+            <Volume2 className="w-6 h-6" />
+            <span className="hidden sm:inline">Play</span>
+          </button>
 
           {/* Next - Always Visible, Prominent */}
           <button

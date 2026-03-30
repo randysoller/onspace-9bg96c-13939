@@ -375,7 +375,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
                     Quick BPM
                   </label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[20, 80, 160, 200].map((quickBpm) => (
+                    {[40, 80, 160, 200].map((quickBpm) => (
                       <button
                         key={quickBpm}
                         onClick={() => setBpm(quickBpm)}

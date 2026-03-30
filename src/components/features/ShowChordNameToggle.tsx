@@ -11,31 +11,15 @@ import { Eye, EyeOff } from 'lucide-react';
 const STORAGE_KEY = 'fretmaster-show-chord-name';
 
 interface ShowChordNameToggleProps {
+  showChordName: boolean;
+  onToggle: (value: boolean) => void;
   className?: string;
 }
 
-export function ShowChordNameToggle({ className = '' }: ShowChordNameToggleProps) {
-  const [showChordName, setShowChordName] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(showChordName));
-  }, [showChordName]);
-
+export function ShowChordNameToggle({ showChordName, onToggle, className = '' }: ShowChordNameToggleProps) {
   const handleToggle = () => {
     const newValue = !showChordName;
-    setShowChordName(newValue);
-    
-    // Dispatch custom event for other components to listen to
-    window.dispatchEvent(new CustomEvent('show-chord-name-changed', { 
-      detail: { showChordName: newValue } 
-    }));
+    onToggle(newValue);
   };
 
   return (

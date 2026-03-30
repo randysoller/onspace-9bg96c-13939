@@ -11,31 +11,15 @@ import { Eye, EyeOff } from 'lucide-react';
 const STORAGE_KEY = 'fretmaster-show-diagrams';
 
 interface ShowDiagramsToggleProps {
+  showDiagrams: boolean;
+  onToggle: (value: boolean) => void;
   className?: string;
 }
 
-export function ShowDiagramsToggle({ className = '' }: ShowDiagramsToggleProps) {
-  const [showDiagrams, setShowDiagrams] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved !== null ? JSON.parse(saved) : true;
-    } catch {
-      return true;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(showDiagrams));
-  }, [showDiagrams]);
-
+export function ShowDiagramsToggle({ showDiagrams, onToggle, className = '' }: ShowDiagramsToggleProps) {
   const handleToggle = () => {
     const newValue = !showDiagrams;
-    setShowDiagrams(newValue);
-    
-    // Dispatch custom event for other components to listen to
-    window.dispatchEvent(new CustomEvent('show-diagrams-changed', { 
-      detail: { showDiagrams: newValue } 
-    }));
+    onToggle(newValue);
   };
 
   return (

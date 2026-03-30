@@ -97,7 +97,7 @@ export function useChordAudio() {
   const activeGainNodes = useRef<GainNode[]>([]);  // Track all gain nodes for cleanup
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
-  const getContext = useCallback(async () => {
+  const getContext = useCallback(() => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
@@ -118,10 +118,8 @@ export function useChordAudio() {
       const oldContext = ctxRef.current;
       ctxRef.current = null;
       
-      // Force synchronous close with timeout fallback (mobile Safari requirement)
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).then(() => {
+      // Async close in background (don't wait - must stay synchronous for user gesture)
+      oldContext.close().then(() => {
         console.log('✅ Old context closed successfully');
       }).catch((err) => {
         console.warn('⚠️ Context close error (non-critical):', err);
@@ -140,10 +138,8 @@ export function useChordAudio() {
       contextCreatedAtRef.current = Date.now();
       console.log('✅ Fresh AudioContext created (state:', ctxRef.current.state, ')');
       
-      // Close old context with timeout fallback
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
       
       return ctxRef.current;
     }
@@ -165,7 +161,7 @@ export function useChordAudio() {
     }
     
     return ctxRef.current;
-  }, []);
+  }, [stopCurrent]);
 
   const stopCurrent = useCallback(() => {
     // CRITICAL: Disconnect ALL nodes before stopping to prevent resource leaks
@@ -188,31 +184,26 @@ export function useChordAudio() {
     console.log('🧹 Cleaned up all audio nodes');
   }, []);
 
-  const playChord = useCallback(async (chord: ChordData) => {
+  const playChord = useCallback((chord: ChordData) => {
     const masterVol = getEffectiveVolume();
     if (masterVol === 0) return;
 
     stopCurrent();
     
-    let ctx: AudioContext;
-    try {
-      ctx = await getContext();
-      console.log('🎸 Playing chord:', chord.name, '| Context state:', ctx.state, '| Platform:', isMobileBrowser ? 'mobile' : 'desktop');
-    } catch (err) {
-      console.error('❌ Cannot play chord - AudioContext unavailable:', err);
+    // CRITICAL: Get context synchronously to preserve user gesture chain
+    const ctx = getContext();
+    
+    if (!ctx) {
+      console.error('❌ Cannot play chord - AudioContext unavailable');
       return;
     }
     
+    console.log('🎸 Playing chord:', chord.name, '| Context state:', ctx.state, '| Platform:', isMobileBrowser ? 'mobile' : 'desktop');
+    
     // VALIDATION: Final state check before playback
     if (ctx.state === 'suspended') {
-      console.error('❌ AudioContext still suspended after getContext() - attempting emergency resume...');
-      try {
-        await ctx.resume();
-        console.log('✅ Emergency resume successful');
-      } catch (resumeErr) {
-        console.error('❌ Emergency resume failed:', resumeErr);
-        return;
-      }
+      console.error('❌ AudioContext still suspended after getContext() - this should not happen');
+      return;
     }
     
     if (ctx.state === 'closed') {

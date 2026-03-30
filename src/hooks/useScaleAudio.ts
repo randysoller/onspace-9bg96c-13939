@@ -37,7 +37,7 @@ export const useScaleAudio = () => {
     };
   }, []);
 
-  const playNote = async (note: string, octave: number = 4, duration: number = 0.5) => {
+  const playNote = (note: string, octave: number = 4, duration: number = 0.5) => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
@@ -58,10 +58,8 @@ export const useScaleAudio = () => {
       const oldContext = audioContextRef.current;
       audioContextRef.current = null;
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     let context = audioContextRef.current;
@@ -86,10 +84,8 @@ export const useScaleAudio = () => {
       contextCreatedAtRef.current = Date.now();
       console.log('✅ ScaleAudio: Fresh AudioContext created');
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();

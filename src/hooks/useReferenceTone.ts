@@ -47,7 +47,7 @@ export function useReferenceTone() {
     }, 300);
   }, []);
 
-  const playChordTone = useCallback(async (chord: ChordData, duration = 2.5) => {
+  const playChordTone = useCallback((chord: ChordData, duration = 2.5) => {
     if (isPlayingRef.current) stopTone();
 
     const now = Date.now();
@@ -69,10 +69,8 @@ export function useReferenceTone() {
       const oldContext = contextRef.current;
       contextRef.current = null;
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
 
     let ctx = contextRef.current ?? new AudioContext();
@@ -94,10 +92,8 @@ export function useReferenceTone() {
       contextCreatedAtRef.current = Date.now();
       console.log('✅ ReferenceTone: Fresh AudioContext created');
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();

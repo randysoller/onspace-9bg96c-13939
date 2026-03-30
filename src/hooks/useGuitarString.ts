@@ -30,7 +30,7 @@ export function useGuitarString() {
   const isPlayingRef = useRef(false);
   const activeNodesRef = useRef<AudioNode[]>([]);
 
-  const getContext = useCallback(async () => {
+  const getContext = useCallback(() => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
@@ -50,10 +50,8 @@ export function useGuitarString() {
       const oldContext = contextRef.current;
       contextRef.current = null;
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     if (contextRef.current && contextRef.current.state === 'suspended') {
@@ -68,10 +66,8 @@ export function useGuitarString() {
       contextCreatedAtRef.current = Date.now();
       console.log('✅ GuitarString: Fresh AudioContext created');
       
-      // Force synchronous close
-      const closePromise = oldContext.close();
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
-      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      // Async close in background
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
       
       return contextRef.current;
     }
@@ -85,15 +81,13 @@ export function useGuitarString() {
     return contextRef.current;
   }, []);
 
-  const playString = useCallback(async ({ frequency, duration = 3.0, volume = 1.0 }: GuitarStringParams) => {
-    let ctx: AudioContext;
-    try {
-      ctx = await getContext();
-      lastPlaybackAtRef.current = Date.now();
-    } catch (err) {
-      console.error('❌ GuitarString: Cannot play - AudioContext unavailable:', err);
+  const playString = useCallback(({ frequency, duration = 3.0, volume = 1.0 }: GuitarStringParams) => {
+    const ctx = getContext();
+    if (!ctx) {
+      console.error('❌ GuitarString: Cannot play - AudioContext unavailable');
       return;
     }
+    lastPlaybackAtRef.current = Date.now();
     const now = ctx.currentTime;
 
     // Track all created nodes for cleanup

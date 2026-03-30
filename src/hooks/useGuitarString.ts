@@ -1,5 +1,8 @@
 import { useRef, useCallback, useEffect } from 'react';
 
+// Mobile detection utility
+const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 /**
  * Realistic guitar string synthesis hook
  * 
@@ -28,15 +31,27 @@ export function useGuitarString() {
       contextRef.current = new AudioContext();
     }
     
-    // CRITICAL FIX: Await resume if suspended
+    // MOBILE FIX: On mobile, close suspended context and create fresh one
     if (contextRef.current.state === 'suspended') {
-      console.log('⏸️ GuitarString: AudioContext suspended, resuming...');
-      try {
-        await contextRef.current.resume();
-        console.log('✅ GuitarString: AudioContext resumed');
-      } catch (err) {
-        console.error('❌ GuitarString: Failed to resume:', err);
-        throw err;
+      if (isMobileBrowser) {
+        console.log('📱 GuitarString Mobile: Closing suspended AudioContext...');
+        try {
+          await contextRef.current.close();
+          contextRef.current = new AudioContext();
+          console.log('✅ GuitarString Mobile: Fresh AudioContext created');
+        } catch (err) {
+          console.error('❌ GuitarString Mobile: Failed to recreate AudioContext:', err);
+          throw err;
+        }
+      } else {
+        console.log('🖥️ GuitarString Desktop: Resuming AudioContext...');
+        try {
+          await contextRef.current.resume();
+          console.log('✅ GuitarString Desktop: AudioContext resumed');
+        } catch (err) {
+          console.error('❌ GuitarString Desktop: Failed to resume:', err);
+          throw err;
+        }
       }
     }
     

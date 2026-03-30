@@ -1,6 +1,9 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 
+// Mobile detection utility
+const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64];
 // E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
 
@@ -41,18 +44,31 @@ export function useReferenceTone() {
   const playChordTone = useCallback(async (chord: ChordData, duration = 2.5) => {
     if (isPlayingRef.current) stopTone();
 
-    const ctx = contextRef.current ?? new AudioContext();
+    let ctx = contextRef.current ?? new AudioContext();
     contextRef.current = ctx;
     
-    // CRITICAL FIX: Await resume if suspended
+    // MOBILE FIX: On mobile, close suspended context and create fresh one
     if (ctx.state === 'suspended') {
-      console.log('⏸️ ReferenceTone: AudioContext suspended, resuming...');
-      try {
-        await ctx.resume();
-        console.log('✅ ReferenceTone: AudioContext resumed successfully');
-      } catch (err) {
-        console.error('❌ ReferenceTone: Failed to resume AudioContext:', err);
-        return;
+      if (isMobileBrowser) {
+        console.log('📱 ReferenceTone Mobile: Closing suspended AudioContext...');
+        try {
+          await ctx.close();
+          ctx = new AudioContext();
+          contextRef.current = ctx;
+          console.log('✅ ReferenceTone Mobile: Fresh AudioContext created');
+        } catch (err) {
+          console.error('❌ ReferenceTone Mobile: Failed to recreate AudioContext:', err);
+          return;
+        }
+      } else {
+        console.log('🖥️ ReferenceTone Desktop: Resuming AudioContext...');
+        try {
+          await ctx.resume();
+          console.log('✅ ReferenceTone Desktop: AudioContext resumed');
+        } catch (err) {
+          console.error('❌ ReferenceTone Desktop: Failed to resume:', err);
+          return;
+        }
       }
     }
 

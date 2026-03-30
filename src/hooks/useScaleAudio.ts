@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { useAudioStore } from '@/stores/audioStore';
 import { NOTE_FREQUENCIES } from '@/constants/scales';
 
+// Mobile detection utility
+const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 export const useScaleAudio = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const { chordVolume } = useAudioStore();
@@ -31,18 +34,31 @@ export const useScaleAudio = () => {
   }, []);
 
   const playNote = async (note: string, octave: number = 4, duration: number = 0.5) => {
-    const context = audioContextRef.current;
+    let context = audioContextRef.current;
     if (!context) return;
 
-    // CRITICAL FIX: Resume if suspended
+    // MOBILE FIX: On mobile, close suspended context and create fresh one
     if (context.state === 'suspended') {
-      console.log('⏸️ ScaleAudio: AudioContext suspended, resuming...');
-      try {
-        await context.resume();
-        console.log('✅ ScaleAudio: AudioContext resumed');
-      } catch (err) {
-        console.error('❌ ScaleAudio: Failed to resume:', err);
-        return;
+      if (isMobileBrowser) {
+        console.log('📱 ScaleAudio Mobile: Closing suspended AudioContext...');
+        try {
+          await context.close();
+          context = new (window.AudioContext || (window as any).webkitAudioContext)();
+          audioContextRef.current = context;
+          console.log('✅ ScaleAudio Mobile: Fresh AudioContext created');
+        } catch (err) {
+          console.error('❌ ScaleAudio Mobile: Failed to recreate AudioContext:', err);
+          return;
+        }
+      } else {
+        console.log('🖥️ ScaleAudio Desktop: Resuming AudioContext...');
+        try {
+          await context.resume();
+          console.log('✅ ScaleAudio Desktop: AudioContext resumed');
+        } catch (err) {
+          console.error('❌ ScaleAudio Desktop: Failed to resume:', err);
+          return;
+        }
       }
     }
 

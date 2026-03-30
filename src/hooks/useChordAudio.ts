@@ -2,6 +2,9 @@ import { useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { useAudioStore } from '@/stores/audioStore';
 
+// Mobile detection utility
+const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
 // Standard guitar tuning frequencies (E2, A2, D3, G3, B3, E4)
 const STRING_FREQUENCIES = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63];
 const SEMITONE_RATIO = Math.pow(2, 1 / 12);
@@ -97,15 +100,28 @@ export function useChordAudio() {
       });
     }
     
-    // CRITICAL FIX: Await resume if suspended
+    // MOBILE FIX: On mobile, close suspended context and create fresh one
+    // Mobile browsers often reject resume() after idle without direct user interaction
     if (ctxRef.current.state === 'suspended') {
-      console.log('⏸️ AudioContext suspended, resuming...');
-      try {
-        await ctxRef.current.resume();
-        console.log('✅ AudioContext resumed successfully');
-      } catch (err) {
-        console.error('❌ Failed to resume AudioContext:', err);
-        throw new Error('Audio playback unavailable - context resume failed');
+      if (isMobileBrowser) {
+        console.log('📱 Mobile: Closing suspended AudioContext and creating fresh one...');
+        try {
+          await ctxRef.current.close();
+          ctxRef.current = new AudioContext();
+          console.log('✅ Mobile: Fresh AudioContext created from user interaction');
+        } catch (err) {
+          console.error('❌ Mobile: Failed to recreate AudioContext:', err);
+          throw new Error('Audio playback unavailable - context recreation failed');
+        }
+      } else {
+        console.log('🖥️ Desktop: Resuming suspended AudioContext...');
+        try {
+          await ctxRef.current.resume();
+          console.log('✅ Desktop: AudioContext resumed successfully');
+        } catch (err) {
+          console.error('❌ Desktop: Failed to resume AudioContext:', err);
+          throw new Error('Audio playback unavailable - context resume failed');
+        }
       }
     }
     

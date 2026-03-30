@@ -41,13 +41,13 @@ export const useScaleAudio = () => {
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
     
-    const isContextStale = isMobileBrowser && (
+    const isContextStale = (
       contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
       timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
     );
     
     if (isContextStale && audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      console.log('⏰ ScaleAudio Mobile: Context stale - forcing recreation');
+      console.log('⏰ ScaleAudio: Context stale - forcing recreation');
       const oldContext = audioContextRef.current;
       audioContextRef.current = null;
       oldContext.close().catch(() => {/* ignore cleanup errors */});
@@ -62,24 +62,13 @@ export const useScaleAudio = () => {
     }
 
     if (context.state === 'suspended') {
-      if (isMobileBrowser) {
-        console.log('📱 ScaleAudio Mobile: Creating fresh AudioContext synchronously...');
-        const oldContext = context;
-        context = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioContextRef.current = context;
-        contextCreatedAtRef.current = Date.now();
-        console.log('✅ ScaleAudio Mobile: Fresh AudioContext created');
-        oldContext.close().catch(() => {/* ignore cleanup errors */});
-      } else {
-        console.log('🖥️ ScaleAudio Desktop: Resuming AudioContext...');
-        try {
-          await context.resume();
-          console.log('✅ ScaleAudio Desktop: AudioContext resumed');
-        } catch (err) {
-          console.error('❌ ScaleAudio Desktop: Failed to resume:', err);
-          return;
-        }
-      }
+      console.log('⏸️ ScaleAudio: Creating fresh AudioContext...');
+      const oldContext = context;
+      context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = context;
+      contextCreatedAtRef.current = Date.now();
+      console.log('✅ ScaleAudio: Fresh AudioContext created');
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();

@@ -51,14 +51,14 @@ export function useReferenceTone() {
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
     
-    // Check for stale context on mobile
-    const isContextStale = isMobileBrowser && (
+    // Check for stale context on ALL platforms
+    const isContextStale = (
       contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
       timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
     );
     
     if (isContextStale && contextRef.current && contextRef.current.state !== 'closed') {
-      console.log('⏰ ReferenceTone Mobile: Context stale - forcing recreation');
+      console.log('⏰ ReferenceTone: Context stale - forcing recreation');
       const oldContext = contextRef.current;
       contextRef.current = null;
       oldContext.close().catch(() => {/* ignore cleanup errors */});
@@ -72,24 +72,13 @@ export function useReferenceTone() {
     }
     
     if (ctx.state === 'suspended') {
-      if (isMobileBrowser) {
-        console.log('📱 ReferenceTone Mobile: Creating fresh AudioContext synchronously...');
-        const oldContext = ctx;
-        ctx = new AudioContext();
-        contextRef.current = ctx;
-        contextCreatedAtRef.current = Date.now();
-        console.log('✅ ReferenceTone Mobile: Fresh AudioContext created');
-        oldContext.close().catch(() => {/* ignore cleanup errors */});
-      } else {
-        console.log('🖥️ ReferenceTone Desktop: Resuming AudioContext...');
-        try {
-          await ctx.resume();
-          console.log('✅ ReferenceTone Desktop: AudioContext resumed');
-        } catch (err) {
-          console.error('❌ ReferenceTone Desktop: Failed to resume:', err);
-          return;
-        }
-      }
+      console.log('⏸️ ReferenceTone: AudioContext suspended - recreating...');
+      const oldContext = ctx;
+      ctx = new AudioContext();
+      contextRef.current = ctx;
+      contextCreatedAtRef.current = Date.now();
+      console.log('✅ ReferenceTone: Fresh AudioContext created');
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();

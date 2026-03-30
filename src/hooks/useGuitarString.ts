@@ -34,38 +34,26 @@ export function useGuitarString() {
     const contextAge = now - contextCreatedAtRef.current;
     const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
     
-    const isContextStale = isMobileBrowser && (
+    const isContextStale = (
       contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
       timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
     );
     
     if (isContextStale && contextRef.current && contextRef.current.state !== 'closed') {
-      console.log('⏰ GuitarString Mobile: Context stale - forcing recreation');
+      console.log('⏰ GuitarString: Context stale - forcing recreation');
       const oldContext = contextRef.current;
       contextRef.current = null;
       oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
     if (contextRef.current && contextRef.current.state === 'suspended') {
-      if (isMobileBrowser) {
-        console.log('📱 GuitarString Mobile: Creating fresh AudioContext synchronously...');
-        const oldContext = contextRef.current;
-        contextRef.current = new AudioContext();
-        contextCreatedAtRef.current = Date.now();
-        console.log('✅ GuitarString Mobile: Fresh AudioContext created');
-        oldContext.close().catch(() => {/* ignore cleanup errors */});
-        return contextRef.current;
-      } else {
-        console.log('🖥️ GuitarString Desktop: Resuming AudioContext...');
-        try {
-          await contextRef.current.resume();
-          console.log('✅ GuitarString Desktop: AudioContext resumed');
-          return contextRef.current;
-        } catch (err) {
-          console.error('❌ GuitarString Desktop: Failed to resume:', err);
-          throw err;
-        }
-      }
+      console.log('⏸️ GuitarString: Creating fresh AudioContext...');
+      const oldContext = contextRef.current;
+      contextRef.current = new AudioContext();
+      contextCreatedAtRef.current = Date.now();
+      console.log('✅ GuitarString: Fresh AudioContext created');
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      return contextRef.current;
     }
     
     if (!contextRef.current || contextRef.current.state === 'closed') {

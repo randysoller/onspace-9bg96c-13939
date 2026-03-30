@@ -37,7 +37,10 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
   const stringSpacing = width / 7;
   const leftMargin = stringSpacing;
   
-  const baseFret = chord.baseFret || 1;
+  // Defensive: Ensure baseFret is a valid number
+  const baseFret = typeof chord.baseFret === 'number' && !isNaN(chord.baseFret) && chord.baseFret > 0
+    ? chord.baseFret
+    : 1;
   const isNut = baseFret === 1;
   
   // Track which strings are rendered by barre sections
@@ -191,6 +194,13 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       
       {/* Barre indicators */}
       {chord.barres?.map((barre, barreIdx) => {
+        // Defensive: Ensure barre values are valid numbers
+        if (typeof barre.fret !== 'number' || isNaN(barre.fret) ||
+            typeof barre.fromString !== 'number' || isNaN(barre.fromString) ||
+            typeof barre.toString !== 'number' || isNaN(barre.toString)) {
+          return null;
+        }
+        
         const fretY = nutY + (barre.fret - baseFret + 0.5) * fretSpacing;
         const fromX = leftMargin + barre.fromString * stringSpacing;
         const toX = leftMargin + barre.toString * stringSpacing;
@@ -275,7 +285,9 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       
       {/* Individual finger dots (skip if rendered by barre) */}
       {chord.frets.map((fret, stringIdx) => {
-        if (fret === null || fret <= 0 || fret < baseFret || fret >= baseFret + 5) return null;
+        // Defensive: Ensure fret is a valid number
+        if (fret === null || fret === undefined || typeof fret !== 'number' || isNaN(fret)) return null;
+        if (fret <= 0 || fret < baseFret || fret >= baseFret + 5) return null;
         if (barreRenderedStrings.has(stringIdx)) return null;
         
         const fretY = nutY + (fret - baseFret + 0.5) * fretSpacing;

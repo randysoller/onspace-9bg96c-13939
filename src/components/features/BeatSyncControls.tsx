@@ -69,11 +69,11 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   };
 
   const incrementBPM = () => {
-    setBPM(Math.min(260, bpm + 1));
+    setBPM(prev => Math.min(260, prev + 1));
   };
 
   const decrementBPM = () => {
-    setBPM(Math.max(20, bpm - 1));
+    setBPM(prev => Math.max(20, prev - 1));
   };
 
   const handleBPMButtonPress = (direction: 'up' | 'down') => {
@@ -214,7 +214,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             <button
               onClick={handleStartStop}
               className={`
-                px-3 py-1 rounded flex items-center gap-1.5 font-display font-semibold text-xs
+                px-4 py-1 rounded flex items-center gap-2 font-display font-semibold text-sm
                 transition-all active:scale-95 ml-6
                 ${isPlaying
                   ? 'bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500/30'
@@ -224,12 +224,12 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             >
               {isPlaying ? (
                 <>
-                  <Square className="w-3 h-3" />
+                  <Square className="w-4 h-4" />
                   <span>Stop</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3 h-3" />
+                  <Play className="w-4 h-4" />
                   <span>Start</span>
                 </>
               )}

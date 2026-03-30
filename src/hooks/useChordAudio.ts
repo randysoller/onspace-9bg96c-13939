@@ -5,6 +5,9 @@ import { useAudioStore } from '@/stores/audioStore';
 // Mobile detection utility
 const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+// Context age threshold for mobile (10 seconds - recreate if older)
+const MOBILE_CONTEXT_MAX_AGE_MS = 10000;
+
 // Standard guitar tuning frequencies (E2, A2, D3, G3, B3, E4)
 const STRING_FREQUENCIES = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63];
 const SEMITONE_RATIO = Math.pow(2, 1 / 12);
@@ -88,24 +91,41 @@ function createPluck(
 
 export function useChordAudio() {
   const ctxRef = useRef<AudioContext | null>(null);
+  const contextCreatedAtRef = useRef<number>(0);
+  const lastPlaybackAtRef = useRef<number>(0);
   const activeOscillators = useRef<OscillatorNode[]>([]);
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
   const getContext = useCallback(async () => {
-    // MOBILE FIX: On mobile, always recreate suspended contexts SYNCHRONOUSLY
-    // to preserve user gesture chain (critical after 30s+ idle)
+    const now = Date.now();
+    const contextAge = now - contextCreatedAtRef.current;
+    const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
+    
+    // CRITICAL MOBILE FIX: Check for stale context
+    // Mobile browsers invalidate AudioContexts after idle, but state might still show 'running'
+    const isContextStale = isMobileBrowser && (
+      contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
+      timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
+    );
+    
+    if (isContextStale && ctxRef.current && ctxRef.current.state !== 'closed') {
+      console.log('⏰ Mobile: AudioContext is stale (age:', contextAge, 'ms, idle:', timeSinceLastPlayback, 'ms) - forcing recreation');
+      const oldContext = ctxRef.current;
+      ctxRef.current = null;
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
+    }
+    
+    // Check if context is suspended or closed
     if (ctxRef.current && ctxRef.current.state === 'suspended') {
       if (isMobileBrowser) {
         console.log('📱 Mobile: AudioContext suspended - creating fresh one synchronously...');
-        // Don't await close() - just abandon old context and create new one IMMEDIATELY
         const oldContext = ctxRef.current;
         ctxRef.current = new AudioContext();
+        contextCreatedAtRef.current = Date.now();
         console.log('✅ Mobile: Fresh AudioContext created (state:', ctxRef.current.state, ')');
-        // Close old context asynchronously in background (don't block)
         oldContext.close().catch(() => {/* ignore cleanup errors */});
         return ctxRef.current;
       } else {
-        // Desktop: Resume existing context
         console.log('🖥️ Desktop: Resuming suspended AudioContext...');
         try {
           await ctxRef.current.resume();
@@ -121,10 +141,17 @@ export function useChordAudio() {
     // Create new context if none exists or if closed
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext();
+      contextCreatedAtRef.current = Date.now();
       console.log('🎵 AudioContext created:', {
         state: ctxRef.current.state,
         sampleRate: ctxRef.current.sampleRate,
+        platform: isMobileBrowser ? 'mobile' : 'desktop',
       });
+      
+      // VALIDATION: Test if context is actually working
+      if (ctxRef.current.state !== 'running') {
+        console.warn('⚠️ AudioContext created but not in running state:', ctxRef.current.state);
+      }
     }
     
     return ctxRef.current;
@@ -139,18 +166,38 @@ export function useChordAudio() {
 
   const playChord = useCallback(async (chord: ChordData) => {
     const masterVol = getEffectiveVolume();
-    if (masterVol === 0) return;   // muted — skip playback entirely
+    if (masterVol === 0) return;
 
     stopCurrent();
     
-    // CRITICAL FIX: Await context initialization and resume
     let ctx: AudioContext;
     try {
       ctx = await getContext();
+      console.log('🎸 Playing chord:', chord.name, '| Context state:', ctx.state, '| Platform:', isMobileBrowser ? 'mobile' : 'desktop');
     } catch (err) {
       console.error('❌ Cannot play chord - AudioContext unavailable:', err);
       return;
     }
+    
+    // VALIDATION: Final state check before playback
+    if (ctx.state === 'suspended') {
+      console.error('❌ AudioContext still suspended after getContext() - attempting emergency resume...');
+      try {
+        await ctx.resume();
+        console.log('✅ Emergency resume successful');
+      } catch (resumeErr) {
+        console.error('❌ Emergency resume failed:', resumeErr);
+        return;
+      }
+    }
+    
+    if (ctx.state === 'closed') {
+      console.error('❌ AudioContext is closed - cannot play');
+      return;
+    }
+    
+    // Update last playback timestamp
+    lastPlaybackAtRef.current = Date.now();
 
     // Master gain: applies volume with boost curve
     // Formula: v^1.2 * 10.0 (+4 dB total from original 6.3)
@@ -159,41 +206,49 @@ export function useChordAudio() {
     masterGain.gain.value = gain;
     masterGain.connect(ctx.destination);
 
-    const now = ctx.currentTime + 0.05;     // 50ms lookahead
-    const strumDelay = 0.035;                // 35ms between strings
-    const noteDuration = 2.5;                // 2.5 second ring-out
+    const now = ctx.currentTime + 0.05;
+    const strumDelay = 0.035;
+    const noteDuration = 2.5;
     const allOscs: OscillatorNode[] = [];
 
-    // Strum low E to high E (index 0 → 5)
-    let strumIndex = 0;
-    for (let i = 0; i < 6; i++) {
-      const fret = chord.frets[i];
-      if (fret === -1) continue;             // muted string — skip
+    try {
+      // Strum low E to high E (index 0 → 5)
+      let strumIndex = 0;
+      for (let i = 0; i < 6; i++) {
+        const fret = chord.frets[i];
+        if (fret === -1) continue;
 
-      const freq = getNoteFrequency(i, fret);
-      // Bass strings slightly louder: 0.3 - (stringIndex * 0.015)
-      const vol = 0.3 - i * 0.015;
-      const startTime = now + strumIndex * strumDelay;
-      const oscs = createPluck(ctx, freq, startTime, noteDuration, vol, masterGain);
-      allOscs.push(...oscs);
-      strumIndex++;
+        const freq = getNoteFrequency(i, fret);
+        const vol = 0.3 - i * 0.015;
+        const startTime = now + strumIndex * strumDelay;
+        const oscs = createPluck(ctx, freq, startTime, noteDuration, vol, masterGain);
+        allOscs.push(...oscs);
+        strumIndex++;
+      }
+
+      activeOscillators.current = allOscs;
+      console.log('✅ Chord playback started successfully - oscillators:', allOscs.length);
+    } catch (playbackErr) {
+      console.error('❌ Error during oscillator creation/playback:', playbackErr);
+      // Clean up any created oscillators
+      allOscs.forEach(osc => {
+        try { osc.stop(); osc.disconnect(); } catch {/* ignore */}
+      });
+      throw playbackErr;
     }
-
-    activeOscillators.current = allOscs;
   }, [getContext, stopCurrent, getEffectiveVolume]);
 
-  // Page Visibility API: Resume AudioContext when tab becomes visible
+  // Page Visibility API: Track visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && ctxRef.current) {
-        if (ctxRef.current.state === 'suspended') {
-          console.log('👁️ Tab visible - resuming AudioContext...');
-          ctxRef.current.resume()
-            .then(() => console.log('✅ AudioContext resumed on visibility change'))
-            .catch((err) => console.error('❌ Failed to resume on visibility change:', err));
-        }
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ Tab visible - context state:', ctxRef.current?.state);
+        // Don't try to resume here - let getContext() handle it on next playback
+        // This preserves the user gesture requirement on mobile
       } else if (document.visibilityState === 'hidden') {
-        console.log('🙈 Tab hidden - AudioContext may suspend');
+        console.log('🙈 Tab hidden - context will likely suspend');
+        // Update timestamp to force recreation on next playback
+        lastPlaybackAtRef.current = 0;
       }
     };
 
@@ -201,11 +256,11 @@ export function useChordAudio() {
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      // Cleanup: Stop all oscillators and close context
+      // CRITICAL FIX: Don't close context on cleanup - it prevents playback after remount
+      // Just stop active oscillators
+      console.log('🧹 useChordAudio cleanup - stopping oscillators but keeping context alive');
       stopCurrent();
-      if (ctxRef.current && ctxRef.current.state !== 'closed') {
-        ctxRef.current.close();
-      }
+      // Context will be closed when browser tab/window actually closes
     };
   }, [stopCurrent]);
 

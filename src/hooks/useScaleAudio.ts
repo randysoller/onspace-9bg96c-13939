@@ -4,24 +4,26 @@ import { NOTE_FREQUENCIES } from '@/constants/scales';
 
 // Mobile detection utility
 const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const MOBILE_CONTEXT_MAX_AGE_MS = 10000;
 
 export const useScaleAudio = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const contextCreatedAtRef = useRef<number>(0);
+  const lastPlaybackAtRef = useRef<number>(0);
   const { chordVolume } = useAudioStore();
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    contextCreatedAtRef.current = Date.now();
+    console.log('🎵 ScaleAudio: AudioContext created');
     
-    // Page Visibility API: Resume AudioContext when tab becomes visible
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && audioContextRef.current) {
-        if (audioContextRef.current.state === 'suspended') {
-          console.log('👁️ ScaleAudio: Tab visible - resuming AudioContext...');
-          audioContextRef.current.resume()
-            .then(() => console.log('✅ ScaleAudio: AudioContext resumed'))
-            .catch((err) => console.error('❌ ScaleAudio: Failed to resume:', err));
-        }
+      if (document.visibilityState === 'visible') {
+        console.log('👁️ ScaleAudio: Tab visible - context state:', audioContextRef.current?.state);
+      } else if (document.visibilityState === 'hidden') {
+        console.log('🙈 ScaleAudio: Tab hidden - marking for recreation');
+        lastPlaybackAtRef.current = 0;
       }
     };
 
@@ -29,21 +31,43 @@ export const useScaleAudio = () => {
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      audioContextRef.current?.close();
+      console.log('🧹 ScaleAudio cleanup - keeping context alive');
+      // Don't close context on cleanup
     };
   }, []);
 
   const playNote = async (note: string, octave: number = 4, duration: number = 0.5) => {
+    const now = Date.now();
+    const contextAge = now - contextCreatedAtRef.current;
+    const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
+    
+    const isContextStale = isMobileBrowser && (
+      contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
+      timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
+    );
+    
+    if (isContextStale && audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      console.log('⏰ ScaleAudio Mobile: Context stale - forcing recreation');
+      const oldContext = audioContextRef.current;
+      audioContextRef.current = null;
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
+    }
+    
     let context = audioContextRef.current;
-    if (!context) return;
+    if (!context) {
+      context = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = context;
+      contextCreatedAtRef.current = Date.now();
+      console.log('🎵 ScaleAudio: New AudioContext created');
+    }
 
-    // MOBILE FIX: On mobile, recreate suspended contexts SYNCHRONOUSLY
     if (context.state === 'suspended') {
       if (isMobileBrowser) {
         console.log('📱 ScaleAudio Mobile: Creating fresh AudioContext synchronously...');
         const oldContext = context;
         context = new (window.AudioContext || (window as any).webkitAudioContext)();
         audioContextRef.current = context;
+        contextCreatedAtRef.current = Date.now();
         console.log('✅ ScaleAudio Mobile: Fresh AudioContext created');
         oldContext.close().catch(() => {/* ignore cleanup errors */});
       } else {
@@ -57,6 +81,8 @@ export const useScaleAudio = () => {
         }
       }
     }
+    
+    lastPlaybackAtRef.current = Date.now();
 
     const baseFreq = NOTE_FREQUENCIES[note];
     if (!baseFreq) return;

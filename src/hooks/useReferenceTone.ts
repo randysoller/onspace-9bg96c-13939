@@ -3,6 +3,7 @@ import type { ChordData } from '@/types/chord';
 
 // Mobile detection utility
 const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+const MOBILE_CONTEXT_MAX_AGE_MS = 10000;
 
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64];
 // E2=40, A2=45, D3=50, G3=55, B3=59, E4=64
@@ -13,6 +14,8 @@ function midiToFreq(midi: number): number {
 
 export function useReferenceTone() {
   const contextRef = useRef<AudioContext | null>(null);
+  const contextCreatedAtRef = useRef<number>(0);
+  const lastPlaybackAtRef = useRef<number>(0);
   const activeNodesRef = useRef<{ oscs: OscillatorNode[]; master: GainNode } | null>(null);
   const isPlayingRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,16 +47,37 @@ export function useReferenceTone() {
   const playChordTone = useCallback(async (chord: ChordData, duration = 2.5) => {
     if (isPlayingRef.current) stopTone();
 
-    let ctx = contextRef.current ?? new AudioContext();
-    contextRef.current = ctx;
+    const now = Date.now();
+    const contextAge = now - contextCreatedAtRef.current;
+    const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
     
-    // MOBILE FIX: On mobile, recreate suspended contexts SYNCHRONOUSLY
+    // Check for stale context on mobile
+    const isContextStale = isMobileBrowser && (
+      contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
+      timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
+    );
+    
+    if (isContextStale && contextRef.current && contextRef.current.state !== 'closed') {
+      console.log('⏰ ReferenceTone Mobile: Context stale - forcing recreation');
+      const oldContext = contextRef.current;
+      contextRef.current = null;
+      oldContext.close().catch(() => {/* ignore cleanup errors */});
+    }
+
+    let ctx = contextRef.current ?? new AudioContext();
+    if (!contextRef.current) {
+      contextRef.current = ctx;
+      contextCreatedAtRef.current = Date.now();
+      console.log('🎵 ReferenceTone: New AudioContext created');
+    }
+    
     if (ctx.state === 'suspended') {
       if (isMobileBrowser) {
         console.log('📱 ReferenceTone Mobile: Creating fresh AudioContext synchronously...');
         const oldContext = ctx;
         ctx = new AudioContext();
         contextRef.current = ctx;
+        contextCreatedAtRef.current = Date.now();
         console.log('✅ ReferenceTone Mobile: Fresh AudioContext created');
         oldContext.close().catch(() => {/* ignore cleanup errors */});
       } else {
@@ -67,6 +91,8 @@ export function useReferenceTone() {
         }
       }
     }
+    
+    lastPlaybackAtRef.current = Date.now();
 
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0.18;
@@ -163,11 +189,9 @@ export function useReferenceTone() {
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      // Cleanup: Stop tone and close context
+      console.log('🧹 useReferenceTone cleanup - stopping tone but keeping context alive');
       stopTone();
-      if (contextRef.current && contextRef.current.state !== 'closed') {
-        contextRef.current.close();
-      }
+      // Don't close context on cleanup
     };
   }, [stopTone]);
 

@@ -86,12 +86,27 @@ export const useScaleAudio = () => {
       oldContext.close().catch(() => {/* ignore cleanup errors */});
     }
     
+    // CRITICAL: Validate context state before proceeding
+    if (context.state === 'closed') {
+      console.error('❌ ScaleAudio: AudioContext is closed, cannot play');
+      return;
+    }
+    
     lastPlaybackAtRef.current = Date.now();
 
     const baseFreq = NOTE_FREQUENCIES[note];
-    if (!baseFreq) return;
+    if (!baseFreq) {
+      console.warn('⚠️ ScaleAudio: Unknown note:', note);
+      return;
+    }
 
     const frequency = baseFreq * Math.pow(2, octave);
+
+    // CRITICAL: Validate frequency is finite
+    if (!Number.isFinite(frequency)) {
+      console.error('❌ ScaleAudio: Invalid frequency:', frequency);
+      return;
+    }
 
     const oscillator = context.createOscillator();
     const gainNode = context.createGain();
@@ -104,9 +119,17 @@ export const useScaleAudio = () => {
 
     // Use default volume of 0.5 for scale practice
     const volume = 0.5;
-    gainNode.gain.setValueAtTime(0, context.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, context.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + duration);
+    const currentTime = context.currentTime;
+    
+    // CRITICAL: Validate all time values are finite
+    if (!Number.isFinite(currentTime)) {
+      console.error('❌ ScaleAudio: Invalid currentTime:', currentTime);
+      return;
+    }
+    
+    gainNode.gain.setValueAtTime(0, currentTime);
+    gainNode.gain.linearRampToValueAtTime(volume, currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + duration);
 
     oscillator.start(context.currentTime);
     oscillator.stop(context.currentTime + duration);

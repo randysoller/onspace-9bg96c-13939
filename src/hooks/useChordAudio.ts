@@ -186,7 +186,12 @@ export function useChordAudio() {
 
   const playChord = useCallback((chord: ChordData) => {
     const masterVol = getEffectiveVolume();
-    if (masterVol === 0) return;
+    
+    // CRITICAL: Validate volume is a finite number
+    if (!Number.isFinite(masterVol) || masterVol === 0) {
+      console.warn('⚠️ ChordAudio: Invalid or zero volume:', masterVol);
+      return;
+    }
 
     stopCurrent();
     
@@ -208,6 +213,12 @@ export function useChordAudio() {
     
     if (ctx.state === 'closed') {
       console.error('❌ AudioContext is closed - cannot play');
+      return;
+    }
+    
+    // CRITICAL: Validate currentTime is finite
+    if (!Number.isFinite(ctx.currentTime)) {
+      console.error('❌ AudioContext has invalid currentTime:', ctx.currentTime);
       return;
     }
     

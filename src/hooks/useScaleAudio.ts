@@ -9,14 +9,42 @@ export const useScaleAudio = () => {
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Page Visibility API: Resume AudioContext when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && audioContextRef.current) {
+        if (audioContextRef.current.state === 'suspended') {
+          console.log('👁️ ScaleAudio: Tab visible - resuming AudioContext...');
+          audioContextRef.current.resume()
+            .then(() => console.log('✅ ScaleAudio: AudioContext resumed'))
+            .catch((err) => console.error('❌ ScaleAudio: Failed to resume:', err));
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       audioContextRef.current?.close();
     };
   }, []);
 
-  const playNote = (note: string, octave: number = 4, duration: number = 0.5) => {
+  const playNote = async (note: string, octave: number = 4, duration: number = 0.5) => {
     const context = audioContextRef.current;
     if (!context) return;
+
+    // CRITICAL FIX: Resume if suspended
+    if (context.state === 'suspended') {
+      console.log('⏸️ ScaleAudio: AudioContext suspended, resuming...');
+      try {
+        await context.resume();
+        console.log('✅ ScaleAudio: AudioContext resumed');
+      } catch (err) {
+        console.error('❌ ScaleAudio: Failed to resume:', err);
+        return;
+      }
+    }
 
     const baseFreq = NOTE_FREQUENCIES[note];
     if (!baseFreq) return;

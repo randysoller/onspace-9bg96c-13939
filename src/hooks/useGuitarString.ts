@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 
 /**
  * Realistic guitar string synthesis hook
@@ -23,18 +23,34 @@ export function useGuitarString() {
   const contextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef(false);
 
-  const getContext = useCallback(() => {
+  const getContext = useCallback(async () => {
     if (!contextRef.current || contextRef.current.state === 'closed') {
       contextRef.current = new AudioContext();
     }
+    
+    // CRITICAL FIX: Await resume if suspended
     if (contextRef.current.state === 'suspended') {
-      contextRef.current.resume();
+      console.log('⏸️ GuitarString: AudioContext suspended, resuming...');
+      try {
+        await contextRef.current.resume();
+        console.log('✅ GuitarString: AudioContext resumed');
+      } catch (err) {
+        console.error('❌ GuitarString: Failed to resume:', err);
+        throw err;
+      }
     }
+    
     return contextRef.current;
   }, []);
 
-  const playString = useCallback(({ frequency, duration = 3.0, volume = 1.0 }: GuitarStringParams) => {
-    const ctx = getContext();
+  const playString = useCallback(async ({ frequency, duration = 3.0, volume = 1.0 }: GuitarStringParams) => {
+    let ctx: AudioContext;
+    try {
+      ctx = await getContext();
+    } catch (err) {
+      console.error('❌ GuitarString: Cannot play - AudioContext unavailable:', err);
+      return;
+    }
     const now = ctx.currentTime;
 
     // ─── Master Chain with Compression ───
@@ -188,6 +204,27 @@ export function useGuitarString() {
     }
     isPlayingRef.current = false;
   }, []);
+
+  // Page Visibility API: Resume AudioContext when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && contextRef.current) {
+        if (contextRef.current.state === 'suspended') {
+          console.log('👁️ GuitarString: Tab visible - resuming AudioContext...');
+          contextRef.current.resume()
+            .then(() => console.log('✅ GuitarString: AudioContext resumed'))
+            .catch((err) => console.error('❌ GuitarString: Failed to resume:', err));
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      stop();
+    };
+  }, [stop]);
 
   return {
     playString,

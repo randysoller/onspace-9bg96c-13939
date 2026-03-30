@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64];
@@ -38,12 +38,23 @@ export function useReferenceTone() {
     }, 300);
   }, []);
 
-  const playChordTone = useCallback((chord: ChordData, duration = 2.5) => {
+  const playChordTone = useCallback(async (chord: ChordData, duration = 2.5) => {
     if (isPlayingRef.current) stopTone();
 
     const ctx = contextRef.current ?? new AudioContext();
     contextRef.current = ctx;
-    if (ctx.state === 'suspended') ctx.resume();
+    
+    // CRITICAL FIX: Await resume if suspended
+    if (ctx.state === 'suspended') {
+      console.log('⏸️ ReferenceTone: AudioContext suspended, resuming...');
+      try {
+        await ctx.resume();
+        console.log('✅ ReferenceTone: AudioContext resumed successfully');
+      } catch (err) {
+        console.error('❌ ReferenceTone: Failed to resume AudioContext:', err);
+        return;
+      }
+    }
 
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0.18;
@@ -121,6 +132,31 @@ export function useReferenceTone() {
       isPlayingRef.current = false;
       timeoutRef.current = null;
     }, (duration + 0.3) * 1000);
+  }, [stopTone]);
+
+  // Page Visibility API: Resume AudioContext when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && contextRef.current) {
+        if (contextRef.current.state === 'suspended') {
+          console.log('👁️ ReferenceTone: Tab visible - resuming AudioContext...');
+          contextRef.current.resume()
+            .then(() => console.log('✅ ReferenceTone: AudioContext resumed on visibility change'))
+            .catch((err) => console.error('❌ ReferenceTone: Failed to resume on visibility change:', err));
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // Cleanup: Stop tone and close context
+      stopTone();
+      if (contextRef.current && contextRef.current.state !== 'closed') {
+        contextRef.current.close();
+      }
+    };
   }, [stopTone]);
 
   return { playChordTone, stopTone, isPlaying: isPlayingRef };

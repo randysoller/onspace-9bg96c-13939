@@ -69,7 +69,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   };
 
   const incrementBPM = () => {
-    const newValue = Math.min(260, bpm + 1);
+    const newValue = Math.min(250, bpm + 1);
     setBpm(newValue);
   };
 
@@ -361,11 +361,36 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
                       onMouseLeave={handleBPMButtonRelease}
                       onTouchStart={() => handleBPMButtonPress('up')}
                       onTouchEnd={handleBPMButtonRelease}
-                      disabled={bpm >= 260}
+                      disabled={bpm >= 250}
                       className="p-2 rounded-lg bg-[hsl(var(--bg-surface))] hover:bg-[hsl(var(--bg-overlay))] disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
+                  </div>
+                </div>
+
+                {/* Quick BPM Buttons */}
+                <div>
+                  <label className="text-xs uppercase tracking-wide text-[hsl(var(--text-muted))] mb-2 block">
+                    Quick BPM
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[20, 80, 160, 200].map((quickBpm) => (
+                      <button
+                        key={quickBpm}
+                        onClick={() => setBpm(quickBpm)}
+                        className={`
+                          py-2 rounded-lg font-semibold text-sm transition-all
+                          ${
+                            bpm === quickBpm
+                              ? 'bg-amber-500 text-zinc-950'
+                              : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                          }
+                        `}
+                      >
+                        {quickBpm}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

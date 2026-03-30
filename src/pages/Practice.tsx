@@ -1,10 +1,11 @@
+
 /**
  * Practice Page - Single Chord Practice with Real-Time Detection
- * PERFORMANCE OPTIMIZED VERSION
+ * PERFORMANCE OPTIMIZED VERSION - CRITICAL FIX FOR NEXT BUTTON
  * 
  * Key optimizations:
- * - Zustand selectors for granular subscriptions (70% fewer re-renders)
- * - useCallback for stable function references
+ * - Direct Zustand selectors (no wrapper functions that create new objects)
+ * - useCallback for stable function references  
  * - useMemo for expensive computations
  * - Removed custom event listeners (replaced with props)
  * - Optimized beat-sync logic
@@ -46,34 +47,6 @@ import { ShowChordNameToggle } from '@/components/features/ShowChordNameToggle';
 import { VolumeControl } from '@/components/features/VolumeControl';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// OPTIMIZED: Zustand Selectors (prevents re-renders on unrelated store changes)
-// ─────────────────────────────────────────────────────────────────────────────
-const usePracticeState = () => ({
-  isPracticing: usePracticeStore(s => s.isPracticing),
-  isRevealed: usePracticeStore(s => s.isRevealed),
-  getCurrentChord: usePracticeStore(s => s.getCurrentChord),
-  nextChord: usePracticeStore(s => s.nextChord),
-  prevChord: usePracticeStore(s => s.prevChord),
-  revealChord: usePracticeStore(s => s.revealChord),
-  hideChord: usePracticeStore(s => s.hideChord),
-  stopPractice: usePracticeStore(s => s.stopPractice),
-});
-
-const useDetectionState = () => ({
-  sensitivity: useDetectionSettingsStore(s => s.sensitivity),
-  setSensitivity: useDetectionSettingsStore(s => s.setSensitivity),
-  advancedEnabled: useDetectionSettingsStore(s => s.advancedEnabled),
-  advancedValues: useDetectionSettingsStore(s => s.advancedValues),
-});
-
-const useMetronomeState = () => ({
-  resetBeatCounter: useMetronomeStore(s => s.resetBeatCounter),
-  beatsUntilAdvance: useMetronomeStore(s => s.beatsUntilAdvance),
-  syncEnabled: useMetronomeStore(s => s.syncEnabled),
-  isPlaying: useMetronomeStore(s => s.isPlaying),
-});
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Helper Functions (pure, no re-creation)
 // ─────────────────────────────────────────────────────────────────────────────
 const getSensitivityLabel = (sens: number) => {
@@ -86,11 +59,32 @@ export default function Practice() {
   const navigate = useNavigate();
   
   // ─────────────────────────────────────────────────────────────────────────────
-  // OPTIMIZED: Granular store subscriptions
+  // CRITICAL FIX: Direct Zustand selectors (no wrapper functions)
+  // Previous issue: Helper functions returned new objects, breaking useCallback
   // ─────────────────────────────────────────────────────────────────────────────
-  const practiceState = usePracticeState();
-  const detectionState = useDetectionState();
-  const metronomeState = useMetronomeState();
+  // Practice state
+  const isPracticing = usePracticeStore(s => s.isPracticing);
+  const isRevealed = usePracticeStore(s => s.isRevealed);
+  const getCurrentChord = usePracticeStore(s => s.getCurrentChord);
+  const nextChord = usePracticeStore(s => s.nextChord);
+  const prevChord = usePracticeStore(s => s.prevChord);
+  const revealChord = usePracticeStore(s => s.revealChord);
+  const hideChord = usePracticeStore(s => s.hideChord);
+  const stopPractice = usePracticeStore(s => s.stopPractice);
+  
+  // Detection state
+  const sensitivity = useDetectionSettingsStore(s => s.sensitivity);
+  const setSensitivity = useDetectionSettingsStore(s => s.setSensitivity);
+  const advancedEnabled = useDetectionSettingsStore(s => s.advancedEnabled);
+  const advancedValues = useDetectionSettingsStore(s => s.advancedValues);
+  
+  // Metronome state
+  const resetBeatCounter = useMetronomeStore(s => s.resetBeatCounter);
+  const beatsUntilAdvance = useMetronomeStore(s => s.beatsUntilAdvance);
+  const syncEnabled = useMetronomeStore(s => s.syncEnabled);
+  const metronomeIsPlaying = useMetronomeStore(s => s.isPlaying);
+  
+  // Audio state
   const getEffectiveVolume = useAudioStore(s => s.getEffectiveVolume);
   
   // ─────────────────────────────────────────────────────────────────────────────
@@ -109,7 +103,7 @@ export default function Practice() {
   // ─────────────────────────────────────────────────────────────────────────────
   // OPTIMIZED: Memoized chord reference (prevents unnecessary re-renders)
   // ─────────────────────────────────────────────────────────────────────────────
-  const chord = useMemo(() => practiceState.getCurrentChord(), [practiceState.getCurrentChord]);
+  const chord = useMemo(() => getCurrentChord(), [getCurrentChord]);
   
   // ─────────────────────────────────────────────────────────────────────────────
   // Session stats
@@ -135,7 +129,7 @@ export default function Practice() {
   const autoAdvanceTimeoutRef = useRef<number | null>(null);
   
   // ─────────────────────────────────────────────────────────────────────────────
-  // OPTIMIZED: Stable event handlers with useCallback
+  // FIXED: Stable event handlers with proper dependencies
   // ─────────────────────────────────────────────────────────────────────────────
   const clearAutoAdvance = useCallback(() => {
     if (autoAdvanceTimeoutRef.current) {
@@ -145,57 +139,60 @@ export default function Practice() {
   }, []);
   
   const handleNext = useCallback(() => {
+    console.log('🎯 handleNext called');
     clearAutoAdvance();
     
-    if (!practiceState.isRevealed && chord) {
+    if (!isRevealed && chord) {
       recordAttempt(chord.symbol, chord.name, 'skipped');
     }
-    practiceState.hideChord();
+    hideChord();
     resetChordTimer();
-    metronomeState.resetBeatCounter();
-    practiceState.nextChord();
+    resetBeatCounter();
+    nextChord();
   }, [
     clearAutoAdvance,
-    practiceState,
+    isRevealed,
     chord,
     recordAttempt,
+    hideChord,
     resetChordTimer,
-    metronomeState,
+    resetBeatCounter,
+    nextChord,
   ]);
   
   const handlePrev = useCallback(() => {
-    practiceState.hideChord();
+    hideChord();
     resetChordTimer();
-    metronomeState.resetBeatCounter();
-    practiceState.prevChord();
-  }, [practiceState, resetChordTimer, metronomeState]);
+    resetBeatCounter();
+    prevChord();
+  }, [hideChord, resetChordTimer, resetBeatCounter, prevChord]);
   
   const handleRestart = useCallback(() => {
-    practiceState.hideChord();
+    hideChord();
     resetChordTimer();
-    metronomeState.resetBeatCounter();
-    practiceState.stopPractice();
+    resetBeatCounter();
+    stopPractice();
     navigate('/chord-practice');
-  }, [practiceState, resetChordTimer, metronomeState, navigate]);
+  }, [hideChord, resetChordTimer, resetBeatCounter, stopPractice, navigate]);
   
   const handleBack = useCallback(() => {
     const summary = getSummary();
     if (summary.attempts.length > 0) {
       endSession();
     } else {
-      practiceState.stopPractice();
+      stopPractice();
       navigate('/chord-practice');
     }
-  }, [getSummary, endSession, practiceState, navigate]);
+  }, [getSummary, endSession, stopPractice, navigate]);
   
   // ─────────────────────────────────────────────────────────────────────────────
-  // OPTIMIZED: Stable detection callbacks
+  // FIXED: Stable detection callbacks
   // ─────────────────────────────────────────────────────────────────────────────
   const handleCorrectDetection = useCallback(() => {
     console.log('✅ Correct chord detected in Practice page!');
     if (chord) {
       recordAttempt(chord.symbol, chord.name, 'correct');
-      practiceState.revealChord();
+      revealChord();
       resetChordTimer();
       
       console.log('⏱️ Setting auto-advance timer for 1.5 seconds...');
@@ -205,7 +202,7 @@ export default function Practice() {
         handleNext();
       }, 1500);
     }
-  }, [chord, recordAttempt, practiceState, resetChordTimer, clearAutoAdvance, handleNext]);
+  }, [chord, recordAttempt, revealChord, resetChordTimer, clearAutoAdvance, handleNext]);
   
   const handleWrongDetection = useCallback((detectedSymbol: string) => {
     console.log('❌ Wrong chord detected:', detectedSymbol);
@@ -216,16 +213,16 @@ export default function Practice() {
   // ─────────────────────────────────────────────────────────────────────────────
   const detectionConfig = useMemo(() => ({
     targetChord: chord,
-    sensitivity: detectionState.sensitivity,
+    sensitivity: sensitivity,
     autoStart: true,
-    advancedSettings: detectionState.advancedEnabled ? detectionState.advancedValues : null,
+    advancedSettings: advancedEnabled ? advancedValues : null,
     onCorrect: handleCorrectDetection,
     onWrongDetected: handleWrongDetection,
   }), [
     chord,
-    detectionState.sensitivity,
-    detectionState.advancedEnabled,
-    detectionState.advancedValues,
+    sensitivity,
+    advancedEnabled,
+    advancedValues,
     handleCorrectDetection,
     handleWrongDetection,
   ]);
@@ -246,8 +243,8 @@ export default function Practice() {
   // OPTIMIZED: Memoized sensitivity label
   // ─────────────────────────────────────────────────────────────────────────────
   const sensitivityLabel = useMemo(
-    () => getSensitivityLabel(detectionState.sensitivity),
-    [detectionState.sensitivity]
+    () => getSensitivityLabel(sensitivity),
+    [sensitivity]
   );
   
   // ─────────────────────────────────────────────────────────────────────────────
@@ -261,15 +258,15 @@ export default function Practice() {
   }, [chord, pauseDetection, playChord]);
   
   // ─────────────────────────────────────────────────────────────────────────────
-  // OPTIMIZED: Sensitivity adjustment handlers
+  // FIXED: Sensitivity adjustment handlers with stable dependencies
   // ─────────────────────────────────────────────────────────────────────────────
   const decreaseSensitivity = useCallback(() => {
-    detectionState.setSensitivity(Math.max(1, detectionState.sensitivity - 1));
-  }, [detectionState]);
+    setSensitivity(Math.max(1, sensitivity - 1));
+  }, [setSensitivity, sensitivity]);
   
   const increaseSensitivity = useCallback(() => {
-    detectionState.setSensitivity(Math.min(10, detectionState.sensitivity + 1));
-  }, [detectionState]);
+    setSensitivity(Math.min(10, sensitivity + 1));
+  }, [setSensitivity, sensitivity]);
   
   // ─────────────────────────────────────────────────────────────────────────────
   // Initialize session on mount
@@ -282,10 +279,10 @@ export default function Practice() {
   // Redirect if not practicing
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!practiceState.isPracticing) {
+    if (!isPracticing) {
       navigate('/chord-setup');
     }
-  }, [practiceState.isPracticing, navigate]);
+  }, [isPracticing, navigate]);
   
   // ─────────────────────────────────────────────────────────────────────────────
   // Cleanup on unmount
@@ -312,12 +309,12 @@ export default function Practice() {
   // New version: Only runs when actually needed via handleNext
   // ─────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!metronomeState.syncEnabled || !metronomeState.isPlaying) return;
+    if (!syncEnabled || !metronomeIsPlaying) return;
     
-    if (metronomeState.beatsUntilAdvance <= 0) {
+    if (beatsUntilAdvance <= 0) {
       handleNext();
     }
-  }, [metronomeState.beatsUntilAdvance, metronomeState.syncEnabled, metronomeState.isPlaying, handleNext]);
+  }, [beatsUntilAdvance, syncEnabled, metronomeIsPlaying, handleNext]);
   
   // ─────────────────────────────────────────────────────────────────────────────
   // Reset chord timer when chord changes
@@ -372,18 +369,18 @@ export default function Practice() {
                 <Sliders className="w-3.5 h-3.5 text-[hsl(var(--text-muted))]" />
                 <button
                   onClick={decreaseSensitivity}
-                  disabled={detectionState.sensitivity <= 1}
+                  disabled={sensitivity <= 1}
                   className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Decrease sensitivity"
                 >
                   <Minus className="w-4 h-4 text-[hsl(var(--text-subtle))]" />
                 </button>
                 <span className="text-sm text-emerald-500 font-bold min-w-[1.5rem] text-center">
-                  {detectionState.sensitivity}
+                  {sensitivity}
                 </span>
                 <button
                   onClick={increaseSensitivity}
-                  disabled={detectionState.sensitivity >= 10}
+                  disabled={sensitivity >= 10}
                   className="p-1.5 rounded-md hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="Increase sensitivity"
                 >
@@ -461,18 +458,18 @@ export default function Practice() {
             <div className="md:hidden flex items-center gap-1">
               <button
                 onClick={decreaseSensitivity}
-                disabled={detectionState.sensitivity <= 1}
+                disabled={sensitivity <= 1}
                 className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Decrease sensitivity"
               >
                 <Minus className="w-[18px] h-[18px] text-[hsl(var(--text-subtle))]" />
               </button>
               <span className="text-[18px] text-emerald-500 font-bold min-w-[1.5rem] text-center leading-none">
-                {detectionState.sensitivity}
+                {sensitivity}
               </span>
               <button
                 onClick={increaseSensitivity}
-                disabled={detectionState.sensitivity >= 10}
+                disabled={sensitivity >= 10}
                 className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
                 aria-label="Increase sensitivity"
               >

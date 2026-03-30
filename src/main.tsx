@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/react-query';
@@ -8,9 +9,11 @@ import { logger } from './lib/logger';
 // CRITICAL: Start React app FIRST, then initialize monitoring
 // This prevents Sentry from interfering with React's hook dispatcher
 createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
-    <App />
-  </QueryClientProvider>
+  <StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </StrictMode>
 );
 
 // Initialize monitoring AFTER React is running (production only)

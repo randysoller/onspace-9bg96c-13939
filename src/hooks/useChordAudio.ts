@@ -97,6 +97,27 @@ export function useChordAudio() {
   const activeGainNodes = useRef<GainNode[]>([]);  // Track all gain nodes for cleanup
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
+  const stopCurrent = useCallback(() => {
+    // CRITICAL: Disconnect ALL nodes before stopping to prevent resource leaks
+    activeOscillators.current.forEach((osc) => {
+      try { 
+        osc.stop(); 
+        osc.disconnect();  // Explicitly disconnect from audio graph
+      } catch { /* already stopped */ }
+    });
+    activeOscillators.current = [];
+    
+    // Disconnect all gain nodes
+    activeGainNodes.current.forEach((gain) => {
+      try { 
+        gain.disconnect(); 
+      } catch { /* already disconnected */ }
+    });
+    activeGainNodes.current = [];
+    
+    console.log('🧹 Cleaned up all audio nodes');
+  }, []);
+
   const getContext = useCallback(() => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
@@ -162,27 +183,6 @@ export function useChordAudio() {
     
     return ctxRef.current;
   }, [stopCurrent]);
-
-  const stopCurrent = useCallback(() => {
-    // CRITICAL: Disconnect ALL nodes before stopping to prevent resource leaks
-    activeOscillators.current.forEach((osc) => {
-      try { 
-        osc.stop(); 
-        osc.disconnect();  // Explicitly disconnect from audio graph
-      } catch { /* already stopped */ }
-    });
-    activeOscillators.current = [];
-    
-    // Disconnect all gain nodes
-    activeGainNodes.current.forEach((gain) => {
-      try { 
-        gain.disconnect(); 
-      } catch { /* already disconnected */ }
-    });
-    activeGainNodes.current = [];
-    
-    console.log('🧹 Cleaned up all audio nodes');
-  }, []);
 
   const playChord = useCallback((chord: ChordData) => {
     const masterVol = getEffectiveVolume();

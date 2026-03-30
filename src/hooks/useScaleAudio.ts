@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAudioStore } from '@/stores/audioStore';
 import { NOTE_FREQUENCIES } from '@/constants/scales';
 
 // Mobile detection utility
@@ -11,7 +10,6 @@ export const useScaleAudio = () => {
   const contextCreatedAtRef = useRef<number>(0);
   const lastPlaybackAtRef = useRef<number>(0);
   const activeNodesRef = useRef<{ oscillators: OscillatorNode[]; gains: GainNode[] }>({ oscillators: [], gains: [] });
-  const { chordVolume } = useAudioStore();
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
@@ -104,8 +102,10 @@ export const useScaleAudio = () => {
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, context.currentTime);
 
+    // Use default volume of 0.5 for scale practice
+    const volume = 0.5;
     gainNode.gain.setValueAtTime(0, context.currentTime);
-    gainNode.gain.linearRampToValueAtTime(chordVolume, context.currentTime + 0.01);
+    gainNode.gain.linearRampToValueAtTime(volume, context.currentTime + 0.01);
     gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + duration);
 
     oscillator.start(context.currentTime);

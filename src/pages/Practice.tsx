@@ -161,10 +161,12 @@ export default function Practice() {
   ]);
   
   const handlePrev = useCallback(() => {
+    console.log('⬅️ handlePrev called');
     hideChord();
     resetChordTimer();
     resetBeatCounter();
     prevChord();
+    console.log('⬅️ handlePrev completed');
   }, [hideChord, resetChordTimer, resetBeatCounter, prevChord]);
   
   const handleRestart = useCallback(() => {

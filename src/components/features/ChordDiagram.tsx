@@ -30,7 +30,15 @@ const FRET_INLAY_POSITIONS = [3, 5, 7, 9, 15, 17, 19, 21]; // Single dot
 const DOUBLE_DOT_POSITIONS = [12, 24]; // Double dot
 
 export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagramProps) {
-  const { width, height, dotRadius, fontSize, fretTextSize } = SIZES[size];
+  // Validate size prop to prevent undefined SIZES lookup
+  const validSize = (['sm', 'md', 'lg'] as const).includes(size as any) ? size : 'md';
+  const { width, height, dotRadius, fontSize, fretTextSize } = SIZES[validSize];
+  
+  // Defensive: Ensure dimensions are valid numbers
+  if (!width || !height || isNaN(width) || isNaN(height)) {
+    console.error('❌ ChordDiagram: Invalid dimensions', { width, height, size, validSize });
+    return null;
+  }
   
   const nutY = height * 0.2;
   const fretSpacing = (height - nutY) / 5;
@@ -45,6 +53,8 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
   
   // Track which strings are rendered by barre sections
   const barreRenderedStrings = new Set<number>();
+  
+  console.log('✅ ChordDiagram rendering:', { symbol: chord.symbol, size: validSize, width, height });
   
   return (
     <svg

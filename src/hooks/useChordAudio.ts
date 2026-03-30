@@ -94,6 +94,7 @@ export function useChordAudio() {
   const contextCreatedAtRef = useRef<number>(0);
   const lastPlaybackAtRef = useRef<number>(0);
   const activeOscillators = useRef<OscillatorNode[]>([]);
+  const activeGainNodes = useRef<GainNode[]>([]);  // Track all gain nodes for cleanup
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
   const getContext = useCallback(async () => {
@@ -110,20 +111,40 @@ export function useChordAudio() {
     
     if (isContextStale && ctxRef.current && ctxRef.current.state !== 'closed') {
       console.log('⏰ AudioContext is stale (age:', contextAge, 'ms, idle:', timeSinceLastPlayback, 'ms) - forcing recreation');
+      
+      // CRITICAL: Stop and disconnect ALL active nodes BEFORE closing context
+      stopCurrent();
+      
       const oldContext = ctxRef.current;
       ctxRef.current = null;
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close with timeout fallback (mobile Safari requirement)
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).then(() => {
+        console.log('✅ Old context closed successfully');
+      }).catch((err) => {
+        console.warn('⚠️ Context close error (non-critical):', err);
+      });
     }
     
     // Check if context is suspended - recreate instead of resume for reliability
     if (ctxRef.current && ctxRef.current.state === 'suspended') {
       console.log('⏸️ AudioContext suspended (platform:', isMobileBrowser ? 'mobile' : 'desktop', ') - recreating for reliability...');
+      
+      // CRITICAL: Clean up all nodes before recreating
+      stopCurrent();
+      
       const oldContext = ctxRef.current;
       ctxRef.current = new AudioContext();
       contextCreatedAtRef.current = Date.now();
       console.log('✅ Fresh AudioContext created (state:', ctxRef.current.state, ')');
-      // Clean up old context asynchronously (don't await to preserve gesture chain)
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Close old context with timeout fallback
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      
       return ctxRef.current;
     }
     
@@ -147,10 +168,24 @@ export function useChordAudio() {
   }, []);
 
   const stopCurrent = useCallback(() => {
+    // CRITICAL: Disconnect ALL nodes before stopping to prevent resource leaks
     activeOscillators.current.forEach((osc) => {
-      try { osc.stop(); } catch { /* already stopped */ }
+      try { 
+        osc.stop(); 
+        osc.disconnect();  // Explicitly disconnect from audio graph
+      } catch { /* already stopped */ }
     });
     activeOscillators.current = [];
+    
+    // Disconnect all gain nodes
+    activeGainNodes.current.forEach((gain) => {
+      try { 
+        gain.disconnect(); 
+      } catch { /* already disconnected */ }
+    });
+    activeGainNodes.current = [];
+    
+    console.log('🧹 Cleaned up all audio nodes');
   }, []);
 
   const playChord = useCallback(async (chord: ChordData) => {
@@ -194,6 +229,9 @@ export function useChordAudio() {
     const gain = Math.pow(masterVol, 1.2) * 10.0;
     masterGain.gain.value = gain;
     masterGain.connect(ctx.destination);
+    
+    // Track gain node for cleanup
+    activeGainNodes.current.push(masterGain);
 
     const now = ctx.currentTime + 0.05;
     const strumDelay = 0.035;
@@ -216,7 +254,18 @@ export function useChordAudio() {
       }
 
       activeOscillators.current = allOscs;
-      console.log('✅ Chord playback started successfully - oscillators:', allOscs.length);
+      console.log('✅ Chord playback started successfully - oscillators:', allOscs.length, '| gain nodes:', activeGainNodes.current.length);
+      
+      // Mobile resource check
+      if (isMobileBrowser) {
+        console.log('📱 Mobile audio state:', {
+          contextState: ctx.state,
+          sampleRate: ctx.sampleRate,
+          activeOscillators: allOscs.length,
+          activeGains: activeGainNodes.current.length,
+          contextAge: Date.now() - contextCreatedAtRef.current,
+        });
+      }
     } catch (playbackErr) {
       console.error('❌ Error during oscillator creation/playback:', playbackErr);
       // Clean up any created oscillators

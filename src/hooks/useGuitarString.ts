@@ -28,6 +28,7 @@ export function useGuitarString() {
   const contextCreatedAtRef = useRef<number>(0);
   const lastPlaybackAtRef = useRef<number>(0);
   const isPlayingRef = useRef(false);
+  const activeNodesRef = useRef<AudioNode[]>([]);
 
   const getContext = useCallback(async () => {
     const now = Date.now();
@@ -41,18 +42,37 @@ export function useGuitarString() {
     
     if (isContextStale && contextRef.current && contextRef.current.state !== 'closed') {
       console.log('⏰ GuitarString: Context stale - forcing recreation');
+      
+      // Clean up all active nodes
+      activeNodesRef.current.forEach(node => { try { node.disconnect(); } catch {} });
+      activeNodesRef.current = [];
+      
       const oldContext = contextRef.current;
       contextRef.current = null;
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
     }
     
     if (contextRef.current && contextRef.current.state === 'suspended') {
       console.log('⏸️ GuitarString: Creating fresh AudioContext...');
+      
+      // Clean up all active nodes
+      activeNodesRef.current.forEach(node => { try { node.disconnect(); } catch {} });
+      activeNodesRef.current = [];
+      
       const oldContext = contextRef.current;
       contextRef.current = new AudioContext();
       contextCreatedAtRef.current = Date.now();
       console.log('✅ GuitarString: Fresh AudioContext created');
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
+      
       return contextRef.current;
     }
     
@@ -76,6 +96,9 @@ export function useGuitarString() {
     }
     const now = ctx.currentTime;
 
+    // Track all created nodes for cleanup
+    const nodesToCleanup: AudioNode[] = [];
+    
     // ─── Master Chain with Compression ───
     const compressor = ctx.createDynamicsCompressor();
     compressor.threshold.setValueAtTime(-12, now);
@@ -84,12 +107,14 @@ export function useGuitarString() {
     compressor.attack.setValueAtTime(0.002, now);
     compressor.release.setValueAtTime(0.15, now);
     compressor.connect(ctx.destination);
+    nodesToCleanup.push(compressor);
 
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(0, now);
     masterGain.gain.linearRampToValueAtTime(volume, now + 0.002);
     masterGain.gain.setTargetAtTime(0.0001, now + 0.005, duration * 0.32);
     masterGain.connect(compressor);
+    nodesToCleanup.push(masterGain);
 
     // ─── Body Resonance EQ Chain ───
     const bodyLow = ctx.createBiquadFilter();
@@ -119,6 +144,8 @@ export function useGuitarString() {
     bodyMid.connect(bodyHigh);
     bodyHigh.connect(airRoll);
     airRoll.connect(masterGain);
+    
+    nodesToCleanup.push(bodyLow, bodyMid, bodyHigh, airRoll);
 
     // ─── Harmonic Partials (Physical Modeling) ───
     const harmonics = [
@@ -212,20 +239,27 @@ export function useGuitarString() {
     buzzSrc.start(now);
 
     isPlayingRef.current = true;
+    activeNodesRef.current.push(...nodesToCleanup);
 
-    // Auto-cleanup
+    // Auto-cleanup - disconnect nodes but DON'T close context
     setTimeout(() => {
+      nodesToCleanup.forEach(node => {
+        try { node.disconnect(); } catch {}
+      });
+      activeNodesRef.current = activeNodesRef.current.filter(n => !nodesToCleanup.includes(n));
       isPlayingRef.current = false;
-      ctx.close();
+      console.log('🧹 GuitarString: Nodes cleaned up, context kept alive');
     }, (duration + 0.5) * 1000);
   }, [getContext]);
 
   const stop = useCallback(() => {
-    if (contextRef.current) {
-      contextRef.current.close();
-      contextRef.current = null;
-    }
+    // Disconnect all active nodes
+    activeNodesRef.current.forEach(node => {
+      try { node.disconnect(); } catch {}
+    });
+    activeNodesRef.current = [];
     isPlayingRef.current = false;
+    console.log('🧹 GuitarString: Stopped and cleaned up all nodes');
   }, []);
 
   // Page Visibility API: Resume AudioContext when tab becomes visible

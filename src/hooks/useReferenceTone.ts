@@ -16,7 +16,7 @@ export function useReferenceTone() {
   const contextRef = useRef<AudioContext | null>(null);
   const contextCreatedAtRef = useRef<number>(0);
   const lastPlaybackAtRef = useRef<number>(0);
-  const activeNodesRef = useRef<{ oscs: OscillatorNode[]; master: GainNode } | null>(null);
+  const activeNodesRef = useRef<{ oscs: OscillatorNode[]; master: GainNode; envelopes: GainNode[] } | null>(null);
   const isPlayingRef = useRef(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -37,10 +37,13 @@ export function useReferenceTone() {
     } catch {}
 
     setTimeout(() => {
+      // CRITICAL: Disconnect ALL nodes to prevent resource leaks
       nodes.oscs.forEach(o => { try { o.stop(); o.disconnect(); } catch {} });
+      nodes.envelopes.forEach(e => { try { e.disconnect(); } catch {} });
       try { nodes.master.disconnect(); } catch {}
       activeNodesRef.current = null;
       isPlayingRef.current = false;
+      console.log('🧹 ReferenceTone: All nodes cleaned up');
     }, 300);
   }, []);
 
@@ -59,9 +62,17 @@ export function useReferenceTone() {
     
     if (isContextStale && contextRef.current && contextRef.current.state !== 'closed') {
       console.log('⏰ ReferenceTone: Context stale - forcing recreation');
+      
+      // Stop all active tones first
+      stopTone();
+      
       const oldContext = contextRef.current;
       contextRef.current = null;
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
     }
 
     let ctx = contextRef.current ?? new AudioContext();
@@ -73,12 +84,20 @@ export function useReferenceTone() {
     
     if (ctx.state === 'suspended') {
       console.log('⏸️ ReferenceTone: AudioContext suspended - recreating...');
+      
+      // Clean up all active nodes
+      stopTone();
+      
       const oldContext = ctx;
       ctx = new AudioContext();
       contextRef.current = ctx;
       contextCreatedAtRef.current = Date.now();
       console.log('✅ ReferenceTone: Fresh AudioContext created');
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();
@@ -88,6 +107,7 @@ export function useReferenceTone() {
     masterGain.connect(ctx.destination);
 
     const oscs: OscillatorNode[] = [];
+    const envelopes: GainNode[] = [];
     const now = ctx.currentTime;
 
     // Collect active strings
@@ -130,6 +150,7 @@ export function useReferenceTone() {
       osc.stop(startTime + duration + 0.1);
 
       oscs.push(osc);
+      envelopes.push(env);
 
       // 2nd harmonic: quiet sine at octave above for warmth
       const osc2 = ctx.createOscillator();
@@ -148,9 +169,10 @@ export function useReferenceTone() {
       osc2.stop(startTime + duration + 0.1);
 
       oscs.push(osc2);
+      envelopes.push(env2);
     });
 
-    activeNodesRef.current = { oscs, master: masterGain };
+    activeNodesRef.current = { oscs, master: masterGain, envelopes };
     isPlayingRef.current = true;
 
     // Auto-cleanup timer

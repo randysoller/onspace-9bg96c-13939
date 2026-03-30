@@ -10,6 +10,7 @@ export const useScaleAudio = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const contextCreatedAtRef = useRef<number>(0);
   const lastPlaybackAtRef = useRef<number>(0);
+  const activeNodesRef = useRef<{ oscillators: OscillatorNode[]; gains: GainNode[] }>({ oscillators: [], gains: [] });
   const { chordVolume } = useAudioStore();
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -48,9 +49,19 @@ export const useScaleAudio = () => {
     
     if (isContextStale && audioContextRef.current && audioContextRef.current.state !== 'closed') {
       console.log('⏰ ScaleAudio: Context stale - forcing recreation');
+      
+      // Clean up all active nodes
+      activeNodesRef.current.oscillators.forEach(osc => { try { osc.stop(); osc.disconnect(); } catch {} });
+      activeNodesRef.current.gains.forEach(gain => { try { gain.disconnect(); } catch {} });
+      activeNodesRef.current = { oscillators: [], gains: [] };
+      
       const oldContext = audioContextRef.current;
       audioContextRef.current = null;
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
     }
     
     let context = audioContextRef.current;
@@ -63,12 +74,22 @@ export const useScaleAudio = () => {
 
     if (context.state === 'suspended') {
       console.log('⏸️ ScaleAudio: Creating fresh AudioContext...');
+      
+      // Clean up all active nodes
+      activeNodesRef.current.oscillators.forEach(osc => { try { osc.stop(); osc.disconnect(); } catch {} });
+      activeNodesRef.current.gains.forEach(gain => { try { gain.disconnect(); } catch {} });
+      activeNodesRef.current = { oscillators: [], gains: [] };
+      
       const oldContext = context;
       context = new (window.AudioContext || (window as any).webkitAudioContext)();
       audioContextRef.current = context;
       contextCreatedAtRef.current = Date.now();
       console.log('✅ ScaleAudio: Fresh AudioContext created');
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
+      
+      // Force synchronous close
+      const closePromise = oldContext.close();
+      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 100));
+      Promise.race([closePromise, timeoutPromise]).catch(() => {/* ignore cleanup errors */});
     }
     
     lastPlaybackAtRef.current = Date.now();
@@ -93,6 +114,18 @@ export const useScaleAudio = () => {
 
     oscillator.start(context.currentTime);
     oscillator.stop(context.currentTime + duration);
+    
+    // Track nodes for cleanup
+    activeNodesRef.current.oscillators.push(oscillator);
+    activeNodesRef.current.gains.push(gainNode);
+    
+    // Auto-cleanup after playback
+    setTimeout(() => {
+      try { oscillator.disconnect(); } catch {}
+      try { gainNode.disconnect(); } catch {}
+      activeNodesRef.current.oscillators = activeNodesRef.current.oscillators.filter(o => o !== oscillator);
+      activeNodesRef.current.gains = activeNodesRef.current.gains.filter(g => g !== gainNode);
+    }, (duration + 0.1) * 1000);
   };
 
   const playScale = async (rootNote: string, scaleIntervals: number[], bpm: number = 120) => {

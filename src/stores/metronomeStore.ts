@@ -85,7 +85,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       countInMeasures: 1,
       
       setIsPlaying: (playing) => set({ isPlaying: playing }),
-      setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(250, bpm)) }),
+      setBpm: (bpm) => set({ bpm: Math.max(20, Math.min(260, bpm)) }),
       setBeatsPerMeasure: (beats) => set({ beatsPerMeasure: beats }),
       setTimeSignature: (beats, noteValue) => set({ beatsPerMeasure: beats, noteValue }),
       setCurrentBeat: (beat) => set({ currentBeat: beat }),

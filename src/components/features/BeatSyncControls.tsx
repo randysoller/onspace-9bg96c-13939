@@ -40,7 +40,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     countInBeat,
     countInMeasures,
     setIsPlaying,
-    setBPM,
+    setBpm,
     setSyncEnabled,
     setSyncUnit,
     setBeatsPerChord,
@@ -69,11 +69,11 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   };
 
   const incrementBPM = () => {
-    setBPM(prev => Math.min(260, prev + 1));
+    setBpm(prev => Math.min(260, prev + 1));
   };
 
   const decrementBPM = () => {
-    setBPM(prev => Math.max(20, prev - 1));
+    setBpm(prev => Math.max(20, prev - 1));
   };
 
   const handleBPMButtonPress = (direction: 'up' | 'down') => {

@@ -61,12 +61,12 @@ export default function MetronomeModal() {
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70]"
         onClick={closeMetronome}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none pt-16 pb-20 md:pt-20 md:pb-8">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none pt-16 pb-20 md:pt-20 md:pb-8">
         <div className="w-full max-w-md h-full max-h-full bg-zinc-950 border border-zinc-800 rounded-lg pointer-events-auto shadow-2xl mx-4 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-zinc-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">

@@ -69,25 +69,16 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   };
 
   const incrementBPM = () => {
-    console.log('🔼 INCREMENT BPM called, current:', bpm);
-    setBpm(prev => {
-      const newValue = Math.min(260, prev + 1);
-      console.log('🔼 Setting BPM from', prev, 'to', newValue);
-      return newValue;
-    });
+    const newValue = Math.min(260, bpm + 1);
+    setBpm(newValue);
   };
 
   const decrementBPM = () => {
-    console.log('🔽 DECREMENT BPM called, current:', bpm);
-    setBpm(prev => {
-      const newValue = Math.max(20, prev - 1);
-      console.log('🔽 Setting BPM from', prev, 'to', newValue);
-      return newValue;
-    });
+    const newValue = Math.max(20, bpm - 1);
+    setBpm(newValue);
   };
 
   const handleBPMButtonPress = (direction: 'up' | 'down') => {
-    console.log('🖱️ BPM Button PRESSED:', direction);
     // Immediate single increment
     if (direction === 'up') {
       incrementBPM();
@@ -97,13 +88,11 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     
     // After 2 seconds, start rapid increment
     holdTimeoutRef.current = setTimeout(() => {
-      console.log('⏱️ Starting rapid increment:', direction);
       setRapidIncrement(direction);
     }, 2000);
   };
 
   const handleBPMButtonRelease = () => {
-    console.log('🖱️ BPM Button RELEASED');
     // Clear timeout if released before 2 seconds
     if (holdTimeoutRef.current) {
       clearTimeout(holdTimeoutRef.current);

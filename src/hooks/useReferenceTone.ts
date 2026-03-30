@@ -47,19 +47,15 @@ export function useReferenceTone() {
     let ctx = contextRef.current ?? new AudioContext();
     contextRef.current = ctx;
     
-    // MOBILE FIX: On mobile, close suspended context and create fresh one
+    // MOBILE FIX: On mobile, recreate suspended contexts SYNCHRONOUSLY
     if (ctx.state === 'suspended') {
       if (isMobileBrowser) {
-        console.log('📱 ReferenceTone Mobile: Closing suspended AudioContext...');
-        try {
-          await ctx.close();
-          ctx = new AudioContext();
-          contextRef.current = ctx;
-          console.log('✅ ReferenceTone Mobile: Fresh AudioContext created');
-        } catch (err) {
-          console.error('❌ ReferenceTone Mobile: Failed to recreate AudioContext:', err);
-          return;
-        }
+        console.log('📱 ReferenceTone Mobile: Creating fresh AudioContext synchronously...');
+        const oldContext = ctx;
+        ctx = new AudioContext();
+        contextRef.current = ctx;
+        console.log('✅ ReferenceTone Mobile: Fresh AudioContext created');
+        oldContext.close().catch(() => {/* ignore cleanup errors */});
       } else {
         console.log('🖥️ ReferenceTone Desktop: Resuming AudioContext...');
         try {

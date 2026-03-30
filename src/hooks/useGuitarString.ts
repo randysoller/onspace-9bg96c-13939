@@ -27,32 +27,30 @@ export function useGuitarString() {
   const isPlayingRef = useRef(false);
 
   const getContext = useCallback(async () => {
-    if (!contextRef.current || contextRef.current.state === 'closed') {
-      contextRef.current = new AudioContext();
-    }
-    
-    // MOBILE FIX: On mobile, close suspended context and create fresh one
-    if (contextRef.current.state === 'suspended') {
+    // MOBILE FIX: On mobile, recreate suspended contexts SYNCHRONOUSLY
+    if (contextRef.current && contextRef.current.state === 'suspended') {
       if (isMobileBrowser) {
-        console.log('📱 GuitarString Mobile: Closing suspended AudioContext...');
-        try {
-          await contextRef.current.close();
-          contextRef.current = new AudioContext();
-          console.log('✅ GuitarString Mobile: Fresh AudioContext created');
-        } catch (err) {
-          console.error('❌ GuitarString Mobile: Failed to recreate AudioContext:', err);
-          throw err;
-        }
+        console.log('📱 GuitarString Mobile: Creating fresh AudioContext synchronously...');
+        const oldContext = contextRef.current;
+        contextRef.current = new AudioContext();
+        console.log('✅ GuitarString Mobile: Fresh AudioContext created');
+        oldContext.close().catch(() => {/* ignore cleanup errors */});
+        return contextRef.current;
       } else {
         console.log('🖥️ GuitarString Desktop: Resuming AudioContext...');
         try {
           await contextRef.current.resume();
           console.log('✅ GuitarString Desktop: AudioContext resumed');
+          return contextRef.current;
         } catch (err) {
           console.error('❌ GuitarString Desktop: Failed to resume:', err);
           throw err;
         }
       }
+    }
+    
+    if (!contextRef.current || contextRef.current.state === 'closed') {
+      contextRef.current = new AudioContext();
     }
     
     return contextRef.current;

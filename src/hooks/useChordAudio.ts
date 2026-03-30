@@ -92,37 +92,39 @@ export function useChordAudio() {
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
   const getContext = useCallback(async () => {
+    // MOBILE FIX: On mobile, always recreate suspended contexts SYNCHRONOUSLY
+    // to preserve user gesture chain (critical after 30s+ idle)
+    if (ctxRef.current && ctxRef.current.state === 'suspended') {
+      if (isMobileBrowser) {
+        console.log('📱 Mobile: AudioContext suspended - creating fresh one synchronously...');
+        // Don't await close() - just abandon old context and create new one IMMEDIATELY
+        const oldContext = ctxRef.current;
+        ctxRef.current = new AudioContext();
+        console.log('✅ Mobile: Fresh AudioContext created (state:', ctxRef.current.state, ')');
+        // Close old context asynchronously in background (don't block)
+        oldContext.close().catch(() => {/* ignore cleanup errors */});
+        return ctxRef.current;
+      } else {
+        // Desktop: Resume existing context
+        console.log('🖥️ Desktop: Resuming suspended AudioContext...');
+        try {
+          await ctxRef.current.resume();
+          console.log('✅ Desktop: AudioContext resumed successfully');
+          return ctxRef.current;
+        } catch (err) {
+          console.error('❌ Desktop: Failed to resume AudioContext:', err);
+          throw new Error('Audio playback unavailable - context resume failed');
+        }
+      }
+    }
+    
+    // Create new context if none exists or if closed
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext();
       console.log('🎵 AudioContext created:', {
         state: ctxRef.current.state,
         sampleRate: ctxRef.current.sampleRate,
       });
-    }
-    
-    // MOBILE FIX: On mobile, close suspended context and create fresh one
-    // Mobile browsers often reject resume() after idle without direct user interaction
-    if (ctxRef.current.state === 'suspended') {
-      if (isMobileBrowser) {
-        console.log('📱 Mobile: Closing suspended AudioContext and creating fresh one...');
-        try {
-          await ctxRef.current.close();
-          ctxRef.current = new AudioContext();
-          console.log('✅ Mobile: Fresh AudioContext created from user interaction');
-        } catch (err) {
-          console.error('❌ Mobile: Failed to recreate AudioContext:', err);
-          throw new Error('Audio playback unavailable - context recreation failed');
-        }
-      } else {
-        console.log('🖥️ Desktop: Resuming suspended AudioContext...');
-        try {
-          await ctxRef.current.resume();
-          console.log('✅ Desktop: AudioContext resumed successfully');
-        } catch (err) {
-          console.error('❌ Desktop: Failed to resume AudioContext:', err);
-          throw new Error('Audio playback unavailable - context resume failed');
-        }
-      }
     }
     
     return ctxRef.current;

@@ -37,19 +37,15 @@ export const useScaleAudio = () => {
     let context = audioContextRef.current;
     if (!context) return;
 
-    // MOBILE FIX: On mobile, close suspended context and create fresh one
+    // MOBILE FIX: On mobile, recreate suspended contexts SYNCHRONOUSLY
     if (context.state === 'suspended') {
       if (isMobileBrowser) {
-        console.log('📱 ScaleAudio Mobile: Closing suspended AudioContext...');
-        try {
-          await context.close();
-          context = new (window.AudioContext || (window as any).webkitAudioContext)();
-          audioContextRef.current = context;
-          console.log('✅ ScaleAudio Mobile: Fresh AudioContext created');
-        } catch (err) {
-          console.error('❌ ScaleAudio Mobile: Failed to recreate AudioContext:', err);
-          return;
-        }
+        console.log('📱 ScaleAudio Mobile: Creating fresh AudioContext synchronously...');
+        const oldContext = context;
+        context = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = context;
+        console.log('✅ ScaleAudio Mobile: Fresh AudioContext created');
+        oldContext.close().catch(() => {/* ignore cleanup errors */});
       } else {
         console.log('🖥️ ScaleAudio Desktop: Resuming AudioContext...');
         try {

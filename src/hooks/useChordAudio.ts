@@ -185,18 +185,30 @@ export function useChordAudio() {
   }, [stopCurrent]);
 
   const playChord = useCallback((chord: ChordData) => {
+    console.log('🔍 DEBUG: playChord called for:', chord.name);
+    
     const masterVol = getEffectiveVolume();
+    console.log('🔍 DEBUG: getEffectiveVolume() returned:', masterVol);
     
     // CRITICAL: Validate volume is a finite number
-    if (!Number.isFinite(masterVol) || masterVol === 0) {
-      console.warn('⚠️ ChordAudio: Invalid or zero volume:', masterVol);
+    // NOTE: Removed masterVol === 0 check to allow playback even when muted (for debugging)
+    if (!Number.isFinite(masterVol)) {
+      console.error('❌ ChordAudio: Volume is not a finite number:', masterVol);
       return;
     }
+    
+    if (masterVol === 0) {
+      console.warn('⚠️ ChordAudio: Volume is zero (muted) - playback will be silent but will continue');
+      // Continue anyway for debugging
+    }
 
+    console.log('🔍 DEBUG: Calling stopCurrent()');
     stopCurrent();
     
     // CRITICAL: Get context synchronously to preserve user gesture chain
+    console.log('🔍 DEBUG: Calling getContext()');
     const ctx = getContext();
+    console.log('🔍 DEBUG: getContext() returned:', ctx ? 'AudioContext' : 'null', '| state:', ctx?.state);
     
     if (!ctx) {
       console.error('❌ Cannot play chord - AudioContext unavailable');
@@ -204,11 +216,23 @@ export function useChordAudio() {
     }
     
     console.log('🎸 Playing chord:', chord.name, '| Context state:', ctx.state, '| Platform:', isMobileBrowser ? 'mobile' : 'desktop');
+    console.log('🔍 DEBUG: AudioContext details:', {
+      state: ctx.state,
+      sampleRate: ctx.sampleRate,
+      currentTime: ctx.currentTime,
+      baseLatency: ctx.baseLatency,
+    });
     
     // VALIDATION: Final state check before playback
     if (ctx.state === 'suspended') {
-      console.error('❌ AudioContext still suspended after getContext() - this should not happen');
-      return;
+      console.error('❌ AudioContext still suspended after getContext() - attempting resume...');
+      try {
+        ctx.resume();
+        console.log('✅ AudioContext resumed successfully');
+      } catch (err) {
+        console.error('❌ Failed to resume AudioContext:', err);
+        return;
+      }
     }
     
     if (ctx.state === 'closed') {
@@ -221,6 +245,8 @@ export function useChordAudio() {
       console.error('❌ AudioContext has invalid currentTime:', ctx.currentTime);
       return;
     }
+    
+    console.log('🔍 DEBUG: All validation checks passed, creating oscillators...');
     
     // Update last playback timestamp
     lastPlaybackAtRef.current = Date.now();
@@ -257,6 +283,7 @@ export function useChordAudio() {
 
       activeOscillators.current = allOscs;
       console.log('✅ Chord playback started successfully - oscillators:', allOscs.length, '| gain nodes:', activeGainNodes.current.length);
+      console.log('🔍 DEBUG: Master gain value:', gain, '| Volume setting:', masterVol);
       
       // Mobile resource check
       if (isMobileBrowser) {

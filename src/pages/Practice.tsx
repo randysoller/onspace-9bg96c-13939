@@ -318,7 +318,7 @@ export default function Practice() {
                       <div key={d} className="w-0.5 h-2 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: `${d}ms` }} />
                     ))}
                   </div>
-                  <span className="text-emerald-500 text-base md:text-xl font-medium leading-none truncate">
+                  <span className="text-emerald-500 text-base md:text-xl font-medium leading-normal truncate">
                     <span className="md:hidden">Listening —</span>
                     <span className="hidden md:inline">Listening — play the chord</span>
                   </span>

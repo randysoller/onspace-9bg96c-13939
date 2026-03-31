@@ -610,7 +610,7 @@ export default function Practice() {
       </div>
 
       {/* Fixed Bottom Toolbar */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[10000] border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
+      <div className="fixed bottom-0 left-0 right-0 z-[10000] border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
         <div className="flex items-stretch gap-2 px-3 py-4 md:pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button

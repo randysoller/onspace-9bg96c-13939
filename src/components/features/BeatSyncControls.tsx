@@ -143,7 +143,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   return (
     <>
       {/* Beat Sync Panel */}
-      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[255px] h-[56px] flex flex-col">
+      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[283px] h-[56px] flex flex-col">
         {/* Header Row — all children must fit within w-[260px] h-[56px] */}
         <div className="flex items-center gap-2 px-2.5 h-full overflow-hidden">
 

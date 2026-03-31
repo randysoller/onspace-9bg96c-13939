@@ -310,12 +310,29 @@ export function useChordAudio() {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         console.log('👁️ Tab visible - context state:', ctxRef.current?.state);
-        // Don't try to resume here - let getContext() handle it on next playback
-        // This preserves the user gesture requirement on mobile
+        // Proactively resume a suspended context when the page becomes visible.
+        // Browsers allow resume() in visibilitychange without a direct user gesture,
+        // so the context is already running by the time the user taps Play.
+        // Also reset the last-playback timestamp so the stale-context check does
+        // NOT force an unnecessary recreation (recreation + async close races with
+        // the new context's first use and is the primary cause of silent playback
+        // after returning from sleep or another page on iOS/Android).
+        if (ctxRef.current && ctxRef.current.state === 'suspended') {
+          ctxRef.current.resume().catch(() => {
+            // Resume may still fail on very strict browsers; getContext() will
+            // handle the fallback recreation on the next playChord() call.
+          });
+        }
+        // Mark as "just played" so timeSinceLastPlayback stays below the
+        // stale threshold and getContext() doesn't discard a healthy context.
+        lastPlaybackAtRef.current = Date.now();
       } else if (document.visibilityState === 'hidden') {
         console.log('🙈 Tab hidden - context will likely suspend');
-        // Update timestamp to force recreation on next playback
-        lastPlaybackAtRef.current = 0;
+        // Do NOT zero lastPlaybackAtRef here. Zeroing it causes the stale check
+        // in getContext() to always trigger on the next playback (timeSinceLastPlayback
+        // = now - 0 = huge), forcing an AudioContext recreation whose async close
+        // races with oscillator creation and produces silent playback on mobile.
+        // The contextAge arm of the stale check is sufficient for genuine staleness.
       }
     };
 

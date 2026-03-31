@@ -144,76 +144,63 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     <>
       {/* Beat Sync Panel */}
       <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[260px] h-[56px] flex flex-col">
-        {/* Header Row */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
-          <div className="flex items-center gap-2">
-            {/* Sync enable/disable toggle */}
-            <button
-              onClick={handleToggleSync}
-              aria-label={syncEnabled ? 'Disable beat sync' : 'Enable beat sync'}
-              title={syncEnabled ? 'Beat sync ON — click to disable' : 'Beat sync OFF — click to enable'}
-              className={`p-1.5 rounded-lg border transition-all active:scale-95 ${
-                syncEnabled
-                  ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/30'
-                  : 'bg-[hsl(var(--bg-overlay))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))]'
-              }`}
-            >
-              {syncEnabled ? (
-                <Link2 className="w-4 h-4" />
-              ) : (
-                <Link2Off className="w-4 h-4" />
-              )}
-            </button>
-            <div className="text-xs">
-              <div className="font-display font-semibold text-[hsl(var(--text-default))] text-[20px]">
-                Beat Sync
-              </div>
-              <div className={`text-[20px] leading-none ${
-                syncEnabled ? 'text-emerald-400' : 'text-[hsl(var(--text-muted))]'
-              }`}>
-                {syncEnabled ? getSummaryText() : 'Off'}
-              </div>
+        {/* Header Row — all children must fit within w-[260px] h-[56px] */}
+        <div className="flex items-center gap-2 px-2.5 h-full overflow-hidden">
+
+          {/* On/Off toggle */}
+          <button
+            onClick={handleToggleSync}
+            aria-label={syncEnabled ? 'Disable beat sync' : 'Enable beat sync'}
+            title={syncEnabled ? 'Beat sync ON — click to disable' : 'Beat sync OFF — click to enable'}
+            className={`flex-shrink-0 p-1.5 rounded-lg border transition-all active:scale-95 ${
+              syncEnabled
+                ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/30'
+                : 'bg-[hsl(var(--bg-overlay))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))]'
+            }`}
+          >
+            {syncEnabled ? <Link2 className="w-3.5 h-3.5" /> : <Link2Off className="w-3.5 h-3.5" />}
+          </button>
+
+          {/* Label + status — grows to fill remaining space */}
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-[hsl(var(--text-default))] leading-none truncate">
+              Beat Sync
+            </div>
+            <div className={`text-[11px] leading-none mt-0.5 truncate ${
+              syncEnabled ? 'text-emerald-400' : 'text-[hsl(var(--text-muted))]'
+            }`}>
+              {syncEnabled ? getSummaryText() : 'Off'}
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Start/Stop Button */}
-            <button
-              onClick={handleStartStop}
-              className={`
-                px-4 py-1 rounded flex items-center gap-2 font-display font-semibold text-sm
-                transition-all active:scale-95 ml-6
-                ${isPlaying
+          {/* Start / Stop button */}
+          <button
+            onClick={handleStartStop}
+            className={`flex-shrink-0 px-2.5 py-1 rounded flex items-center gap-1 font-semibold text-xs
+              transition-all active:scale-95
+              ${
+                isPlaying
                   ? 'bg-red-500/20 text-red-500 border border-red-500/40 hover:bg-red-500/30'
                   : 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/40 hover:bg-emerald-500/30'
-                }
-              `}
-            >
-              {isPlaying ? (
-                <>
-                  <Square className="w-4 h-4" />
-                  <span>Stop</span>
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" />
-                  <span>Start</span>
-                </>
-              )}
-            </button>
+              }`}
+          >
+            {isPlaying ? (
+              <><Square className="w-3 h-3" /><span>Stop</span></>
+            ) : (
+              <><Play className="w-3 h-3" /><span>Start</span></>
+            )}
+          </button>
 
-            {/* Expand/Collapse Toggle */}
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="p-1 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
-            >
-              {isExpanded ? (
-                <ChevronUp className="w-[26px] h-[26px] text-[hsl(var(--text-subtle))]" strokeWidth={3} />
-              ) : (
-                <ChevronDown className="w-[26px] h-[26px] text-[hsl(var(--text-subtle))]" strokeWidth={3} />
-              )}
-            </button>
-          </div>
+          {/* Expand / Collapse chevron */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex-shrink-0 p-0.5 hover:bg-[hsl(var(--bg-elevated))] rounded transition-colors"
+          >
+            {isExpanded
+              ? <ChevronUp   className="w-4 h-4 text-[hsl(var(--text-subtle))]" strokeWidth={2.5} />
+              : <ChevronDown className="w-4 h-4 text-[hsl(var(--text-subtle))]" strokeWidth={2.5} />}
+          </button>
+
         </div>
 
         {/* Expanded Controls */}

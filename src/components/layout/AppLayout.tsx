@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Header } from './Header';
 import { MobileTabBar } from './MobileTabBar';
@@ -10,6 +10,8 @@ import type { PracticeReminderSettings } from '@/lib/practice-reminder';
 
 export const AppLayout = () => {
   const { isUpdateAvailable, updateServiceWorker } = usePWA();
+  const location = useLocation();
+  const isPracticePage = location.pathname === '/practice';
   
   const [reminderSettings, setReminderSettings] = useState<PracticeReminderSettings>(() => {
     const stored = localStorage.getItem('practiceReminderSettings');
@@ -71,8 +73,15 @@ export const AppLayout = () => {
         </div>
       )}
       
-      <Header />
-      <main id="main-content" className="pt-16 pb-20 md:pb-8" tabIndex={-1}>
+      {/* Hide header on mobile for the practice page to maximise screen space */}
+      <div className={isPracticePage ? 'hidden md:block' : ''}>
+        <Header />
+      </div>
+      <main
+        id="main-content"
+        className={`pb-20 md:pb-8 ${isPracticePage ? 'pt-0 md:pt-16' : 'pt-16'}`}
+        tabIndex={-1}
+      >
         <Outlet />
       </main>
       <MobileTabBar />

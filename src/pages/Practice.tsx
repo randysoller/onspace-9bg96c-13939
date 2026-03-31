@@ -434,7 +434,7 @@ export default function Practice() {
             </div>
 
             {/* Diagram Toggle — right-0 mirrors the chord name toggle alignment */}
-            <div className="relative flex items-center justify-center h-9 mt-4">
+            <div className="relative flex items-center justify-center h-9 mt-16">
               <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
               <div className="absolute right-0">
                 <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />

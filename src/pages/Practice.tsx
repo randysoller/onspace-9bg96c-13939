@@ -419,8 +419,8 @@ export default function Practice() {
             )}
 
             {/* Diagram Toggle */}
-            <div className="flex items-center justify-between gap-6 mt-4 max-w-md mx-auto">
-              <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
+            <div className="flex items-center justify-center gap-4 mt-4 max-w-md mx-auto">
+              <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
               <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />
             </div>
 
@@ -449,7 +449,7 @@ export default function Practice() {
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
                   bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--color-primary))] font-semibold text-lg
+                  text-[hsl(var(--color-primary))] font-semibold text-base
                   hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
                   active:scale-[0.97] transition-all"
               >
@@ -464,7 +464,7 @@ export default function Practice() {
                 aria-label="Next chord"
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
-                  bg-[hsl(var(--color-primary))] text-white font-semibold text-lg
+                  bg-[hsl(var(--color-primary))] text-white font-semibold text-base
                   hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
                   shadow-md shadow-[hsl(var(--color-primary)/0.25)]"
               >

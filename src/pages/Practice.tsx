@@ -301,55 +301,66 @@ export default function Practice() {
 
       {/* ── Listening Status ── */}
       {isListening && (
-        <div className={`border-b px-4 py-0 md:py-1 ${
+        <div className={`border-b px-4 py-1 md:py-1 ${
           result === 'correct' ? 'bg-emerald-900/20 border-emerald-500/30'
           : result === 'wrong'  ? 'bg-red-900/20 border-red-500/30'
           : 'bg-[hsl(var(--bg-surface))]'
         }`}>
-          <div className="flex items-center justify-center gap-1 md:gap-3 max-w-5xl mx-auto">
-            {!result && (
-              <>
-                <div className="flex gap-0.5">
-                  {[0,100,200].map(d => (
-                    <div key={d} className="w-0.5 h-1.5 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: `${d}ms` }} />
-                  ))}
-                </div>
-                <span className="text-emerald-500 text-[18px] md:text-xl font-medium leading-none py-0.5 md:py-0">Listening — play the chord</span>
-              </>
-            )}
-            {result === 'correct' && (
-              <>
-                <CheckCircle2 className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-emerald-500" />
-                <span className="text-emerald-500 text-[10px] md:text-xs font-bold leading-none py-0.5 md:py-0">Correct!</span>
-              </>
-            )}
-            {result === 'wrong' && (
-              <>
-                <XCircle className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 text-red-500" />
-                <span className="text-red-500 text-[10px] md:text-xs font-bold leading-none py-0.5 md:py-0">Try again</span>
-              </>
-            )}
-            <div className="md:hidden flex items-center gap-1">
+          {/* Mobile: left = status, right = sensitivity controls */}
+          <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto md:justify-center md:gap-3">
+
+            {/* Status text */}
+            <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
+              {!result && (
+                <>
+                  <div className="flex gap-0.5 shrink-0">
+                    {[0,100,200].map(d => (
+                      <div key={d} className="w-0.5 h-2 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: `${d}ms` }} />
+                    ))}
+                  </div>
+                  <span className="text-emerald-500 text-sm md:text-xl font-medium leading-none truncate">
+                    <span className="md:hidden">Listening</span>
+                    <span className="hidden md:inline">Listening — play the chord</span>
+                  </span>
+                </>
+              )}
+              {result === 'correct' && (
+                <>
+                  <CheckCircle2 className="w-4 h-4 md:w-3.5 md:h-3.5 text-emerald-500 shrink-0" />
+                  <span className="text-emerald-500 text-sm md:text-xs font-bold leading-none">Correct!</span>
+                </>
+              )}
+              {result === 'wrong' && (
+                <>
+                  <XCircle className="w-4 h-4 md:w-3.5 md:h-3.5 text-red-500 shrink-0" />
+                  <span className="text-red-500 text-sm md:text-xs font-bold leading-none">Try again</span>
+                </>
+              )}
+            </div>
+
+            {/* Mobile sensitivity controls — right-aligned */}
+            <div className="md:hidden flex items-center gap-1.5 shrink-0">
               <button
                 onTouchStart={e => { e.preventDefault(); if (sensitivity > 1) decreaseSensitivity(); }}
                 onClick={decreaseSensitivity}
                 disabled={sensitivity <= 1}
                 aria-label="Decrease sensitivity"
-                style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation', userSelect: 'none' }}
-                className="rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
-                <Minus className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
+                style={{ minWidth: 52, minHeight: 52, touchAction: 'manipulation', userSelect: 'none' }}
+                className="rounded-lg bg-[hsl(var(--bg-overlay))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
+                <Minus className="w-6 h-6 text-[hsl(var(--text-default))]" />
               </button>
-              <span className="text-[18px] text-emerald-500 font-bold min-w-[2rem] text-center leading-none">{sensitivity}</span>
+              <span className="text-lg text-emerald-500 font-bold min-w-[2rem] text-center leading-none">{sensitivity}</span>
               <button
                 onTouchStart={e => { e.preventDefault(); if (sensitivity < 10) increaseSensitivity(); }}
                 onClick={increaseSensitivity}
                 disabled={sensitivity >= 10}
                 aria-label="Increase sensitivity"
-                style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation', userSelect: 'none' }}
-                className="rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
-                <Plus className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
+                style={{ minWidth: 52, minHeight: 52, touchAction: 'manipulation', userSelect: 'none' }}
+                className="rounded-lg bg-[hsl(var(--bg-overlay))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
+                <Plus className="w-6 h-6 text-[hsl(var(--text-default))]" />
               </button>
             </div>
+
           </div>
         </div>
       )}

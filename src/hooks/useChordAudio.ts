@@ -1,6 +1,7 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { useAudioStore } from '@/stores/audioStore';
+import { detectDeviceCapabilities } from '@/lib/audio/device-detection';
 
 // ─── MODULE-LEVEL SINGLETON ──────────────────────────────────────────────────
 //
@@ -207,7 +208,11 @@ export function useChordAudio() {
 
     const scheduleOscillators = (audioCtx: AudioContext) => {
       const masterGain = audioCtx.createGain();
-      masterGain.gain.value = Math.pow(masterVol, 1.2) * 3.5;
+      // Mobile speakers are significantly quieter — apply a boost so the
+      // chord is clearly audible without the user needing to max their volume.
+      const isMobile = detectDeviceCapabilities().isMobile;
+      const gainMultiplier = isMobile ? 6.0 : 3.5;
+      masterGain.gain.value = Math.pow(masterVol, 1.2) * gainMultiplier;
       masterGain.connect(audioCtx.destination);
       activeGainNodes.current.push(masterGain);
 

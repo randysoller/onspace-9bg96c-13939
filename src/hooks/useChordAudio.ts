@@ -125,13 +125,28 @@ export function useChordAudio() {
   // createFreshContext: builds a brand-new AudioContext and records its birth time.
   // MUST be called synchronously inside a user gesture (tap/click) so iOS Safari
   // starts the context in 'running' state without needing resume().
+  //
+  // CRITICAL: We null out ctxRef BEFORE calling close(), then construct the new
+  // context. This eliminates the window where iOS sees two concurrent AudioContexts,
+  // which caused it to suspend the new one even inside a user gesture.
   const createFreshContext = useCallback(() => {
     stopCurrent();
-    if (ctxRef.current && ctxRef.current.state !== 'closed') {
-      // Close the old context in the background — we won't use its nodes again
-      // because stopCurrent() already disconnected them all.
-      ctxRef.current.close().catch(() => {});
+
+    // Step 1: Capture and immediately release the old context reference.
+    // Setting ctxRef to null BEFORE close() ensures iOS does not see two
+    // live contexts simultaneously when the new one is constructed.
+    const oldCtx = ctxRef.current;
+    ctxRef.current = null;
+
+    // Step 2: Kick off async close in the background. We no longer hold a
+    // reference to it, so iOS treats it as released before step 3 runs.
+    if (oldCtx && oldCtx.state !== 'closed') {
+      oldCtx.close().catch(() => {});
     }
+
+    // Step 3: Create brand-new context. We are still synchronously inside the
+    // user gesture here, and iOS sees zero live contexts, so it starts this
+    // one in 'running' state unconditionally.
     const ctx = new AudioContext();
     ctxRef.current = ctx;
     contextCreatedAtRef.current = Date.now();
@@ -274,15 +289,25 @@ export function useChordAudio() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('👁️ Tab visible - context state:', ctxRef.current?.state);
-        // NOTE: We intentionally do NOT call resume() here.
+        const state = ctxRef.current?.state ?? 'null';
+        console.log('👁️ Tab visible - context state:', state);
+
+        // Pre-emptively close and null out the suspended context here so that
+        // when the user taps Play, createFreshContext() sees ctxRef = null and
+        // constructs a new AudioContext with zero overlap — eliminating the
+        // dual-context race that causes iOS to suspend the replacement.
         //
-        // On iOS Safari, visibilitychange is not a user gesture. Calling resume()
-        // here is silently rejected by iOS and, worse, can poison the context's
-        // internal state so that subsequent resume() calls from actual gestures
-        // also fail. The correct recovery happens inside playChord(): when a
-        // non-running context is found inside a tap gesture, it is replaced with
-        // a fresh AudioContext that iOS starts in 'running' state automatically.
+        // We do NOT call resume() here (not a user gesture on iOS).
+        // We do NOT call stopCurrent() here — oscillators from the last play
+        // have already finished by the time the screen wakes.
+        if (ctxRef.current && ctxRef.current.state !== 'running') {
+          const staleCtx = ctxRef.current;
+          ctxRef.current = null;
+          contextCreatedAtRef.current = 0;
+          staleCtx.close().catch(() => {});
+          console.log('🗑️ Stale suspended context pre-emptively released on wake — next play will create fresh context');
+        }
+
         lastPlaybackAtRef.current = Date.now();
       } else if (document.visibilityState === 'hidden') {
         console.log('🙈 Tab hidden - context will suspend on iOS');

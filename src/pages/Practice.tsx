@@ -56,6 +56,10 @@ const getSensitivityLabel = (sens: number) => {
 };
 
 export default function Practice() {
+  // ✅ VERSION CHECK - Updated at 2:47 PM
+  console.log('🔥 Practice.tsx LOADED - Version 2.47 PM');
+  console.log('🔥 Build timestamp:', new Date().toISOString());
+  
   const navigate = useNavigate();
   
   // ─────────────────────────────────────────────────────────────────────────────
@@ -600,8 +604,13 @@ export default function Practice() {
         </div>
       </div>
 
+      {/* VERSION INDICATOR (REMOVE AFTER TESTING) */}
+      <div className="fixed top-2 right-2 z-[9999] bg-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+        v2.47
+      </div>
+
       {/* Fixed Bottom Toolbar */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-50 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-[100] border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md">
         <div className="flex items-stretch gap-2 px-3 py-4 md:pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button

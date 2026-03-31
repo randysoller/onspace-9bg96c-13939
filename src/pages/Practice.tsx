@@ -371,9 +371,15 @@ export default function Practice() {
                 transition={{ duration: 0.3 }}>
                 <div className="text-[58px] font-black text-white mb-2 leading-none">{chord.symbol}</div>
                 <div className="relative flex items-center justify-center h-9">
-                  <span className={`text-2xl font-medium text-[hsl(var(--text-subtle))] ${!showChordName ? 'invisible' : ''}`}>
-                    {chord.name}
-                  </span>
+                  {showChordName ? (
+                    <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">
+                      {chord.name}
+                    </span>
+                  ) : (
+                    <span className="text-base font-medium text-[hsl(var(--text-muted))] italic tracking-wide">
+                      Chord name hidden
+                    </span>
+                  )}
                   <div className="absolute right-0">
                     <ShowChordNameToggle showChordName={showChordName} onToggle={setShowChordName} />
                   </div>

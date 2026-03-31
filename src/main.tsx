@@ -5,9 +5,11 @@ import { queryClient } from '@/lib/react-query';
 import App from './App.tsx'
 import './index.css'
 import { logger } from './lib/logger';
+import { initAuth } from '@/stores/authStore';
 
-// CRITICAL: Start React app FIRST, then initialize monitoring
-// This prevents Sentry from interfering with React's hook dispatcher
+// CRITICAL: Start React app FIRST, then initialize auth and monitoring.
+// Top-level Supabase auth calls in authStore previously ran at module-load
+// time and raced with React's hook dispatcher, causing "dispatcher is null".
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
@@ -15,6 +17,10 @@ createRoot(document.getElementById("root")!).render(
     </QueryClientProvider>
   </StrictMode>
 );
+
+// Auth must be initialized AFTER render() so React's dispatcher is ready
+// before any Supabase callbacks can trigger state updates.
+initAuth();
 
 // Initialize monitoring AFTER React is running (production only)
 if (import.meta.env.MODE === 'production') {

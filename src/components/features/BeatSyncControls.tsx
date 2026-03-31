@@ -56,8 +56,16 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     } else if (syncEnabled) {
       startCountIn();
     } else {
-      setIsPlaying(true);
+      // Beat sync is off — enable it first, then start with count-in
+      setSyncEnabled(true);
+      // startCountIn reads syncEnabled from store; set then call in next tick
+      setTimeout(() => startCountIn(), 0);
     }
+  };
+
+  const handleToggleSync = () => {
+    if (isPlaying) stopMetronome();
+    setSyncEnabled(!syncEnabled);
   };
 
   const incrementCount = () => {
@@ -201,12 +209,31 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">
           <div className="flex items-center gap-2">
+            {/* Sync enable/disable toggle */}
+            <button
+              onClick={handleToggleSync}
+              aria-label={syncEnabled ? 'Disable beat sync' : 'Enable beat sync'}
+              title={syncEnabled ? 'Beat sync ON — click to disable' : 'Beat sync OFF — click to enable'}
+              className={`p-1.5 rounded-lg border transition-all active:scale-95 ${
+                syncEnabled
+                  ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/30'
+                  : 'bg-[hsl(var(--bg-overlay))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))]'
+              }`}
+            >
+              {syncEnabled ? (
+                <Link2 className="w-4 h-4" />
+              ) : (
+                <Link2Off className="w-4 h-4" />
+              )}
+            </button>
             <div className="text-xs">
               <div className="font-display font-semibold text-[hsl(var(--text-default))] text-[20px]">
                 Beat Sync
               </div>
-              <div className="text-[20px] text-[hsl(var(--text-subtle))] leading-none">
-                {getSummaryText()}
+              <div className={`text-[20px] leading-none ${
+                syncEnabled ? 'text-emerald-400' : 'text-[hsl(var(--text-muted))]'
+              }`}>
+                {syncEnabled ? getSummaryText() : 'Off'}
               </div>
             </div>
           </div>

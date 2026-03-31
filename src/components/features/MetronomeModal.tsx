@@ -2,7 +2,8 @@ import { Music, X, Play, Square, Volume2, VolumeX } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
-import { useMetronomeAudio } from '@/hooks/useMetronomeAudio';
+// useMetronomeAudio is intentionally NOT imported here — it is mounted once
+// at the AppLayout level to keep the audio engine alive across all routes.
 
 export default function MetronomeModal() {
   const { isOpen, closeMetronome } = useMetronomeUIStore();
@@ -22,9 +23,6 @@ export default function MetronomeModal() {
     setSubdivision,
   } = useMetronomeStore();
   const { metronomeVolume, setMetronomeVolume } = useAudioStore();
-  
-  // Initialize metronome audio hook
-  useMetronomeAudio();
 
   const handleTempoChange = (newTempo: number) => {
     setBpm(Math.max(20, Math.min(250, newTempo)));

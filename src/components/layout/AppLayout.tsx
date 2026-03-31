@@ -6,6 +6,7 @@ import { PracticeReminderBanner } from '@/components/PracticeReminderBanner';
 import { InstallPrompt } from '@/components/InstallPrompt';
 import { usePWA } from '@/hooks/usePWA';
 import MetronomeModal from '@/components/features/MetronomeModal';
+import { useMetronomeAudio } from '@/hooks/useMetronomeAudio';
 import type { PracticeReminderSettings } from '@/lib/practice-reminder';
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
@@ -28,6 +29,12 @@ function loadCurrentStreak(): number {
 export const AppLayout = () => {
   const { isUpdateAvailable, updateServiceWorker } = usePWA();
   const location = useLocation();
+
+  // Mount the metronome audio engine at the app-shell level so it stays alive
+  // regardless of whether MetronomeModal is open or closed. This ensures
+  // incrementBeat() fires on every tick and beatsUntilAdvance decrements correctly
+  // for the Beat Sync chord-advance feature on the Practice page.
+  useMetronomeAudio();
   const isPracticePage = location.pathname === '/practice';
 
   // Initialise directly from localStorage — no redundant useEffect re-read

@@ -426,7 +426,7 @@ export default function Practice() {
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
                   className="flex items-end justify-center gap-6 mb-2 -mt-[10px]"
-                  style={{ transform: 'scale(2.156)' }}>
+                  style={{ transform: 'scale(2.156)', overflow: 'visible' }}>
                   <ChordDiagram chord={chord} size="lg" />
                   <ChordTablature chord={chord} size="lg" />
                 </motion.div>

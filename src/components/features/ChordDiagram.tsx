@@ -64,13 +64,16 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       className={`chord-diagram ${className}`}
       role="img"
       aria-label={`${chord.symbol} chord diagram`}
+      style={{ overflow: 'visible' }}
     >
-      {/* Fret position label */}
+      {/* Fret position label — rendered outside the viewBox boundary so it's never obscured */}
       {!isNut && (
         <text
-          x={leftMargin * 0.3}
+          x={-fretTextSize * 0.3}
           y={nutY + fretSpacing * 0.5}
-          className="fill-zinc-500 font-display"
+          textAnchor="end"
+          dominantBaseline="middle"
+          className="fill-zinc-400 font-display"
           style={{ fontSize: fretTextSize }}
         >
           {baseFret}fr
@@ -116,13 +119,13 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
                 cx={leftMargin + stringSpacing * 1.5}
                 cy={dotY}
                 r={dotRadius * 0.3}
-                className="fill-zinc-700/40"
+                className="fill-zinc-500/70"
               />
               <circle
                 cx={leftMargin + stringSpacing * 3.5}
                 cy={dotY}
                 r={dotRadius * 0.3}
-                className="fill-zinc-700/40"
+                className="fill-zinc-500/70"
               />
             </g>
           );
@@ -134,7 +137,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
             cx={leftMargin + stringSpacing * 2.5}
             cy={dotY}
             r={dotRadius * 0.35}
-            className="fill-zinc-700/40"
+            className="fill-zinc-500/70"
           />
         );
       })}

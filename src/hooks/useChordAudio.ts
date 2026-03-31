@@ -158,7 +158,7 @@ export function useChordAudio() {
     return ctx;
   }, [stopCurrent]);
 
-  const getContext = useCallback(() => {
+  const getContext = useCallback((): AudioContext | null => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
 
@@ -175,18 +175,14 @@ export function useChordAudio() {
       return ctxRef.current;
     }
 
-    // No context yet — create one. If it starts suspended (pre-gesture), that
-    // is fine; playChord() will replace it with a fresh one inside the gesture.
-    if (!ctxRef.current || ctxRef.current.state === 'closed') {
-      ctxRef.current = new AudioContext();
-      contextCreatedAtRef.current = Date.now();
-      console.log('🎵 AudioContext created (pre-gesture or background):', {
-        state: ctxRef.current.state,
-        sampleRate: ctxRef.current.sampleRate,
-      });
-    }
-
-    return ctxRef.current;
+    // Return the existing non-running (suspended) context as-is.
+    // CRITICAL: Do NOT create a new AudioContext here if ctxRef is null.
+    // playChord() calls createFreshContext() when it sees a non-running result,
+    // which creates exactly ONE new AudioContext inside the user gesture.
+    // Creating one here (outside the gesture) causes iOS to see two concurrent
+    // contexts when createFreshContext() runs its async close + new construction,
+    // which causes iOS to suspend the new gesture-created context.
+    return ctxRef.current ?? null;
   }, []);
 
   const playChord = useCallback((chord: ChordData) => {

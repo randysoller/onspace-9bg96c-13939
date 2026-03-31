@@ -303,15 +303,18 @@ export default function Practice() {
         </div>
       )}
 
-      {/* ── Listening Status ── */}
+      {/* ── Listening Status ──
+           Fixed min-h ensures bar height never changes between listening/correct/wrong
+           states, preventing layout shifts in the content below.
+      */}
       {isListening && (
-        <div className={`border-b px-4 py-1 md:py-1 ${
+        <div className={`border-b px-4 py-1 md:py-1 min-h-[40px] md:min-h-[46px] flex items-center ${
           result === 'correct' ? 'bg-emerald-900/20 border-emerald-500/30'
           : result === 'wrong'  ? 'bg-red-900/20 border-red-500/30'
           : 'bg-[hsl(var(--bg-surface))]'
         }`}>
           {/* Mobile: left = status text, right = sensitivity controls */}
-          <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto md:justify-center md:gap-3">
+          <div className="w-full flex items-center justify-between gap-2 max-w-5xl mx-auto md:justify-center md:gap-3">
 
             {/* Status text */}
             <div className="flex items-center gap-1.5 md:gap-2 min-w-0">
@@ -330,14 +333,14 @@ export default function Practice() {
               )}
               {result === 'correct' && (
                 <>
-                  <CheckCircle2 className="w-4 h-4 md:w-3.5 md:h-3.5 text-emerald-500 shrink-0" />
-                  <span className="text-emerald-500 text-sm md:text-xs font-bold leading-none">Correct!</span>
+                  <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 shrink-0" />
+                  <span className="text-emerald-500 text-base md:text-xl font-bold leading-normal">Correct!</span>
                 </>
               )}
               {result === 'wrong' && (
                 <>
-                  <XCircle className="w-4 h-4 md:w-3.5 md:h-3.5 text-red-500 shrink-0" />
-                  <span className="text-red-500 text-sm md:text-xs font-bold leading-none">Try again</span>
+                  <XCircle className="w-4 h-4 md:w-5 md:h-5 text-red-500 shrink-0" />
+                  <span className="text-red-500 text-base md:text-xl font-bold leading-normal">Try again</span>
                 </>
               )}
             </div>

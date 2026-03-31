@@ -102,19 +102,22 @@ export const useMetronomeStore = create<MetronomeStore>()(
         if (nextSubdivisionCounter === 0) {
           const nextBeat = (state.currentBeat + 1) % state.beatsPerMeasure;
           
-          // Beat-sync logic
-          if (state.syncEnabled && !state.isCountingIn) {
+          // Beat-sync chord-advance logic
+          // When sync is enabled and playing (no count-in phase), track beats since last chord change.
+          // beatsUntilAdvance reaching 0 is watched by Practice.tsx to trigger handleNext().
+          if (state.syncEnabled && state.isPlaying) {
             const newBeatsSinceChordChange = state.beatsSinceChordChange + 1;
-            const totalBeats = state.syncUnit === 'measures' 
-              ? state.beatsPerChord * state.beatsPerMeasure 
+            const totalBeats = state.syncUnit === 'measures'
+              ? state.beatsPerChord * state.beatsPerMeasure
               : state.beatsPerChord;
             const remaining = totalBeats - newBeatsSinceChordChange;
-            
+
             return {
               subdivisionCounter: 0,
               currentBeat: nextBeat,
               beatsSinceChordChange: newBeatsSinceChordChange,
-              beatsUntilAdvance: remaining,
+              // Clamp at 0 so the Practice.tsx useEffect fires exactly once per chord
+              beatsUntilAdvance: Math.max(0, remaining),
             };
           }
           
@@ -149,15 +152,20 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setCountInMeasures: (measures) => set({ countInMeasures: measures }),
       
       startCountIn: () => set((state) => {
-        const total = state.countInMeasures * state.beatsPerMeasure;
+        // Simplified: no count-in overlay — just start playing with sync enabled.
+        // The isCountingIn / countInBeat fields are kept in state for future use
+        // but the overlay has been removed to prevent the UI freeze bug.
+        const totalBeats = state.syncUnit === 'measures'
+          ? state.beatsPerChord * state.beatsPerMeasure
+          : state.beatsPerChord;
         return {
-          isCountingIn: true,
-          countInBeat: 1,
-          countInTotal: total,
           isPlaying: true,
           syncEnabled: true,
+          isCountingIn: false,
+          countInBeat: 0,
           currentBeat: 0,
           beatsSinceChordChange: 0,
+          beatsUntilAdvance: totalBeats,
         };
       }),
       
@@ -166,6 +174,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
         isCountingIn: false,
         countInBeat: 0,
         currentBeat: 0,
+        beatsSinceChordChange: 0,
       }),
     }),
     {

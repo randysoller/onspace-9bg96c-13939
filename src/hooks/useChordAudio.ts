@@ -5,8 +5,12 @@ import { useAudioStore } from '@/stores/audioStore';
 // Mobile detection utility
 const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// Context age threshold for mobile (10 seconds - recreate if older)
-const MOBILE_CONTEXT_MAX_AGE_MS = 10000;
+// Context age threshold: only recreate a context that has been alive for a very
+// long time (30 minutes). Navigation gaps and sleep cycles are handled by
+// resume() in the visibility handler — NOT by destroying and recreating the
+// context (recreation produces a new suspended context on iOS/Android that
+// races with its own async close and produces silent playback).
+const CONTEXT_MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
 
 // Standard guitar tuning frequencies (E2, A2, D3, G3, B3, E4)
 const STRING_FREQUENCIES = [82.41, 110.0, 146.83, 196.0, 246.94, 329.63];
@@ -121,51 +125,32 @@ export function useChordAudio() {
   const getContext = useCallback(() => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
-    const timeSinceLastPlayback = now - lastPlaybackAtRef.current;
-    
-    // CRITICAL FIX: Check for stale context on ALL platforms
-    // Both mobile and desktop browsers invalidate AudioContexts after extended idle
-    const isContextStale = (
-      contextAge > MOBILE_CONTEXT_MAX_AGE_MS || 
-      timeSinceLastPlayback > MOBILE_CONTEXT_MAX_AGE_MS
-    );
-    
-    if (isContextStale && ctxRef.current && ctxRef.current.state !== 'closed') {
-      console.log('⏰ AudioContext is stale (age:', contextAge, 'ms, idle:', timeSinceLastPlayback, 'ms) - forcing recreation');
-      
-      // CRITICAL: Stop and disconnect ALL active nodes BEFORE closing context
+
+    // Only destroy and recreate after 30 minutes of total lifetime.
+    // Do NOT use timeSinceLastPlayback as a stale signal — after sleep or
+    // navigation that gap always exceeds any short threshold, and the brand-new
+    // AudioContext also starts suspended on iOS/Android, causing the same
+    // silent-playback race we were trying to avoid.
+    if (contextAge > CONTEXT_MAX_AGE_MS && ctxRef.current && ctxRef.current.state !== 'closed') {
+      console.log('⏰ AudioContext lifetime exceeded 30 min — recreating');
       stopCurrent();
-      
       const oldContext = ctxRef.current;
       ctxRef.current = null;
-      
-      // Async close in background (don't wait - must stay synchronous for user gesture)
-      oldContext.close().then(() => {
-        console.log('✅ Old context closed successfully');
-      }).catch((err) => {
-        console.warn('⚠️ Context close error (non-critical):', err);
-      });
+      oldContext.close().catch(() => {});
     }
-    
-    // Check if context is suspended - recreate instead of resume for reliability
+
+    // If suspended, resume in-place — the audio graph is still intact.
+    // Recreating would produce another suspended context AND race with the
+    // async close of the old one, both of which cause silent playback.
     if (ctxRef.current && ctxRef.current.state === 'suspended') {
-      console.log('⏸️ AudioContext suspended (platform:', isMobileBrowser ? 'mobile' : 'desktop', ') - recreating for reliability...');
-      
-      // CRITICAL: Clean up all nodes before recreating
-      stopCurrent();
-      
-      const oldContext = ctxRef.current;
-      ctxRef.current = new AudioContext();
-      contextCreatedAtRef.current = Date.now();
-      console.log('✅ Fresh AudioContext created (state:', ctxRef.current.state, ')');
-      
-      // Async close in background
-      oldContext.close().catch(() => {/* ignore cleanup errors */});
-      
+      console.log('⏸️ AudioContext suspended — resuming in-place');
+      ctxRef.current.resume().catch(() => {});
+      // Return the existing context immediately; oscillators scheduled with
+      // a future startTime (ctx.currentTime + 0.05s) will play once resumed.
       return ctxRef.current;
     }
-    
-    // Create new context if none exists or if closed
+
+    // Create a fresh context only when there is none or it has been closed.
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext();
       contextCreatedAtRef.current = Date.now();
@@ -174,134 +159,89 @@ export function useChordAudio() {
         sampleRate: ctxRef.current.sampleRate,
         platform: isMobileBrowser ? 'mobile' : 'desktop',
       });
-      
-      // VALIDATION: Test if context is actually working
-      if (ctxRef.current.state !== 'running') {
-        console.warn('⚠️ AudioContext created but not in running state:', ctxRef.current.state);
+      // New context may start suspended on mobile — kick off resume immediately.
+      if (ctxRef.current.state === 'suspended') {
+        ctxRef.current.resume().catch(() => {});
       }
     }
-    
+
     return ctxRef.current;
   }, [stopCurrent]);
 
   const playChord = useCallback((chord: ChordData) => {
-    console.log('🔍 DEBUG: playChord called for:', chord.name);
-    
     const masterVol = getEffectiveVolume();
-    console.log('🔍 DEBUG: getEffectiveVolume() returned:', masterVol);
-    
-    // CRITICAL: Validate volume is a finite number
-    // NOTE: Removed masterVol === 0 check to allow playback even when muted (for debugging)
+
     if (!Number.isFinite(masterVol)) {
-      console.error('❌ ChordAudio: Volume is not a finite number:', masterVol);
+      console.error('❌ ChordAudio: invalid volume:', masterVol);
       return;
-    }
-    
-    if (masterVol === 0) {
-      console.warn('⚠️ ChordAudio: Volume is zero (muted) - playback will be silent but will continue');
-      // Continue anyway for debugging
     }
 
-    console.log('🔍 DEBUG: Calling stopCurrent()');
     stopCurrent();
-    
-    // CRITICAL: Get context synchronously to preserve user gesture chain
-    console.log('🔍 DEBUG: Calling getContext()');
+
+    // getContext() is called synchronously to stay within the iOS/Android user-gesture
+    // token. If the context is suspended it calls resume() immediately (also sync),
+    // which is sufficient for the browser to accept the gesture association.
     const ctx = getContext();
-    console.log('🔍 DEBUG: getContext() returned:', ctx ? 'AudioContext' : 'null', '| state:', ctx?.state);
-    
-    if (!ctx) {
-      console.error('❌ Cannot play chord - AudioContext unavailable');
+    if (!ctx || ctx.state === 'closed') {
+      console.error('❌ Cannot play chord — AudioContext unavailable or closed');
       return;
     }
-    
-    console.log('🎸 Playing chord:', chord.name, '| Context state:', ctx.state, '| Platform:', isMobileBrowser ? 'mobile' : 'desktop');
-    console.log('🔍 DEBUG: AudioContext details:', {
-      state: ctx.state,
-      sampleRate: ctx.sampleRate,
-      currentTime: ctx.currentTime,
-      baseLatency: ctx.baseLatency,
-    });
-    
-    // VALIDATION: Final state check before playback
-    if (ctx.state === 'suspended') {
-      console.error('❌ AudioContext still suspended after getContext() - attempting resume...');
-      try {
-        ctx.resume();
-        console.log('✅ AudioContext resumed successfully');
-      } catch (err) {
-        console.error('❌ Failed to resume AudioContext:', err);
+
+    // ── Cause #3 fix ────────────────────────────────────────────────────────
+    // On mobile, ctx.currentTime is FROZEN while the context is suspended.
+    // Scheduling oscillators with startTime = frozenTime + 0.05s means those
+    // events are already in the past once the context actually resumes, so the
+    // audio engine silently discards them — producing no sound.
+    //
+    // Fix: await the resume Promise before reading ctx.currentTime.
+    // The async continuation still executes within the same user-gesture token
+    // because resume() was kicked off synchronously above; iOS/Android honour
+    // this and don't revoke the gesture permission across the microtask boundary.
+    const scheduleOscillators = (audioCtx: AudioContext) => {
+      if (!Number.isFinite(audioCtx.currentTime)) {
+        console.error('❌ AudioContext has invalid currentTime:', audioCtx.currentTime);
         return;
       }
-    }
-    
-    if (ctx.state === 'closed') {
-      console.error('❌ AudioContext is closed - cannot play');
-      return;
-    }
-    
-    // CRITICAL: Validate currentTime is finite
-    if (!Number.isFinite(ctx.currentTime)) {
-      console.error('❌ AudioContext has invalid currentTime:', ctx.currentTime);
-      return;
-    }
-    
-    console.log('🔍 DEBUG: All validation checks passed, creating oscillators...');
-    
-    // Update last playback timestamp
-    lastPlaybackAtRef.current = Date.now();
 
-    // Master gain: applies volume with boost curve
-    // Formula: v^1.2 * 3.5 (balanced for clean playback, prevents clipping)
-    const masterGain = ctx.createGain();
-    const gain = Math.pow(masterVol, 1.2) * 3.5;
-    masterGain.gain.value = gain;
-    masterGain.connect(ctx.destination);
-    
-    // Track gain node for cleanup
-    activeGainNodes.current.push(masterGain);
+      lastPlaybackAtRef.current = Date.now();
 
-    const now = ctx.currentTime + 0.05;
-    const strumDelay = 0.035;
-    const noteDuration = 2.5;
-    const allOscs: OscillatorNode[] = [];
+      // Master gain — v^1.2 * 3.5 boost curve (prevents clipping)
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.value = Math.pow(masterVol, 1.2) * 3.5;
+      masterGain.connect(audioCtx.destination);
+      activeGainNodes.current.push(masterGain);
 
-    try {
-      // Strum low E to high E (index 0 → 5)
-      let strumIndex = 0;
-      for (let i = 0; i < 6; i++) {
-        const fret = chord.frets[i];
-        if (fret === -1) continue;
+      // Read currentTime AFTER resume so the clock reflects the live position
+      const now = audioCtx.currentTime + 0.05;
+      const allOscs: OscillatorNode[] = [];
 
-        const freq = getNoteFrequency(i, fret);
-        const vol = 0.3 - i * 0.015;
-        const startTime = now + strumIndex * strumDelay;
-        const oscs = createPluck(ctx, freq, startTime, noteDuration, vol, masterGain);
-        allOscs.push(...oscs);
-        strumIndex++;
+      try {
+        let strumIndex = 0;
+        for (let i = 0; i < 6; i++) {
+          const fret = chord.frets[i];
+          if (fret === -1) continue;
+          const freq = getNoteFrequency(i, fret);
+          const vol = 0.3 - i * 0.015;
+          const oscs = createPluck(audioCtx, freq, now + strumIndex * 0.035, 2.5, vol, masterGain);
+          allOscs.push(...oscs);
+          strumIndex++;
+        }
+        activeOscillators.current = allOscs;
+        console.log('✅ Chord scheduled — context state:', audioCtx.state, '| oscillators:', allOscs.length);
+      } catch (err) {
+        console.error('❌ Oscillator creation failed:', err);
+        allOscs.forEach(osc => { try { osc.stop(); osc.disconnect(); } catch {/* ignore */} });
       }
+    };
 
-      activeOscillators.current = allOscs;
-      console.log('✅ Chord playback started successfully - oscillators:', allOscs.length, '| gain nodes:', activeGainNodes.current.length);
-      console.log('🔍 DEBUG: Master gain value:', gain, '| Volume setting:', masterVol);
-      
-      // Mobile resource check
-      if (isMobileBrowser) {
-        console.log('📱 Mobile audio state:', {
-          contextState: ctx.state,
-          sampleRate: ctx.sampleRate,
-          activeOscillators: allOscs.length,
-          activeGains: activeGainNodes.current.length,
-          contextAge: Date.now() - contextCreatedAtRef.current,
-        });
-      }
-    } catch (playbackErr) {
-      console.error('❌ Error during oscillator creation/playback:', playbackErr);
-      // Clean up any created oscillators
-      allOscs.forEach(osc => {
-        try { osc.stop(); osc.disconnect(); } catch {/* ignore */}
-      });
-      throw playbackErr;
+    if (ctx.state === 'suspended') {
+      // Await the resume so currentTime is live before we schedule.
+      ctx.resume()
+        .then(() => scheduleOscillators(ctx))
+        .catch((err) => console.error('❌ resume() failed:', err));
+    } else {
+      // Context is already running — schedule immediately.
+      scheduleOscillators(ctx);
     }
   }, [getContext, stopCurrent, getEffectiveVolume]);
 

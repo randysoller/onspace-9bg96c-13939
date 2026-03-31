@@ -98,38 +98,67 @@ export const useMetronomeStore = create<MetronomeStore>()(
         const subdivisionMultiplier = state.subdivision === 'quarter' ? 1 : state.subdivision === 'eighth' ? 2 : 4;
         const nextSubdivisionCounter = (state.subdivisionCounter + 1) % subdivisionMultiplier;
         
-        // Only increment the beat number when subdivision counter wraps to 0
-        if (nextSubdivisionCounter === 0) {
-          const nextBeat = (state.currentBeat + 1) % state.beatsPerMeasure;
-          
-          // Beat-sync chord-advance logic
-          // When sync is enabled and playing (no count-in phase), track beats since last chord change.
-          // beatsUntilAdvance reaching 0 is watched by Practice.tsx to trigger handleNext().
-          if (state.syncEnabled && state.isPlaying) {
-            const newBeatsSinceChordChange = state.beatsSinceChordChange + 1;
+        // Only act on full beats (when subdivision counter wraps back to 0)
+        if (nextSubdivisionCounter !== 0) {
+          return { subdivisionCounter: nextSubdivisionCounter };
+        }
+
+        const nextBeat = (state.currentBeat + 1) % state.beatsPerMeasure;
+
+        // ── Count-in phase ──────────────────────────────────────────────────
+        // While isCountingIn is true, silently tick through the count-in beats.
+        // Practice.tsx cannot fire handleNext() during this phase because
+        // beatsUntilAdvance is not yet initialized (still at its reset value).
+        // When the last count-in beat completes, transition to active sync.
+        if (state.isCountingIn) {
+          const nextCountInBeat = state.countInBeat + 1;
+
+          if (nextCountInBeat >= state.countInTotal) {
+            // Count-in complete → initialize the chord-advance counter
             const totalBeats = state.syncUnit === 'measures'
               ? state.beatsPerChord * state.beatsPerMeasure
               : state.beatsPerChord;
-            const remaining = totalBeats - newBeatsSinceChordChange;
-
             return {
               subdivisionCounter: 0,
               currentBeat: nextBeat,
-              beatsSinceChordChange: newBeatsSinceChordChange,
-              // Clamp at 0 so the Practice.tsx useEffect fires exactly once per chord
-              beatsUntilAdvance: Math.max(0, remaining),
+              isCountingIn: false,
+              countInBeat: 0,
+              beatsSinceChordChange: 0,
+              beatsUntilAdvance: totalBeats,
             };
           }
-          
+
+          // Still counting in — just advance the count-in beat
           return {
             subdivisionCounter: 0,
             currentBeat: nextBeat,
-          };
-        } else {
-          return {
-            subdivisionCounter: nextSubdivisionCounter
+            countInBeat: nextCountInBeat,
           };
         }
+
+        // ── Active sync phase ───────────────────────────────────────────────
+        // Track beats since last chord change; beatsUntilAdvance reaching 0
+        // is watched by Practice.tsx useEffect to trigger handleNext().
+        if (state.syncEnabled && state.isPlaying) {
+          const newBeatsSinceChordChange = state.beatsSinceChordChange + 1;
+          const totalBeats = state.syncUnit === 'measures'
+            ? state.beatsPerChord * state.beatsPerMeasure
+            : state.beatsPerChord;
+          const remaining = totalBeats - newBeatsSinceChordChange;
+
+          return {
+            subdivisionCounter: 0,
+            currentBeat: nextBeat,
+            beatsSinceChordChange: newBeatsSinceChordChange,
+            // Clamp at 0 so the Practice.tsx useEffect fires exactly once per chord
+            beatsUntilAdvance: Math.max(0, remaining),
+          };
+        }
+
+        return {
+          subdivisionCounter: 0,
+          currentBeat: nextBeat,
+        };
       }),
       
       // Beat-sync actions
@@ -152,20 +181,22 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setCountInMeasures: (measures) => set({ countInMeasures: measures }),
       
       startCountIn: () => set((state) => {
-        // Simplified: no count-in overlay — just start playing with sync enabled.
-        // The isCountingIn / countInBeat fields are kept in state for future use
-        // but the overlay has been removed to prevent the UI freeze bug.
-        const totalBeats = state.syncUnit === 'measures'
-          ? state.beatsPerChord * state.beatsPerMeasure
-          : state.beatsPerChord;
+        // Calculate count-in duration: countInMeasures × beatsPerMeasure beats.
+        // beatsUntilAdvance is intentionally NOT set here — it will be initialized
+        // by incrementBeat() the moment the last count-in beat completes, preventing
+        // Practice.tsx from firing handleNext() during the count-in window.
+        const countInTotal = state.countInMeasures * state.beatsPerMeasure;
         return {
           isPlaying: true,
           syncEnabled: true,
-          isCountingIn: false,
+          isCountingIn: true,
           countInBeat: 0,
+          countInTotal,
           currentBeat: 0,
           beatsSinceChordChange: 0,
-          beatsUntilAdvance: totalBeats,
+          // Keep beatsUntilAdvance high so the Practice.tsx guard (prevBeatsUntilAdvance > 0)
+          // cannot falsely trigger before count-in ends.
+          beatsUntilAdvance: countInTotal + 9999,
         };
       }),
       

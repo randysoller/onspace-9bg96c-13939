@@ -139,7 +139,6 @@ export default function Practice() {
   }, []);
   
   const handleNext = useCallback(() => {
-    console.log('🎯 handleNext called');
     clearAutoAdvance();
     
     if (!isRevealed && chord) {
@@ -161,12 +160,10 @@ export default function Practice() {
   ]);
   
   const handlePrev = useCallback(() => {
-    console.log('⬅️ handlePrev called');
     hideChord();
     resetChordTimer();
     resetBeatCounter();
     prevChord();
-    console.log('⬅️ handlePrev completed');
   }, [hideChord, resetChordTimer, resetBeatCounter, prevChord]);
   
   const handleRestart = useCallback(() => {
@@ -191,23 +188,20 @@ export default function Practice() {
   // FIXED: Stable detection callbacks
   // ─────────────────────────────────────────────────────────────────────────────
   const handleCorrectDetection = useCallback(() => {
-    console.log('✅ Correct chord detected in Practice page!');
     if (chord) {
       recordAttempt(chord.symbol, chord.name, 'correct');
       revealChord();
       resetChordTimer();
       
-      console.log('⏱️ Setting auto-advance timer for 1.5 seconds...');
       clearAutoAdvance();
       autoAdvanceTimeoutRef.current = window.setTimeout(() => {
-        console.log('⏭️ Auto-advancing to next chord...');
         handleNext();
       }, 1500);
     }
   }, [chord, recordAttempt, revealChord, resetChordTimer, clearAutoAdvance, handleNext]);
   
   const handleWrongDetection = useCallback((detectedSymbol: string) => {
-    console.log('❌ Wrong chord detected:', detectedSymbol);
+    // Optional: Could show feedback here
   }, []);
   
   // ─────────────────────────────────────────────────────────────────────────────

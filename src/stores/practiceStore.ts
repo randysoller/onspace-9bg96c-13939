@@ -289,15 +289,11 @@ export const usePracticeStore = create<PracticeState>()(
       
       prevChord: () => {
         const state = get();
-        console.log('🔄 prevChord called, currentIndex:', state.currentIndex);
         if (state.currentIndex > 0) {
-          console.log('✅ Moving to previous chord:', state.currentIndex - 1);
           set({
             currentIndex: state.currentIndex - 1,
             isRevealed: false,
           });
-        } else {
-          console.log('⚠️ Already at first chord, cannot go back');
         }
       },
       

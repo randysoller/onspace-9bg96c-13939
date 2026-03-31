@@ -318,8 +318,8 @@ export default function Practice() {
                       <div key={d} className="w-0.5 h-2 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: `${d}ms` }} />
                     ))}
                   </div>
-                  <span className="text-emerald-500 text-sm md:text-xl font-medium leading-none truncate">
-                    <span className="md:hidden">Listening — Mic Sensitivity</span>
+                  <span className="text-emerald-500 text-base md:text-xl font-medium leading-none truncate">
+                    <span className="md:hidden">Listening —</span>
                     <span className="hidden md:inline">Listening — play the chord</span>
                   </span>
                 </>
@@ -340,6 +340,7 @@ export default function Practice() {
 
             {/* Mobile sensitivity controls — right-aligned */}
             <div className="md:hidden flex items-center gap-1.5 shrink-0">
+              <span className="text-base text-emerald-500 font-medium leading-none">Mic Sensitivity</span>
               <button
                 onTouchStart={e => { e.preventDefault(); if (sensitivity > 1) decreaseSensitivity(); }}
                 onClick={decreaseSensitivity}

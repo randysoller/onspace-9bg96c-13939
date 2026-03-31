@@ -10,7 +10,7 @@
  * - Count-in visual overlay (fullscreen with beat numbers)
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Square, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
@@ -25,120 +25,86 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   const [rapidIncrement, setRapidIncrement] = useState<'up' | 'down' | null>(null);
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const rapidIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const {
-    isPlaying,
-    bpm,
-    beatsPerMeasure,
-    currentBeat,
-    syncEnabled,
-    syncUnit,
-    beatsPerChord,
-    autoRevealBeforeAdvance,
-    beatsUntilAdvance,
-    setIsPlaying,
-    setBpm,
-    setSyncEnabled,
-    setSyncUnit,
-    setBeatsPerChord,
-    setAutoRevealBeforeAdvance,
-    setCountInMeasures,
-    countInMeasures,
-    startCountIn,
-    stop: stopMetronome,
-  } = useMetronomeStore();
 
-  const handleStartStop = () => {
-    if (isPlaying) {
-      stopMetronome();
-    } else {
-      // startCountIn() enables sync and starts playing in one atomic store update
-      startCountIn();
-    }
-  };
+  // ── Granular store subscriptions ─────────────────────────────────────────
+  // Each selector subscribes only to the fields it needs so this component
+  // does NOT re-render on every metronome tick (currentBeat, subdivisionCounter).
+  const isPlaying   = useMetronomeStore(s => s.isPlaying);
+  const bpm         = useMetronomeStore(s => s.bpm);
+  const syncEnabled = useMetronomeStore(s => s.syncEnabled);
+  const syncUnit    = useMetronomeStore(s => s.syncUnit);
+  const beatsPerChord    = useMetronomeStore(s => s.beatsPerChord);
+  const countInMeasures  = useMetronomeStore(s => s.countInMeasures);
+  const autoRevealBeforeAdvance = useMetronomeStore(s => s.autoRevealBeforeAdvance);
+  // Actions — Zustand guarantees stable references across renders
+  const setBpm           = useMetronomeStore(s => s.setBpm);
+  const setSyncEnabled   = useMetronomeStore(s => s.setSyncEnabled);
+  const setSyncUnit      = useMetronomeStore(s => s.setSyncUnit);
+  const setBeatsPerChord = useMetronomeStore(s => s.setBeatsPerChord);
+  const setCountInMeasures = useMetronomeStore(s => s.setCountInMeasures);
+  const startCountIn   = useMetronomeStore(s => s.startCountIn);
+  const stopMetronome  = useMetronomeStore(s => s.stop);
 
-  const handleToggleSync = () => {
+  // Keep a ref to the current BPM so the rapid-increment interval callback always
+  // reads the latest value without being recreated on every BPM change.
+  const bpmRef = useRef(bpm);
+  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
+
+  const handleStartStop = useCallback(() => {
+    if (isPlaying) stopMetronome();
+    else startCountIn();
+  }, [isPlaying, stopMetronome, startCountIn]);
+
+  const handleToggleSync = useCallback(() => {
     if (isPlaying) stopMetronome();
     setSyncEnabled(!syncEnabled);
-  };
+  }, [isPlaying, stopMetronome, setSyncEnabled, syncEnabled]);
 
-  const incrementCount = () => {
-    setBeatsPerChord(Math.min(32, beatsPerChord + 1));
-  };
+  const incrementCount = useCallback(() => setBeatsPerChord(Math.min(32, beatsPerChord + 1)), [setBeatsPerChord, beatsPerChord]);
+  const decrementCount = useCallback(() => setBeatsPerChord(Math.max(1,  beatsPerChord - 1)), [setBeatsPerChord, beatsPerChord]);
 
-  const decrementCount = () => {
-    setBeatsPerChord(Math.max(1, beatsPerChord - 1));
-  };
+  // Use bpmRef so the rapid-increment interval reads the latest BPM without
+  // needing to be recreated (and thus restarted) on every BPM change.
+  const incrementBPM = useCallback(() => setBpm(Math.min(250, bpmRef.current + 1)), [setBpm]);
+  const decrementBPM = useCallback(() => setBpm(Math.max(20,  bpmRef.current - 1)), [setBpm]);
 
-  const incrementBPM = () => {
-    const newValue = Math.min(250, bpm + 1);
-    setBpm(newValue);
-  };
+  const handleBPMButtonPress = useCallback((direction: 'up' | 'down') => {
+    // Immediate single step
+    if (direction === 'up') incrementBPM(); else decrementBPM();
+    // After 600 ms hold, switch to rapid mode
+    holdTimeoutRef.current = setTimeout(() => setRapidIncrement(direction), 600);
+  }, [incrementBPM, decrementBPM]);
 
-  const decrementBPM = () => {
-    const newValue = Math.max(20, bpm - 1);
-    setBpm(newValue);
-  };
-
-  const handleBPMButtonPress = (direction: 'up' | 'down') => {
-    // Immediate single increment
-    if (direction === 'up') {
-      incrementBPM();
-    } else {
-      decrementBPM();
-    }
-    
-    // After 2 seconds, start rapid increment
-    holdTimeoutRef.current = setTimeout(() => {
-      setRapidIncrement(direction);
-    }, 2000);
-  };
-
-  const handleBPMButtonRelease = () => {
-    // Clear timeout if released before 2 seconds
-    if (holdTimeoutRef.current) {
-      clearTimeout(holdTimeoutRef.current);
-      holdTimeoutRef.current = null;
-    }
-    
-    // Stop rapid increment
+  const handleBPMButtonRelease = useCallback(() => {
+    if (holdTimeoutRef.current) { clearTimeout(holdTimeoutRef.current); holdTimeoutRef.current = null; }
     setRapidIncrement(null);
-  };
-
-  // Handle rapid increment
-  useEffect(() => {
-    if (!rapidIncrement) return;
-    
-    rapidIntervalRef.current = setInterval(() => {
-      if (rapidIncrement === 'up') {
-        incrementBPM();
-      } else {
-        decrementBPM();
-      }
-    }, 100); // 10 increments per second
-    
-    return () => {
-      if (rapidIntervalRef.current) {
-        clearInterval(rapidIntervalRef.current);
-        rapidIntervalRef.current = null;
-      }
-    };
-  }, [rapidIncrement, bpm]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
-      if (rapidIntervalRef.current) clearInterval(rapidIntervalRef.current);
-    };
   }, []);
 
-  const getSummaryText = () => {
+  // Rapid-increment interval — only recreated when direction changes, NOT on every BPM tick
+  useEffect(() => {
+    if (!rapidIncrement) return;
+    rapidIntervalRef.current = setInterval(() => {
+      if (rapidIncrement === 'up') incrementBPM(); else decrementBPM();
+    }, 80);
+    return () => {
+      if (rapidIntervalRef.current) { clearInterval(rapidIntervalRef.current); rapidIntervalRef.current = null; }
+    };
+  // incrementBPM/decrementBPM are stable (useCallback + bpmRef) so this effect
+  // only restarts when the direction itself changes — eliminating the jitter from
+  // the previous implementation that included `bpm` in the dependency array.
+  }, [rapidIncrement, incrementBPM, decrementBPM]);
+
+  // Cleanup on unmount
+  useEffect(() => () => {
+    if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+    if (rapidIntervalRef.current) clearInterval(rapidIntervalRef.current);
+  }, []);
+
+  const summaryText = useMemo(() => {
     if (!syncEnabled) return '';
     const unit = syncUnit === 'beats' ? 'beat' : 'measure';
-    const plural = beatsPerChord === 1 ? '' : 's';
-    return `Every ${beatsPerChord} ${unit}${plural}`;
-  };
+    return `Every ${beatsPerChord} ${unit}${beatsPerChord === 1 ? '' : 's'}`;
+  }, [syncEnabled, syncUnit, beatsPerChord]);
 
   return (
     <>
@@ -169,7 +135,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             <div className={`text-[11px] leading-none mt-0.5 truncate ${
               syncEnabled ? 'text-emerald-400' : 'text-[hsl(var(--text-muted))]'
             }`}>
-              {syncEnabled ? getSummaryText() : 'Off'}
+              {syncEnabled ? summaryText : 'Off'}
             </div>
           </div>
 

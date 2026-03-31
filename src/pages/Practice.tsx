@@ -239,7 +239,7 @@ export default function Practice() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-40 md:pb-28">
+    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-[calc(64px+64px+env(safe-area-inset-bottom))] md:pb-[calc(64px+env(safe-area-inset-bottom))]">
 
       {/* ── Top Toolbar ── */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
@@ -418,8 +418,8 @@ export default function Practice() {
       {/* ── Bottom Toolbar ── */}
       {/* Sits above MobileTabBar (h-16 = 64px on mobile). z-index beats MobileTabBar's 9999. */}
       <div
-        className="fixed left-0 right-0 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md"
-        style={{ bottom: 0, zIndex: 10001 }}
+        className="fixed left-0 right-0 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md md:bottom-0"
+        style={{ bottom: 64, zIndex: 10001 }}
       >
         <div className="flex items-stretch gap-2 px-3 pt-3 pb-3 max-w-2xl mx-auto"
              style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>

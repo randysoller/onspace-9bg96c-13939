@@ -32,6 +32,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { logger } from '@/lib/logger';
+import { useCustomChordStore } from '@/stores/customChordStore';
+import { customToLibraryChord } from '@/types/customChord';
 
 export type DetectionResult = 'correct' | 'wrong' | null;
 
@@ -127,19 +129,20 @@ interface ChordTemplate {
   isBarre: boolean;
 }
 
-const ALL_CHORD_TEMPLATES: ChordTemplate[] = (() => {
+// Static templates from the standard chord database (deduplicated by root+type symbol).
+const STATIC_CHORD_TEMPLATES: ChordTemplate[] = (() => {
   const templates: ChordTemplate[] = [];
   const seenSymbols = new Set<string>();
-  
+
   for (const chord of CHORD_DATABASE) {
     const symbol = `${chord.root}${chord.type}`;
     if (seenSymbols.has(symbol)) continue;
     seenSymbols.add(symbol);
-    
+
     const pc = getChordPitchClasses(chord);
     const template = new Float64Array(12);
     for (const p of pc) template[p] = 1.0;
-    
+
     templates.push({
       chord,
       pitchClasses: pc,
@@ -147,9 +150,39 @@ const ALL_CHORD_TEMPLATES: ChordTemplate[] = (() => {
       isBarre: isBarreChord(chord),
     });
   }
-  
+
   return templates;
 })();
+
+/**
+ * Returns the merged template list: static library chords + any saved custom chords.
+ * Custom chords use their actual fret positions (via customToLibraryChord) so their
+ * unique voicings are recognised both as detection targets and in identifyBestMatch.
+ * Called at detection time (not module load) so new custom chords appear immediately.
+ */
+function getEffectiveTemplates(): ChordTemplate[] {
+  const { customChords } = useCustomChordStore.getState();
+  if (customChords.length === 0) return STATIC_CHORD_TEMPLATES;
+
+  // Deduplicate: custom chords keyed by their own ID override nothing in STATIC list;
+  // they are simply appended so the detector can also recognise custom voicings.
+  const customTemplates: ChordTemplate[] = [];
+  for (const custom of customChords) {
+    const chord = customToLibraryChord(custom) as ChordData;
+    const pc = getChordPitchClasses(chord);
+    if (pc.size === 0) continue; // skip chords with no fretted notes
+    const template = new Float64Array(12);
+    for (const p of pc) template[p] = 1.0;
+    customTemplates.push({
+      chord,
+      pitchClasses: pc,
+      chromaTemplate: template,
+      isBarre: isBarreChord(chord),
+    });
+  }
+
+  return [...STATIC_CHORD_TEMPLATES, ...customTemplates];
+}
 
 // ============================================================================
 // NSDF PITCH DETECTION
@@ -597,8 +630,8 @@ function matchChroma(
 function identifyBestMatch(chroma: Float64Array, excludeSymbol?: string): string | null {
   let bestSim = 0;
   let bestSymbol: string | null = null;
-  
-  for (const template of ALL_CHORD_TEMPLATES) {
+
+  for (const template of getEffectiveTemplates()) {
     const symbol = `${template.chord.root}${template.chord.type}`;
     if (symbol === excludeSymbol) continue;
     

@@ -35,8 +35,10 @@ import {
   Music2,
   Check,
   Bookmark,
+  Heart,
 } from 'lucide-react';
 import PresetDropdown from '@/components/features/PresetDropdown';
+import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
 import heroImg from '@/assets/hero-guitar.jpg';
 
 // ============================================================================
@@ -379,6 +381,7 @@ export default function ChordSetup() {
     barreRoots,
     keyFilter,
     activePresetId,
+    showFavoritesOnly,
     toggleCategory,
     clearCategories,
     toggleChordType,
@@ -387,9 +390,13 @@ export default function ChordSetup() {
     clearBarreRoots,
     setKeyFilter,
     setActivePreset,
+    setShowFavoritesOnly,
     startPractice,
     getAvailableCount,
   } = usePracticeStore();
+
+  const { favoriteIds } = useChordFavoritesStore();
+  const favoriteCount = favoriteIds.size;
   
   const presetStore = usePresetStore();
   const presets = presetStore.presets;
@@ -405,6 +412,8 @@ export default function ChordSetup() {
   
   // Computed values
   const availableCount = useMemo(() => getAvailableCount(), [
+    showFavoritesOnly,
+    favoriteIds,
     categories,
     chordTypes,
     barreRoots,
@@ -494,6 +503,7 @@ export default function ChordSetup() {
     clearBarreRoots();
     setKeyFilter(null);
     setActivePreset(null);
+    setShowFavoritesOnly(false);
   };
   
   // Outside-click close (desktop only)
@@ -606,6 +616,28 @@ export default function ChordSetup() {
                 isPresetMode ? 'opacity-40 pointer-events-none' : ''
               }`}
             >
+              {/* Favorites Chip */}
+              <button
+                onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
+                  showFavoritesOnly
+                    ? 'border-rose-500/50 bg-rose-500/10 text-rose-400'
+                    : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))] hover:text-rose-400 hover:border-rose-500/30'
+                }`}
+              >
+                <Heart className={`size-4 ${showFavoritesOnly ? 'fill-rose-400' : ''}`} />
+                <span>Favorites</span>
+                {favoriteCount > 0 && (
+                  <span className={`flex size-5 rounded-full items-center justify-center text-[10px] font-bold ${
+                    showFavoritesOnly
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))]'
+                  }`}>
+                    {favoriteCount}
+                  </span>
+                )}
+              </button>
+
               {/* Key Chip */}
               <div className="relative" ref={keyDropdownRef}>
                 <button
@@ -809,6 +841,17 @@ export default function ChordSetup() {
                 
                 {!isPresetMode && (
                   <>
+                    {/* Favorites Pill */}
+                    {showFavoritesOnly && (
+                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-rose-500/12 border border-rose-500/25 text-rose-400">
+                        <Heart className="size-3 fill-current" />
+                        <span>Favorites</span>
+                        <button onClick={() => setShowFavoritesOnly(false)} className="hover:opacity-70">
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    )}
+
                     {/* Key Pill */}
                     {keyFilter && (
                       <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
@@ -898,6 +941,15 @@ export default function ChordSetup() {
               
               {/* Summary Rows */}
               <div className="space-y-3">
+                {showFavoritesOnly && !isPresetMode && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[hsl(var(--text-subtle))]">Filter</span>
+                    <span className="text-rose-400 font-medium flex items-center gap-1.5">
+                      <Heart className="size-3.5 fill-rose-400" />
+                      Favorites only
+                    </span>
+                  </div>
+                )}
                 {isPresetMode ? (
                   <>
                     <div className="flex items-center justify-between text-sm">

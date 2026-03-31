@@ -11,6 +11,7 @@ import type { KeySignature } from '@/constants/scales';
 import { NOTE_NAMES } from '@/constants/scales';
 import { useCustomChordStore } from './customChordStore';
 import { usePresetStore } from './presetStore';
+import { useChordFavoritesStore } from './chordFavoritesStore';
 import { customToLibraryChord } from '@/types/customChord';
 
 export type TimerDuration = 0 | 2 | 5 | 10;
@@ -23,6 +24,7 @@ interface PracticeState {
   keyFilter: KeySignature | null;
   activePresetId: string | null;
   timerDuration: TimerDuration;
+  showFavoritesOnly: boolean;
   
   // Practice session state
   currentIndex: number;
@@ -41,6 +43,7 @@ interface PracticeState {
   setKeyFilter: (ks: KeySignature | null) => void;
   setActivePreset: (id: string | null) => void;
   setTimerDuration: (duration: TimerDuration) => void;
+  setShowFavoritesOnly: (value: boolean) => void;
   
   startPractice: () => void;
   stopPractice: () => void;
@@ -101,8 +104,12 @@ function filterChords(
   categories: Set<ChordCategory>,
   types: Set<ChordType>,
   barreRoots: Set<BarreRoot>,
-  keyFilter: KeySignature | null
+  keyFilter: KeySignature | null,
+  showFavoritesOnly: boolean = false
 ): ChordData[] {
+  const favoriteIds = showFavoritesOnly
+    ? useChordFavoritesStore.getState().favoriteIds
+    : null;
   const allCats = categories.size === 0 || categories.size === 3;
   const allRoots = barreRoots.size === 0 || barreRoots.size === 3;
   
@@ -128,7 +135,9 @@ function filterChords(
       matchKey = chordRoot >= 0 && scaleNotes.has(chordRoot);
     }
     
-    return matchCategory && matchType && matchRoot && matchKey;
+    const matchFavorite = !favoriteIds || favoriteIds.has(chord.id);
+
+    return matchCategory && matchType && matchRoot && matchKey && matchFavorite;
   });
 }
 
@@ -142,6 +151,7 @@ export const usePracticeStore = create<PracticeState>()(
       keyFilter: null,
       activePresetId: null,
       timerDuration: 0,
+      showFavoritesOnly: false,
       
       // Initial practice state
       currentIndex: 0,
@@ -228,6 +238,10 @@ export const usePracticeStore = create<PracticeState>()(
       setTimerDuration: (duration) => {
         set({ timerDuration: duration });
       },
+
+      setShowFavoritesOnly: (value) => {
+        set({ showFavoritesOnly: value, activePresetId: null });
+      },
       
       startPractice: () => {
         const state = get();
@@ -244,7 +258,7 @@ export const usePracticeStore = create<PracticeState>()(
           }
         } else {
           // Otherwise, use manual filters
-          filtered = filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter);
+          filtered = filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly);
         }
         
         const shuffled = shuffleArray(filtered);
@@ -322,7 +336,7 @@ export const usePracticeStore = create<PracticeState>()(
           return 0;
         }
         
-        return filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter).length;
+        return filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly).length;
       },
     }),
     {
@@ -334,6 +348,7 @@ export const usePracticeStore = create<PracticeState>()(
         keyFilter: state.keyFilter,
         timerDuration: state.timerDuration,
         activePresetId: state.activePresetId,
+        showFavoritesOnly: state.showFavoritesOnly,
       }),
       merge: (persisted: any, current) => ({
         ...current,
@@ -345,6 +360,7 @@ export const usePracticeStore = create<PracticeState>()(
               keyFilter: persisted.keyFilter ?? null,
               timerDuration: persisted.timerDuration ?? 0,
               activePresetId: persisted.activePresetId ?? null,
+              showFavoritesOnly: persisted.showFavoritesOnly ?? false,
             }
           : {}),
       }),

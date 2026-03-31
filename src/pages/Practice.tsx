@@ -405,8 +405,8 @@ export default function Practice() {
                 <motion.div key={`${chord.id}-diagram`}
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3 }}
-                  className="flex items-end justify-center gap-6 mb-2 -mt-[10px]"
-                  style={{ transform: 'scale(1.38)' }}>
+                  className="flex items-end justify-center gap-6 mb-2 -mt-[10px] w-full"
+                  style={{ transform: 'scale(1.38)', transformOrigin: 'center top' }}>
                   <ChordDiagram chord={chord} size="lg" />
                   <ChordTablature chord={chord} size="lg" />
                 </motion.div>
@@ -449,7 +449,7 @@ export default function Practice() {
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
                   bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--color-primary))] font-semibold text-lg
+                  text-[hsl(var(--color-primary))] font-semibold text-base
                   hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
                   active:scale-[0.97] transition-all"
               >
@@ -464,7 +464,7 @@ export default function Practice() {
                 aria-label="Next chord"
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
-                  bg-[hsl(var(--color-primary))] text-white font-semibold text-lg
+                  bg-[hsl(var(--color-primary))] text-white font-semibold text-base
                   hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
                   shadow-md shadow-[hsl(var(--color-primary)/0.25)]"
               >

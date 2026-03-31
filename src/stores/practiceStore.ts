@@ -266,14 +266,11 @@ export const usePracticeStore = create<PracticeState>()(
       },
       
       nextChord: () => {
-        console.log('🟢 nextChord() in store CALLED');
         const state = get();
         const nextIndex = state.currentIndex + 1;
-        console.log('🟢 Current index:', state.currentIndex, '→ Next index:', nextIndex);
         
         // If past end, reshuffle entire array and reset to 0 (infinite loop)
         if (nextIndex >= state.practiceChords.length) {
-          console.log('🟢 Reshuffling (reached end)');
           const reshuffled = shuffleArray(state.practiceChords);
           set({
             practiceChords: reshuffled,
@@ -282,30 +279,22 @@ export const usePracticeStore = create<PracticeState>()(
             totalPracticed: state.totalPracticed + 1,
           });
         } else {
-          console.log('🟢 Advancing to next chord');
           set({
             currentIndex: nextIndex,
             isRevealed: false,
             totalPracticed: state.totalPracticed + 1,
           });
         }
-        console.log('🟢 nextChord() COMPLETED');
       },
       
       prevChord: () => {
-        console.log('🟡 prevChord() in store CALLED');
         const state = get();
-        console.log('🟡 Current index:', state.currentIndex);
         if (state.currentIndex > 0) {
-          console.log('🟡 Going back to index:', state.currentIndex - 1);
           set({
             currentIndex: state.currentIndex - 1,
             isRevealed: false,
           });
-        } else {
-          console.log('🟡 Already at first chord, cannot go back');
         }
-        console.log('🟡 prevChord() COMPLETED');
       },
       
       revealChord: () => {

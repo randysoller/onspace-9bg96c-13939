@@ -139,6 +139,7 @@ export default function Practice() {
   }, []);
   
   const handleNext = useCallback(() => {
+    console.log('🔵 handleNext FIRED');
     clearAutoAdvance();
     
     if (!isRevealed && chord) {
@@ -147,7 +148,9 @@ export default function Practice() {
     hideChord();
     resetChordTimer();
     resetBeatCounter();
+    console.log('🔵 About to call nextChord()');
     nextChord();
+    console.log('🔵 nextChord() completed');
   }, [
     clearAutoAdvance,
     isRevealed,
@@ -160,10 +163,13 @@ export default function Practice() {
   ]);
   
   const handlePrev = useCallback(() => {
+    console.log('🟠 handlePrev FIRED');
     hideChord();
     resetChordTimer();
     resetBeatCounter();
+    console.log('🟠 About to call prevChord()');
     prevChord();
+    console.log('🟠 prevChord() completed');
   }, [hideChord, resetChordTimer, resetBeatCounter, prevChord]);
   
   const handleRestart = useCallback(() => {
@@ -599,7 +605,10 @@ export default function Practice() {
         <div className="flex items-stretch gap-2 px-3 py-4 md:pb-safe max-w-2xl mx-auto">
           {/* Prev */}
           <button
-            onClick={handlePrev}
+            onClick={() => {
+              console.log('⬅️ PREV BUTTON CLICKED');
+              handlePrev();
+            }}
             aria-label="Previous chord"
             className="min-w-[56px] min-h-[56px] rounded-xl flex items-center justify-center touch-manipulation
               bg-[hsl(var(--bg-surface))] border-2 border-[hsl(var(--border-subtle))]
@@ -623,7 +632,10 @@ export default function Practice() {
 
           {/* Next */}
           <button
-            onClick={handleNext}
+            onClick={() => {
+              console.log('➡️ NEXT BUTTON CLICKED');
+              handleNext();
+            }}
             aria-label="Next chord"
             className="flex-1 min-h-[56px] rounded-xl flex items-center justify-center gap-2 touch-manipulation
               bg-[hsl(var(--color-primary))] text-white

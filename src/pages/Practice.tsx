@@ -319,7 +319,7 @@ export default function Practice() {
                     ))}
                   </div>
                   <span className="text-emerald-500 text-sm md:text-xl font-medium leading-none truncate">
-                    <span className="md:hidden">Listening</span>
+                    <span className="md:hidden">Listening — Mic Sensitivity</span>
                     <span className="hidden md:inline">Listening — play the chord</span>
                   </span>
                 </>

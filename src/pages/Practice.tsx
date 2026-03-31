@@ -432,13 +432,13 @@ export default function Practice() {
                 type="button"
                 onClick={handlePrev}
                 aria-label="Previous chord"
-                style={{ minWidth: 64, minHeight: 64, touchAction: 'manipulation', cursor: 'pointer' }}
-                className="rounded-2xl flex items-center justify-center
+                style={{ minWidth: 48, minHeight: 48, touchAction: 'manipulation', cursor: 'pointer' }}
+                className="rounded-xl flex items-center justify-center
                   bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
                   hover:bg-[hsl(var(--bg-overlay))] hover:border-[hsl(var(--border-default))]
                   active:scale-95 transition-all"
               >
-                <SkipBack className="w-6 h-6 text-[hsl(var(--text-subtle))]" />
+                <SkipBack className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
               </button>
 
               {/* Play */}
@@ -446,14 +446,14 @@ export default function Practice() {
                 type="button"
                 onClick={handlePlayChord}
                 aria-label="Play chord"
-                style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-                className="rounded-2xl flex items-center justify-center gap-2
+                style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
+                className="rounded-xl flex items-center justify-center gap-1.5
                   bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--color-primary))] font-bold text-base
+                  text-[hsl(var(--color-primary))] font-semibold text-sm
                   hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
                   active:scale-[0.97] transition-all"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-4 h-4" />
                 <span>Play</span>
               </button>
 
@@ -462,14 +462,14 @@ export default function Practice() {
                 type="button"
                 onClick={handleNext}
                 aria-label="Next chord"
-                style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-                className="rounded-2xl flex items-center justify-center gap-2
-                  bg-[hsl(var(--color-primary))] text-white font-bold text-base
+                style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
+                className="rounded-xl flex items-center justify-center gap-1.5
+                  bg-[hsl(var(--color-primary))] text-white font-semibold text-sm
                   hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
-                  shadow-lg shadow-[hsl(var(--color-primary)/0.25)]"
+                  shadow-md shadow-[hsl(var(--color-primary)/0.25)]"
               >
                 <span>Next</span>
-                <SkipForward className="w-5 h-5" />
+                <SkipForward className="w-4 h-4" />
               </button>
 
             </div>

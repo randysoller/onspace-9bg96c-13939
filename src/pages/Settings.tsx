@@ -7,7 +7,7 @@ import { useTunerStore } from '@/stores/tunerStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { useChordTypeFilterStore, FILTER_PRESETS, type FilterPreset, type ChordCategory } from '@/stores/chordTypeFilterStore';
 import { settingsApi } from '@/lib/api/settings';
-import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock, Download, TestTube, Filter, CheckCircle2, Circle } from 'lucide-react';
+import { ArrowLeft, Save, Volume2, Sliders, Music, Bell, Clock, Download, TestTube, Filter, CheckCircle2, Circle, Eye, RotateCcw } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
@@ -32,6 +32,33 @@ export default function Settings() {
   const tunerStore = useTunerStore();
   const detectionStore = useDetectionSettingsStore();
   const chordFilterStore = useChordTypeFilterStore();
+
+  // Practice display preferences (stored in localStorage, read by Practice.tsx)
+  const [showDiagrams, setShowDiagramsSetting] = useState(() => {
+    try {
+      const v = localStorage.getItem('fretmaster-show-diagrams');
+      return v !== null ? v !== 'false' : true;
+    } catch { return true; }
+  });
+
+  const [showChordName, setShowChordNameSetting] = useState(() => {
+    try {
+      const v = localStorage.getItem('fretmaster-show-chord-name');
+      return v !== null ? v !== 'false' : true;
+    } catch { return true; }
+  });
+
+  const persistDisplayPref = (key: string, value: boolean) => {
+    try { localStorage.setItem(key, value ? 'true' : 'false'); } catch { /* quota */ }
+  };
+
+  const handleResetDisplayDefaults = () => {
+    setShowDiagramsSetting(true);
+    setShowChordNameSetting(true);
+    persistDisplayPref('fretmaster-show-diagrams', true);
+    persistDisplayPref('fretmaster-show-chord-name', true);
+    toast.success('Display preferences reset to defaults');
+  };
 
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // FIX #7: Track unsaved changes
@@ -451,6 +478,85 @@ export default function Settings() {
               <span className="text-xs text-zinc-500 mt-1 block">
                 {Math.round(detectionStore.noiseGate * 100)}%
               </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Practice Display */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-bold">Practice Display</h2>
+            </div>
+            <button
+              onClick={handleResetDisplayDefaults}
+              className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-amber-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800"
+              aria-label="Reset display preferences to defaults"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset defaults
+            </button>
+          </div>
+          <p className="text-sm text-zinc-500 mb-4">Controls what's shown on the chord practice screen.</p>
+
+          <div className="space-y-3">
+            {/* Show Diagrams */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-white">Show Chord Diagrams</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Display fretboard diagram and tablature during practice</p>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !showDiagrams;
+                  setShowDiagramsSetting(next);
+                  persistDisplayPref('fretmaster-show-diagrams', next);
+                }}
+                className={`relative w-14 h-8 rounded-full transition-colors min-w-[56px] ${
+                  showDiagrams ? 'bg-amber-500' : 'bg-zinc-700'
+                }`}
+                role="switch"
+                aria-checked={showDiagrams}
+                aria-label="Toggle chord diagrams"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
+                    showDiagrams ? 'translate-x-6' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+            </div>
+
+            <div className="border-t border-zinc-800" />
+
+            {/* Show Chord Name */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <p className="text-sm font-medium text-white">Show Chord Name</p>
+                <p className="text-xs text-zinc-500 mt-0.5">Display the full chord name below the symbol</p>
+              </div>
+              <button
+                onClick={() => {
+                  const next = !showChordName;
+                  setShowChordNameSetting(next);
+                  persistDisplayPref('fretmaster-show-chord-name', next);
+                }}
+                className={`relative w-14 h-8 rounded-full transition-colors min-w-[56px] ${
+                  showChordName ? 'bg-amber-500' : 'bg-zinc-700'
+                }`}
+                role="switch"
+                aria-checked={showChordName}
+                aria-label="Toggle chord name"
+              >
+                <span
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform ${
+                    showChordName ? 'translate-x-6' : ''
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
             </div>
           </div>
         </div>

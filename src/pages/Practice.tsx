@@ -78,13 +78,21 @@ export default function Practice() {
 
   // ─── LOCAL STATE ─────────────────────────────────────────────────────────────
   const [showDiagrams, setShowDiagrams] = useState(() => {
-    const saved = localStorage.getItem('fretmaster-show-diagrams');
-    return saved !== null ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem('fretmaster-show-diagrams');
+      return saved !== null ? (JSON.parse(saved) === true) : true;
+    } catch {
+      return true;
+    }
   });
 
   const [showChordName, setShowChordName] = useState(() => {
-    const saved = localStorage.getItem('fretmaster-show-chord-name');
-    return saved !== null ? JSON.parse(saved) : true;
+    try {
+      const saved = localStorage.getItem('fretmaster-show-chord-name');
+      return saved !== null ? (JSON.parse(saved) === true) : true;
+    } catch {
+      return true;
+    }
   });
 
   // ─── SESSION STATS ────────────────────────────────────────────────────────────
@@ -205,8 +213,12 @@ export default function Practice() {
   }, [stopListening, stopCurrent, clearAutoAdvance]);
 
   useEffect(() => {
-    localStorage.setItem('fretmaster-show-diagrams', JSON.stringify(showDiagrams));
-    localStorage.setItem('fretmaster-show-chord-name', JSON.stringify(showChordName));
+    try {
+      localStorage.setItem('fretmaster-show-diagrams', showDiagrams ? 'true' : 'false');
+      localStorage.setItem('fretmaster-show-chord-name', showChordName ? 'true' : 'false');
+    } catch {
+      // localStorage write failure (e.g. private mode quota) — silently ignore
+    }
   }, [showDiagrams, showChordName]);
 
   useEffect(() => {

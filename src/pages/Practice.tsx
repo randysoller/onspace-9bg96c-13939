@@ -214,10 +214,21 @@ export default function Practice() {
     }
   }, [showDiagrams, showChordName]);
 
+  // Beat-sync chord advance: fires when the metronome has counted enough beats.
+  // beatsUntilAdvance hits 0 in incrementBeat(); resetBeatCounter() (called inside
+  // handleNext → resetBeatCounter) resets it so this effect won't fire again until
+  // the next cycle completes.
+  const prevBeatsUntilAdvance = useRef<number>(Infinity);
   useEffect(() => {
-    if (syncEnabled && metronomeIsPlaying && beatsUntilAdvance <= 0) {
+    if (
+      syncEnabled &&
+      metronomeIsPlaying &&
+      beatsUntilAdvance === 0 &&
+      prevBeatsUntilAdvance.current > 0
+    ) {
       handleNext();
     }
+    prevBeatsUntilAdvance.current = beatsUntilAdvance;
   }, [beatsUntilAdvance, syncEnabled, metronomeIsPlaying, handleNext]);
 
   useEffect(() => { resetChordTimer(); }, [chord?.id, resetChordTimer]);

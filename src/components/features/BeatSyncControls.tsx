@@ -36,9 +36,6 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     beatsPerChord,
     autoRevealBeforeAdvance,
     beatsUntilAdvance,
-    isCountingIn,
-    countInBeat,
-    countInMeasures,
     setIsPlaying,
     setBpm,
     setSyncEnabled,
@@ -46,6 +43,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
     setBeatsPerChord,
     setAutoRevealBeforeAdvance,
     setCountInMeasures,
+    countInMeasures,
     startCountIn,
     stop: stopMetronome,
   } = useMetronomeStore();
@@ -53,13 +51,9 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   const handleStartStop = () => {
     if (isPlaying) {
       stopMetronome();
-    } else if (syncEnabled) {
-      startCountIn();
     } else {
-      // Beat sync is off — enable it first, then start with count-in
-      setSyncEnabled(true);
-      // startCountIn reads syncEnabled from store; set then call in next tick
-      setTimeout(() => startCountIn(), 0);
+      // startCountIn() enables sync and starts playing in one atomic store update
+      startCountIn();
     }
   };
 
@@ -148,63 +142,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
 
   return (
     <>
-      {/* Count-In Visual Overlay */}
-      <AnimatePresence>
-        {isCountingIn && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-[hsl(var(--bg-base)/0.4)] backdrop-blur-sm pointer-events-none"
-          >
-            <AnimatePresence mode="wait">
-              {countInBeat <= countInMeasures * beatsPerMeasure ? (
-                <motion.div
-                  key={`beat-${countInBeat}`}
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.5 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-center"
-                >
-                  <div
-                    className="font-black text-red-500"
-                    style={{
-                      fontSize: 'clamp(10rem, 20vw, 14rem)',
-                      lineHeight: 1,
-                      textShadow: '0 0 40px hsl(0 84% 60% / 0.5)',
-                    }}
-                  >
-                    {countInBeat}
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="start"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.5 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="text-center"
-                >
-                  <div
-                    className="font-black text-emerald-500"
-                    style={{
-                      fontSize: 'clamp(8rem, 18vw, 12rem)',
-                      lineHeight: 1,
-                      textShadow: '0 0 40px hsl(142 71% 45% / 0.5)',
-                    }}
-                  >
-                    START
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Beat Sync Panel - Lengthened horizontally by 24px */}
+      {/* Beat Sync Panel */}
       <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[260px] h-[56px] flex flex-col">
         {/* Header Row */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-[hsl(var(--border-subtle))] flex-1">

@@ -69,7 +69,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
       {/* Fret position label — rendered outside the viewBox boundary so it's never obscured */}
       {!isNut && (
         <text
-          x={-fretTextSize * 0.3}
+          x={fretTextSize * 0.9}
           y={nutY + fretSpacing * 0.5}
           textAnchor="end"
           dominantBaseline="middle"

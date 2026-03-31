@@ -433,10 +433,12 @@ export default function Practice() {
               </AnimatePresence>
             </div>
 
-            {/* Diagram Toggle */}
-            <div className="flex items-center justify-center gap-4 mt-4 max-w-md mx-auto">
+            {/* Diagram Toggle — right-0 mirrors the chord name toggle alignment */}
+            <div className="relative flex items-center justify-center h-9 mt-4">
               <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
-              <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />
+              <div className="absolute right-0">
+                <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />
+              </div>
             </div>
 
             {/* ── Inline Navigation Buttons ── */}

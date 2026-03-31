@@ -449,7 +449,7 @@ export default function Practice() {
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
                   bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--color-primary))] font-semibold text-2xl
+                  text-[hsl(var(--color-primary))] font-semibold text-xl
                   hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
                   active:scale-[0.97] transition-all"
               >
@@ -464,7 +464,7 @@ export default function Practice() {
                 aria-label="Next chord"
                 style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
                 className="rounded-xl flex items-center justify-center gap-1.5
-                  bg-[hsl(var(--color-primary))] text-white font-semibold text-2xl
+                  bg-[hsl(var(--color-primary))] text-white font-semibold text-xl
                   hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
                   shadow-md shadow-[hsl(var(--color-primary)/0.25)]"
               >

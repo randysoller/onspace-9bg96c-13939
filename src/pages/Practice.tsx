@@ -1,3 +1,4 @@
+
 /**
  * Practice Page - Single Chord Practice with Real-Time Detection
  * 
@@ -260,11 +261,17 @@ export default function Practice() {
       {/* ── Top Toolbar ── */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
         {/* relative container: BeatSyncControls is absolutely pinned to the left so its
-             width never participates in the flex layout and cannot push the right-side controls */}
+             width never participates in the flex layout and cannot push the right-side controls.
+             pointer-events-none on the wrapper + pointer-events-auto on the child ensures the
+             absolute box does NOT intercept touches outside its visible 56px header area —
+             critical on mobile where the chord diagram overlaps this region visually. */}
         <div className="relative flex items-center justify-end max-w-5xl mx-auto min-h-[40px]">
-          <div className="absolute left-0">
-            <BeatSyncControls onChordAdvance={handleNext} onAutoReveal={handlePlayChord} />
+          <div className="absolute left-0 pointer-events-none">
+            <div className="pointer-events-auto">
+              <BeatSyncControls onChordAdvance={handleNext} onAutoReveal={handlePlayChord} />
+            </div>
           </div>
+          {/* Closing div tag for the top toolbar's inner flex container was missing here */}
           <div className="flex items-center gap-3">
             {isListening && (
               <div className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]">

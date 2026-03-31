@@ -16,7 +16,6 @@ import {
   Mic, 
   MicOff,
   Volume2, 
-  EyeOff, 
   SkipBack, 
   SkipForward, 
   Sliders,
@@ -377,11 +376,10 @@ export default function Practice() {
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}>
                 <div className="text-[58px] font-black text-white mb-2 leading-none">{chord.symbol}</div>
-                <div className="relative flex items-center justify-center">
-                  {showChordName
-                    ? <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">{chord.name}</span>
-                    : <span className="text-lg text-[hsl(var(--text-muted))] italic">Chord name hidden</span>
-                  }
+                <div className="relative flex items-center justify-center h-9">
+                  <span className={`text-2xl font-medium text-[hsl(var(--text-subtle))] ${!showChordName ? 'invisible' : ''}`}>
+                    {chord.name}
+                  </span>
                   <div className="absolute right-0">
                     <ShowChordNameToggle showChordName={showChordName} onToggle={setShowChordName} />
                   </div>
@@ -421,8 +419,8 @@ export default function Practice() {
               </AnimatePresence>
             </div>
 
-            {/* Diagram & Tablature */}
-            {showDiagrams ? (
+            {/* Diagram & Tablature — always in DOM; invisible preserves layout space */}
+            <div className={!showDiagrams ? 'invisible' : ''}>
               <AnimatePresence mode="wait">
                 <motion.div key={`${chord.id}-diagram`}
                   initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
@@ -433,12 +431,7 @@ export default function Practice() {
                   <ChordTablature chord={chord} size="lg" />
                 </motion.div>
               </AnimatePresence>
-            ) : (
-              <div className="text-[hsl(var(--text-muted))] mb-3 -mt-[10px]">
-                <EyeOff className="w-7 h-7 mx-auto mb-2 opacity-50" />
-                <div className="text-xl font-semibold">Diagram hidden</div>
-              </div>
-            )}
+            </div>
 
             {/* Diagram Toggle */}
             <div className="flex items-center justify-center gap-4 mt-4 max-w-md mx-auto">

@@ -163,14 +163,11 @@ export default function Practice() {
     advancedSettings: advancedEnabled ? advancedValues : null,
     onCorrect: handleCorrectDetection,
     onWrongDetected: handleWrongDetection,
-  }), [
-    chord?.id,           // only re-run when the chord actually changes (by id)
-    sensitivity,
-    advancedEnabled,
-    advancedValues,
-    handleCorrectDetection,
-    handleWrongDetection,
-  ]);
+  // chord?.id ensures the config only rebuilds when the chord itself changes, not on
+  // every render. Full `chord` object is safe to use inside because chord is derived
+  // from practiceChords[currentIndex] — the same reference when id hasn't changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [chord?.id, sensitivity, advancedEnabled, advancedValues, handleCorrectDetection, handleWrongDetection]);
 
   const {
     isListening,
@@ -191,9 +188,12 @@ export default function Practice() {
   }, [pauseDetection, playChord]);
 
   // ─── SENSITIVITY ─────────────────────────────────────────────────────────────
-  const decreaseSensitivity = useCallback(() => setSensitivity(Math.max(1, sensitivity - 1)), [setSensitivity, sensitivity]);
-  const increaseSensitivity = useCallback(() => setSensitivity(Math.min(10, sensitivity + 1)), [setSensitivity, sensitivity]);
-  const sensitivityLabel = useMemo(() => getSensitivityLabel(sensitivity), [sensitivity]);
+  // Use functional updater form so these callbacks don't need `sensitivity` in their deps —
+  // they only recreate when `setSensitivity` changes (i.e. never, store actions are stable).
+  const decreaseSensitivity = useCallback(() => setSensitivity((prev) => Math.max(1, prev - 1)), [setSensitivity]);
+  const increaseSensitivity = useCallback(() => setSensitivity((prev) => Math.min(10, prev + 1)), [setSensitivity]);
+  // getSensitivityLabel is a trivial lookup — memoizing it costs more than just calling it.
+  const sensitivityLabel = getSensitivityLabel(sensitivity);
 
   // ─── EFFECTS ─────────────────────────────────────────────────────────────────
   useEffect(() => { startSession(); }, [startSession]);

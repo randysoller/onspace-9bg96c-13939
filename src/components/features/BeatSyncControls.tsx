@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Link2Off, Play, Square, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Square, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 
 interface BeatSyncControlsProps {
@@ -143,7 +143,7 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
   return (
     <>
       {/* Beat Sync Panel */}
-      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[260px] h-[56px] flex flex-col">
+      <div className="relative border border-[hsl(var(--border-subtle))] rounded-lg bg-[hsl(var(--bg-surface))] overflow-visible w-[300px] h-[56px] flex flex-col">
         {/* Header Row — all children must fit within w-[260px] h-[56px] */}
         <div className="flex items-center gap-2 px-2.5 h-full overflow-hidden">
 
@@ -152,13 +152,13 @@ export function BeatSyncControls({ onChordAdvance, onAutoReveal }: BeatSyncContr
             onClick={handleToggleSync}
             aria-label={syncEnabled ? 'Disable beat sync' : 'Enable beat sync'}
             title={syncEnabled ? 'Beat sync ON — click to disable' : 'Beat sync OFF — click to enable'}
-            className={`flex-shrink-0 p-1.5 rounded-lg border transition-all active:scale-95 ${
+            className={`flex-shrink-0 px-2 py-1 rounded-lg border transition-all active:scale-95 text-xs font-bold min-w-[36px] ${
               syncEnabled
                 ? 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400 hover:bg-emerald-500/30'
                 : 'bg-[hsl(var(--bg-overlay))] border-[hsl(var(--border-subtle))] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))]'
             }`}
           >
-            {syncEnabled ? <Link2 className="w-3.5 h-3.5" /> : <Link2Off className="w-3.5 h-3.5" />}
+            {syncEnabled ? 'ON' : 'OFF'}
           </button>
 
           {/* Label + status — grows to fill remaining space */}

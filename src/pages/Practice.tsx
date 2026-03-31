@@ -15,9 +15,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, 
   MicOff,
-  Volume2, 
-  SkipBack, 
-  SkipForward, 
   Sliders,
   CheckCircle2,
   XCircle,
@@ -25,16 +22,13 @@ import {
   Minus,
 } from 'lucide-react';
 import { usePracticeStore } from '@/stores/practiceStore';
-import { useAudioStore } from '@/stores/audioStore';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useChordDetection } from '@/hooks/useChordDetection';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { useSessionStats } from '@/hooks/useSessionStats';
-import { ChordDiagram } from '@/components/features/ChordDiagram';
-import { ChordTablature } from '@/components/features/ChordTablature';
+import { ChordDisplay } from '@/components/features/ChordDisplay';
 import { BeatSyncControls } from '@/components/features/BeatSyncControls';
-import { ShowDiagramsToggle } from '@/components/features/ShowDiagramsToggle';
 import { ShowChordNameToggle } from '@/components/features/ShowChordNameToggle';
 import { VolumeControl } from '@/components/features/VolumeControl';
 
@@ -70,9 +64,9 @@ export default function Practice() {
   const advancedValues  = useDetectionSettingsStore(s => s.advancedValues);
 
   // Metronome
-  const resetBeatCounter  = useMetronomeStore(s => s.resetBeatCounter);
-  const beatsUntilAdvance = useMetronomeStore(s => s.beatsUntilAdvance);
-  const syncEnabled       = useMetronomeStore(s => s.syncEnabled);
+  const resetBeatCounter   = useMetronomeStore(s => s.resetBeatCounter);
+  const beatsUntilAdvance  = useMetronomeStore(s => s.beatsUntilAdvance);
+  const syncEnabled        = useMetronomeStore(s => s.syncEnabled);
   const metronomeIsPlaying = useMetronomeStore(s => s.isPlaying);
 
   // ─── LOCAL STATE ─────────────────────────────────────────────────────────────
@@ -305,7 +299,7 @@ export default function Practice() {
           : result === 'wrong'  ? 'bg-red-900/20 border-red-500/30'
           : 'bg-[hsl(var(--bg-surface))]'
         }`}>
-          {/* Mobile: left = status, right = sensitivity controls */}
+          {/* Mobile: left = status text, right = sensitivity controls */}
           <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto md:justify-center md:gap-3">
 
             {/* Status text */}
@@ -313,7 +307,7 @@ export default function Practice() {
               {!result && (
                 <>
                   <div className="flex gap-0.5 shrink-0">
-                    {[0,100,200].map(d => (
+                    {[0, 100, 200].map(d => (
                       <div key={d} className="w-0.5 h-2 md:h-2.5 bg-emerald-500 animate-pulse" style={{ animationDelay: `${d}ms` }} />
                     ))}
                   </div>
@@ -369,7 +363,7 @@ export default function Practice() {
       <div className="flex-1 flex items-center justify-center pt-0 pb-16 px-4 -mt-12">
         <div className="text-center">
 
-          {/* Chord Symbol */}
+          {/* Chord Symbol + Name */}
           <div className="mb-6 mt-[64px]">
             <AnimatePresence mode="wait">
               <motion.div key={`${chord.id}-symbol`}
@@ -388,116 +382,17 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
-          {/* Diagram Section
-               Note: the negative/positive margin offsets below (-mt-[319px], mt-[336px], etc.)
-               are intentional compensations for the CSS transform: scale(2.156) on the diagram
-               wrapper. CSS transforms do NOT affect layout flow — the element still occupies its
-               original (pre-scale) bounding box — so these manual offsets correct the visual gap.
-               If the scale factor changes, recalculate: offset ≈ (scale - 1) × original_height / 2.
-          */}
-          <div className="-mt-[319px]">
-            {/* Detection Feedback Pill */}
-            <div className="min-h-[60px] mb-[2px] mt-[336px] flex items-center justify-center">
-              <AnimatePresence>
-                {result && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.5, y: 6 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.7, y: -6 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    className="pointer-events-none">
-                    <div className={`px-7 py-2 rounded-2xl backdrop-blur-md border-2 ${
-                      result === 'correct'
-                        ? 'bg-[hsl(142_71%_45%/0.15)] border-[hsl(142_71%_45%/0.5)]'
-                        : 'bg-[hsl(0_84%_60%/0.15)] border-[hsl(0_84%_60%/0.5)]'
-                    }`}>
-                      <span className={`font-display text-2xl font-extrabold uppercase tracking-wider ${
-                        result === 'correct' ? 'text-emerald-500' : 'text-red-500'
-                      }`}
-                        style={{ textShadow: result === 'correct'
-                          ? '0 0 20px hsl(142 71% 45% / 0.5)'
-                          : '0 0 20px hsl(0 84% 60% / 0.5)' }}>
-                        {result === 'correct' ? 'Correct' : 'Wrong'}
-                      </span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          {/* Diagram section — extracted to ChordDisplay for testability and separation of concerns */}
+          <ChordDisplay
+            chord={chord}
+            showDiagrams={showDiagrams}
+            result={result}
+            onToggleDiagrams={setShowDiagrams}
+            onPrev={handlePrev}
+            onPlay={handlePlayChord}
+            onNext={handleNext}
+          />
 
-            {/* Diagram & Tablature — always in DOM; invisible preserves layout space */}
-            <div className={!showDiagrams ? 'invisible' : ''}>
-              <AnimatePresence mode="wait">
-                <motion.div key={`${chord.id}-diagram`}
-                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex items-end justify-center gap-6 mb-2 -mt-[10px]"
-                  style={{ transform: 'scale(2.156)', overflow: 'visible' }}>
-                  <ChordDiagram chord={chord} size="lg" />
-                  <ChordTablature chord={chord} size="lg" />
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Diagram Toggle — right-0 mirrors the chord name toggle alignment */}
-            <div className="relative flex items-center justify-center h-9 mt-16">
-              <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
-              <div className="absolute right-0">
-                <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />
-              </div>
-            </div>
-
-            {/* ── Inline Navigation Buttons ── */}
-            <div className="flex items-stretch gap-3 mt-8 max-w-md mx-auto px-1">
-
-              {/* Prev */}
-              <button
-                type="button"
-                onClick={handlePrev}
-                aria-label="Previous chord"
-                style={{ minWidth: 48, minHeight: 48, touchAction: 'manipulation', cursor: 'pointer' }}
-                className="rounded-xl flex items-center justify-center
-                  bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  hover:bg-[hsl(var(--bg-overlay))] hover:border-[hsl(var(--border-default))]
-                  active:scale-95 transition-all"
-              >
-                <SkipBack className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
-              </button>
-
-              {/* Play */}
-              <button
-                type="button"
-                onClick={handlePlayChord}
-                aria-label="Play chord"
-                style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-                className="rounded-xl flex items-center justify-center gap-1.5
-                  bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
-                  text-[hsl(var(--color-primary))] font-semibold text-base
-                  hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
-                  active:scale-[0.97] transition-all"
-              >
-                <Volume2 className="w-4 h-4" />
-                <span>Play</span>
-              </button>
-
-              {/* Next */}
-              <button
-                type="button"
-                onClick={handleNext}
-                aria-label="Next chord"
-                style={{ minHeight: 48, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-                className="rounded-xl flex items-center justify-center gap-1.5
-                  bg-[hsl(var(--color-primary))] text-white font-semibold text-base
-                  hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
-                  shadow-md shadow-[hsl(var(--color-primary)/0.25)]"
-              >
-                <span>Next</span>
-                <SkipForward className="w-4 h-4" />
-              </button>
-
-            </div>
-
-          </div>
         </div>
       </div>
 

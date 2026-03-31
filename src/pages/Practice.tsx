@@ -330,14 +330,24 @@ export default function Practice() {
               </>
             )}
             <div className="md:hidden flex items-center gap-1">
-              <button onClick={decreaseSensitivity} disabled={sensitivity <= 1}
-                className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 touch-manipulation">
-                <Minus className="w-[18px] h-[18px] text-[hsl(var(--text-subtle))]" />
+              <button
+                onTouchStart={e => { e.preventDefault(); if (sensitivity > 1) decreaseSensitivity(); }}
+                onClick={decreaseSensitivity}
+                disabled={sensitivity <= 1}
+                aria-label="Decrease sensitivity"
+                style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation', userSelect: 'none' }}
+                className="rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
+                <Minus className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
               </button>
-              <span className="text-[18px] text-emerald-500 font-bold min-w-[1.5rem] text-center leading-none">{sensitivity}</span>
-              <button onClick={increaseSensitivity} disabled={sensitivity >= 10}
-                className="p-0.5 rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] active:scale-95 transition-all disabled:opacity-30 touch-manipulation">
-                <Plus className="w-[18px] h-[18px] text-[hsl(var(--text-subtle))]" />
+              <span className="text-[18px] text-emerald-500 font-bold min-w-[2rem] text-center leading-none">{sensitivity}</span>
+              <button
+                onTouchStart={e => { e.preventDefault(); if (sensitivity < 10) increaseSensitivity(); }}
+                onClick={increaseSensitivity}
+                disabled={sensitivity >= 10}
+                aria-label="Increase sensitivity"
+                style={{ minWidth: 44, minHeight: 44, touchAction: 'manipulation', userSelect: 'none' }}
+                className="rounded-md bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] flex items-center justify-center active:scale-95 transition-all disabled:opacity-30">
+                <Plus className="w-5 h-5 text-[hsl(var(--text-subtle))]" />
               </button>
             </div>
           </div>

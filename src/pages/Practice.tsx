@@ -251,7 +251,7 @@ export default function Practice() {
 
   // ─── RENDER ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-[calc(64px+64px+env(safe-area-inset-bottom))] md:pb-[calc(64px+env(safe-area-inset-bottom))]">
+    <div className="min-h-screen bg-[hsl(var(--bg-base))] text-[hsl(var(--text-default))] pb-[calc(64px+env(safe-area-inset-bottom))]">
 
       {/* ── Top Toolbar ── */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
@@ -423,63 +423,58 @@ export default function Practice() {
               <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Chord Diagrams On/Off</span>
               <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={setShowDiagrams} />
             </div>
+
+            {/* ── Inline Navigation Buttons ── */}
+            <div className="flex items-stretch gap-3 mt-8 max-w-md mx-auto px-1">
+
+              {/* Prev */}
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous chord"
+                style={{ minWidth: 64, minHeight: 64, touchAction: 'manipulation', cursor: 'pointer' }}
+                className="rounded-2xl flex items-center justify-center
+                  bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
+                  hover:bg-[hsl(var(--bg-overlay))] hover:border-[hsl(var(--border-default))]
+                  active:scale-95 transition-all"
+              >
+                <SkipBack className="w-6 h-6 text-[hsl(var(--text-subtle))]" />
+              </button>
+
+              {/* Play */}
+              <button
+                type="button"
+                onClick={handlePlayChord}
+                aria-label="Play chord"
+                style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
+                className="rounded-2xl flex items-center justify-center gap-2
+                  bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]
+                  text-[hsl(var(--color-primary))] font-bold text-base
+                  hover:bg-[hsl(var(--color-primary)/0.12)] hover:border-[hsl(var(--color-primary)/0.4)]
+                  active:scale-[0.97] transition-all"
+              >
+                <Volume2 className="w-5 h-5" />
+                <span>Play</span>
+              </button>
+
+              {/* Next */}
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next chord"
+                style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
+                className="rounded-2xl flex items-center justify-center gap-2
+                  bg-[hsl(var(--color-primary))] text-white font-bold text-base
+                  hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
+                  shadow-lg shadow-[hsl(var(--color-primary)/0.25)]"
+              >
+                <span>Next</span>
+                <SkipForward className="w-5 h-5" />
+              </button>
+
+            </div>
+
           </div>
-        </div>
-      </div>
-
-      {/* ── Bottom Toolbar ── */}
-      {/* Sits above MobileTabBar (h-16 = 64px on mobile). z-index beats MobileTabBar's 9999. */}
-      <div
-        className="fixed left-0 right-0 border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] backdrop-blur-md md:bottom-0"
-        style={{ bottom: 64, zIndex: 10001 }}
-      >
-        <div className="flex items-stretch gap-2 px-3 pt-3 pb-3 max-w-2xl mx-auto"
-             style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
-
-          {/* Prev */}
-          <button
-            type="button"
-            onClick={handlePrev}
-            aria-label="Previous chord"
-            style={{ minWidth: 64, minHeight: 64, touchAction: 'manipulation', cursor: 'pointer' }}
-            className="rounded-xl flex items-center justify-center
-              bg-[hsl(var(--bg-surface))] border-2 border-[hsl(var(--border-subtle))]
-              hover:bg-[hsl(var(--bg-overlay))] active:scale-95 transition-all"
-          >
-            <SkipBack className="w-6 h-6 text-[hsl(var(--text-subtle))]" />
-          </button>
-
-          {/* Play */}
-          <button
-            type="button"
-            onClick={handlePlayChord}
-            aria-label="Play chord"
-            style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-            className="rounded-xl flex items-center justify-center gap-2
-              bg-[hsl(var(--color-primary)/0.15)] border-2 border-[hsl(var(--color-primary)/0.4)]
-              text-[hsl(var(--color-primary))] font-display font-bold text-lg
-              hover:bg-[hsl(var(--color-primary)/0.25)] active:scale-[0.97] transition-all"
-          >
-            <Volume2 className="w-6 h-6" />
-            <span className="hidden sm:inline">Play</span>
-          </button>
-
-          {/* Next */}
-          <button
-            type="button"
-            onClick={handleNext}
-            aria-label="Next chord"
-            style={{ minHeight: 64, touchAction: 'manipulation', cursor: 'pointer', flex: 1 }}
-            className="rounded-xl flex items-center justify-center gap-2
-              bg-[hsl(var(--color-primary))] text-white
-              font-display font-bold text-lg
-              hover:bg-[hsl(var(--color-emphasis))] active:scale-[0.97] transition-all
-              shadow-lg shadow-[hsl(var(--color-primary)/0.3)]"
-          >
-            <span>Next</span>
-            <SkipForward className="w-6 h-6" />
-          </button>
-
         </div>
       </div>
 

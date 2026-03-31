@@ -259,8 +259,10 @@ export default function Practice() {
 
       {/* ── Top Toolbar ── */}
       <div className="border-b border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] px-4 py-3">
-        <div className="flex items-center justify-between gap-4 max-w-5xl mx-auto">
-          <div className="flex-shrink-0">
+        {/* relative container: BeatSyncControls is absolutely pinned to the left so its
+             width never participates in the flex layout and cannot push the right-side controls */}
+        <div className="relative flex items-center justify-end max-w-5xl mx-auto min-h-[40px]">
+          <div className="absolute left-0">
             <BeatSyncControls onChordAdvance={handleNext} onAutoReveal={handlePlayChord} />
           </div>
           <div className="flex items-center gap-3">

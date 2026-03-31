@@ -24,9 +24,6 @@ export const MobileTabBar = () => {
   const location = useLocation();
   const { toggleMetronome, closeMetronome } = useMetronomeUIStore();
 
-  // Hide on Practice page — it has its own bottom toolbar
-  if (location.pathname === '/practice') return null;
-
   return (
     <div 
       className="md:hidden bg-black/90 backdrop-blur-lg border-t border-amber-500/20" 

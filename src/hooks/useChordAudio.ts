@@ -5,11 +5,11 @@ import { useAudioStore } from '@/stores/audioStore';
 // Mobile detection utility
 const isMobileBrowser = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// Context age threshold: only recreate a context that has been alive for a very
-// long time (30 minutes). Navigation gaps and sleep cycles are handled by
-// resume() in the visibility handler — NOT by destroying and recreating the
-// context (recreation produces a new suspended context on iOS/Android that
-// races with its own async close and produces silent playback).
+// Context age threshold for background maintenance (30 minutes).
+// Note: sleep/navigation recovery no longer depends on resume() — instead,
+// playChord() recreates the context fresh inside the user gesture if it
+// finds the context non-running. A freshly constructed AudioContext inside
+// a tap gesture always starts in 'running' state on iOS Safari.
 const CONTEXT_MAX_AGE_MS = 30 * 60 * 1000; // 30 minutes
 
 // Standard guitar tuning frequencies (E2, A2, D3, G3, B3, E4)
@@ -122,51 +122,57 @@ export function useChordAudio() {
     console.log('🧹 Cleaned up all audio nodes');
   }, []);
 
+  // createFreshContext: builds a brand-new AudioContext and records its birth time.
+  // MUST be called synchronously inside a user gesture (tap/click) so iOS Safari
+  // starts the context in 'running' state without needing resume().
+  const createFreshContext = useCallback(() => {
+    stopCurrent();
+    if (ctxRef.current && ctxRef.current.state !== 'closed') {
+      // Close the old context in the background — we won't use its nodes again
+      // because stopCurrent() already disconnected them all.
+      ctxRef.current.close().catch(() => {});
+    }
+    const ctx = new AudioContext();
+    ctxRef.current = ctx;
+    contextCreatedAtRef.current = Date.now();
+    console.log('🎵 Fresh AudioContext created inside user gesture:', {
+      state: ctx.state,
+      sampleRate: ctx.sampleRate,
+      platform: isMobileBrowser ? 'mobile' : 'desktop',
+    });
+    return ctx;
+  }, [stopCurrent]);
+
   const getContext = useCallback(() => {
     const now = Date.now();
     const contextAge = now - contextCreatedAtRef.current;
 
-    // Only destroy and recreate after 30 minutes of total lifetime.
-    // Do NOT use timeSinceLastPlayback as a stale signal — after sleep or
-    // navigation that gap always exceeds any short threshold, and the brand-new
-    // AudioContext also starts suspended on iOS/Android, causing the same
-    // silent-playback race we were trying to avoid.
+    // Retire extremely old contexts (30+ min). Safety valve only —
+    // the primary sleep/navigation recovery path lives inside playChord().
     if (contextAge > CONTEXT_MAX_AGE_MS && ctxRef.current && ctxRef.current.state !== 'closed') {
-      console.log('⏰ AudioContext lifetime exceeded 30 min — recreating');
-      stopCurrent();
-      const oldContext = ctxRef.current;
+      console.log('⏰ AudioContext lifetime exceeded 30 min — will recreate on next play');
+      ctxRef.current.close().catch(() => {});
       ctxRef.current = null;
-      oldContext.close().catch(() => {});
     }
 
-    // If suspended, resume in-place — the audio graph is still intact.
-    // Recreating would produce another suspended context AND race with the
-    // async close of the old one, both of which cause silent playback.
-    if (ctxRef.current && ctxRef.current.state === 'suspended') {
-      console.log('⏸️ AudioContext suspended — resuming in-place');
-      ctxRef.current.resume().catch(() => {});
-      // Return the existing context immediately; oscillators scheduled with
-      // a future startTime (ctx.currentTime + 0.05s) will play once resumed.
+    // Return the existing running context if healthy.
+    if (ctxRef.current && ctxRef.current.state === 'running') {
       return ctxRef.current;
     }
 
-    // Create a fresh context only when there is none or it has been closed.
+    // No context yet — create one. If it starts suspended (pre-gesture), that
+    // is fine; playChord() will replace it with a fresh one inside the gesture.
     if (!ctxRef.current || ctxRef.current.state === 'closed') {
       ctxRef.current = new AudioContext();
       contextCreatedAtRef.current = Date.now();
-      console.log('🎵 AudioContext created:', {
+      console.log('🎵 AudioContext created (pre-gesture or background):', {
         state: ctxRef.current.state,
         sampleRate: ctxRef.current.sampleRate,
-        platform: isMobileBrowser ? 'mobile' : 'desktop',
       });
-      // New context may start suspended on mobile — kick off resume immediately.
-      if (ctxRef.current.state === 'suspended') {
-        ctxRef.current.resume().catch(() => {});
-      }
     }
 
     return ctxRef.current;
-  }, [stopCurrent]);
+  }, []);
 
   const playChord = useCallback((chord: ChordData) => {
     const masterVol = getEffectiveVolume();
@@ -176,27 +182,41 @@ export function useChordAudio() {
       return;
     }
 
-    stopCurrent();
+    // ── Core fix: gesture-boundary context acquisition ──────────────────────
+    //
+    // Problem: iOS Safari suspends the AudioContext when the screen locks.
+    // The visibilitychange-based resume() fails because iOS does not classify
+    // that event as a user gesture. Any attempt to call resume() outside a
+    // direct tap/click is silently rejected, leaving the context suspended.
+    // Once suspended via non-gesture code, subsequent resume() calls on that
+    // same context can also fail because iOS tracks the "tried outside gesture"
+    // state per-context.
+    //
+    // Solution: when we detect a non-running context INSIDE a confirmed user
+    // gesture (this function is always called from a button tap), discard the
+    // old context and create a brand-new AudioContext. iOS always starts a new
+    // AudioContext in 'running' state when constructed inside a user gesture —
+    // no resume() needed, no race condition possible.
+    //
+    // stopCurrent() is called inside createFreshContext() so we don't double-call it.
+    let ctx: AudioContext;
+    const existing = getContext();
 
-    // getContext() is called synchronously to stay within the iOS/Android user-gesture
-    // token. If the context is suspended it calls resume() immediately (also sync),
-    // which is sufficient for the browser to accept the gesture association.
-    const ctx = getContext();
+    if (!existing || existing.state !== 'running') {
+      // Non-running context found inside a user gesture → replace it entirely.
+      console.log('🔄 Non-running context detected inside gesture — creating fresh context. State was:', existing?.state ?? 'null');
+      ctx = createFreshContext();
+    } else {
+      // Healthy running context — just clear previous oscillators.
+      stopCurrent();
+      ctx = existing;
+    }
+
     if (!ctx || ctx.state === 'closed') {
-      console.error('❌ Cannot play chord — AudioContext unavailable or closed');
+      console.error('❌ Cannot play chord — AudioContext unavailable');
       return;
     }
 
-    // ── Cause #3 fix ────────────────────────────────────────────────────────
-    // On mobile, ctx.currentTime is FROZEN while the context is suspended.
-    // Scheduling oscillators with startTime = frozenTime + 0.05s means those
-    // events are already in the past once the context actually resumes, so the
-    // audio engine silently discards them — producing no sound.
-    //
-    // Fix: await the resume Promise before reading ctx.currentTime.
-    // The async continuation still executes within the same user-gesture token
-    // because resume() was kicked off synchronously above; iOS/Android honour
-    // this and don't revoke the gesture permission across the microtask boundary.
     const scheduleOscillators = (audioCtx: AudioContext) => {
       if (!Number.isFinite(audioCtx.currentTime)) {
         console.error('❌ AudioContext has invalid currentTime:', audioCtx.currentTime);
@@ -211,7 +231,8 @@ export function useChordAudio() {
       masterGain.connect(audioCtx.destination);
       activeGainNodes.current.push(masterGain);
 
-      // Read currentTime AFTER resume so the clock reflects the live position
+      // A fresh context's currentTime starts at 0 and is live immediately.
+      // A resumed context's currentTime is also live post-resume.
       const now = audioCtx.currentTime + 0.05;
       const allOscs: OscillatorNode[] = [];
 
@@ -234,45 +255,37 @@ export function useChordAudio() {
       }
     };
 
-    if (ctx.state === 'suspended') {
-      // Await the resume so currentTime is live before we schedule.
+    // By this point, ctx is either:
+    //   a) A brand-new context (state: 'running') — schedule immediately
+    //   b) An existing running context — schedule immediately
+    // There is no suspended-context branch because we replaced it above.
+    if (ctx.state === 'running') {
+      scheduleOscillators(ctx);
+    } else {
+      // Edge case: new context started suspended (extremely strict browser policy).
+      // Attempt resume as a last resort — we're still inside the gesture.
       ctx.resume()
         .then(() => scheduleOscillators(ctx))
-        .catch((err) => console.error('❌ resume() failed:', err));
-    } else {
-      // Context is already running — schedule immediately.
-      scheduleOscillators(ctx);
+        .catch((err) => console.error('❌ resume() on fresh context failed:', err));
     }
-  }, [getContext, stopCurrent, getEffectiveVolume]);
+  }, [getContext, createFreshContext, stopCurrent, getEffectiveVolume]);
 
   // Page Visibility API: Track visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         console.log('👁️ Tab visible - context state:', ctxRef.current?.state);
-        // Proactively resume a suspended context when the page becomes visible.
-        // Browsers allow resume() in visibilitychange without a direct user gesture,
-        // so the context is already running by the time the user taps Play.
-        // Also reset the last-playback timestamp so the stale-context check does
-        // NOT force an unnecessary recreation (recreation + async close races with
-        // the new context's first use and is the primary cause of silent playback
-        // after returning from sleep or another page on iOS/Android).
-        if (ctxRef.current && ctxRef.current.state === 'suspended') {
-          ctxRef.current.resume().catch(() => {
-            // Resume may still fail on very strict browsers; getContext() will
-            // handle the fallback recreation on the next playChord() call.
-          });
-        }
-        // Mark as "just played" so timeSinceLastPlayback stays below the
-        // stale threshold and getContext() doesn't discard a healthy context.
+        // NOTE: We intentionally do NOT call resume() here.
+        //
+        // On iOS Safari, visibilitychange is not a user gesture. Calling resume()
+        // here is silently rejected by iOS and, worse, can poison the context's
+        // internal state so that subsequent resume() calls from actual gestures
+        // also fail. The correct recovery happens inside playChord(): when a
+        // non-running context is found inside a tap gesture, it is replaced with
+        // a fresh AudioContext that iOS starts in 'running' state automatically.
         lastPlaybackAtRef.current = Date.now();
       } else if (document.visibilityState === 'hidden') {
-        console.log('🙈 Tab hidden - context will likely suspend');
-        // Do NOT zero lastPlaybackAtRef here. Zeroing it causes the stale check
-        // in getContext() to always trigger on the next playback (timeSinceLastPlayback
-        // = now - 0 = huge), forcing an AudioContext recreation whose async close
-        // races with oscillator creation and produces silent playback on mobile.
-        // The contextAge arm of the stale check is sufficient for genuine staleness.
+        console.log('🙈 Tab hidden - context will suspend on iOS');
       }
     };
 

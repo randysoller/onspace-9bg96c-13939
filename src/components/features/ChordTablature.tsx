@@ -5,6 +5,7 @@
  * Reversed display order (high e on top, low E on bottom)
  */
 
+import { memo } from 'react';
 import type { ChordData } from '@/types/chord';
 
 interface ChordTablatureProps {
@@ -21,7 +22,7 @@ const SIZES = {
   lg: { text: 'text-base', gap: 'gap-2', padding: 'px-4 py-3' },
 };
 
-export function ChordTablature({ chord, size = 'md', className = '' }: ChordTablatureProps) {
+function ChordTablatureBase({ chord, size = 'md', className = '' }: ChordTablatureProps) {
   const { text, gap, padding } = SIZES[size];
   
   return (
@@ -52,3 +53,5 @@ export function ChordTablature({ chord, size = 'md', className = '' }: ChordTabl
     </div>
   );
 }
+
+export const ChordTablature = memo(ChordTablatureBase);

@@ -388,7 +388,13 @@ export default function Practice() {
             </AnimatePresence>
           </div>
 
-          {/* Diagram Section */}
+          {/* Diagram Section
+               Note: the negative/positive margin offsets below (-mt-[319px], mt-[336px], etc.)
+               are intentional compensations for the CSS transform: scale(2.156) on the diagram
+               wrapper. CSS transforms do NOT affect layout flow — the element still occupies its
+               original (pre-scale) bounding box — so these manual offsets correct the visual gap.
+               If the scale factor changes, recalculate: offset ≈ (scale - 1) × original_height / 2.
+          */}
           <div className="-mt-[319px]">
             {/* Detection Feedback Pill */}
             <div className="min-h-[60px] mb-[2px] mt-[336px] flex items-center justify-center">

@@ -11,6 +11,7 @@
  * - Barre indicators
  */
 
+import { memo } from 'react';
 import type { ChordData } from '@/types/chord';
 
 interface ChordDiagramProps {
@@ -29,9 +30,9 @@ const STRING_THICKNESSES = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7]; // Low E → High E
 const FRET_INLAY_POSITIONS = [3, 5, 7, 9, 15, 17, 19, 21]; // Single dot
 const DOUBLE_DOT_POSITIONS = [12, 24]; // Double dot
 
-export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagramProps) {
+function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramProps) {
   // Validate size prop to prevent undefined SIZES lookup
-  const validSize = (['sm', 'md', 'lg'] as const).includes(size as any) ? size : 'md';
+  const validSize: 'sm' | 'md' | 'lg' = size in SIZES ? (size as 'sm' | 'md' | 'lg') : 'md';
   const { width, height, dotRadius, fontSize, fretTextSize } = SIZES[validSize];
   
   // Defensive: Ensure dimensions are valid numbers
@@ -53,9 +54,7 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
   
   // Track which strings are rendered by barre sections
   const barreRenderedStrings = new Set<number>();
-  
-  console.log('✅ ChordDiagram rendering:', { symbol: chord.symbol, size: validSize, width, height });
-  
+
   return (
     <svg
       width={width}
@@ -358,3 +357,5 @@ export function ChordDiagram({ chord, size = 'md', className = '' }: ChordDiagra
     </svg>
   );
 }
+
+export const ChordDiagram = memo(ChordDiagramBase);

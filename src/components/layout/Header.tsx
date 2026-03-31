@@ -5,7 +5,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
 import { NotificationCenter } from '@/components/layout/NotificationCenter';
 
-// Custom Metronome Icon (old-time pyramid metronome)
+// ─── Custom Icons ─────────────────────────────────────────────────────────────
+
 const MetronomeIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4l-8 14h16L12 4z" />
@@ -14,7 +15,6 @@ const MetronomeIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-// Custom Tuning Fork Icon
 const TuningForkIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v8a3 3 0 006 0V3" />
@@ -23,10 +23,32 @@ const TuningForkIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// ─── Nav Item Constants (module-level — never reallocated on render) ──────────
+
+const NAV_ITEMS = [
+  { path: '/',        label: 'Home',    icon: Home },
+  { path: '/tuner',   label: 'Tuner',   icon: TuningForkIcon },
+  { path: '/library', label: 'Library', icon: Library },
+  { path: '/editor',  label: 'Editor',  icon: Edit },
+] as const;
+
+const USER_MENU_ITEMS = [
+  { path: '/lessons',      label: 'Lessons',      icon: BookOpen },
+  { path: '/challenges',   label: 'Challenges',   icon: Zap },
+  { path: '/songs',        label: 'Songs',        icon: Music2 },
+  { path: '/analytics',    label: 'Analytics',    icon: TrendingUp },
+  { path: '/goals',        label: 'Goals',        icon: Target },
+  { path: '/achievements', label: 'Achievements', icon: Trophy },
+  { path: '/leaderboard',  label: 'Leaderboard',  icon: Trophy },
+  { path: '/history',      label: 'History',      icon: BarChart3 },
+  { path: '/settings',     label: 'Settings',     icon: SettingsIcon },
+] as const;
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export const Header = () => {
   const location = useLocation();
   const { user } = useAuthStore();
-
   const { toggleMetronome, closeMetronome } = useMetronomeUIStore();
 
   const handleSignOut = async () => {
@@ -38,29 +60,11 @@ export const Header = () => {
     }
   };
 
-  const navItems = [
-    { path: '/', label: 'Home', icon: Home },
-    { path: '/tuner', label: 'Tuner', icon: TuningForkIcon },
-    { path: '/library', label: 'Library', icon: Library },
-    { path: '/editor', label: 'Editor', icon: Edit },
-  ];
-
-  const userMenuItems = [
-    { path: '/lessons', label: 'Lessons', icon: BookOpen },
-    { path: '/challenges', label: 'Challenges', icon: Zap },
-    { path: '/songs', label: 'Songs', icon: Music2 },
-    { path: '/analytics', label: 'Analytics', icon: TrendingUp },
-    { path: '/goals', label: 'Goals', icon: Target },
-    { path: '/achievements', label: 'Achievements', icon: Trophy },
-    { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
-    { path: '/history', label: 'History', icon: BarChart3 },
-    { path: '/settings', label: 'Settings', icon: SettingsIcon },
-  ];
-
   return (
     <header className="fixed top-0 left-0 right-0 bg-black/40 backdrop-blur-lg border-b border-amber-500/20 z-[70]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <Music className="w-8 h-8 text-amber-500" />
@@ -71,10 +75,10 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
+
+            {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              
               return (
                 <Link
                   key={item.path}
@@ -91,8 +95,8 @@ export const Header = () => {
                 </Link>
               );
             })}
-            
-            {/* Metronome Button (Modal Trigger) */}
+
+            {/* Metronome trigger */}
             <button
               onClick={toggleMetronome}
               className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-zinc-400 hover:text-white hover:bg-white/5"
@@ -101,39 +105,32 @@ export const Header = () => {
               <span className="font-medium">Metronome</span>
             </button>
 
-            {/* User Menu Items (only if logged in) */}
-            {user && (
-              <>
-                {userMenuItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-                  
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={closeMetronome}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
-                        isActive
-                          ? 'bg-amber-500/20 text-amber-500'
-                          : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <Icon className="w-4 h-4" />
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </>
-            )}
+            {/* Authenticated user menu */}
+            {user && USER_MENU_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={closeMetronome}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
+                    isActive
+                      ? 'bg-amber-500/20 text-amber-500'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-4 h-4" />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              );
+            })}
 
-            {/* Auth Buttons */}
+            {/* Auth */}
             {user ? (
               <div className="flex items-center gap-3 ml-4 pl-4 border-l border-zinc-800">
                 <NotificationCenter />
-                <div className="text-sm text-zinc-400">
-                  {user.username}
-                </div>
+                <div className="text-sm text-zinc-400">{user.username}</div>
                 <button
                   onClick={handleSignOut}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all text-zinc-400 hover:text-white hover:bg-white/5"
@@ -151,6 +148,7 @@ export const Header = () => {
                 <span className="font-medium">Sign In</span>
               </Link>
             )}
+
           </nav>
         </div>
       </div>

@@ -203,7 +203,9 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
         const x1 = getStringX(barre.fromString);
         const x2 = getStringX(barre.toString);
         const y = getFretY(barre.fret) - fretSpacing / 2;
-        const barHeight = 6;
+        // Scale barHeight with dotRadius so it looks proportionally correct
+        // at all sizes (sm/md/lg). Fixed '6' was too thin at lg (modal view).
+        const barHeight = config.dotRadius * 1.2;
         return (
           <rect
             key={`barre-${idx}`}
@@ -211,7 +213,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
             y={y - barHeight / 2}
             width={x2 - x1}
             height={barHeight}
-            rx={barHeight}
+            rx={barHeight / 2}
             fill={barre.color}
             fillOpacity={0.9}
           />

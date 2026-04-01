@@ -93,7 +93,7 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
   const numFrets = chord.numFrets;
   const numStrings = 6;
 
-  const padLeft = 44, padRight = 20, padTop = 56, padBottom = 24;
+  const padLeft = 44, padRight = 20, padTop = 72, padBottom = 24;
   const gridWidth = width - padLeft - padRight;
   const gridHeight = height - padTop - padBottom;
   const stringSpacing = gridWidth / (numStrings - 1);
@@ -174,22 +174,26 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
     }
   }, [chord, toggleMutedString, toggleOpenString, toggleOpenDiamond]);
 
+  // ─── Barre String Toggle ────────────────────────────────────────────────────
+  // Shared logic called from both the fret zone rect AND the marker <g> in barre mode.
+  const handleBarreStringToggle = useCallback((fret: number, stringIdx: number) => {
+    if (!barreMode) return;
+    if (fret !== barreMode.anchorFret) return;
+    if (stringIdx === barreMode.anchorString) return; // can't deselect anchor
+    const isSelected = barreMode.selectedStrings.includes(stringIdx);
+    const selectedStrings = isSelected
+      ? barreMode.selectedStrings.filter(s => s !== stringIdx)
+      : [...barreMode.selectedStrings, stringIdx];
+    setBarreMode({ ...barreMode, selectedStrings });
+  }, [barreMode]);
+
   // ─── Fret Zone Click ────────────────────────────────────────────────────────
   const handleFretZoneClick = useCallback((fret: number, stringIdx: number, svgX: number, svgY: number) => {
     if (drag) return;
 
     // In barre mode: delegate to barre selection
     if (barreMode) {
-      const marker = chord.markers.find(m => m.fret === fret && m.string === stringIdx);
-      if (marker && fret === barreMode.anchorFret) {
-        // Toggle selection (can't deselect anchor)
-        if (stringIdx === barreMode.anchorString) return;
-        const isSelected = barreMode.selectedStrings.includes(stringIdx);
-        const selectedStrings = isSelected
-          ? barreMode.selectedStrings.filter(s => s !== stringIdx)
-          : [...barreMode.selectedStrings, stringIdx];
-        setBarreMode({ ...barreMode, selectedStrings });
-      }
+      handleBarreStringToggle(fret, stringIdx);
       return;
     }
 
@@ -396,26 +400,42 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
               {/* State indicator */}
               {isMuted && (
                 <g>
-                  <line x1={cx - dotRadius * 0.6} y1={headerY - dotRadius * 0.6} x2={cx + dotRadius * 0.6} y2={headerY + dotRadius * 0.6} stroke="hsl(30 7% 47%)" strokeWidth={1.5} />
-                  <line x1={cx + dotRadius * 0.6} y1={headerY - dotRadius * 0.6} x2={cx - dotRadius * 0.6} y2={headerY + dotRadius * 0.6} stroke="hsl(30 7% 47%)" strokeWidth={1.5} />
+                  {/* Gray X — muted string */}
+                  <line x1={cx - dotRadius * 0.65} y1={headerY - dotRadius * 0.65} x2={cx + dotRadius * 0.65} y2={headerY + dotRadius * 0.65} stroke="hsl(0 0% 45%)" strokeWidth={1.8} strokeLinecap="round" />
+                  <line x1={cx + dotRadius * 0.65} y1={headerY - dotRadius * 0.65} x2={cx - dotRadius * 0.65} y2={headerY + dotRadius * 0.65} stroke="hsl(0 0% 45%)" strokeWidth={1.8} strokeLinecap="round" />
                 </g>
               )}
               {isDiamond && (
                 <>
+                  {/* Blue diamond — root note, matches fretboard root markers */}
                   <polygon
-                    points={`${cx},${headerY - dotRadius * 0.85} ${cx + dotRadius * 0.85},${headerY} ${cx},${headerY + dotRadius * 0.85} ${cx - dotRadius * 0.85},${headerY}`}
+                    points={`${cx},${headerY - dotRadius * 0.88} ${cx + dotRadius * 0.88},${headerY} ${cx},${headerY + dotRadius * 0.88} ${cx - dotRadius * 0.88},${headerY}`}
                     fill="none"
                     stroke="hsl(200 80% 62%)"
-                    strokeWidth={1.5}
+                    strokeWidth={1.8}
                   />
-                  <text x={cx} y={headerY + dotRadius * 1.3} textAnchor="middle" fontSize={7} fill="hsl(200 80% 62%)" fontFamily="DM Sans, sans-serif">root</text>
+                  <text x={cx} y={headerY + dotRadius * 1.35} textAnchor="middle" fontSize={7} fill="hsl(200 80% 62%)" fontFamily="DM Sans, sans-serif">root</text>
                 </>
               )}
               {isOpen && !isDiamond && (
-                <circle cx={cx} cy={headerY} r={dotRadius * 0.7} fill="none" stroke="hsl(33 14% 72%)" strokeWidth={1.5} />
+                // Orange circle — open string, matches dot color
+                <circle cx={cx} cy={headerY} r={dotRadius * 0.72} fill="none" stroke="hsl(38 90% 56%)" strokeWidth={1.8} />
               )}
               {!isMuted && !isOpen && (
-                <text x={cx} y={headerY + 4} textAnchor="middle" fontSize={8} fill="hsl(30 7% 47%)" fillOpacity={0.4} fontFamily="DM Sans, sans-serif">tap</text>
+                // Ghost circle — neutral/unset state; dashed to suggest interactivity
+                <>
+                  <circle
+                    cx={cx}
+                    cy={headerY}
+                    r={dotRadius * 0.72}
+                    fill="none"
+                    stroke="hsl(33 14% 55%)"
+                    strokeWidth={1.2}
+                    strokeDasharray="2.5 2.5"
+                    strokeOpacity={0.45}
+                  />
+                  <title>Tap to set open / muted / root</title>
+                </>
               )}
             </g>
           );
@@ -599,6 +619,12 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
               key={`marker-${idx}`}
               opacity={dimmed ? 0.35 : opacity}
               onPointerDown={(e) => !barreMode && handleMarkerPointerDown(e, marker)}
+              onClick={(e) => {
+                if (!barreMode) return;
+                if (!isEligible) return;
+                e.stopPropagation();
+                handleBarreStringToggle(marker.fret, marker.string);
+              }}
               style={{ cursor: barreMode ? (isEligible ? 'pointer' : 'default') : 'grab' }}
             >
               {/* Hit area */}

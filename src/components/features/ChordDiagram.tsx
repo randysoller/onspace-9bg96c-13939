@@ -238,15 +238,18 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
         
         return (
           <g key={`barre-${barreIdx}`}>
-            {/* Barre bar */}
-            <rect
-              x={fromX - dotRadius * 0.4}
-              y={fretY - dotRadius * 0.7}
-              width={toX - fromX + dotRadius * 0.8}
-              height={dotRadius * 2.1}
-              rx={dotRadius * 0.7}
-              className="fill-amber-500/80"
-            />
+            {/* Barre bar — height and centering match CustomChordDiagram's
+                 barHeight = dotRadius * 1.2 so both renderers stay consistent. */}
+            {(() => { const bh = dotRadius * 1.2; return (
+              <rect
+                x={fromX}
+                y={fretY - bh / 2}
+                width={toX - fromX}
+                height={bh}
+                rx={bh / 2}
+                className="fill-amber-500/80"
+              />
+            ); })()}
             {/* Individual dots at contact points */}
             {Array.from({ length: barre.toString - barre.fromString + 1 }, (_, i) => {
               const stringIdx = barre.fromString + i;

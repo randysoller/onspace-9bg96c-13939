@@ -877,17 +877,26 @@ export default function ChordSetup() {
                     )}
                     
                     {/* Category Pills */}
-                    {[...categories].map((cat) => (
-                      <div
-                        key={cat}
-                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500"
-                      >
-                        <span>{CATEGORY_LABELS[cat].replace(' Chords', '')}</span>
-                        <button onClick={() => toggleCategory(cat)} className="hover:opacity-70">
-                          <X className="size-3" />
-                        </button>
-                      </div>
-                    ))}
+                    {[...categories].map((cat) => {
+                      const catPill = cat === 'open'
+                        ? 'bg-emerald-500/12 border-emerald-500/25 text-emerald-500'
+                        : cat === 'barre'
+                        ? 'bg-purple-500/12 border-purple-500/25 text-purple-400'
+                        : cat === 'movable'
+                        ? 'bg-yellow-400/12 border-yellow-400/25 text-yellow-300'
+                        : 'bg-zinc-500/12 border-zinc-500/25 text-zinc-400';
+                      return (
+                        <div
+                          key={cat}
+                          className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium border ${catPill}`}
+                        >
+                          <span>{CATEGORY_LABELS[cat].replace(' Chords', '')}</span>
+                          <button onClick={() => toggleCategory(cat)} className="hover:opacity-70">
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
                     
                     {/* Type Pills */}
                     {chordTypes.size > 0 && chordTypes.size <= 3 ? (

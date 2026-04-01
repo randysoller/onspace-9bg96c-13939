@@ -8,10 +8,13 @@ import type { ChordType, ChordCategory } from '@/types/chord';
 import type { DotShape } from '@/types/customChord';
 import { DEFAULT_DOT_COLOR, DEFAULT_ROOT_COLOR } from '@/types/customChord';
 import {
-  Plus, Save, Trash2, RotateCcw, Minus, FileText, Pencil, Tag,
+  Plus, Save, Trash2, RotateCcw, Minus, FileText, Pencil, Tag, Download,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { CHORD_DATABASE } from '@/constants/chords';
+import { customToLibraryChord } from '@/types/customChord';
+import type { ChordData } from '@/types/chord';
 
 const EDITABLE_TYPES: ChordType[] = [
   'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended',
@@ -56,6 +59,67 @@ export default function ChordEditor() {
     currentChord.markers.length > 0;
 
   const canDelete = isEditing || !!currentChord.sourceChordId;
+
+  // ── Export chords.ts download ────────────────────────────────────────────────
+  const canExport =
+    currentChord.name.trim() !== '' &&
+    currentChord.symbol.trim() !== '' &&
+    currentChord.markers.length > 0;
+
+  const handleExportChordsTs = () => {
+    // Convert the current chord to ChordData format
+    const newEntry = customToLibraryChord(currentChord);
+
+    // Serialise a single ChordData entry as a compact object literal
+    // matching the style used in src/constants/chords.ts
+    const serializeChord = (c: ChordData & Record<string, unknown>): string => {
+      const parts: string[] = [];
+      parts.push(`id: '${c.id}'`);
+      parts.push(`name: '${c.name.replace(/'/g, "\\'")}'`);
+      parts.push(`symbol: '${c.symbol.replace(/'/g, "\\'")}'`);
+      parts.push(`category: '${c.category}'`);
+      parts.push(`type: '${c.type}'`);
+      parts.push(`frets: [${(c.frets as number[]).join(', ')}]`);
+      parts.push(`fingers: [${(c.fingers as number[]).join(', ')}]`);
+      parts.push(`baseFret: ${c.baseFret}`);
+      if (c.barres && (c.barres as number[]).length > 0) {
+        parts.push(`barres: [${(c.barres as number[]).join(', ')}]`);
+      }
+      parts.push(`rootNoteString: ${c.rootNoteString}`);
+      return `  { ${parts.join(', ')} }`;
+    };
+
+    // Build all entries: existing CHORD_DATABASE + new chord
+    const allEntries = [
+      ...CHORD_DATABASE.map(c => serializeChord(c as ChordData & Record<string, unknown>)),
+      serializeChord(newEntry as unknown as ChordData & Record<string, unknown>),
+    ];
+
+    const fileContent = [
+      `import type { ChordData } from '@/types/chord';`,
+      ``,
+      `export const CHORD_DATABASE: ChordData[] = [`,
+      allEntries.join(',\n'),
+      `];`,
+      ``,
+    ].join('\n');
+
+    // Trigger browser download
+    const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'chords.ts';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success('chords.ts downloaded!', {
+      description: `"${currentChord.symbol}" appended. In OnSpace, open Code View → src/constants/chords.ts → replace file contents.`,
+      duration: 6000,
+    });
+  };
 
   const handleShapeChange = (shape: DotShape) => {
     setSelectedShape(shape);
@@ -372,6 +436,21 @@ export default function ChordEditor() {
                 >
                   <Save className="w-4 h-4" />
                   {isEditing ? 'Update Chord' : 'Save to Library'}
+                </button>
+
+                {/* Export chords.ts */}
+                <button
+                  type="button"
+                  onClick={handleExportChordsTs}
+                  disabled={!canExport}
+                  className={`w-full flex items-center justify-center gap-2 rounded-lg py-2.5 font-display text-sm font-semibold transition-all border ${
+                    canExport
+                      ? 'border-[hsl(var(--color-primary)/0.4)] text-[hsl(var(--color-primary))] hover:bg-[hsl(var(--color-primary)/0.08)]'
+                      : 'border-[hsl(var(--border-subtle))] text-[hsl(var(--text-muted))] cursor-not-allowed opacity-40'
+                  }`}
+                >
+                  <Download className="w-4 h-4" />
+                  Download chords.ts
                 </button>
 
                 {/* Cancel — Start New */}

@@ -101,7 +101,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           <div className="text-3xl font-black text-white mb-0.5">
             {chord.symbol}
           </div>
-          <div className="text-xs text-zinc-600 uppercase tracking-wide mb-1">
+          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">
             {chord.category === 'open' ? 'Open Chords'
               : chord.category === 'barre' ? 'Barre Chords'
               : chord.category === 'movable' ? 'Movable Chords'

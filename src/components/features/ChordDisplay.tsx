@@ -99,11 +99,38 @@ function ChordDisplayBase({
         </AnimatePresence>
       </div>
 
-      {/* ── Diagrams On/Off Toggle ──
-           right-0 mirrors the chord name toggle alignment.
+      {/* ── Legend + Diagrams On/Off Toggle ──
+           Legend is absolutely centered in the row so it adds zero height.
+           md:hidden keeps it mobile-only where diagram real estate is scarce.
+           The toggle stays right-0 as before.
       */}
       <div className="relative flex items-center justify-center h-9 mt-16">
         <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
+
+        {/* Mobile-only legend — centered, non-interactive overlay */}
+        <div className="md:hidden absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="flex items-center gap-4">
+            {/* Orange circle — finger position */}
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <circle cx="6" cy="6" r="6" fill="hsl(38 90% 56%)" />
+              </svg>
+              <span className="text-[11px] font-body font-medium text-[hsl(var(--text-subtle))] leading-none">
+                Finger Position
+              </span>
+            </div>
+            {/* Blue diamond — root note */}
+            <div className="flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 12 12">
+                <polygon points="6,0 12,6 6,12 0,6" fill="hsl(200 80% 55%)" />
+              </svg>
+              <span className="text-[11px] font-body font-medium text-[hsl(var(--text-subtle))] leading-none">
+                Root Note
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="absolute right-0">
           <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={onToggleDiagrams} />
         </div>

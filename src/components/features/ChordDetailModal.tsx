@@ -1,5 +1,7 @@
 import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChordData } from '@/types/chord';
+import CustomChordDiagram from '@/components/features/CustomChordDiagram';
+import type { CustomChordData } from '@/types/customChord';
 
 interface ChordDetailModalProps {
   chord: ChordData;
@@ -97,8 +99,32 @@ export default function ChordDetailModal({
 
           {/* Diagram Section */}
           <div className="p-3 flex gap-3 items-start flex-shrink-0">
-            {/* Chord Diagram */}
+            {/* Chord Diagram — use CustomChordDiagram for custom/edited chords so
+                 baseFret offsets and relative fret math are handled correctly.
+                 The modal receives the full custom field set via the extended ChordData type. */}
             <div className="flex-shrink-0">
+              {(chord as any).isCustom ? (
+                <CustomChordDiagram
+                  chord={{
+                    id: chord.id,
+                    name: chord.name,
+                    symbol: chord.symbol,
+                    baseFret: chord.baseFret,
+                    numFrets: (chord as any).numFrets ?? 5,
+                    markers: (chord as any).customMarkers ?? [],
+                    barres: (chord as any).customBarres ?? [],
+                    mutedStrings: new Set<number>((chord as any).customMutedStrings ?? []),
+                    openStrings: new Set<number>((chord as any).customOpenStrings ?? []),
+                    openDiamonds: new Set<number>((chord as any).customOpenDiamonds ?? []),
+                    chordType: chord.type,
+                    chordCategory: chord.category,
+                    sourceChordId: (chord as any).sourceChordId,
+                    createdAt: 0,
+                    updatedAt: 0,
+                  } as CustomChordData}
+                  size="lg"
+                />
+              ) : (
               <svg width="244" height="320" viewBox="0 0 160 210" className="select-none">
                 {/* Nut (thick top line) */}
                 <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
@@ -204,7 +230,7 @@ export default function ChordDetailModal({
                       x2={20 + maxString * 24}
                       y2={28 + (barreFret - 0.5) * 35}
                       stroke="currentColor"
-                      strokeWidth="10"
+                      strokeWidth="22.5"
                       strokeLinecap="round"
                       className="text-amber-500"
                     />
@@ -271,6 +297,7 @@ export default function ChordDetailModal({
                   return null;
                 })}
               </svg>
+              )}
             </div>
 
             {/* Tablature Notation */}

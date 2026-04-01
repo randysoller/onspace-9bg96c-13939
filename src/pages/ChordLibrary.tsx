@@ -142,22 +142,20 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           )}
         </div>
 
-        {/* Tablature — only for standard chords; custom chords use relative fret
-             numbers internally so absolute display would be misleading */}
-        {!(chord as any).isCustom && (
-          <div className="bg-white rounded-md px-2.5 py-2 text-[10px] font-mono self-start shadow-lg flex-shrink-0">
-            {[...chord.frets].reverse().map((fret, idx) => (
-              <div key={idx} className="flex gap-1.5 items-center py-[1px]">
-                <span className="text-zinc-800 font-bold w-2">{REVERSED_STRINGS[idx]}</span>
-                <span className="text-zinc-400">—</span>
-                <span className="text-zinc-900 font-bold w-2.5 text-center text-xs">
-                  {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
-                </span>
-                <span className="text-zinc-400">—</span>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Tablature — frets[] always contains absolute fret numbers for both
+             standard and custom chords (customToLibraryChord converts them). */}
+        <div className="bg-white rounded-md px-2.5 py-2 text-[10px] font-mono self-start shadow-lg flex-shrink-0">
+          {[...chord.frets].reverse().map((fret, idx) => (
+            <div key={idx} className="flex gap-1.5 items-center py-[1px]">
+              <span className="text-zinc-800 font-bold w-2">{REVERSED_STRINGS[idx]}</span>
+              <span className="text-zinc-400">—</span>
+              <span className="text-zinc-900 font-bold w-2.5 text-center text-xs">
+                {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
+              </span>
+              <span className="text-zinc-400">—</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -107,8 +107,9 @@ function ChordDisplayBase({
       <div className="relative flex items-center justify-center h-9 mt-16">
         <span className="text-[hsl(var(--text-subtle))] text-lg font-medium">Diagrams On/Off</span>
 
-        {/* Mobile-only legend — centered, non-interactive overlay */}
-        <div className="md:hidden absolute inset-0 flex items-center justify-center pointer-events-none">
+        {/* Mobile-only legend — floats above the toggle row; hidden when diagrams are off */}
+        {showDiagrams && (
+        <div className="md:hidden absolute bottom-full left-0 right-0 mb-4 flex items-center justify-center pointer-events-none">
           <div className="flex items-center gap-4">
             {/* Orange circle — finger position */}
             <div className="flex items-center gap-1.5">
@@ -130,6 +131,7 @@ function ChordDisplayBase({
             </div>
           </div>
         </div>
+        )}
 
         <div className="absolute right-0">
           <ShowDiagramsToggle showDiagrams={showDiagrams} onToggle={onToggleDiagrams} />

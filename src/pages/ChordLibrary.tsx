@@ -5,7 +5,7 @@ import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, MousePointer, Plus, Save, Heart, Edit,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
-  CheckCircle2,
+  CheckCircle2, Pencil, X,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData } from '@/types/chord';
@@ -181,6 +181,7 @@ export default function ChordLibrary() {
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
+  const [editingPackId, setEditingPackId] = useState<string | null>(null);
   const [packAssignments, setPackAssignments] = useState<Record<string, string[]>>(() => {
     try {
       const stored = localStorage.getItem('fretmaster_pack_assignments');
@@ -271,6 +272,17 @@ export default function ChordLibrary() {
     navigate('/editor');
   };
 
+  const handleEditPackSlot = (packId: string) => {
+    const assigned = packAssignments[packId];
+    if (assigned && assigned.length > 0) {
+      setSelectedChords(new Set(assigned));
+    }
+    setEditingPackId(packId);
+    setShowPresetMenu(false);
+    const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
+    toast.success(`Editing "${packTitle}" — adjust chords then open the dropdown to re-save`);
+  };
+
   const handleSaveToPackSlot = (packId: string) => {
     if (selectedChords.size === 0) {
       toast.error('Select at least one chord first');
@@ -280,6 +292,7 @@ export default function ChordLibrary() {
     setPackAssignments(updated);
     localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
     const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
+    if (editingPackId === packId) setEditingPackId(null);
     toast.success(`${selectedChords.size} chords saved to "${packTitle}"`);
   };
 
@@ -298,6 +311,7 @@ export default function ChordLibrary() {
     setPackAssignments(updated);
     localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
     if (selectedPreset === packId) setSelectedPreset(null);
+    if (editingPackId === packId) setEditingPackId(null);
     toast.success('Pack cleared');
   };
 
@@ -381,6 +395,30 @@ export default function ChordLibrary() {
           </p>
         </div>
 
+        {/* Edit Pack Banner */}
+        {editingPackId && (() => {
+          const pack = CHORD_PACKS.find((p) => p.id === editingPackId);
+          return pack ? (
+            <div className="mb-3 flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
+              <Pencil className="w-4 h-4 text-amber-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-amber-400">Editing Pack</p>
+                <p className="text-sm font-bold text-white truncate">{pack.title}</p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="text-xs text-amber-400/80">{selectedChords.size} selected</span>
+                <button
+                  onClick={() => setEditingPackId(null)}
+                  className="text-amber-400/60 hover:text-amber-400 transition-colors"
+                  aria-label="Cancel editing"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : null;
+        })()}
+
         {/* Preset Dropdown */}
         <div className="mb-4 relative">
           {/* Collapsed trigger */}
@@ -463,8 +501,15 @@ export default function ChordLibrary() {
 
                         {/* Right action */}
                         {isPopulated ? (
-                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             {isActive && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleEditPackSlot(pack.id); }}
+                              className="p-1.5 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+                              aria-label={`Edit ${pack.title}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); handleClearPackSlot(pack.id); }}
                               className="text-zinc-600 hover:text-zinc-400 text-[10px] underline underline-offset-2 transition-colors"
@@ -491,6 +536,10 @@ export default function ChordLibrary() {
                   <p className="text-xs text-zinc-600 px-1 mb-3">
                     Select chords from the list below, then tap a pack slot to save them.
                   </p>
+                ) : editingPackId ? (
+                  <p className="text-xs text-amber-400 px-1 mb-3 font-medium">
+                    {selectedChords.size} chord{selectedChords.size !== 1 ? 's' : ''} selected — tap the pack below to update:
+                  </p>
                 ) : (
                   <p className="text-xs text-emerald-400 px-1 mb-3 font-medium">
                     {selectedChords.size} chord{selectedChords.size !== 1 ? 's' : ''} selected — choose a pack slot:
@@ -508,7 +557,9 @@ export default function ChordLibrary() {
                         onClick={() => handleSaveToPackSlot(pack.id)}
                         disabled={selectedChords.size === 0}
                         className={`w-full relative flex items-center gap-3 border rounded-lg px-3 py-2.5 overflow-hidden transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                          selectedChords.size > 0
+                          editingPackId === pack.id
+                            ? 'bg-amber-500/15 border-amber-500/50 text-amber-400'
+                            : selectedChords.size > 0
                             ? `${pack.saveBtnColor} border`
                             : 'bg-zinc-900 border-zinc-800 text-zinc-500'
                         }`}

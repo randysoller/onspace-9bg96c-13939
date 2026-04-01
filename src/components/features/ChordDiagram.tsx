@@ -178,8 +178,8 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
         } else if (fret === 0) {
           // Open string
           if (isRoot) {
-            // Root diamond
-            const size = dotRadius * 0.95;
+            // Root diamond — 20% larger than orange dots
+            const size = dotRadius * 1.14;
             return (
               <polygon
                 key={`open-${idx}`}
@@ -260,11 +260,11 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
               const isRoot = stringIdx === chord.rootNoteString;
               
               if (isRoot) {
-                // Root diamond
+                // Root diamond — 20% larger than orange dots
                 return (
                   <g key={`barre-dot-${stringIdx}`}>
                     <polygon
-                      points={`${dotX},${fretY - dotRadius} ${dotX + dotRadius},${fretY} ${dotX},${fretY + dotRadius} ${dotX - dotRadius},${fretY}`}
+                      points={`${dotX},${fretY - dotRadius * 1.2} ${dotX + dotRadius * 1.2},${fretY} ${dotX},${fretY + dotRadius * 1.2} ${dotX - dotRadius * 1.2},${fretY}`}
                       className="fill-cyan-500"
                     />
                     {finger && finger > 0 && (
@@ -323,11 +323,11 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
         const isRoot = stringIdx === chord.rootNoteString;
         
         if (isRoot) {
-          // Root diamond
+          // Root diamond — 20% larger than orange dots
           return (
             <g key={`dot-${stringIdx}`}>
               <polygon
-                points={`${dotX},${fretY - dotRadius} ${dotX + dotRadius},${fretY} ${dotX},${fretY + dotRadius} ${dotX - dotRadius},${fretY}`}
+                points={`${dotX},${fretY - dotRadius * 1.2} ${dotX + dotRadius * 1.2},${fretY} ${dotX},${fretY + dotRadius * 1.2} ${dotX - dotRadius * 1.2},${fretY}`}
                 className="fill-cyan-500"
               />
               {finger && finger > 0 && (

@@ -409,7 +409,7 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
                 <>
                   {/* Blue diamond — root note, matches fretboard root markers */}
                   <polygon
-                    points={`${cx},${headerY - dotRadius * 0.88} ${cx + dotRadius * 0.88},${headerY} ${cx},${headerY + dotRadius * 0.88} ${cx - dotRadius * 0.88},${headerY}`}
+                    points={`${cx},${headerY - dotRadius * 1.056} ${cx + dotRadius * 1.056},${headerY} ${cx},${headerY + dotRadius * 1.056} ${cx - dotRadius * 1.056},${headerY}`}
                     fill="none"
                     stroke="hsl(200 80% 62%)"
                     strokeWidth={1.8}
@@ -632,7 +632,7 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
 
               {marker.shape === 'diamond' ? (
                 <polygon
-                  points={`${cx},${cy - r * 1.15} ${cx + r * 1.15},${cy} ${cx},${cy + r * 1.15} ${cx - r * 1.15},${cy}`}
+                  points={`${cx},${cy - r * 1.38} ${cx + r * 1.38},${cy} ${cx},${cy + r * 1.38} ${cx - r * 1.38},${cy}`}
                   fill={marker.color}
                 />
               ) : (
@@ -678,7 +678,7 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
             <g opacity={0.75} style={{ pointerEvents: 'none' }}>
               {marker.shape === 'diamond' ? (
                 <polygon
-                  points={`${cx},${cy - r * 1.15} ${cx + r * 1.15},${cy} ${cx},${cy + r * 1.15} ${cx - r * 1.15},${cy}`}
+                  points={`${cx},${cy - r * 1.38} ${cx + r * 1.38},${cy} ${cx},${cy + r * 1.38} ${cx - r * 1.38},${cy}`}
                   fill={marker.color}
                   stroke="hsl(38 75% 52%)"
                   strokeWidth={2}

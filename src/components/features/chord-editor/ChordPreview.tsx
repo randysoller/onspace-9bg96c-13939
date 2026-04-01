@@ -115,7 +115,7 @@ export const ChordPreview = memo(({ symbol, chordName, markers, barres, openStri
               return (
                 <path
                   key={`preview-diamond-${idx}`}
-                  d={`M ${x} ${10 - 7} L ${x + 7} ${10} L ${x} ${10 + 7} L ${x - 7} ${10} Z`}
+                  d={`M ${x} ${10 - 8.4} L ${x + 8.4} ${10} L ${x} ${10 + 8.4} L ${x - 8.4} ${10} Z`}
                   fill="none"
                   stroke="#06b6d4"
                   strokeWidth="2.5"
@@ -157,7 +157,7 @@ export const ChordPreview = memo(({ symbol, chordName, markers, barres, openStri
                   <circle cx={x} cy={y} r={PREVIEW_MARKER_RADIUS} fill={marker.color} />
                 ) : (
                   <path
-                    d={`M ${x} ${y - PREVIEW_MARKER_RADIUS} L ${x + PREVIEW_MARKER_RADIUS} ${y} L ${x} ${y + PREVIEW_MARKER_RADIUS} L ${x - PREVIEW_MARKER_RADIUS} ${y} Z`}
+                    d={`M ${x} ${y - PREVIEW_MARKER_RADIUS * 1.2} L ${x + PREVIEW_MARKER_RADIUS * 1.2} ${y} L ${x} ${y + PREVIEW_MARKER_RADIUS * 1.2} L ${x - PREVIEW_MARKER_RADIUS * 1.2} ${y} Z`}
                     fill={marker.color}
                   />
                 )}

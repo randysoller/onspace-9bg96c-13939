@@ -171,7 +171,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
           );
         }
         if (chord.openDiamonds.has(i)) {
-          const dr = r * 1.3;
+          const dr = r * 1.56; // 1.3 × 1.2 — 20% larger
           return (
             <polygon
               key={`header-${i}`}
@@ -229,7 +229,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
         const labelText = marker.label || (marker.finger > 0 ? String(marker.finger) : '');
 
         if (marker.shape === 'diamond') {
-          const dr = r * 1.15;
+          const dr = r * 1.38; // 1.15 × 1.2 — 20% larger
           return (
             <g key={`marker-${idx}`}>
               <polygon

@@ -231,7 +231,7 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
               x={fromX - dotRadius * 0.4}
               y={fretY - dotRadius * 0.7}
               width={toX - fromX + dotRadius * 0.8}
-              height={dotRadius * 1.4}
+              height={dotRadius * 2.1}
               rx={dotRadius * 0.7}
               className="fill-amber-500/80"
             />

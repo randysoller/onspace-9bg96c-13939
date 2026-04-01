@@ -110,12 +110,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           <div className="text-sm text-zinc-400">
             {chord.name}
           </div>
-          {(chord as any).isCustom && !(chord as any).sourceChordId && (
-            <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-              <Edit className="w-2.5 h-2.5 text-amber-500" />
-              <span className="text-[9px] font-semibold text-amber-500 uppercase tracking-wide">Custom</span>
-            </div>
-          )}
+
         </div>
 
         {/* Chord Diagram — use CustomChordDiagram for custom chords so baseFret

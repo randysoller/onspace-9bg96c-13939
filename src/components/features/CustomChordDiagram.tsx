@@ -203,7 +203,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
         const x1 = getStringX(barre.fromString);
         const x2 = getStringX(barre.toString);
         const y = getFretY(barre.fret) - fretSpacing / 2;
-        const barHeight = 4;
+        const barHeight = 6;
         return (
           <rect
             key={`barre-${idx}`}

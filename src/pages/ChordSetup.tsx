@@ -94,11 +94,13 @@ function CheckboxIcon({
   color = 'primary',
 }: {
   checked: boolean;
-  color?: 'primary' | 'emerald';
+  color?: 'primary' | 'emerald' | 'purple' | 'yellow';
 }) {
   const colorMap = {
     primary: { bg: 'bg-[hsl(var(--color-primary))]', border: 'border-[hsl(var(--color-primary))]' },
     emerald: { bg: 'bg-emerald-500', border: 'border-emerald-500' },
+    purple: { bg: 'bg-purple-500', border: 'border-purple-500' },
+    yellow: { bg: 'bg-yellow-400', border: 'border-yellow-400' },
   };
   
   const colors = colorMap[color];
@@ -228,12 +230,12 @@ function CategorySheetContent({
       {/* Category Rows */}
       {ALL_CATEGORIES.map((cat) => {
         const catColor = cat === 'open'
-          ? { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: 'text-emerald-400' }
+          ? { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: 'text-emerald-400', cbColor: 'emerald' as const }
           : cat === 'barre'
-          ? { bg: 'bg-purple-500/10', text: 'text-purple-400', icon: 'text-purple-400' }
+          ? { bg: 'bg-purple-500/10', text: 'text-purple-400', icon: 'text-purple-400', cbColor: 'purple' as const }
           : cat === 'movable'
-          ? { bg: 'bg-yellow-400/10', text: 'text-yellow-300', icon: 'text-yellow-300' }
-          : { bg: 'bg-zinc-800/30', text: 'text-[hsl(var(--text-default))]', icon: 'text-[hsl(var(--text-subtle))]' };
+          ? { bg: 'bg-yellow-400/10', text: 'text-yellow-300', icon: 'text-yellow-300', cbColor: 'yellow' as const }
+          : { bg: 'bg-zinc-800/30', text: 'text-[hsl(var(--text-default))]', icon: 'text-[hsl(var(--text-subtle))]', cbColor: 'primary' as const };
         const isSelected = categories.has(cat);
         return (
           <button
@@ -243,14 +245,12 @@ function CategorySheetContent({
               isSelected ? catColor.bg : ''
             }`}
           >
-            <CheckboxIcon checked={isSelected} color="emerald" />
+            <CheckboxIcon checked={isSelected} color={catColor.cbColor} />
             <div className="flex items-center gap-2 flex-shrink-0">
-              <span className={isSelected ? catColor.icon : 'text-[hsl(var(--text-subtle))]'}>
+              <span className={catColor.icon}>
                 {CATEGORY_ICONS[cat]}
               </span>
-              <span className={`font-body font-medium ${textSize} ${
-                isSelected ? catColor.text : 'text-[hsl(var(--text-default))]'
-              }`}>
+              <span className={`font-body font-medium ${textSize} ${catColor.text}`}>
                 {CATEGORY_LABELS[cat].replace(' Chords', '')}
               </span>
             </div>
@@ -701,7 +701,13 @@ export default function ChordSetup() {
                 <button
                   onClick={() => toggleSheet('category')}
                   className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
-                    categories.size > 0
+                    categories.size === 1 && [...categories][0] === 'open'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
+                      : categories.size === 1 && [...categories][0] === 'barre'
+                      ? 'border-purple-500/50 bg-purple-500/10 text-purple-400'
+                      : categories.size === 1 && [...categories][0] === 'movable'
+                      ? 'border-yellow-400/50 bg-yellow-400/10 text-yellow-300'
+                      : categories.size > 1
                       ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-500'
                       : activeSheet === 'category'
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'

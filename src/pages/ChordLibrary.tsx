@@ -101,7 +101,12 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           <div className="text-3xl font-black text-white mb-0.5">
             {chord.symbol}
           </div>
-          <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">
+          <div className={`text-xs uppercase tracking-wide mb-1 ${
+            chord.category === 'open' ? 'text-emerald-400'
+            : chord.category === 'barre' ? 'text-purple-400'
+            : chord.category === 'movable' ? 'text-yellow-300'
+            : 'text-zinc-400'
+          }`}>
             {chord.category === 'open' ? 'Open'
               : chord.category === 'barre' ? 'Barre'
               : chord.category === 'movable' ? 'Movable'
@@ -404,7 +409,7 @@ export default function ChordLibrary() {
             onClick={() => toggleCategoryFilter('Open')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
               selectedCategories.includes('Open')
-                ? 'bg-amber-500 text-zinc-950'
+                ? 'bg-emerald-500 text-white'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
           >
@@ -416,7 +421,7 @@ export default function ChordLibrary() {
             onClick={() => toggleCategoryFilter('Barre')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
               selectedCategories.includes('Barre')
-                ? 'bg-amber-500 text-zinc-950'
+                ? 'bg-purple-500 text-white'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
           >
@@ -428,7 +433,7 @@ export default function ChordLibrary() {
             onClick={() => toggleCategoryFilter('Movable')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
               selectedCategories.includes('Movable')
-                ? 'bg-amber-500 text-zinc-950'
+                ? 'bg-yellow-400 text-zinc-950'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
           >

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, MousePointer, Plus, Save, Heart, Edit,
+  Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData } from '@/types/chord';
@@ -289,6 +290,43 @@ export default function ChordLibrary() {
 
   const favoriteCount = favoriteIds.size;
 
+  // ── Chord Pack definitions (curated packs — chords populated later) ──────────
+  const CHORD_PACKS = [
+    {
+      id: 'first-song-starter',
+      title: 'First Song Starter Pack',
+      description: 'The essential open chords every beginner needs to play their first real song.',
+      icon: <Star className="w-4 h-4" />,
+      accentColor: 'from-amber-500 to-orange-500',
+      badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+      iconBg: 'bg-amber-500/15 text-amber-400',
+      chordCount: 0,
+      comingSoon: true,
+    },
+    {
+      id: 'open-chord-essentials',
+      title: 'Open Chord Essentials',
+      description: 'Master the foundational open chord shapes that power hundreds of popular songs.',
+      icon: <Sparkles className="w-4 h-4" />,
+      accentColor: 'from-emerald-500 to-teal-500',
+      badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+      iconBg: 'bg-emerald-500/15 text-emerald-400',
+      chordCount: 0,
+      comingSoon: true,
+    },
+    {
+      id: 'power-chord-builder',
+      title: 'Power Chord Builder',
+      description: 'Rock-ready movable shapes that unlock the entire fretboard once mastered.',
+      icon: <Zap className="w-4 h-4" />,
+      accentColor: 'from-purple-500 to-indigo-500',
+      badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
+      iconBg: 'bg-purple-500/15 text-purple-400',
+      chordCount: 0,
+      comingSoon: true,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -306,69 +344,125 @@ export default function ChordLibrary() {
 
         {/* Preset Dropdown */}
         <div className="mb-4 relative">
+          {/* Collapsed trigger */}
           <button
             onClick={() => setShowPresetMenu(!showPresetMenu)}
-            className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg px-4 py-3 flex items-center justify-between hover:bg-zinc-900 transition-colors"
+            className={`w-full border rounded-lg px-4 py-3 flex items-center justify-between transition-colors ${
+              showPresetMenu
+                ? 'bg-zinc-900 border-zinc-700'
+                : 'bg-zinc-900/50 border-zinc-800 hover:bg-zinc-900'
+            }`}
           >
             <div className="flex items-center gap-2.5">
-              <Bookmark className="w-4 h-4 text-zinc-500" />
-              <span className="text-sm font-medium text-zinc-300">
-                {selectedPreset || 'EASY START - Presets'}
+              <Package className="w-4 h-4 text-amber-500" />
+              <span className="text-sm font-semibold text-zinc-200">
+                {selectedPreset || 'Choose a Chord Pack'}
               </span>
-              <span className="bg-zinc-800 text-zinc-500 text-xs font-bold px-2 py-0.5 rounded">
-                {selectedChords.size}
-              </span>
+              {selectedChords.size > 0 && (
+                <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2 py-0.5 rounded border border-amber-500/30">
+                  {selectedChords.size} selected
+                </span>
+              )}
             </div>
-            <svg className="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <ChevronDown
+              className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${
+                showPresetMenu ? 'rotate-180' : ''
+              }`}
+            />
           </button>
 
+          {/* Expanded panel */}
           {showPresetMenu && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-10 overflow-hidden">
-              <div className="p-4 border-b border-zinc-800">
-                <div className="text-xs font-bold text-zinc-400 uppercase tracking-wide mb-2">Create New Preset</div>
+            <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 z-10 overflow-hidden">
+              
+              {/* ── Curated Chord Packs ──────────────────────────────────── */}
+              <div className="p-3 border-b border-zinc-800">
+                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
+                  Curated Packs
+                </div>
+                <div className="space-y-2">
+                  {CHORD_PACKS.map((pack) => (
+                    <div
+                      key={pack.id}
+                      className="relative flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-lg p-3 overflow-hidden group cursor-default"
+                    >
+                      {/* Left color accent stripe */}
+                      <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
+
+                      {/* Icon */}
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ml-1 ${pack.iconBg}`}>
+                        {pack.icon}
+                      </div>
+
+                      {/* Text */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-bold text-white">{pack.title}</span>
+                          {pack.comingSoon && (
+                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${pack.badgeColor}`}>
+                              Coming Soon
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{pack.description}</p>
+                      </div>
+
+                      {/* Arrow */}
+                      <ChevronRight className="w-4 h-4 text-zinc-700 flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Create Custom Preset ──────────────────────────────────── */}
+              <div className="p-3 border-b border-zinc-800">
+                <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
+                  Create Your Own
+                </div>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     placeholder="Preset name..."
                     value={newPresetName}
                     onChange={(e) => setNewPresetName(e.target.value)}
-                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500"
+                    className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition-colors"
                   />
                   <button
                     onClick={handleCreatePreset}
                     disabled={!newPresetName.trim() || selectedChords.size === 0}
-                    className="bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-zinc-950 font-bold px-4 py-2 rounded text-sm transition-colors"
+                    className="bg-amber-500 hover:bg-amber-600 disabled:bg-zinc-800 disabled:text-zinc-600 text-zinc-950 font-bold px-4 py-2 rounded-lg text-sm transition-colors"
                   >
                     <Save className="w-4 h-4" />
                   </button>
                 </div>
                 {selectedChords.size === 0 && (
-                  <p className="text-xs text-zinc-600 mt-1">Select chords below to create a preset</p>
+                  <p className="text-xs text-zinc-600 mt-1.5 px-1">Select chords from the list below first</p>
                 )}
               </div>
 
+              {/* ── Saved User Presets ────────────────────────────────────── */}
               {userPresets && userPresets.length > 0 ? (
-                <div className="p-2">
-                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wide px-2 py-1">Your Presets</div>
-                  {userPresets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      onClick={() => handleLoadPreset(preset.name)}
-                      className="w-full text-left px-3 py-2 hover:bg-zinc-800 rounded transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white font-medium">{preset.name}</span>
+                <div className="p-3">
+                  <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">Saved Presets</div>
+                  <div className="space-y-1">
+                    {userPresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        onClick={() => handleLoadPreset(preset.name)}
+                        className="w-full text-left flex items-center justify-between px-3 py-2.5 hover:bg-zinc-800 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Bookmark className="w-3.5 h-3.5 text-zinc-600" />
+                          <span className="text-sm text-white font-medium">{preset.name}</span>
+                        </div>
                         <span className="text-xs text-zinc-500">{preset.chordIds?.length || 0} chords</span>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <div className="p-4 text-center">
-                  <p className="text-sm text-zinc-500">No saved presets yet</p>
-                  <p className="text-xs text-zinc-600 mt-1">Select chords and create your first preset above</p>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-xs text-zinc-600">No saved presets yet — select chords and save above</p>
                 </div>
               )}
             </div>

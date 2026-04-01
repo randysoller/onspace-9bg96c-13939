@@ -1,6 +1,7 @@
 import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChordData } from '@/types/chord';
 import CustomChordDiagram from '@/components/features/CustomChordDiagram';
+import { ChordDiagram } from '@/components/features/ChordDiagram';
 import type { CustomChordData } from '@/types/customChord';
 
 interface ChordDetailModalProps {
@@ -99,9 +100,9 @@ export default function ChordDetailModal({
 
           {/* Diagram Section */}
           <div className="p-3 flex gap-3 items-start flex-shrink-0">
-            {/* Chord Diagram — use CustomChordDiagram for custom/edited chords so
-                 baseFret offsets and relative fret math are handled correctly.
-                 The modal receives the full custom field set via the extended ChordData type. */}
+            {/* Chord Diagram — CustomChordDiagram for custom/edited chords (handles
+                 relative fret math + baseFret offset); ChordDiagram for standard chords.
+                 Both use size='lg' so barre thickness, dot radius, and layout are identical. */}
             <div className="flex-shrink-0">
               {(chord as any).isCustom ? (
                 <CustomChordDiagram
@@ -125,178 +126,7 @@ export default function ChordDetailModal({
                   size="lg"
                 />
               ) : (
-              <svg width="244" height="320" viewBox="0 0 160 210" className="select-none">
-                {/* Nut (thick top line) */}
-                <rect x="20" y="28" width="120" height="4" fill="currentColor" className="text-zinc-600" />
-
-                {/* Fret lines */}
-                {[1, 2, 3, 4].map((fret) => (
-                  <line
-                    key={`fret-${fret}`}
-                    x1="20"
-                    y1={28 + fret * 35}
-                    x2="140"
-                    y2={28 + fret * 35}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-zinc-600"
-                  />
-                ))}
-
-                {/* String lines */}
-                {[0, 1, 2, 3, 4, 5].map((string) => (
-                  <line
-                    key={`string-${string}`}
-                    x1={20 + string * 24}
-                    y1="28"
-                    x2={20 + string * 24}
-                    y2="168"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="text-zinc-600"
-                  />
-                ))}
-
-                {/* Muted/Open markers above nut */}
-                {chord.frets.map((fret, idx) => {
-                  if (fret === -1) {
-                    // Muted string - gray X matching fret/string color, same size as open circles
-                    return (
-                      <text
-                        key={`marker-${idx}`}
-                        x={20 + idx * 24}
-                        y="18"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="#71717a"
-                        className="font-bold"
-                        style={{ fontSize: '24px' }}
-                      >
-                        ✕
-                      </text>
-                    );
-                  } else if (fret === 0) {
-                    const isRoot = idx === rootStringIndex;
-                    if (isRoot) {
-                      // Open root note - blue diamond (5% reduction: 10.9725 * 0.95 = 10.423875)
-                      return (
-                        <path
-                          key={`marker-${idx}`}
-                          d={`M ${20 + idx * 24} ${18 - 10.423875} 
-                              L ${20 + idx * 24 + 10.423875} ${18} 
-                              L ${20 + idx * 24} ${18 + 10.423875} 
-                              L ${20 + idx * 24 - 10.423875} ${18} Z`}
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          className="text-cyan-500"
-                        />
-                      );
-                    } else {
-                      // Open - orange circle border (original stays same)
-                      return (
-                        <circle
-                          key={`marker-${idx}`}
-                          cx={20 + idx * 24}
-                          cy={18}
-                          r="8.91"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          className="text-amber-500"
-                        />
-                      );
-                    }
-                  }
-                  return null;
-                })}
-
-                {/* Barres (drawn first so they appear behind) */}
-                {chord.barres?.map((barreFret, barreIdx) => {
-                  const stringsOnBarre = chord.frets
-                    .map((f, idx) => (f === barreFret ? idx : -1))
-                    .filter(idx => idx !== -1);
-                  
-                  if (stringsOnBarre.length < 2) return null;
-                  
-                  const minString = Math.min(...stringsOnBarre);
-                  const maxString = Math.max(...stringsOnBarre);
-
-                  return (
-                    <line
-                      key={`barre-${barreIdx}`}
-                      x1={20 + minString * 24}
-                      y1={28 + (barreFret - 0.5) * 35}
-                      x2={20 + maxString * 24}
-                      y2={28 + (barreFret - 0.5) * 35}
-                      stroke="currentColor"
-                      strokeWidth="22.5"
-                      strokeLinecap="round"
-                      className="text-amber-500"
-                    />
-                  );
-                })}
-
-                {/* Finger dots */}
-                {chord.frets.map((fret, stringIdx) => {
-                  if (fret > 0) {
-                    const isRoot = stringIdx === rootStringIndex;
-                    const fingerNum = chord.fingers?.[stringIdx];
-
-                    if (isRoot) {
-                      // Root note - blue diamond (5% reduction: 14.9625 * 0.95 = 14.214375)
-                      return (
-                        <g key={`dot-${stringIdx}`}>
-                          <path
-                            d={`M ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 - 14.214375} 
-                                L ${20 + stringIdx * 24 + 14.214375} ${28 + (fret - 0.5) * 35} 
-                                L ${20 + stringIdx * 24} ${28 + (fret - 0.5) * 35 + 14.214375} 
-                                L ${20 + stringIdx * 24 - 14.214375} ${28 + (fret - 0.5) * 35} Z`}
-                            fill="currentColor"
-                            className="text-cyan-500"
-                          />
-                          {fingerNum && (
-                            <text
-                              x={20 + stringIdx * 24}
-                              y={28 + (fret - 0.5) * 35 + 1}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              className="text-white text-[15px] font-black"
-                            >
-                              {fingerNum}
-                            </text>
-                          )}
-                        </g>
-                      );
-                    } else {
-                      // Regular finger dot - orange circle with number
-                      return (
-                        <g key={`dot-${stringIdx}`}>
-                          <circle
-                            cx={20 + stringIdx * 24}
-                            cy={28 + (fret - 0.5) * 35}
-                            r="11"
-                            fill="currentColor"
-                            className="text-amber-500"
-                          />
-                          {fingerNum && (
-                            <text
-                              x={20 + stringIdx * 24}
-                              y={28 + (fret - 0.5) * 35 + 1}
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              className="text-white text-[15px] font-black"
-                            >
-                              {fingerNum}
-                            </text>
-                          )}
-                        </g>
-                      );
-                    }
-                  }
-                  return null;
-                })}
-              </svg>
+                <ChordDiagram chord={chord} size="lg" />
               )}
             </div>
 

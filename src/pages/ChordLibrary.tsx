@@ -7,6 +7,8 @@ import {
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
+import { ChordDiagram } from '@/components/features/ChordDiagram';
+import CustomChordDiagram from '@/components/features/CustomChordDiagram';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { usePresetStore } from '@/stores/presetStore';
 import { useCustomChordStore } from '@/stores/customChordStore';
@@ -44,7 +46,6 @@ interface ChordCardProps {
 
 function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFavorite, onClick }: ChordCardProps) {
   const { playChord } = useChordAudio();
-  const rootStringIndex = chord.rootNoteString;
 
   return (
     <div
@@ -108,7 +109,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           <div className="text-sm text-zinc-400">
             {chord.name}
           </div>
-          {(chord as any).isCustom && (
+          {(chord as any).isCustom && !(chord as any).sourceChordId && (
             <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
               <Edit className="w-2.5 h-2.5 text-amber-500" />
               <span className="text-[9px] font-semibold text-amber-500 uppercase tracking-wide">Custom</span>
@@ -116,86 +117,51 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           )}
         </div>
 
-        {/* Chord Diagram */}
-        <div className="flex-shrink-0 -ml-[19px]">
-          <svg width="100" height="135" viewBox="-5 0 110 135" className="select-none">
-            <rect x="10" y="20" width="80" height="3" fill="currentColor" className="text-zinc-600" />
-            {[1, 2, 3, 4].map((fret) => (
-              <line key={`fret-${fret}`} x1="10" y1={20 + fret * 25} x2="90" y2={20 + fret * 25} stroke="currentColor" strokeWidth="1.5" className="text-zinc-600" />
-            ))}
-            {[0, 1, 2, 3, 4, 5].map((string) => (
-              <line key={`string-${string}`} x1={10 + string * 16} y1="20" x2={10 + string * 16} y2="120" stroke="currentColor" strokeWidth="1.5" className="text-zinc-600" />
-            ))}
-            {chord.frets.map((fret, idx) => {
-              if (fret === -1) {
-                return (
-                  <text key={`marker-${idx}`} x={10 + idx * 16} y="12" textAnchor="middle" dominantBaseline="middle" fill="#71717a" style={{ fontSize: '20px' }}>✕</text>
-                );
-              } else if (fret === 0) {
-                const isRoot = idx === rootStringIndex;
-                if (isRoot) {
-                  return (
-                    <path key={`marker-${idx}`} d={`M ${10 + idx * 16} ${12 - 7.581} L ${10 + idx * 16 + 7.581} ${12} L ${10 + idx * 16} ${12 + 7.581} L ${10 + idx * 16 - 7.581} ${12} Z`} fill="none" stroke="currentColor" strokeWidth="2" className="text-cyan-500" />
-                  );
-                } else {
-                  return (
-                    <circle key={`marker-${idx}`} cx={10 + idx * 16} cy={12} r="6.48" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500" />
-                  );
-                }
-              }
-              return null;
-            })}
-            {chord.barres?.map((barreFret, barreIdx) => {
-              const stringsOnBarre = chord.frets.map((f, idx) => (f === barreFret ? idx : -1)).filter(idx => idx !== -1);
-              if (stringsOnBarre.length < 2) return null;
-              const minString = Math.min(...stringsOnBarre);
-              const maxString = Math.max(...stringsOnBarre);
-              return (
-                <line key={`barre-${barreIdx}`} x1={10 + minString * 16} y1={20 + (barreFret - 0.5) * 25} x2={10 + maxString * 16} y2={20 + (barreFret - 0.5) * 25} stroke="currentColor" strokeWidth="7" strokeLinecap="round" className="text-amber-500" />
-              );
-            })}
-            {chord.frets.map((fret, stringIdx) => {
-              if (fret > 0) {
-                const isRoot = stringIdx === rootStringIndex;
-                const fingerNum = chord.fingers?.[stringIdx];
-                if (isRoot) {
-                  return (
-                    <g key={`dot-${stringIdx}`}>
-                      <path d={`M ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 - 12.319125} L ${10 + stringIdx * 16 + 12.319125} ${20 + (fret - 0.5) * 25} L ${10 + stringIdx * 16} ${20 + (fret - 0.5) * 25 + 12.319125} L ${10 + stringIdx * 16 - 12.319125} ${20 + (fret - 0.5) * 25} Z`} fill="currentColor" className="text-cyan-500" />
-                      {fingerNum && fingerNum > 0 && (
-                        <text x={10 + stringIdx * 16} y={20 + (fret - 0.5) * 25 + 1} textAnchor="middle" dominantBaseline="middle" className="text-white text-[11px] font-black">{fingerNum}</text>
-                      )}
-                    </g>
-                  );
-                } else {
-                  return (
-                    <g key={`dot-${stringIdx}`}>
-                      <circle cx={10 + stringIdx * 16} cy={20 + (fret - 0.5) * 25} r="8" fill="currentColor" className="text-amber-500" />
-                      {fingerNum && fingerNum > 0 && (
-                        <text x={10 + stringIdx * 16} y={20 + (fret - 0.5) * 25 + 1} textAnchor="middle" dominantBaseline="middle" className="text-white text-[11px] font-black">{fingerNum}</text>
-                      )}
-                    </g>
-                  );
-                }
-              }
-              return null;
-            })}
-          </svg>
+        {/* Chord Diagram — use CustomChordDiagram for custom chords so baseFret
+             offsets and relative fret math are handled correctly */}
+        <div className="flex-shrink-0">
+          {(chord as any).isCustom ? (
+            <CustomChordDiagram
+              chord={{
+                id: chord.id,
+                name: chord.name,
+                symbol: chord.symbol,
+                baseFret: chord.baseFret,
+                numFrets: (chord as any).numFrets ?? 5,
+                markers: (chord as any).customMarkers ?? [],
+                barres: (chord as any).customBarres ?? [],
+                mutedStrings: new Set<number>((chord as any).customMutedStrings ?? []),
+                openStrings: new Set<number>((chord as any).customOpenStrings ?? []),
+                openDiamonds: new Set<number>((chord as any).customOpenDiamonds ?? []),
+                chordType: chord.type,
+                chordCategory: chord.category,
+                sourceChordId: (chord as any).sourceChordId,
+                createdAt: 0,
+                updatedAt: 0,
+              }}
+              size="sm"
+            />
+          ) : (
+            <ChordDiagram chord={chord} size="sm" />
+          )}
         </div>
 
-        {/* Tablature */}
-        <div className="bg-white rounded-md px-2.5 py-2 text-[10px] font-mono self-start shadow-lg flex-shrink-0">
-          {[...chord.frets].reverse().map((fret, idx) => (
-            <div key={idx} className="flex gap-1.5 items-center py-[1px]">
-              <span className="text-zinc-800 font-bold w-2">{REVERSED_STRINGS[idx]}</span>
-              <span className="text-zinc-400">—</span>
-              <span className="text-zinc-900 font-bold w-2.5 text-center text-xs">
-                {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
-              </span>
-              <span className="text-zinc-400">—</span>
-            </div>
-          ))}
-        </div>
+        {/* Tablature — only for standard chords; custom chords use relative fret
+             numbers internally so absolute display would be misleading */}
+        {!(chord as any).isCustom && (
+          <div className="bg-white rounded-md px-2.5 py-2 text-[10px] font-mono self-start shadow-lg flex-shrink-0">
+            {[...chord.frets].reverse().map((fret, idx) => (
+              <div key={idx} className="flex gap-1.5 items-center py-[1px]">
+                <span className="text-zinc-800 font-bold w-2">{REVERSED_STRINGS[idx]}</span>
+                <span className="text-zinc-400">—</span>
+                <span className="text-zinc-900 font-bold w-2.5 text-center text-xs">
+                  {fret === -1 ? 'x' : fret === 0 ? '0' : fret}
+                </span>
+                <span className="text-zinc-400">—</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

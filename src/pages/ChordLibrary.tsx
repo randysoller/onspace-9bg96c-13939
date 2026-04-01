@@ -1,10 +1,11 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, MousePointer, Plus, Save, Heart, Edit,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
+  CheckCircle2,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData } from '@/types/chord';
@@ -180,6 +181,14 @@ export default function ChordLibrary() {
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
+  const [packAssignments, setPackAssignments] = useState<Record<string, string[]>>(() => {
+    try {
+      const stored = localStorage.getItem('fretmaster_pack_assignments');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const { presets: userPresets, addPreset } = usePresetStore();
   const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();
@@ -262,6 +271,36 @@ export default function ChordLibrary() {
     navigate('/editor');
   };
 
+  const handleSaveToPackSlot = (packId: string) => {
+    if (selectedChords.size === 0) {
+      toast.error('Select at least one chord first');
+      return;
+    }
+    const updated = { ...packAssignments, [packId]: Array.from(selectedChords) };
+    setPackAssignments(updated);
+    localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
+    const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
+    toast.success(`${selectedChords.size} chords saved to "${packTitle}"`);
+  };
+
+  const handleLoadPackSlot = (packId: string) => {
+    const chords = packAssignments[packId];
+    if (!chords || chords.length === 0) return;
+    setSelectedChords(new Set(chords));
+    setSelectedPreset(packId);
+    setShowPresetMenu(false);
+    toast.success(`Loaded ${chords.length} chords from pack`);
+  };
+
+  const handleClearPackSlot = (packId: string) => {
+    const updated = { ...packAssignments };
+    delete updated[packId];
+    setPackAssignments(updated);
+    localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
+    if (selectedPreset === packId) setSelectedPreset(null);
+    toast.success('Pack cleared');
+  };
+
   const handleCreatePreset = () => {
     if (!newPresetName.trim()) {
       toast.error('Please enter a preset name');
@@ -290,7 +329,7 @@ export default function ChordLibrary() {
 
   const favoriteCount = favoriteIds.size;
 
-  // ── Chord Pack definitions (curated packs — chords populated later) ──────────
+  // ── Chord Pack definitions ──────────────────────────────────────────────────
   const CHORD_PACKS = [
     {
       id: 'first-song-starter',
@@ -300,8 +339,8 @@ export default function ChordLibrary() {
       accentColor: 'from-amber-500 to-orange-500',
       badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
       iconBg: 'bg-amber-500/15 text-amber-400',
-      chordCount: 0,
-      comingSoon: true,
+      saveBtnColor: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/30',
+      loadBtnColor: 'bg-amber-500 hover:bg-amber-600 text-zinc-950',
     },
     {
       id: 'open-chord-essentials',
@@ -311,8 +350,8 @@ export default function ChordLibrary() {
       accentColor: 'from-emerald-500 to-teal-500',
       badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
       iconBg: 'bg-emerald-500/15 text-emerald-400',
-      chordCount: 0,
-      comingSoon: true,
+      saveBtnColor: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border-emerald-500/30',
+      loadBtnColor: 'bg-emerald-500 hover:bg-emerald-600 text-white',
     },
     {
       id: 'power-chord-builder',
@@ -322,8 +361,8 @@ export default function ChordLibrary() {
       accentColor: 'from-purple-500 to-indigo-500',
       badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
       iconBg: 'bg-purple-500/15 text-purple-400',
-      chordCount: 0,
-      comingSoon: true,
+      saveBtnColor: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border-purple-500/30',
+      loadBtnColor: 'bg-purple-500 hover:bg-purple-600 text-white',
     },
   ];
 
@@ -381,48 +420,131 @@ export default function ChordLibrary() {
                   Curated Packs
                 </div>
                 <div className="space-y-2">
-                  {CHORD_PACKS.map((pack) => (
-                    <div
-                      key={pack.id}
-                      className="relative flex items-center gap-3 bg-zinc-950 border border-zinc-800 rounded-lg p-3 overflow-hidden group cursor-default"
-                    >
-                      {/* Left color accent stripe */}
-                      <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
+                  {CHORD_PACKS.map((pack) => {
+                    const assigned = packAssignments[pack.id];
+                    const isPopulated = assigned && assigned.length > 0;
+                    const isActive = selectedPreset === pack.id;
+                    return (
+                      <div
+                        key={pack.id}
+                        onClick={() => isPopulated && handleLoadPackSlot(pack.id)}
+                        className={`relative flex items-center gap-3 bg-zinc-950 border rounded-lg p-3 overflow-hidden transition-all ${
+                          isPopulated
+                            ? isActive
+                              ? 'border-amber-500/50 cursor-pointer'
+                              : 'border-zinc-700 hover:border-zinc-600 cursor-pointer'
+                            : 'border-zinc-800 cursor-default'
+                        }`}
+                      >
+                        {/* Left color accent stripe */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
 
-                      {/* Icon */}
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ml-1 ${pack.iconBg}`}>
-                        {pack.icon}
-                      </div>
-
-                      {/* Text */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-white">{pack.title}</span>
-                          {pack.comingSoon && (
-                            <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${pack.badgeColor}`}>
-                              Coming Soon
-                            </span>
-                          )}
+                        {/* Icon */}
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ml-1 ${pack.iconBg}`}>
+                          {pack.icon}
                         </div>
-                        <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{pack.description}</p>
-                      </div>
 
-                      {/* Arrow */}
-                      <ChevronRight className="w-4 h-4 text-zinc-700 flex-shrink-0" />
-                    </div>
-                  ))}
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold text-white">{pack.title}</span>
+                            {isPopulated ? (
+                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-zinc-800 text-zinc-300 border-zinc-700">
+                                {assigned.length} chords
+                              </span>
+                            ) : (
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${pack.badgeColor}`}>
+                                Empty
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{pack.description}</p>
+                        </div>
+
+                        {/* Right action */}
+                        {isPopulated ? (
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {isActive && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleClearPackSlot(pack.id); }}
+                              className="text-zinc-600 hover:text-zinc-400 text-[10px] underline underline-offset-2 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          </div>
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-zinc-700 flex-shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* ── Create Custom Preset ──────────────────────────────────── */}
               <div className="p-3 border-b border-zinc-800">
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
-                  Create Your Own
+                  Save Selected Chords to a Pack
                 </div>
+
+                {selectedChords.size === 0 ? (
+                  <p className="text-xs text-zinc-600 px-1 mb-3">
+                    Select chords from the list below, then tap a pack slot to save them.
+                  </p>
+                ) : (
+                  <p className="text-xs text-emerald-400 px-1 mb-3 font-medium">
+                    {selectedChords.size} chord{selectedChords.size !== 1 ? 's' : ''} selected — choose a pack slot:
+                  </p>
+                )}
+
+                {/* Pack slot buttons */}
+                <div className="space-y-2 mb-3">
+                  {CHORD_PACKS.map((pack) => {
+                    const assigned = packAssignments[pack.id];
+                    const isPopulated = assigned && assigned.length > 0;
+                    return (
+                      <button
+                        key={pack.id}
+                        onClick={() => handleSaveToPackSlot(pack.id)}
+                        disabled={selectedChords.size === 0}
+                        className={`w-full relative flex items-center gap-3 border rounded-lg px-3 py-2.5 overflow-hidden transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                          selectedChords.size > 0
+                            ? `${pack.saveBtnColor} border`
+                            : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                        }`}
+                      >
+                        {/* Accent stripe */}
+                        <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
+
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ml-1 ${pack.iconBg}`}>
+                          <span className="scale-75">{pack.icon}</span>
+                        </div>
+
+                        <span className="flex-1 text-left text-xs font-semibold">{pack.title}</span>
+
+                        {isPopulated && (
+                          <span className="text-[10px] text-zinc-400 shrink-0">
+                            {assigned.length} saved
+                          </span>
+                        )}
+
+                        <Save className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Divider */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex-1 h-px bg-zinc-800" />
+                  <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">or name your own</span>
+                  <div className="flex-1 h-px bg-zinc-800" />
+                </div>
+
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Preset name..."
+                    placeholder="Custom preset name..."
                     value={newPresetName}
                     onChange={(e) => setNewPresetName(e.target.value)}
                     className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-amber-500 transition-colors"
@@ -435,9 +557,6 @@ export default function ChordLibrary() {
                     <Save className="w-4 h-4" />
                   </button>
                 </div>
-                {selectedChords.size === 0 && (
-                  <p className="text-xs text-zinc-600 mt-1.5 px-1">Select chords from the list below first</p>
-                )}
               </div>
 
               {/* ── Saved User Presets ────────────────────────────────────── */}

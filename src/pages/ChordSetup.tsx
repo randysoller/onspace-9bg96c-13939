@@ -226,26 +226,40 @@ function CategorySheetContent({
       </button>
       
       {/* Category Rows */}
-      {ALL_CATEGORIES.map((cat) => (
-        <button
-          key={cat}
-          onClick={() => onToggleCategory(cat)}
-          className={`w-full flex items-start gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
-            categories.has(cat) ? 'bg-emerald-500/8' : ''
-          }`}
-        >
-          <CheckboxIcon checked={categories.has(cat)} color="emerald" />
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {CATEGORY_ICONS[cat]}
-            <span className={`font-body font-medium ${textSize} text-[hsl(var(--text-default))]`}>
-              {CATEGORY_LABELS[cat].replace(' Chords', '')}
-            </span>
-          </div>
-          <p className="text-xs text-[hsl(var(--text-muted))] leading-snug">
-            {CATEGORY_DESCRIPTIONS[cat]}
-          </p>
-        </button>
-      ))}
+      {ALL_CATEGORIES.map((cat) => {
+        const catColor = cat === 'open'
+          ? { bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: 'text-emerald-400' }
+          : cat === 'barre'
+          ? { bg: 'bg-purple-500/10', text: 'text-purple-400', icon: 'text-purple-400' }
+          : cat === 'movable'
+          ? { bg: 'bg-yellow-400/10', text: 'text-yellow-300', icon: 'text-yellow-300' }
+          : { bg: 'bg-zinc-800/30', text: 'text-[hsl(var(--text-default))]', icon: 'text-[hsl(var(--text-subtle))]' };
+        const isSelected = categories.has(cat);
+        return (
+          <button
+            key={cat}
+            onClick={() => onToggleCategory(cat)}
+            className={`w-full flex items-start gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
+              isSelected ? catColor.bg : ''
+            }`}
+          >
+            <CheckboxIcon checked={isSelected} color="emerald" />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className={isSelected ? catColor.icon : 'text-[hsl(var(--text-subtle))]'}>
+                {CATEGORY_ICONS[cat]}
+              </span>
+              <span className={`font-body font-medium ${textSize} ${
+                isSelected ? catColor.text : 'text-[hsl(var(--text-default))]'
+              }`}>
+                {CATEGORY_LABELS[cat].replace(' Chords', '')}
+              </span>
+            </div>
+            <p className="text-xs text-[hsl(var(--text-muted))] leading-snug">
+              {CATEGORY_DESCRIPTIONS[cat]}
+            </p>
+          </button>
+        );
+      })}
       
       {/* Root String Section */}
       {showRootSection && (

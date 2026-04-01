@@ -102,10 +102,10 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
             {chord.symbol}
           </div>
           <div className="text-xs text-zinc-400 uppercase tracking-wide mb-1">
-            {chord.category === 'open' ? 'Open Chords'
-              : chord.category === 'barre' ? 'Barre Chords'
-              : chord.category === 'movable' ? 'Movable Chords'
-              : 'Custom Chords'}
+            {chord.category === 'open' ? 'Open'
+              : chord.category === 'barre' ? 'Barre'
+              : chord.category === 'movable' ? 'Movable'
+              : 'Custom'}
           </div>
           <div className="text-sm text-zinc-400">
             {chord.name}

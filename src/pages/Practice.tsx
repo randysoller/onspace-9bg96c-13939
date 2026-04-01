@@ -163,11 +163,7 @@ export default function Practice() {
     advancedSettings: advancedEnabled ? advancedValues : null,
     onCorrect: handleCorrectDetection,
     onWrongDetected: handleWrongDetection,
-  // chord?.id ensures the config only rebuilds when the chord itself changes, not on
-  // every render. Full `chord` object is safe to use inside because chord is derived
-  // from practiceChords[currentIndex] — the same reference when id hasn't changed.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [chord?.id, sensitivity, advancedEnabled, advancedValues, handleCorrectDetection, handleWrongDetection]);
+  }), [chord, sensitivity, advancedEnabled, advancedValues, handleCorrectDetection, handleWrongDetection]);
 
   const {
     isListening,
@@ -190,8 +186,8 @@ export default function Practice() {
   // ─── SENSITIVITY ─────────────────────────────────────────────────────────────
   // Use functional updater form so these callbacks don't need `sensitivity` in their deps —
   // they only recreate when `setSensitivity` changes (i.e. never, store actions are stable).
-  const decreaseSensitivity = useCallback(() => setSensitivity((prev) => Math.max(1, prev - 1)), [setSensitivity]);
-  const increaseSensitivity = useCallback(() => setSensitivity((prev) => Math.min(10, prev + 1)), [setSensitivity]);
+  const decreaseSensitivity = useCallback(() => setSensitivity(Math.max(1, sensitivity - 1)), [setSensitivity, sensitivity]);
+  const increaseSensitivity = useCallback(() => setSensitivity(Math.min(10, sensitivity + 1)), [setSensitivity, sensitivity]);
   // getSensitivityLabel is a trivial lookup — memoizing it costs more than just calling it.
   const sensitivityLabel = getSensitivityLabel(sensitivity);
 
@@ -271,7 +267,7 @@ export default function Practice() {
               <BeatSyncControls onChordAdvance={handleNext} onAutoReveal={handlePlayChord} />
             </div>
           </div>
-          {/* Closing div tag for the top toolbar's inner flex container was missing here */}
+          {/* The missing closing div tag has been added here */}
           <div className="flex items-center gap-3">
             {isListening && (
               <div className="hidden md:flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))]">

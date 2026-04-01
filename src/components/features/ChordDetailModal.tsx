@@ -77,7 +77,12 @@ export default function ChordDetailModal({
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex gap-2">
-                    <span className="px-2.5 py-0.5 bg-zinc-800/60 text-zinc-300 text-[10px] font-semibold uppercase tracking-wide rounded">
+                    <span className={`px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide rounded ${
+                      chord.category === 'open'    ? 'bg-emerald-500/15 text-emerald-400'
+                      : chord.category === 'barre'   ? 'bg-purple-500/15 text-purple-400'
+                      : chord.category === 'movable' ? 'bg-yellow-400/15 text-yellow-300'
+                      : 'bg-zinc-800/60 text-zinc-300'
+                    }`}>
                       {chord.category}
                     </span>
                     <span className="px-2.5 py-0.5 bg-zinc-800/60 text-zinc-300 text-[10px] font-semibold uppercase tracking-wide rounded">

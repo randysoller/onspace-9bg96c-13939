@@ -246,6 +246,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
                   fill={textFill}
                   fontFamily="DM Sans, sans-serif"
                   fontWeight={700}
+                  style={{ fontFeatureSettings: '"tnum"' }}
                 >
                   {labelText}
                 </text>

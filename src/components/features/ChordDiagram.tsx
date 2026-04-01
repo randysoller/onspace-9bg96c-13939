@@ -274,7 +274,7 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
                         textAnchor="middle"
                         dominantBaseline="middle"
                         className="fill-white font-black"
-                        style={{ fontSize: fontSize * 1.2 }}
+                        style={{ fontSize: fontSize * 1.05, fontFeatureSettings: '"tnum"' }}
                       >
                         {finger}
                       </text>
@@ -337,7 +337,7 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
                   textAnchor="middle"
                   dominantBaseline="middle"
                   className="fill-white font-black"
-                  style={{ fontSize: fontSize * 1.2 }}
+                  style={{ fontSize: fontSize * 1.05, fontFeatureSettings: '"tnum"' }}
                 >
                   {finger}
                 </text>

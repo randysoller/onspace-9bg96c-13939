@@ -649,7 +649,7 @@ export default function InteractiveFretboard({ chord, width = 320, height = 420 
                   fill={textFill}
                   fontFamily="DM Sans, sans-serif"
                   fontWeight={700}
-                  style={{ pointerEvents: 'none' }}
+                  style={{ pointerEvents: 'none', ...(marker.shape === 'diamond' ? { fontFeatureSettings: '"tnum"' } : {}) }}
                 >
                   {labelText}
                 </text>

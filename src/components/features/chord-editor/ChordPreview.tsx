@@ -168,6 +168,7 @@ export const ChordPreview = memo(({ symbol, chordName, markers, barres, openStri
                   dominantBaseline="middle"
                   className="text-xs font-black"
                   fill={textFill}
+                  style={marker.shape === 'diamond' ? { fontFeatureSettings: '"tnum"' } : undefined}
                 >
                   {marker.label || marker.finger}
                 </text>

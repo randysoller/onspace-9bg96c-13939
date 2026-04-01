@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -182,14 +183,14 @@ export default function ChordLibrary() {
   const [newPresetName, setNewPresetName] = useState('');
 
   const { presets: userPresets, addPreset } = usePresetStore();
-  const { editStandardChord, editChord } = useCustomChordStore();
+  const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();
   const { favoriteIds, toggleFavorite } = useChordFavoritesStore();
   const { playChord } = useChordAudio();
 
   // ── Effective chord list (standard + custom, respecting hidden) ──────────────
-  // Recomputed on every render — acceptable since this is a lazy page and
-  // customChords/hiddenStandardChords only change on explicit user actions.
-  const allChords = useMemo(() => getEffectiveChords(), []);
+  // Depends on customChords + hiddenStandardChords so it recomputes reactively
+  // when the user saves/edits/deletes chords in the same session.
+  const allChords = useMemo(() => getEffectiveChords(), [customChords, hiddenStandardChords]);
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {

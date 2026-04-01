@@ -239,8 +239,8 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
         return (
           <g key={`barre-${barreIdx}`}>
             {/* Barre bar — height and centering match CustomChordDiagram's
-                 barHeight = dotRadius * 1.2 so both renderers stay consistent. */}
-            {(() => { const bh = dotRadius * 1.2; return (
+                 barHeight = dotRadius * 1.02 (1.2 × 0.85 = 15% thinner). */}
+            {(() => { const bh = dotRadius * 1.02; return (
               <rect
                 x={fromX}
                 y={fretY - bh / 2}

@@ -205,24 +205,36 @@ function ChordDiagramBase({ chord, size = 'md', className = '' }: ChordDiagramPr
       })}
       
       {/* Barre indicators */}
-      {chord.barres?.map((barre, barreIdx) => {
-        // Defensive: Ensure barre values are valid numbers
-        if (typeof barre.fret !== 'number' || isNaN(barre.fret) ||
-            typeof barre.fromString !== 'number' || isNaN(barre.fromString) ||
-            typeof barre.toString !== 'number' || isNaN(barre.toString)) {
-          return null;
-        }
-        
-        const fretY = nutY + (barre.fret - baseFret + 0.5) * fretSpacing;
-        const fromX = leftMargin + barre.fromString * stringSpacing;
-        const toX = leftMargin + barre.toString * stringSpacing;
-        
+      {/* chord.barres is number[] (plain absolute fret numbers per ChordData type).
+           We derive fromString/toString by scanning chord.frets for strings at that fret. */}
+      {chord.barres?.map((barreFret, barreIdx) => {
+        // barreFret is a plain number (absolute fret position)
+        const barreFretNum = typeof barreFret === 'number' ? barreFret : (barreFret as any).fret;
+        if (typeof barreFretNum !== 'number' || isNaN(barreFretNum)) return null;
+
+        // Derive which strings participate in this barre
+        const barreStringIndices = chord.frets
+          .map((f, idx) => ({ f, idx }))
+          .filter(x => x.f === barreFretNum)
+          .map(x => x.idx);
+        if (barreStringIndices.length < 2) return null;
+
+        const fromStringIdx = Math.min(...barreStringIndices);
+        const toStringIdx = Math.max(...barreStringIndices);
+
+        const fretY = nutY + (barreFretNum - baseFret + 0.5) * fretSpacing;
+        const fromX = leftMargin + fromStringIdx * stringSpacing;
+        const toX = leftMargin + toStringIdx * stringSpacing;
+
         // Mark these strings as rendered by barre
-        for (let s = barre.fromString; s <= barre.toString; s++) {
-          if (chord.frets[s] === barre.fret) {
+        for (let s = fromStringIdx; s <= toStringIdx; s++) {
+          if (chord.frets[s] === barreFretNum) {
             barreRenderedStrings.add(s);
           }
         }
+
+        // Use barre as alias for the derived values below
+        const barre = { fret: barreFretNum, fromString: fromStringIdx, toString: toStringIdx };
         
         return (
           <g key={`barre-${barreIdx}`}>

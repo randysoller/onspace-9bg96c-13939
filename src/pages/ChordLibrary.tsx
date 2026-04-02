@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
@@ -206,69 +206,40 @@ export default function ChordLibrary() {
   });
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
-  // DEFINITIVE APPROACH: Store scroll Y in Zustand (persists to localStorage).
-  // All previous sessionStorage/window.scrollY attempts failed because:
-  //   1. index.css `html, body { height: 100% }` means no DOM element reliably
-  //      owns a non-zero scrollTop — getScrollTop() always returned 0.
-  //   2. sessionStorage cleanup was racing React Router's scroll reset.
-  // Solution: Use window.pageYOffset (most compatible read API), save to Zustand
-  // on every scroll event, restore with useLayoutEffect (fires before browser paint
-  // so no visible jump) with a retry loop for lazy-rendered content.
+  // Root cause of all previous failures: <main tabIndex={-1}> in AppLayout was
+  // receiving programmatic focus after every React Router navigation, which
+  // triggered the browser's scroll-into-view behavior and reset scroll to 0 —
+  // happening AFTER useLayoutEffect restored the position. Fixed by removing
+  // tabIndex={-1} from <main> in AppLayout.tsx.
+  //
+  // Strategy: capture scroll Y in a ref on every scroll event; flush to Zustand
+  // (localStorage-persisted) in cleanup. Restore with a short setTimeout so
+  // React Router's async navigation work has finished before we scroll.
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
 
-  // SAVE: window.pageYOffset is the most universally compatible way to read
-  // the scroll position. Save to Zustand store (not sessionStorage).
+  // SAVE: track position continuously in a ref; write to store on unmount.
   useEffect(() => {
-    // Capture current value immediately on mount (handles back-navigation)
-    lastScrollY.current = window.pageYOffset;
-
     const handleScroll = () => {
       lastScrollY.current = window.pageYOffset;
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      // Flush last captured value to store on unmount.
-      // We use lastScrollY.current (captured in the scroll handler) NOT
-      // window.pageYOffset here because by cleanup time, React Router may
-      // have already reset the window scroll to 0.
       setSavedScrollY(lastScrollY.current);
     };
-  // The original error "Definition for rule 'react-hooks/exhaustive-deps' was not found."
-  // implies there's an ESLint config issue. If we remove the eslint-disable comment,
-  // React will warn about missing dependencies (`setSavedScrollY`). Adding it
-  // as a dependency here. However, `setSavedScrollY` is from Zustand, and should
-  // be stable, so adding it here doesn't typically cause infinite loops.
-  }, [setSavedScrollY]); // Added setSavedScrollY as a dependency
+  }, [setSavedScrollY]);
 
-  // RESTORE: useLayoutEffect fires synchronously after DOM mutations but before
-  // the browser paints — this eliminates the visible "flash to top" that
-  // setTimeout-based approaches cause. Retry until page is tall enough.
-  useLayoutEffect(() => {
+  // RESTORE: setTimeout(150) ensures we run after React Router finishes any
+  // async post-navigation work (focus management, etc.).
+  useEffect(() => {
     if (!savedScrollY || restoredRef.current) return;
     restoredRef.current = true;
-
-    let attempts = 0;
-    const tryRestore = () => {
-      // The page must be taller than savedScrollY for the scroll to land.
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      if (scrollable >= savedScrollY || attempts >= 10) {
-        window.scrollTo(0, savedScrollY);
-      } else {
-        attempts++;
-        setTimeout(tryRestore, 80);
-      }
-    };
-    tryRestore();
-  // Only run once on mount — savedScrollY is stable from the store.
-  // The original error implies an ESLint config issue. Adding savedScrollY
-  // as a dependency here. Since savedScrollY is from Zustand and used for
-  // initial restoration, it's typically stable on first render or changes
-  // intentionally only once, so adding it shouldn't cause issues.
-  }, [savedScrollY]); // Added savedScrollY as a dependency
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: savedScrollY, behavior: 'instant' as ScrollBehavior });
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [savedScrollY]); // Add savedScrollY to dependency array
 
   const { presets: userPresets, addPreset } = usePresetStore();
   const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();

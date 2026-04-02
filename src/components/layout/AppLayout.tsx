@@ -90,7 +90,6 @@ export const AppLayout = () => {
       <main
         id="main-content"
         className={`pb-20 md:pb-8 ${isPracticePage ? 'pt-0 md:pt-16' : 'pt-16'}`}
-        tabIndex={-1}
       >
         <Outlet />
       </main>

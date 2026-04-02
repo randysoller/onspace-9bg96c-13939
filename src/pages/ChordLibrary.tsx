@@ -204,52 +204,72 @@ export default function ChordLibrary() {
   });
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
+  // ROOT CAUSE: index.css sets `body { height: 100% }` which constrains the
+  // body to exactly the viewport height. The body itself does NOT scroll.
+  // The actual scroll container is document.documentElement (the <html> element).
+  // All previous attempts used window.scrollY / window.scrollTo() which both
+  // read/write 0 because the window scroll offset follows the body, not <html>.
+  // Fix: read/write document.documentElement.scrollTop directly.
   const SCROLL_KEY = 'fretmaster_chord_library_scroll';
-  // lastScrollY ref: always holds the most recent Y captured by the scroll
-  // handler. We flush this value to sessionStorage in the cleanup, NOT inside
-  // the RAF callback — because React Router calls window.scrollTo(0,0) on
-  // navigation, which fires the scroll event one final time and would overwrite
-  // our saved position with 0 before the RAF callback runs.
   const lastScrollY = useRef(0);
 
-  // SAVE: Track scroll in a ref on every scroll event (RAF-throttled for perf).
-  // On unmount, flush the ref value to sessionStorage synchronously.
-  useEffect(() => {
-    // Initialise from current position in case user hasn't scrolled yet
-    lastScrollY.current = window.scrollY;
+  const getScrollTop = () =>
+    document.documentElement.scrollTop || document.body.scrollTop || window.scrollY;
 
-    let rafId: number | null = null;
+  // SAVE: Listen on both document and window to catch whichever element scrolls.
+  // Write directly to sessionStorage on each event (no RAF delay needed — writes
+  // are cheap, and delaying allows a navigation-triggered reset to overwrite us).
+  useEffect(() => {
+    lastScrollY.current = getScrollTop();
+
     const handleScroll = () => {
-      // Capture Y immediately (synchronously) before any RAF delay
-      lastScrollY.current = window.scrollY;
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-      });
+      const y = getScrollTop();
+      lastScrollY.current = y;
+      sessionStorage.setItem(SCROLL_KEY, String(y));
     };
+
+    document.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      if (rafId !== null) cancelAnimationFrame(rafId);
+      document.removeEventListener('scroll', handleScroll);
       window.removeEventListener('scroll', handleScroll);
-      // Flush the last *real* scroll position synchronously on unmount.
-      // At this point React Router has already reset window.scrollY to 0,
-      // but lastScrollY.current still holds the position the user was at.
+      // Also flush synchronously on unmount in case no scroll event fired
+      // after the last position change (e.g. keyboard navigation).
       sessionStorage.setItem(SCROLL_KEY, String(lastScrollY.current));
     };
   }, []);
 
-  // RESTORE: Wait for the chord list to fully paint before scrolling.
-  // 100ms is enough for the list to render and the page to reach full height.
+  // RESTORE: Try scrolling every 100ms until the page is tall enough.
+  // With lazy-loaded content the page may not have reached full height yet
+  // at first paint, so a retry loop is more reliable than a single timeout.
   useEffect(() => {
     const saved = sessionStorage.getItem(SCROLL_KEY);
     if (!saved) return;
     const y = parseInt(saved, 10);
     if (!y) return;
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
-    }, 100);
-    return () => clearTimeout(timer);
+
+    let attempts = 0;
+    const tryRestore = () => {
+      const pageHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body.scrollHeight
+      );
+      const viewportHeight = window.innerHeight;
+      if (pageHeight - viewportHeight >= y || attempts >= 8) {
+        // Page is tall enough — scroll all three possible containers.
+        document.documentElement.scrollTop = y;
+        document.body.scrollTop = y;
+        window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+      } else {
+        attempts++;
+        setTimeout(tryRestore, 100);
+      }
+    };
+
+    // Start after a brief delay to let the first paint complete.
+    const initialTimer = setTimeout(tryRestore, 50);
+    return () => clearTimeout(initialTimer);
   }, []);
 
   const { presets: userPresets, addPreset } = usePresetStore();

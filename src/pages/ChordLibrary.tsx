@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
@@ -14,6 +14,7 @@ import { ChordDiagram } from '@/components/features/ChordDiagram';
 import CustomChordDiagram from '@/components/features/CustomChordDiagram';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { usePresetStore } from '@/stores/presetStore';
+import { useChordLibraryStore } from '@/stores/chordLibraryStore';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
 import { customToLibraryChord } from '@/types/customChord';
@@ -22,8 +23,6 @@ import { toast } from 'sonner';
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
 
 // ─── Effective Chord List ──────────────────────────────────────────────────────
-// Merges standard library with saved custom chords, respecting hidden chord list.
-// Custom chords that have a sourceChordId replace the original standard chord.
 function getEffectiveChords(): ChordData[] {
   const { customChords, hiddenStandardChords } = useCustomChordStore.getState();
   const replacedIds = new Set(
@@ -117,11 +116,9 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           <div className="text-sm text-zinc-400">
             {chord.name}
           </div>
-
         </div>
 
-        {/* Chord Diagram — use CustomChordDiagram for custom chords so baseFret
-             offsets and relative fret math are handled correctly */}
+        {/* Chord Diagram */}
         <div className="flex-shrink-0">
           {(chord as any).isCustom ? (
             <CustomChordDiagram
@@ -149,8 +146,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           )}
         </div>
 
-        {/* Tablature — frets[] always contains absolute fret numbers for both
-             standard and custom chords (customToLibraryChord converts them). */}
+        {/* Tablature */}
         <div className="bg-white rounded-md px-2.5 py-2 text-[10px] font-mono self-start shadow-lg flex-shrink-0">
           {[...chord.frets].reverse().map((fret, idx) => (
             <div key={idx} className="flex gap-1.5 items-center py-[1px]">
@@ -172,16 +168,32 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
 
 export default function ChordLibrary() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  // ── Persistent state via Zustand store (survives navigation) ─────────────────
+  const {
+    searchQuery,
+    setSearchQuery,
+    selectedChordIds,
+    setSelectedChordIds,
+    toggleChordSelection: storeToggleChordSelection,
+    filterCategories,
+    toggleCategory: storeToggleCategory,
+    clearCategories: storeClearCategories,
+    activeLibraryPresetId,
+    setActiveLibraryPreset,
+  } = useChordLibraryStore();
+
+  // Derived mutable set from persisted array
+  const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
+
+  // ── Local-only state (intentionally resets each visit) ───────────────────────
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [selectedChords, setSelectedChords] = useState<Set<string>>(new Set());
   const [detailModalChord, setDetailModalChord] = useState<(ChordData & { isCustom?: boolean }) | null>(null);
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const [editingPackId, setEditingPackId] = useState<string | null>(null);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(activeLibraryPresetId);
   const [packAssignments, setPackAssignments] = useState<Record<string, string[]>>(() => {
     try {
       const stored = localStorage.getItem('fretmaster_pack_assignments');
@@ -191,14 +203,29 @@ export default function ChordLibrary() {
     }
   });
 
+  // ── Scroll restoration ───────────────────────────────────────────────────────
+  const SCROLL_KEY = 'fretmaster_chord_library_scroll';
+
+  useEffect(() => {
+    // Restore scroll position after first render
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (saved) {
+      const y = parseInt(saved, 10);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+      });
+    }
+    // Save scroll position when leaving the page
+    return () => {
+      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+    };
+  }, []);
+
   const { presets: userPresets, addPreset } = usePresetStore();
   const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();
   const { favoriteIds, toggleFavorite } = useChordFavoritesStore();
   const { playChord } = useChordAudio();
 
-  // ── Effective chord list (standard + custom, respecting hidden) ──────────────
-  // Depends on customChords + hiddenStandardChords so it recomputes reactively
-  // when the user saves/edits/deletes chords in the same session.
   const allChords = useMemo(() => getEffectiveChords(), [customChords, hiddenStandardChords]);
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
@@ -210,35 +237,23 @@ export default function ChordLibrary() {
         chord.name.toLowerCase().includes(searchQuery.toLowerCase());
 
       const categoryMatch =
-        selectedCategories.length === 0 ||
-        selectedCategories.some((cat) => {
-          if (cat === 'Open') return chord.category === 'open';
-          if (cat === 'Barre') return chord.category === 'barre';
-          if (cat === 'Movable') return chord.category === 'movable';
-          if (cat === 'Custom') return chord.category === 'custom';
-          return true;
-        });
+        filterCategories.length === 0 ||
+        filterCategories.includes(chord.category as any);
 
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
       return searchMatch && categoryMatch && favoriteMatch;
     });
-  }, [allChords, searchQuery, selectedCategories, showFavoritesOnly, favoriteIds]);
+  }, [allChords, searchQuery, filterCategories, showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
   const toggleCategoryFilter = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
+    storeToggleCategory(category as any);
   };
 
   const toggleChordSelection = (id: string) => {
-    setSelectedChords((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) { next.delete(id); } else { next.add(id); }
-      return next;
-    });
+    storeToggleChordSelection(id);
   };
 
   const handleChordClick = (chord: ChordData & { isCustom?: boolean }, index: number) => {
@@ -262,7 +277,6 @@ export default function ChordLibrary() {
     }
   };
 
-  // Edit: custom chords use editChord(id); standard chords use editStandardChord(chord)
   const handleEdit = (chord: ChordData & { isCustom?: boolean }) => {
     if (chord.isCustom) {
       editChord(chord.id);
@@ -275,7 +289,7 @@ export default function ChordLibrary() {
   const handleEditPackSlot = (packId: string) => {
     const assigned = packAssignments[packId];
     if (assigned && assigned.length > 0) {
-      setSelectedChords(new Set(assigned));
+      setSelectedChordIds(assigned);
     }
     setEditingPackId(packId);
     setShowPresetMenu(false);
@@ -293,14 +307,16 @@ export default function ChordLibrary() {
     localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
     const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
     if (editingPackId === packId) setEditingPackId(null);
+    setSelectedChordIds([]);
     toast.success(`${selectedChords.size} chords saved to "${packTitle}"`);
   };
 
   const handleLoadPackSlot = (packId: string) => {
     const chords = packAssignments[packId];
     if (!chords || chords.length === 0) return;
-    setSelectedChords(new Set(chords));
+    setSelectedChordIds(chords);
     setSelectedPreset(packId);
+    setActiveLibraryPreset(packId);
     setShowPresetMenu(false);
     toast.success(`Loaded ${chords.length} chords from pack`);
   };
@@ -310,7 +326,7 @@ export default function ChordLibrary() {
     delete updated[packId];
     setPackAssignments(updated);
     localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
-    if (selectedPreset === packId) setSelectedPreset(null);
+    if (selectedPreset === packId) { setSelectedPreset(null); setActiveLibraryPreset(null); }
     if (editingPackId === packId) setEditingPackId(null);
     toast.success('Pack cleared');
   };
@@ -328,14 +344,15 @@ export default function ChordLibrary() {
     toast.success(`Preset "${newPresetName}" created with ${selectedChords.size} chords`);
     setNewPresetName('');
     setShowPresetMenu(false);
-    setSelectedChords(new Set());
+    setSelectedChordIds([]);
   };
 
   const handleLoadPreset = (presetName: string) => {
     const preset = userPresets.find((p) => p.name === presetName);
     if (preset) {
-      setSelectedChords(new Set(preset.chordIds));
+      setSelectedChordIds(preset.chordIds);
       setSelectedPreset(presetName);
+      setActiveLibraryPreset(preset.id);
       setShowPresetMenu(false);
       toast.success(`Loaded preset "${presetName}" with ${preset.chordIds.length} chords`);
     }
@@ -526,7 +543,7 @@ export default function ChordLibrary() {
                 </div>
               </div>
 
-              {/* ── Create Custom Preset ──────────────────────────────────── */}
+              {/* ── Save Selected Chords to a Pack ───────────────────────── */}
               <div className="p-3 border-b border-zinc-800">
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
                   Save Selected Chords to a Pack
@@ -659,9 +676,9 @@ export default function ChordLibrary() {
         {/* Filter Pills — category + favorites */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           <button
-            onClick={() => { setSelectedCategories([]); setShowFavoritesOnly(false); }}
+            onClick={() => { storeClearCategories(); setShowFavoritesOnly(false); }}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
-              selectedCategories.length === 0 && !showFavoritesOnly
+              filterCategories.length === 0 && !showFavoritesOnly
                 ? 'bg-amber-500 text-zinc-950'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
@@ -670,9 +687,9 @@ export default function ChordLibrary() {
           </button>
 
           <button
-            onClick={() => toggleCategoryFilter('Open')}
+            onClick={() => toggleCategoryFilter('open')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              selectedCategories.includes('Open')
+              filterCategories.includes('open')
                 ? 'bg-emerald-500 text-white'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
@@ -682,9 +699,9 @@ export default function ChordLibrary() {
           </button>
 
           <button
-            onClick={() => toggleCategoryFilter('Barre')}
+            onClick={() => toggleCategoryFilter('barre')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              selectedCategories.includes('Barre')
+              filterCategories.includes('barre')
                 ? 'bg-purple-500 text-white'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
@@ -694,9 +711,9 @@ export default function ChordLibrary() {
           </button>
 
           <button
-            onClick={() => toggleCategoryFilter('Movable')}
+            onClick={() => toggleCategoryFilter('movable')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              selectedCategories.includes('Movable')
+              filterCategories.includes('movable')
                 ? 'bg-yellow-400 text-zinc-950'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}
@@ -706,9 +723,9 @@ export default function ChordLibrary() {
           </button>
 
           <button
-            onClick={() => toggleCategoryFilter('Custom')}
+            onClick={() => toggleCategoryFilter('custom')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              selectedCategories.includes('Custom')
+              filterCategories.includes('custom')
                 ? 'bg-amber-500 text-zinc-950'
                 : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
             }`}

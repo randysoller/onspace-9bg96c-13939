@@ -206,40 +206,45 @@ export default function ChordLibrary() {
   });
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
-  // Root cause of all previous failures: <main tabIndex={-1}> in AppLayout was
-  // receiving programmatic focus after every React Router navigation, which
-  // triggered the browser's scroll-into-view behavior and reset scroll to 0 —
-  // happening AFTER useLayoutEffect restored the position. Fixed by removing
-  // tabIndex={-1} from <main> in AppLayout.tsx.
-  //
-  // Strategy: capture scroll Y in a ref on every scroll event; flush to Zustand
-  // (localStorage-persisted) in cleanup. Restore with a short setTimeout so
-  // React Router's async navigation work has finished before we scroll.
+  // DEFINITIVE APPROACH: target <main id="main-content"> directly as an explicit
+  // overflow-y:auto scroll container (set in AppLayout). This eliminates ALL
+  // previous failure modes:
+  //   • window.scrollY / window.scrollTo() were unreliable because html+body
+  //     both have height:100% in index.css — the actual scroll container was
+  //     ambiguous and browser-dependent.
+  //   • React Router clipping window scroll when navigating to shorter pages
+  //     was corrupting the saved value.
+  //   • tabIndex={-1} focus-scroll was overriding restoration (now removed).
+  // By making <main> the scroll container we control exactly what scrolls and
+  // what property to read — scrollTop is unambiguous.
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
 
-  // SAVE: track position continuously in a ref; write to store on unmount.
+  const getScrollEl = () => document.getElementById('main-content');
+
+  // SAVE: track scrollTop on the explicit container; flush to store on unmount.
   useEffect(() => {
+    const el = getScrollEl();
+    if (!el) return;
     const handleScroll = () => {
-      lastScrollY.current = window.pageYOffset;
+      lastScrollY.current = el.scrollTop;
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    el.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      el.removeEventListener('scroll', handleScroll);
       setSavedScrollY(lastScrollY.current);
     };
   }, [setSavedScrollY]);
 
-  // RESTORE: setTimeout(150) ensures we run after React Router finishes any
-  // async post-navigation work (focus management, etc.).
+  // RESTORE: after mount, set scrollTop directly on the container.
+  // No window.scrollTo — no ambiguity.
   useEffect(() => {
     if (!savedScrollY || restoredRef.current) return;
     restoredRef.current = true;
-    const timer = setTimeout(() => {
-      window.scrollTo({ top: savedScrollY, behavior: 'instant' as ScrollBehavior });
-    }, 150);
-    return () => clearTimeout(timer);
-  }, [savedScrollY]); // Add savedScrollY to dependency array
+    const el = getScrollEl();
+    if (!el) return;
+    el.scrollTop = savedScrollY;
+  }, [savedScrollY]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
   const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();

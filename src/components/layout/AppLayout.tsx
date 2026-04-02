@@ -89,7 +89,11 @@ export const AppLayout = () => {
 
       <main
         id="main-content"
-        className={`pb-20 md:pb-8 ${isPracticePage ? 'pt-0 md:pt-16' : 'pt-16'}`}
+        className={`pb-20 md:pb-8 ${
+          isPracticePage
+            ? 'pt-0 md:pt-16'
+            : 'pt-16 h-[calc(100vh-4rem)] overflow-y-auto'
+        }`}
       >
         <Outlet />
       </main>

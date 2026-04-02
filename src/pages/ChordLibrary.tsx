@@ -205,29 +205,42 @@ export default function ChordLibrary() {
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const SCROLL_KEY = 'fretmaster_chord_library_scroll';
+  // lastScrollY ref: always holds the most recent Y captured by the scroll
+  // handler. We flush this value to sessionStorage in the cleanup, NOT inside
+  // the RAF callback — because React Router calls window.scrollTo(0,0) on
+  // navigation, which fires the scroll event one final time and would overwrite
+  // our saved position with 0 before the RAF callback runs.
+  const lastScrollY = useRef(0);
 
-  // SAVE: Track scroll continuously via event listener.
-  // Cannot rely on useEffect cleanup — React Router resets window.scrollY to 0
-  // before the cleanup function runs, so the cleanup always saves 0.
+  // SAVE: Track scroll in a ref on every scroll event (RAF-throttled for perf).
+  // On unmount, flush the ref value to sessionStorage synchronously.
   useEffect(() => {
+    // Initialise from current position in case user hasn't scrolled yet
+    lastScrollY.current = window.scrollY;
+
     let rafId: number | null = null;
     const handleScroll = () => {
+      // Capture Y immediately (synchronously) before any RAF delay
+      lastScrollY.current = window.scrollY;
       if (rafId !== null) return;
       rafId = requestAnimationFrame(() => {
-        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
         rafId = null;
       });
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       if (rafId !== null) cancelAnimationFrame(rafId);
       window.removeEventListener('scroll', handleScroll);
+      // Flush the last *real* scroll position synchronously on unmount.
+      // At this point React Router has already reset window.scrollY to 0,
+      // but lastScrollY.current still holds the position the user was at.
+      sessionStorage.setItem(SCROLL_KEY, String(lastScrollY.current));
     };
   }, []);
 
   // RESTORE: Wait for the chord list to fully paint before scrolling.
-  // A single rAF fires before layout is complete; setTimeout(60ms) ensures
-  // the page is tall enough to reach the saved Y position.
+  // 100ms is enough for the list to render and the page to reach full height.
   useEffect(() => {
     const saved = sessionStorage.getItem(SCROLL_KEY);
     if (!saved) return;
@@ -235,7 +248,7 @@ export default function ChordLibrary() {
     if (!y) return;
     const timer = setTimeout(() => {
       window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
-    }, 60);
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 

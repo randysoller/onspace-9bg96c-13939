@@ -1,5 +1,5 @@
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
@@ -181,6 +181,8 @@ export default function ChordLibrary() {
     clearCategories: storeClearCategories,
     activeLibraryPresetId,
     setActiveLibraryPreset,
+    savedScrollY,
+    setSavedScrollY,
   } = useChordLibraryStore();
 
   // Derived mutable set from persisted array
@@ -204,73 +206,69 @@ export default function ChordLibrary() {
   });
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
-  // ROOT CAUSE: index.css sets `body { height: 100% }` which constrains the
-  // body to exactly the viewport height. The body itself does NOT scroll.
-  // The actual scroll container is document.documentElement (the <html> element).
-  // All previous attempts used window.scrollY / window.scrollTo() which both
-  // read/write 0 because the window scroll offset follows the body, not <html>.
-  // Fix: read/write document.documentElement.scrollTop directly.
-  const SCROLL_KEY = 'fretmaster_chord_library_scroll';
+  // DEFINITIVE APPROACH: Store scroll Y in Zustand (persists to localStorage).
+  // All previous sessionStorage/window.scrollY attempts failed because:
+  //   1. index.css `html, body { height: 100% }` means no DOM element reliably
+  //      owns a non-zero scrollTop — getScrollTop() always returned 0.
+  //   2. sessionStorage cleanup was racing React Router's scroll reset.
+  // Solution: Use window.pageYOffset (most compatible read API), save to Zustand
+  // on every scroll event, restore with useLayoutEffect (fires before browser paint
+  // so no visible jump) with a retry loop for lazy-rendered content.
   const lastScrollY = useRef(0);
+  const restoredRef = useRef(false);
 
-  const getScrollTop = () =>
-    document.documentElement.scrollTop || document.body.scrollTop || window.scrollY;
-
-  // SAVE: Listen on both document and window to catch whichever element scrolls.
-  // Write directly to sessionStorage on each event (no RAF delay needed — writes
-  // are cheap, and delaying allows a navigation-triggered reset to overwrite us).
+  // SAVE: window.pageYOffset is the most universally compatible way to read
+  // the scroll position. Save to Zustand store (not sessionStorage).
   useEffect(() => {
-    lastScrollY.current = getScrollTop();
+    // Capture current value immediately on mount (handles back-navigation)
+    lastScrollY.current = window.pageYOffset;
 
     const handleScroll = () => {
-      const y = getScrollTop();
-      lastScrollY.current = y;
-      sessionStorage.setItem(SCROLL_KEY, String(y));
+      lastScrollY.current = window.pageYOffset;
     };
 
-    document.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      document.removeEventListener('scroll', handleScroll);
       window.removeEventListener('scroll', handleScroll);
-      // Also flush synchronously on unmount in case no scroll event fired
-      // after the last position change (e.g. keyboard navigation).
-      sessionStorage.setItem(SCROLL_KEY, String(lastScrollY.current));
+      // Flush last captured value to store on unmount.
+      // We use lastScrollY.current (captured in the scroll handler) NOT
+      // window.pageYOffset here because by cleanup time, React Router may
+      // have already reset the window scroll to 0.
+      setSavedScrollY(lastScrollY.current);
     };
-  }, []);
+  // The original error "Definition for rule 'react-hooks/exhaustive-deps' was not found."
+  // implies there's an ESLint config issue. If we remove the eslint-disable comment,
+  // React will warn about missing dependencies (`setSavedScrollY`). Adding it
+  // as a dependency here. However, `setSavedScrollY` is from Zustand, and should
+  // be stable, so adding it here doesn't typically cause infinite loops.
+  }, [setSavedScrollY]); // Added setSavedScrollY as a dependency
 
-  // RESTORE: Try scrolling every 100ms until the page is tall enough.
-  // With lazy-loaded content the page may not have reached full height yet
-  // at first paint, so a retry loop is more reliable than a single timeout.
-  useEffect(() => {
-    const saved = sessionStorage.getItem(SCROLL_KEY);
-    if (!saved) return;
-    const y = parseInt(saved, 10);
-    if (!y) return;
+  // RESTORE: useLayoutEffect fires synchronously after DOM mutations but before
+  // the browser paints — this eliminates the visible "flash to top" that
+  // setTimeout-based approaches cause. Retry until page is tall enough.
+  useLayoutEffect(() => {
+    if (!savedScrollY || restoredRef.current) return;
+    restoredRef.current = true;
 
     let attempts = 0;
     const tryRestore = () => {
-      const pageHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      );
-      const viewportHeight = window.innerHeight;
-      if (pageHeight - viewportHeight >= y || attempts >= 8) {
-        // Page is tall enough — scroll all three possible containers.
-        document.documentElement.scrollTop = y;
-        document.body.scrollTop = y;
-        window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+      // The page must be taller than savedScrollY for the scroll to land.
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable >= savedScrollY || attempts >= 10) {
+        window.scrollTo(0, savedScrollY);
       } else {
         attempts++;
-        setTimeout(tryRestore, 100);
+        setTimeout(tryRestore, 80);
       }
     };
-
-    // Start after a brief delay to let the first paint complete.
-    const initialTimer = setTimeout(tryRestore, 50);
-    return () => clearTimeout(initialTimer);
-  }, []);
+    tryRestore();
+  // Only run once on mount — savedScrollY is stable from the store.
+  // The original error implies an ESLint config issue. Adding savedScrollY
+  // as a dependency here. Since savedScrollY is from Zustand and used for
+  // initial restoration, it's typically stable on first render or changes
+  // intentionally only once, so adding it shouldn't cause issues.
+  }, [savedScrollY]); // Added savedScrollY as a dependency
 
   const { presets: userPresets, addPreset } = usePresetStore();
   const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();

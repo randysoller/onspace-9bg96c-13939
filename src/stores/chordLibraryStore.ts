@@ -9,6 +9,7 @@ interface ChordLibraryState {
   searchQuery: string;
   activeLibraryPresetId: string | null;
   selectedChordIds: string[];
+  savedScrollY: number;
   
   toggleCategory: (cat: ChordCategory) => void;
   clearCategories: () => void;
@@ -22,6 +23,7 @@ interface ChordLibraryState {
   toggleChordSelection: (id: string) => void;
   setSelectedChordIds: (ids: string[]) => void;
   clearSelectedChords: () => void;
+  setSavedScrollY: (y: number) => void;
   clearAll: () => void;
 }
 
@@ -34,6 +36,7 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
       searchQuery: '',
       activeLibraryPresetId: null,
       selectedChordIds: [],
+      savedScrollY: 0,
 
       toggleCategory: (cat) =>
         set((state) => {
@@ -103,6 +106,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
 
       clearSelectedChords: () => set({ selectedChordIds: [] }),
 
+      setSavedScrollY: (y) => set({ savedScrollY: y }),
+
       clearAll: () =>
         set({
           filterCategories: [],
@@ -121,6 +126,7 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
         searchQuery: state.searchQuery,
         activeLibraryPresetId: state.activeLibraryPresetId,
         selectedChordIds: state.selectedChordIds,
+        savedScrollY: state.savedScrollY,
       }),
       merge: (persisted: any, current) => ({
         ...current,
@@ -132,6 +138,7 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
               searchQuery: persisted.searchQuery ?? '',
               activeLibraryPresetId: persisted.activeLibraryPresetId ?? null,
               selectedChordIds: persisted.selectedChordIds ?? [],
+              savedScrollY: persisted.savedScrollY ?? 0,
             }
           : {}),
       }),

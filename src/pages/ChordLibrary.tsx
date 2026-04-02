@@ -206,19 +206,37 @@ export default function ChordLibrary() {
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const SCROLL_KEY = 'fretmaster_chord_library_scroll';
 
+  // SAVE: Track scroll continuously via event listener.
+  // Cannot rely on useEffect cleanup — React Router resets window.scrollY to 0
+  // before the cleanup function runs, so the cleanup always saves 0.
   useEffect(() => {
-    // Restore scroll position after first render
-    const saved = sessionStorage.getItem(SCROLL_KEY);
-    if (saved) {
-      const y = parseInt(saved, 10);
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+    let rafId: number | null = null;
+    const handleScroll = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
+        rafId = null;
       });
-    }
-    // Save scroll position when leaving the page
-    return () => {
-      sessionStorage.setItem(SCROLL_KEY, String(window.scrollY));
     };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // RESTORE: Wait for the chord list to fully paint before scrolling.
+  // A single rAF fires before layout is complete; setTimeout(60ms) ensures
+  // the page is tall enough to reach the saved Y position.
+  useEffect(() => {
+    const saved = sessionStorage.getItem(SCROLL_KEY);
+    if (!saved) return;
+    const y = parseInt(saved, 10);
+    if (!y) return;
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior });
+    }, 60);
+    return () => clearTimeout(timer);
   }, []);
 
   const { presets: userPresets, addPreset } = usePresetStore();

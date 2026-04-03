@@ -38,16 +38,15 @@ function App() {
   const syncFromSupabase = useCustomChordStore(s => s.syncFromSupabase);
 
   // Sync custom chords from Supabase whenever the user is authenticated.
-  // We also listen to the authStore `loading` flag so we fire ONCE as soon
-  // as auth resolves (covers page-reload where user was already logged in).
+  // This is the SINGLE authoritative sync path — useBackendSync is a no-op.
+  // We watch user?.id and authLoading so we fire exactly once per login.
   const authLoading = useAuthStore(s => s.loading);
   useEffect(() => {
-    // Don't sync while auth is still initialising
-    if (authLoading) return;
-    if (user?.id) {
-      syncFromSupabase(user.id);
-    }
-  // Re-run whenever the resolved user changes OR auth finishes loading
+    if (authLoading) return;          // still initialising — wait
+    if (!user?.id) return;            // not logged in — nothing to sync
+    console.log('[FretMaster] App.tsx triggering syncFromSupabase for user:', user.id);
+    syncFromSupabase(user.id);
+  // user?.id changing means a different user logged in — re-sync
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, authLoading]);
 

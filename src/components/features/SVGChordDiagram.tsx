@@ -368,8 +368,8 @@ function SVGChordDiagramBase({
           const d = r * 0.85;
           return (
             <g key={`head-${i}`}>
-              <line x1={cx - d} y1={cy - d} x2={cx + d} y2={cy + d} stroke="hsl(30 7% 47%)" strokeWidth={1.5} />
-              <line x1={cx + d} y1={cy - d} x2={cx - d} y2={cy + d} stroke="hsl(30 7% 47%)" strokeWidth={1.5} />
+              <line x1={cx - d} y1={cy - d} x2={cx + d} y2={cy + d} stroke="hsl(30 7% 47%)" strokeWidth={2.5} />
+              <line x1={cx + d} y1={cy - d} x2={cx - d} y2={cy + d} stroke="hsl(30 7% 47%)" strokeWidth={2.5} />
             </g>
           );
         }
@@ -383,7 +383,7 @@ function SVGChordDiagramBase({
               points={`${cx},${cy - dr} ${cx + dr},${cy} ${cx},${cy + dr} ${cx - dr},${cy}`}
               fill={fill}
               stroke={stroke}
-              strokeWidth={1.5}
+              strokeWidth={2.5}
             />
           );
         }
@@ -391,7 +391,7 @@ function SVGChordDiagramBase({
           const stroke = effectiveLibraryMode ? LIB_OPEN_CIRCLE : 'hsl(33 14% 72%)';
           return (
             <circle key={`head-${i}`} cx={cx} cy={cy} r={r}
-              fill="none" stroke={stroke} strokeWidth={1.5} />
+              fill="none" stroke={stroke} strokeWidth={2.5} />
           );
         }
         return null;

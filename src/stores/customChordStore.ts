@@ -85,24 +85,62 @@ function saveCustomChords(chords: CustomChordData[]): void {
   try {
     const serialized: SerializedCustomChord[] = chords.map(serializeChord);
     const json = JSON.stringify(serialized);
+
+    // Attempt the write
     localStorage.setItem(STORAGE_KEY, json);
-    console.log(`[FretMaster] Saved ${chords.length} chord(s) to localStorage key "${STORAGE_KEY}" (${json.length} chars)`);
+
+    // ── VERIFICATION READ-BACK ──────────────────────────────────────────────
+    // Immediately read back what we just wrote. If this fails or returns
+    // something different, we know the write silently failed (quota, origin
+    // mismatch, private-browsing block, etc.).
+    const verify = localStorage.getItem(STORAGE_KEY);
+    if (verify !== json) {
+      console.error(
+        `[FretMaster] ⚠️ WRITE VERIFICATION FAILED for key "${STORAGE_KEY}"`,
+        '\nWrote:', json.slice(0, 200),
+        '\nRead back:', verify?.slice(0, 200) ?? 'null',
+        '\nThis means chords will NOT persist across sessions.'
+      );
+    } else {
+      console.log(
+        `[FretMaster] ✅ Saved & verified ${chords.length} chord(s) → key "${STORAGE_KEY}" (${json.length} chars)`,
+        `\nOrigin: ${window.location.origin}`,
+        `\nChord symbols: ${chords.map(c => c.symbol).join(', ')}`
+      );
+    }
   } catch (err) {
-    console.error('[FretMaster] Failed to save custom chords to localStorage:', err);
+    console.error('[FretMaster] ❌ localStorage.setItem threw an exception:', err);
+    console.error('[FretMaster] This browser/context does not support localStorage (private mode? iframe block?).');
   }
 }
 
 function loadCustomChords(): CustomChordData[] {
+  console.log(
+    `[FretMaster] loadCustomChords() called.`,
+    `\nOrigin: ${window.location.origin}`,
+    `\nAll localStorage keys (${localStorage.length}):`,
+    Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)).join(', ') || '(none)'
+  );
+
   // Try v3 key first
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed: SerializedCustomChord[] = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const chords = parsed.map(deserializeChord);
-        console.log(`[FretMaster] Loaded ${chords.length} chord(s) from localStorage key "${STORAGE_KEY}"`);
-        return chords;
+      if (Array.isArray(parsed)) {
+        if (parsed.length > 0) {
+          const chords = parsed.map(deserializeChord);
+          console.log(`[FretMaster] ✅ Loaded ${chords.length} chord(s) from "${STORAGE_KEY}": ${chords.map(c => c.symbol).join(', ')}`);
+          return chords;
+        } else {
+          console.log(`[FretMaster] Key "${STORAGE_KEY}" exists but contains empty array — starting fresh`);
+          return [];
+        }
+      } else {
+        console.warn(`[FretMaster] Key "${STORAGE_KEY}" contains non-array data:`, typeof parsed);
       }
+    } else {
+      console.log(`[FretMaster] Key "${STORAGE_KEY}" not found in localStorage`);
     }
   } catch (err) {
     console.error('[FretMaster] Failed to load from v3 key:', err);
@@ -118,8 +156,7 @@ function loadCustomChords(): CustomChordData[] {
         parsed?.state?.customChords ?? parsed?.customChords;
       if (Array.isArray(chordsRaw) && chordsRaw.length > 0) {
         const chords = chordsRaw.map(deserializeChord);
-        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v2 key`);
-        // Persist to v3 key and remove v2
+        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v2 key → saving to v3`);
         saveCustomChords(chords);
         localStorage.removeItem(OLD_KEY_V2);
         return chords;
@@ -136,7 +173,7 @@ function loadCustomChords(): CustomChordData[] {
       const parsed: SerializedCustomChord[] = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const chords = parsed.map(deserializeChord);
-        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v1 key`);
+        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v1 key → saving to v3`);
         saveCustomChords(chords);
         localStorage.removeItem(OLD_KEY_V1);
         return chords;
@@ -146,7 +183,7 @@ function loadCustomChords(): CustomChordData[] {
     console.error('[FretMaster] Failed to migrate from v1 key:', err);
   }
 
-  console.log('[FretMaster] No stored chords found, starting fresh');
+  console.log('[FretMaster] No stored chords found — starting fresh');
   return [];
 }
 
@@ -502,14 +539,13 @@ export const useCustomChordStore = create<CustomChordStore>()(
     },
 
     deleteChord: (id) => {
-      set(state => {
-        const customChords = state.customChords.filter(c => c.id !== id);
-        saveCustomChords(customChords);
-        const reset = state.currentChord.id === id
-          ? { currentChord: createBlankChord(), isEditing: false }
-          : {};
-        return { customChords, ...reset };
-      });
+      const state = get();
+      const customChords = state.customChords.filter(c => c.id !== id);
+      saveCustomChords(customChords);  // Write OUTSIDE set() — pure functions shouldn't have side-effects
+      const reset = state.currentChord.id === id
+        ? { currentChord: createBlankChord(), isEditing: false }
+        : {};
+      set({ customChords, ...reset });
     },
 
     deleteFromLibrary: () => {

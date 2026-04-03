@@ -131,7 +131,29 @@ export default function ChordEditor() {
   };
 
   const handleSave = () => {
+    console.log(
+      `[FretMaster] handleSave() fired`,
+      `\n  name: "${currentChord.name}"`,
+      `\n  symbol: "${currentChord.symbol}"`,
+      `\n  markers: ${currentChord.markers.length}`,
+      `\n  isEditing: ${isEditing}`,
+      `\n  canSave: ${canSave}`,
+      `\n  origin: ${window.location.origin}`
+    );
     saveChord();
+    // Verify Zustand state updated
+    const stored = useCustomChordStore.getState().customChords;
+    console.log(
+      `[FretMaster] After saveChord(): Zustand has ${stored.length} chord(s):`,
+      stored.map(c => c.symbol).join(', ') || '(none)'
+    );
+    // Verify localStorage
+    const lsRaw = localStorage.getItem('fretmaster-custom-chords-v3');
+    const lsParsed = lsRaw ? JSON.parse(lsRaw) : null;
+    console.log(
+      `[FretMaster] localStorage[fretmaster-custom-chords-v3] has ${Array.isArray(lsParsed) ? lsParsed.length : 0} chord(s)`,
+      Array.isArray(lsParsed) ? lsParsed.map((c: any) => c.symbol).join(', ') : 'null/invalid'
+    );
     const message = isEditing ? 'Chord updated in your library!' : 'Chord saved to your library!';
     toast.success(message, {
       description: `"${currentChord.symbol}" is now available in the Chord Library.`,

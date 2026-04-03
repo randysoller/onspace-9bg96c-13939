@@ -9,8 +9,7 @@ import {
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
-import { ChordDiagram } from '@/components/features/ChordDiagram';
-import CustomChordDiagram from '@/components/features/CustomChordDiagram';
+import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import { useChordAudio } from '@/hooks/useChordAudio';
 import { usePresetStore } from '@/stores/presetStore';
 import { useChordLibraryStore } from '@/stores/chordLibraryStore';
@@ -105,10 +104,11 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           </div>
         </div>
 
-        {/* Chord Diagram */}
+          {/* Chord Diagram — SVGChordDiagram handles both standard and custom */}
         <div className="flex-shrink-0">
           {(chord as any).isCustom ? (
-            <CustomChordDiagram
+            <SVGChordDiagram
+              isCustom
               chord={{
                 id: chord.id,
                 name: chord.name,
@@ -130,7 +130,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
               libraryMode
             />
           ) : (
-            <ChordDiagram chord={chord} size="sm" />
+            <SVGChordDiagram chord={chord} size="sm" />
           )}
         </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import InteractiveFretboard from '@/components/features/InteractiveFretboard';
-import CustomChordDiagram from '@/components/features/CustomChordDiagram';
+import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import ColorShapePicker from '@/components/features/ColorShapePicker';
 import { CHORD_TYPE_LABELS, CATEGORY_LABELS } from '@/types/chord';
 import type { ChordType, ChordCategory } from '@/types/chord';
@@ -707,7 +707,7 @@ export default function ChordEditor() {
                     </div>
                   )}
 
-                  <CustomChordDiagram chord={currentChord} size="lg" />
+                  <SVGChordDiagram chord={currentChord} isCustom size="lg" />
 
                   {(currentChord.chordCategory || currentChord.chordType) && (
                     <div className="flex flex-wrap gap-1 justify-center mt-1">

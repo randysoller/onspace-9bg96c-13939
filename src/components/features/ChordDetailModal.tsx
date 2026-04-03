@@ -1,7 +1,6 @@
 import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ChordData } from '@/types/chord';
-import CustomChordDiagram from '@/components/features/CustomChordDiagram';
-import { ChordDiagram } from '@/components/features/ChordDiagram';
+import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import type { CustomChordData } from '@/types/customChord';
 
 interface ChordDetailModalProps {
@@ -105,12 +104,13 @@ export default function ChordDetailModal({
 
           {/* Diagram Section */}
           <div className="p-3 flex gap-3 items-start flex-shrink-0">
-            {/* Chord Diagram — CustomChordDiagram for custom/edited chords (handles
-                 relative fret math + baseFret offset); ChordDiagram for standard chords.
-                 Both use size='lg' so barre thickness, dot radius, and layout are identical. */}
+            {/* Unified SVGChordDiagram handles both standard and custom chords.
+                 isCustom prop switches the normalisation path; libraryMode enforces
+                 the amber/cyan/white colour scheme in both cases. */}
             <div className="flex-shrink-0">
               {(chord as any).isCustom ? (
-                <CustomChordDiagram
+                <SVGChordDiagram
+                  isCustom
                   chord={{
                     id: chord.id,
                     name: chord.name,
@@ -132,7 +132,7 @@ export default function ChordDetailModal({
                   libraryMode
                 />
               ) : (
-                <ChordDiagram chord={chord} size="lg" />
+                <SVGChordDiagram chord={chord} size="lg" />
               )}
             </div>
 

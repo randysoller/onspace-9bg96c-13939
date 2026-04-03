@@ -5,7 +5,7 @@ import { authApi } from '@/lib/api/auth';
 import { LogIn, Mail, Lock, User } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
-type AuthView = 'login' | 'signup';
+type AuthView = 'login' | 'signup' | 'forgot';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -28,6 +28,7 @@ export default function Auth() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLocalLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +47,20 @@ export default function Auth() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
       setLoading(false);
+      setLocalLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLocalLoading(true);
+    try {
+      await authApi.resetPassword(email);
+      setResetSent(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email');
+    } finally {
       setLocalLoading(false);
     }
   };
@@ -131,13 +146,70 @@ export default function Auth() {
               {loading && <LoadingSpinner size="sm" />}
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
-            <div className="text-center">
+            <div className="flex items-center justify-between">
+              <button type="button" onClick={() => { setView('forgot'); setError(''); setResetSent(false); }}
+                className="text-zinc-400 hover:text-zinc-300 text-sm">
+                Forgot password?
+              </button>
               <button type="button" onClick={() => { setView('signup'); setError(''); }}
                 className="text-amber-500 hover:text-amber-400 text-sm">
                 Don&apos;t have an account? Sign up
               </button>
             </div>
           </form>
+        ) : view === 'forgot' ? (
+          <div>
+            {resetSent ? (
+              <div className="text-center">
+                <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-white mb-2">Check your email</h2>
+                <p className="text-sm text-zinc-400 mb-6">
+                  A password reset link has been sent to <span className="text-white font-medium">{email}</span>. Check your inbox and follow the link to set a new password.
+                </p>
+                <button type="button" onClick={() => { setView('login'); setResetSent(false); setEmail(''); }}
+                  className="text-amber-500 hover:text-amber-400 text-sm">
+                  Back to Sign In
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <p className="text-sm text-zinc-400 mb-2">
+                  Enter your email address and we'll send you a link to reset your password.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">
+                    <Mail className="w-4 h-4 inline mr-2" />Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    placeholder="your@email.com"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {loading && <LoadingSpinner size="sm" />}
+                  {loading ? 'Sending…' : 'Send Reset Link'}
+                </button>
+                <div className="text-center">
+                  <button type="button" onClick={() => { setView('login'); setError(''); }}
+                    className="text-zinc-400 hover:text-zinc-300 text-sm">
+                    Back to Sign In
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         ) : (
           <form onSubmit={handleSignUp} className="space-y-4">
             <div>

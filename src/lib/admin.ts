@@ -10,8 +10,7 @@
  */
 
 export const ADMIN_USER_IDS: ReadonlySet<string> = new Set([
-  // ← paste your Supabase user UUID here, e.g.:
-  // 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  '40b66412-d322-4f08-9799-269570e0ceea',
 ]);
 
 export function isAdmin(userId: string | undefined | null): boolean {

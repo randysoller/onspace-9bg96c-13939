@@ -576,14 +576,23 @@ export const useCustomChordStore = create<CustomChordStore>()(
     }),
     {
       name: 'fretmaster-custom-chords-v2',
+      // Only persist the serialized chord array — nothing else.
+      // hiddenStandardChords is a Set<string> and cannot be JSON-serialized;
+      // it is managed manually via loadHiddenChords() / saveHiddenChords().
       partialize: (state) => ({
         customChords: state.customChords.map(serialize),
       }),
       merge: (persisted: any, current) => {
+        // `persisted` is the unwrapped state object: { customChords: SerializedCustomChord[] }
         let chords: CustomChordData[] = [];
 
-        if (persisted?.customChords?.length > 0) {
-          chords = persisted.customChords.map(deserialize);
+        if (Array.isArray(persisted?.customChords) && persisted.customChords.length > 0) {
+          try {
+            chords = persisted.customChords.map(deserialize);
+          } catch (err) {
+            console.error('[FretMaster] Failed to deserialize persisted chords:', err);
+            chords = [];
+          }
         } else {
           // Fall back to old manual key for migration
           chords = migrateOldStorage();
@@ -592,7 +601,15 @@ export const useCustomChordStore = create<CustomChordStore>()(
           }
         }
 
-        return { ...current, customChords: chords };
+        // Re-load hiddenStandardChords from its own dedicated key — never
+        // let it come from Zustand persistence (it's a Set, not serializable).
+        const hiddenStandardChords = loadHiddenChords();
+
+        return {
+          ...current,
+          customChords: chords,
+          hiddenStandardChords,
+        };
       },
     }
   )

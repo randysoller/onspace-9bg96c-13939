@@ -218,6 +218,7 @@ class StorageManager {
       'settings',
       'practiceReminderSettings',
       'pushNotificationsEnabled',
+      'fretmaster-',   // protect ALL fretmaster app data
     ];
     
     return criticalPrefixes.some(prefix => key.startsWith(prefix));

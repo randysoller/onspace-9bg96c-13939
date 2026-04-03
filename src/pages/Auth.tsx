@@ -29,10 +29,12 @@ export default function Auth() {
   const [error, setError] = useState('');
   const [loading, setLocalLoading] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [showForgotHint, setShowForgotHint] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setShowForgotHint(false);
     setLoading(true);
     setLocalLoading(true);
     try {
@@ -45,7 +47,9 @@ export default function Auth() {
       });
       navigate('/');
     } catch (err: unknown) {
+      const code = (err as any)?.code;
       setError(err instanceof Error ? err.message : 'Login failed');
+      if (code === 'invalid_credentials') setShowForgotHint(true);
       setLoading(false);
       setLocalLoading(false);
     }
@@ -88,7 +92,14 @@ export default function Auth() {
       });
       navigate('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Sign up failed');
+      const code = (err as any)?.code;
+      if (code === 'user_already_exists') {
+        // Redirect to login with the same email pre-filled
+        setView('login');
+        setError(err instanceof Error ? err.message : 'Account already exists. Please sign in.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Sign up failed');
+      }
       setLoading(false);
       setLocalLoading(false);
     }
@@ -146,8 +157,20 @@ export default function Auth() {
               {loading && <LoadingSpinner size="sm" />}
               {loading ? 'Signing in…' : 'Sign In'}
             </button>
+            {showForgotHint && (
+              <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg px-4 py-3 text-sm text-amber-400 text-center">
+                Can't remember your password?{' '}
+                <button
+                  type="button"
+                  onClick={() => { setView('forgot'); setError(''); setResetSent(false); setShowForgotHint(false); }}
+                  className="underline font-bold hover:text-amber-300"
+                >
+                  Reset it here
+                </button>
+              </div>
+            )}
             <div className="flex items-center justify-between">
-              <button type="button" onClick={() => { setView('forgot'); setError(''); setResetSent(false); }}
+              <button type="button" onClick={() => { setView('forgot'); setError(''); setResetSent(false); setShowForgotHint(false); }}
                 className="text-zinc-400 hover:text-zinc-300 text-sm">
                 Forgot password?
               </button>

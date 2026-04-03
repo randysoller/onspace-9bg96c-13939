@@ -437,7 +437,7 @@ function SVGChordDiagramBase({
                   x={cx} y={cy + 1}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={r * 1.58}
+                  fontSize={r * 1.975}
                   fill={tFill}
                   fontFamily="DM Sans, sans-serif"
                   fontWeight={fontWeight}
@@ -458,7 +458,7 @@ function SVGChordDiagramBase({
                 x={cx} y={cy + 1}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize={r * 1.35}
+                fontSize={r * 1.6875}
                 fill={tFill}
                 fontFamily="DM Sans, sans-serif"
                 fontWeight={fontWeight}

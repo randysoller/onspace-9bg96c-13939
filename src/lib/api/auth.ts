@@ -4,7 +4,12 @@ export const authApi = {
   async sendOtp(email: string) {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        // Always redirect back to the current app origin so the magic-link
+        // email never points to localhost or a stale Supabase Site URL setting.
+        emailRedirectTo: window.location.origin,
+      },
     });
     if (error) throw error;
   },

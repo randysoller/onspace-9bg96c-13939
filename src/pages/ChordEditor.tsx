@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
+import { isAdmin, ADMIN_USER_IDS } from '@/lib/admin';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { customToLibraryChord } from '@/types/customChord';
 import type { ChordData } from '@/types/chord';
@@ -55,6 +56,9 @@ export default function ChordEditor() {
     newChord,
     clearFretboard,
   } = useCustomChordStore();
+
+  const adminAccess = isAdmin(user?.id);
+  const adminSetupMode = ADMIN_USER_IDS.size === 0; // no admins configured yet
 
   const canSave =
     currentChord.name.trim() !== '' &&
@@ -177,6 +181,55 @@ export default function ChordEditor() {
     if (value === 'T') return customLabel === 'T';
     return selectedFinger === (value as number) && customLabel !== 'T';
   };
+
+  // ── Admin gate ─────────────────────────────────────────────────────────────
+  // Show a locked screen unless the current user is in ADMIN_USER_IDS.
+  // Special case: if ADMIN_USER_IDS is still empty (initial setup), show the
+  // setup helper so the developer can copy their own user ID in.
+  if (!authLoading && !adminAccess) {
+    return (
+      <div className="stage-gradient min-h-[calc(100vh-58px)] flex items-center justify-center px-4">
+        <div className="max-w-md w-full rounded-2xl border border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-elevated)/0.8)] backdrop-blur-sm p-8 text-center">
+          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-[hsl(var(--semantic-error)/0.12)] flex items-center justify-center">
+            <svg className="w-7 h-7 text-[hsl(var(--semantic-error))]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="font-display text-xl font-bold text-[hsl(var(--text-default))] mb-2">Admin Only</h2>
+          {!user ? (
+            <>
+              <p className="text-sm text-[hsl(var(--text-muted))] mb-6">
+                The Chord Editor is restricted to authorised administrators. Sign in to continue.
+              </p>
+              <button
+                onClick={() => navigate('/auth')}
+                className="bg-[hsl(var(--color-primary))] text-[hsl(var(--bg-base))] font-bold px-6 py-2.5 rounded-lg text-sm transition-opacity hover:opacity-90"
+              >
+                Sign In
+              </button>
+            </>
+          ) : adminSetupMode ? (
+            <>
+              <p className="text-sm text-[hsl(var(--text-muted))] mb-4">
+                No admins configured yet. Add your user ID to <code className="text-[hsl(var(--color-primary))] bg-[hsl(var(--bg-surface))] px-1 py-0.5 rounded text-xs">src/lib/admin.ts</code> to unlock the editor.
+              </p>
+              <div className="rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] p-3 text-left">
+                <p className="text-[10px] font-display uppercase tracking-wider text-[hsl(var(--text-muted))] mb-1">Your user ID</p>
+                <p className="font-mono text-xs text-[hsl(var(--color-primary))] break-all select-all">{user.id}</p>
+              </div>
+              <p className="text-xs text-[hsl(var(--text-muted))] mt-3 leading-relaxed">
+                Copy the ID above into the <code className="text-xs">ADMIN_USER_IDS</code> set in <code className="text-xs">src/lib/admin.ts</code>, then save the file.
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-[hsl(var(--text-muted))]">
+              Your account does not have permission to access the Chord Editor.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="stage-gradient min-h-[calc(100vh-58px)]">

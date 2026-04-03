@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { supabase } from '@/lib/supabase';
 import {
   CustomChordData,
   FretMarker,
@@ -12,9 +13,9 @@ import type { ChordType, ChordCategory, ChordData } from '@/types/chord';
 // ─── Storage Key ──────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'fretmaster-custom-chords-v3';
-const HIDDEN_KEY = 'fretmaster-hidden-chords';
-const OLD_KEY_V2 = 'fretmaster-custom-chords-v2';
-const OLD_KEY_V1 = 'fretmaster-custom-chords';
+const HIDDEN_KEY  = 'fretmaster-hidden-chords';
+const OLD_KEY_V2  = 'fretmaster-custom-chords-v2';
+const OLD_KEY_V1  = 'fretmaster-custom-chords';
 
 // ─── Serialization ────────────────────────────────────────────────────────────
 
@@ -76,71 +77,35 @@ function deserializeChord(data: SerializedCustomChord): CustomChordData {
   };
 }
 
-// ─── Manual Persistence (bypasses Zustand persist middleware entirely) ─────────
-// Using Zustand's persist middleware with custom partialize + merge has proven
-// unreliable when the store contains non-serializable types (Set). We bypass it
-// entirely and manage read/write ourselves, which is simpler and more debuggable.
+// ─── Local Persistence (localStorage cache) ───────────────────────────────────
+// localStorage is a fast local cache only. It is origin-scoped, so it can't be
+// relied on for cross-session persistence across different preview URLs.
+// Supabase is the authoritative, origin-agnostic store.
 
 function saveCustomChords(chords: CustomChordData[]): void {
   try {
     const serialized: SerializedCustomChord[] = chords.map(serializeChord);
     const json = JSON.stringify(serialized);
-
-    // Attempt the write
     localStorage.setItem(STORAGE_KEY, json);
-
-    // ── VERIFICATION READ-BACK ──────────────────────────────────────────────
-    // Immediately read back what we just wrote. If this fails or returns
-    // something different, we know the write silently failed (quota, origin
-    // mismatch, private-browsing block, etc.).
-    const verify = localStorage.getItem(STORAGE_KEY);
-    if (verify !== json) {
-      console.error(
-        `[FretMaster] ⚠️ WRITE VERIFICATION FAILED for key "${STORAGE_KEY}"`,
-        '\nWrote:', json.slice(0, 200),
-        '\nRead back:', verify?.slice(0, 200) ?? 'null',
-        '\nThis means chords will NOT persist across sessions.'
-      );
-    } else {
-      console.log(
-        `[FretMaster] ✅ Saved & verified ${chords.length} chord(s) → key "${STORAGE_KEY}" (${json.length} chars)`,
-        `\nOrigin: ${window.location.origin}`,
-        `\nChord symbols: ${chords.map(c => c.symbol).join(', ')}`
-      );
-    }
+    console.log(
+      `[FretMaster] localStorage cache updated: ${chords.length} chord(s) at origin ${window.location.origin}`
+    );
   } catch (err) {
-    console.error('[FretMaster] ❌ localStorage.setItem threw an exception:', err);
-    console.error('[FretMaster] This browser/context does not support localStorage (private mode? iframe block?).');
+    console.error('[FretMaster] localStorage write failed (quota/private mode):', err);
   }
 }
 
 function loadCustomChords(): CustomChordData[] {
-  console.log(
-    `[FretMaster] loadCustomChords() called.`,
-    `\nOrigin: ${window.location.origin}`,
-    `\nAll localStorage keys (${localStorage.length}):`,
-    Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i)).join(', ') || '(none)'
-  );
-
   // Try v3 key first
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed: SerializedCustomChord[] = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        if (parsed.length > 0) {
-          const chords = parsed.map(deserializeChord);
-          console.log(`[FretMaster] ✅ Loaded ${chords.length} chord(s) from "${STORAGE_KEY}": ${chords.map(c => c.symbol).join(', ')}`);
-          return chords;
-        } else {
-          console.log(`[FretMaster] Key "${STORAGE_KEY}" exists but contains empty array — starting fresh`);
-          return [];
-        }
-      } else {
-        console.warn(`[FretMaster] Key "${STORAGE_KEY}" contains non-array data:`, typeof parsed);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const chords = parsed.map(deserializeChord);
+        console.log(`[FretMaster] Loaded ${chords.length} chord(s) from localStorage cache`);
+        return chords;
       }
-    } else {
-      console.log(`[FretMaster] Key "${STORAGE_KEY}" not found in localStorage`);
     }
   } catch (err) {
     console.error('[FretMaster] Failed to load from v3 key:', err);
@@ -151,12 +116,11 @@ function loadCustomChords(): CustomChordData[] {
     const raw = localStorage.getItem(OLD_KEY_V2);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Zustand persist stores as { state: {...}, version: N }
       const chordsRaw: SerializedCustomChord[] | undefined =
         parsed?.state?.customChords ?? parsed?.customChords;
       if (Array.isArray(chordsRaw) && chordsRaw.length > 0) {
         const chords = chordsRaw.map(deserializeChord);
-        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v2 key → saving to v3`);
+        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v2 key`);
         saveCustomChords(chords);
         localStorage.removeItem(OLD_KEY_V2);
         return chords;
@@ -173,7 +137,7 @@ function loadCustomChords(): CustomChordData[] {
       const parsed: SerializedCustomChord[] = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
         const chords = parsed.map(deserializeChord);
-        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v1 key → saving to v3`);
+        console.log(`[FretMaster] Migrated ${chords.length} chord(s) from v1 key`);
         saveCustomChords(chords);
         localStorage.removeItem(OLD_KEY_V1);
         return chords;
@@ -183,8 +147,80 @@ function loadCustomChords(): CustomChordData[] {
     console.error('[FretMaster] Failed to migrate from v1 key:', err);
   }
 
-  console.log('[FretMaster] No stored chords found — starting fresh');
+  console.log('[FretMaster] No localStorage cache — Supabase sync will load chords after auth');
   return [];
+}
+
+// ─── Supabase Sync ────────────────────────────────────────────────────────────
+// We store the full serialized chord in the `notes` jsonb column (as a JSON
+// string in a 1-element array). The row is identified by a namespaced key in the
+// `name` column: `__fmid__<chord.id>`. This allows safe upsert on (user_id,name).
+
+const SUPABASE_NAME_PREFIX = '__fmid__';
+
+async function pushChordToSupabase(chord: CustomChordData, userId: string): Promise<void> {
+  const serialized = serializeChord(chord);
+  const nameKey = `${SUPABASE_NAME_PREFIX}${chord.id}`;
+
+  const { error } = await supabase
+    .from('custom_chords')
+    .upsert(
+      {
+        user_id: userId,
+        name: nameKey,
+        frets: serialized.mutedStrings,   // repurposed — real data lives in notes
+        fingers: serialized.openStrings,
+        notes: [JSON.stringify(serialized)],
+        chord_type: chord.chordCategory ?? 'custom',
+      },
+      { onConflict: 'user_id,name' }
+    );
+
+  if (error) {
+    console.error(`[FretMaster] Supabase push failed for "${chord.symbol}":`, error.message);
+  } else {
+    console.log(`[FretMaster] ✅ Supabase upsert OK: "${chord.symbol}"`);
+  }
+}
+
+async function deleteChordFromSupabase(chordId: string, userId: string): Promise<void> {
+  const nameKey = `${SUPABASE_NAME_PREFIX}${chordId}`;
+  const { error } = await supabase
+    .from('custom_chords')
+    .delete()
+    .eq('user_id', userId)
+    .eq('name', nameKey);
+  if (error) {
+    console.error('[FretMaster] Supabase delete failed:', error.message);
+  }
+}
+
+async function fetchChordsFromSupabase(userId: string): Promise<CustomChordData[]> {
+  const { data, error } = await supabase
+    .from('custom_chords')
+    .select('*')
+    .eq('user_id', userId)
+    .like('name', `${SUPABASE_NAME_PREFIX}%`)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[FretMaster] Supabase fetch failed:', error.message);
+    return [];
+  }
+
+  const chords: CustomChordData[] = [];
+  for (const row of data ?? []) {
+    try {
+      const notesArr = row.notes as string[] | null;
+      if (!notesArr || notesArr.length === 0) continue;
+      const serialized: SerializedCustomChord = JSON.parse(notesArr[0]);
+      chords.push(deserializeChord(serialized));
+    } catch (e) {
+      console.warn('[FretMaster] Failed to parse Supabase row:', row.id, e);
+    }
+  }
+  console.log(`[FretMaster] ✅ Fetched ${chords.length} chord(s) from Supabase`);
+  return chords;
 }
 
 // ─── Hidden Chords ────────────────────────────────────────────────────────────
@@ -276,14 +312,17 @@ interface CustomChordStore {
 
   // Hidden chords
   hideStandardChord: (id: string) => void;
+
+  // Supabase sync — called once after auth resolves
+  syncFromSupabase: (userId: string) => Promise<void>;
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────
-// NOTE: No `persist` middleware — we manage localStorage directly to eliminate
-// all Zustand serialization ambiguity with Set<number> in CustomChordData.
 
 export const useCustomChordStore = create<CustomChordStore>()(
   (set, get) => ({
+    // Initialize from localStorage cache immediately (synchronous / fast).
+    // Supabase will overwrite this with authoritative data after auth resolves.
     customChords: loadCustomChords(),
     currentChord: createBlankChord(),
     selectedColor: DEFAULT_DOT_COLOR,
@@ -532,20 +571,34 @@ export const useCustomChordStore = create<CustomChordStore>()(
         customChords = [...state.customChords, saved];
       }
 
-      // Write to localStorage BEFORE updating Zustand state so it's never lost
+      // 1. Update localStorage cache (fast, synchronous)
       saveCustomChords(customChords);
-
+      // 2. Update Zustand state
       set({ customChords, currentChord: createBlankChord(), isEditing: false });
+      // 3. Push to Supabase (async, fire-and-forget — works across ALL origins)
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user?.id) {
+          pushChordToSupabase(saved, data.user.id);
+        } else {
+          console.warn('[FretMaster] Not logged in — chord saved to localStorage only. Log in to sync across devices/URLs.');
+        }
+      });
     },
 
     deleteChord: (id) => {
       const state = get();
       const customChords = state.customChords.filter(c => c.id !== id);
-      saveCustomChords(customChords);  // Write OUTSIDE set() — pure functions shouldn't have side-effects
+      saveCustomChords(customChords);
       const reset = state.currentChord.id === id
         ? { currentChord: createBlankChord(), isEditing: false }
         : {};
       set({ customChords, ...reset });
+      // Delete from Supabase (fire-and-forget)
+      supabase.auth.getUser().then(({ data }) => {
+        if (data?.user?.id) {
+          deleteChordFromSupabase(id, data.user.id);
+        }
+      });
     },
 
     deleteFromLibrary: () => {
@@ -560,6 +613,12 @@ export const useCustomChordStore = create<CustomChordStore>()(
         }
         saveCustomChords(customChords);
         set({ customChords, hiddenStandardChords, currentChord: createBlankChord(), isEditing: false });
+        // Delete from Supabase (fire-and-forget)
+        supabase.auth.getUser().then(({ data }) => {
+          if (data?.user?.id) {
+            deleteChordFromSupabase(chord.id, data.user.id);
+          }
+        });
       } else if (state.currentChord.sourceChordId) {
         const hiddenStandardChords = new Set(state.hiddenStandardChords);
         hiddenStandardChords.add(state.currentChord.sourceChordId);
@@ -691,6 +750,39 @@ export const useCustomChordStore = create<CustomChordStore>()(
         saveHiddenChords(hiddenStandardChords);
         return { hiddenStandardChords };
       });
+    },
+
+    // ── Supabase Sync ───────────────────────────────────────────────────────
+    // Called once in App.tsx after auth resolves. Fetches all chords from
+    // Supabase (origin-agnostic), merges with any local-only chords (saved
+    // while logged out), pushes local-only chords to Supabase, then updates
+    // both the store and the localStorage cache so future boots are fast.
+
+    syncFromSupabase: async (userId: string) => {
+      console.log(`[FretMaster] Starting Supabase sync for user ${userId}...`);
+      const remoteChords = await fetchChordsFromSupabase(userId);
+      const localChords  = get().customChords;
+
+      const remoteById = new Map(remoteChords.map(c => [c.id, c]));
+
+      // Chords only in localStorage — push them to Supabase
+      const localOnly = localChords.filter(c => !remoteById.has(c.id));
+      if (localOnly.length > 0) {
+        console.log(`[FretMaster] Pushing ${localOnly.length} local-only chord(s) to Supabase...`);
+        await Promise.all(localOnly.map(c => pushChordToSupabase(c, userId)));
+      }
+
+      // Merge: remote is authoritative; local-only chords are appended
+      const seen = new Set<string>();
+      const merged = [...remoteChords, ...localOnly].filter(c => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
+
+      saveCustomChords(merged);
+      set({ customChords: merged });
+      console.log(`[FretMaster] Sync complete. ${merged.length} total chord(s).`);
     },
   })
 );

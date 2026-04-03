@@ -222,18 +222,32 @@ export default function ChordLibrary() {
   const { presets: userPresets, addPreset } = usePresetStore();
 
   // ── Custom chord store — subscribed so memo re-runs on syncFromSupabase ───────
-  const { editStandardChord, editChord, customChords, hiddenStandardChords, syncFromSupabase } = useCustomChordStore();
+  const { editStandardChord, editChord, customChords, hiddenStandardChords, syncFromSupabase, syncStatus, lastSyncedAt } = useCustomChordStore();
   const user = useAuthStore(s => s.user);
 
   // Manual sync button — lets user force-pull from Supabase if library looks stale
-  const [syncing, setSyncing] = useState(false);
   const handleManualSync = async () => {
     if (!user?.id) { toast.error('Sign in to sync your chords'); return; }
-    setSyncing(true);
     await syncFromSupabase(user.id);
-    setSyncing(false);
-    toast.success('Library synced from cloud');
+    if (useCustomChordStore.getState().syncStatus === 'synced') {
+      toast.success('Library synced from cloud');
+    } else {
+      toast.error('Sync failed — check your connection');
+    }
   };
+
+  // Format last-synced timestamp as a short relative string
+  const syncTimeLabel = lastSyncedAt
+    ? (() => {
+        const diffMs = Date.now() - lastSyncedAt;
+        const diffMin = Math.floor(diffMs / 60_000);
+        if (diffMin < 1) return 'just now';
+        if (diffMin === 1) return '1 min ago';
+        if (diffMin < 60) return `${diffMin} min ago`;
+        const diffHr = Math.floor(diffMin / 60);
+        return diffHr === 1 ? '1 hr ago' : `${diffHr} hr ago`;
+      })()
+    : null;
 
   const { favoriteIds, toggleFavorite } = useChordFavoritesStore();
   const { playChord } = useChordAudio();
@@ -437,21 +451,59 @@ export default function ChordLibrary() {
                 Browse all chord diagrams — tap the checkbox to select chords for a practice preset
               </p>
             </div>
-            {/* Cloud sync button — visible when logged in */}
+            {/* Sync status badge + manual sync — visible when logged in */}
             {user && (
               <button
                 onClick={handleManualSync}
-                disabled={syncing}
-                className="flex-shrink-0 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-amber-400 disabled:opacity-50 transition-colors pb-0.5"
+                disabled={syncStatus === 'syncing'}
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black
+                  "
+                style={{
+                  // Dynamic colours via inline style to avoid Tailwind purge issues with dynamic class names
+                  ...(syncStatus === 'synced'
+                    ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.35)', background: 'rgba(74,222,128,0.08)' }
+                    : syncStatus === 'failed'
+                    ? { color: '#fbbf24', borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.08)' }
+                    : syncStatus === 'syncing'
+                    ? { color: '#a1a1aa', borderColor: 'rgba(161,161,170,0.25)', background: 'rgba(161,161,170,0.05)' }
+                    : { color: '#71717a', borderColor: 'rgba(113,113,122,0.25)', background: 'transparent' }),
+                }}
+                aria-label={
+                  syncStatus === 'synced' ? `Synced ${syncTimeLabel ?? ''}. Click to sync again.`
+                  : syncStatus === 'failed' ? 'Sync failed. Click to retry.'
+                  : syncStatus === 'syncing' ? 'Syncing…'
+                  : 'Click to sync from cloud'
+                }
               >
-                <svg
-                  className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`}
-                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                {syncing ? 'Syncing…' : 'Sync'}
+                {syncStatus === 'syncing' && (
+                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                {syncStatus === 'synced' && (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {syncStatus === 'failed' && (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                )}
+                {(syncStatus === 'idle' || syncStatus === 'failed') && (
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                )}
+                <span>
+                  {syncStatus === 'syncing' && 'Syncing…'}
+                  {syncStatus === 'synced' && (syncTimeLabel ? `Synced ${syncTimeLabel}` : 'Synced')}
+                  {syncStatus === 'failed' && 'Sync failed — retry'}
+                  {syncStatus === 'idle' && 'Sync'}
+                </span>
               </button>
             )}
           </div>

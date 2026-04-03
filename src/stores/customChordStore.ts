@@ -256,6 +256,10 @@ function deepCopyChord(chord: CustomChordData): CustomChordData {
 
 // ─── Store Interface ──────────────────────────────────────────────────────────
 
+// ─── Sync Status ─────────────────────────────────────────────────────────────
+
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'failed';
+
 interface CustomChordStore {
   customChords: CustomChordData[];
   currentChord: CustomChordData;
@@ -265,6 +269,10 @@ interface CustomChordStore {
   customLabel: string;
   isEditing: boolean;
   hiddenStandardChords: Set<string>;
+
+  // Sync status — updated by syncFromSupabase
+  syncStatus: SyncStatus;
+  lastSyncedAt: number | null;   // epoch ms of last successful sync
 
   // Marker actions
   addMarker: (fret: number, string: number) => void;
@@ -331,6 +339,8 @@ export const useCustomChordStore = create<CustomChordStore>()(
     customLabel: '',
     isEditing: false,
     hiddenStandardChords: loadHiddenChords(),
+    syncStatus: 'idle' as SyncStatus,
+    lastSyncedAt: null,
 
     // ── Marker Actions ──────────────────────────────────────────────────────
 
@@ -760,29 +770,36 @@ export const useCustomChordStore = create<CustomChordStore>()(
 
     syncFromSupabase: async (userId: string) => {
       console.log(`[FretMaster] Starting Supabase sync for user ${userId}...`);
-      const remoteChords = await fetchChordsFromSupabase(userId);
-      const localChords  = get().customChords;
+      set({ syncStatus: 'syncing' });
 
-      const remoteById = new Map(remoteChords.map(c => [c.id, c]));
+      try {
+        const remoteChords = await fetchChordsFromSupabase(userId);
+        const localChords  = get().customChords;
 
-      // Chords only in localStorage — push them to Supabase
-      const localOnly = localChords.filter(c => !remoteById.has(c.id));
-      if (localOnly.length > 0) {
-        console.log(`[FretMaster] Pushing ${localOnly.length} local-only chord(s) to Supabase...`);
-        await Promise.all(localOnly.map(c => pushChordToSupabase(c, userId)));
+        const remoteById = new Map(remoteChords.map(c => [c.id, c]));
+
+        // Chords only in localStorage — push them to Supabase
+        const localOnly = localChords.filter(c => !remoteById.has(c.id));
+        if (localOnly.length > 0) {
+          console.log(`[FretMaster] Pushing ${localOnly.length} local-only chord(s) to Supabase...`);
+          await Promise.all(localOnly.map(c => pushChordToSupabase(c, userId)));
+        }
+
+        // Merge: remote is authoritative; local-only chords are appended
+        const seen = new Set<string>();
+        const merged = [...remoteChords, ...localOnly].filter(c => {
+          if (seen.has(c.id)) return false;
+          seen.add(c.id);
+          return true;
+        });
+
+        saveCustomChords(merged);
+        set({ customChords: merged, syncStatus: 'synced', lastSyncedAt: Date.now() });
+        console.log(`[FretMaster] Sync complete. ${merged.length} total chord(s).`);
+      } catch (err) {
+        console.error('[FretMaster] syncFromSupabase error:', err);
+        set({ syncStatus: 'failed' });
       }
-
-      // Merge: remote is authoritative; local-only chords are appended
-      const seen = new Set<string>();
-      const merged = [...remoteChords, ...localOnly].filter(c => {
-        if (seen.has(c.id)) return false;
-        seen.add(c.id);
-        return true;
-      });
-
-      saveCustomChords(merged);
-      set({ customChords: merged });
-      console.log(`[FretMaster] Sync complete. ${merged.length} total chord(s).`);
     },
   })
 );

@@ -129,6 +129,7 @@ export default function ChordDetailModal({
                     updatedAt: 0,
                   } as CustomChordData}
                   size="lg"
+                  libraryMode
                 />
               ) : (
                 <ChordDiagram chord={chord} size="lg" />

@@ -3,6 +3,12 @@ import type { CustomChordData } from '@/types/customChord';
 interface CustomChordDiagramProps {
   chord: CustomChordData;
   size?: 'sm' | 'md' | 'lg';
+  /**
+   * When true, overrides all marker colors with the library's standard
+   * amber/cyan/white scheme so custom chords look identical to standard
+   * ChordDiagram entries (amber circles, cyan diamonds, white labels).
+   */
+  libraryMode?: boolean;
 }
 
 interface SizeConfig {
@@ -38,7 +44,13 @@ function isLightColor(color: string): boolean {
   return false;
 }
 
-export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDiagramProps) {
+// Library-mode canonical colors — must match ChordDiagram's Tailwind classes exactly
+const LIBRARY_CIRCLE_COLOR = 'hsl(38 92% 50%)';   // amber-500
+const LIBRARY_DIAMOND_COLOR = 'hsl(198 93% 60%)'; // cyan-400 (matches fill-cyan-500)
+const LIBRARY_LABEL_FILL = '#ffffff';
+const LIBRARY_BARRE_COLOR = 'rgba(251,191,36,0.80)'; // amber-500 @ 80% (matches ChordDiagram)
+
+export default function CustomChordDiagram({ chord, size = 'md', libraryMode = false }: CustomChordDiagramProps) {
   const config = SIZE_CONFIGS[size];
   const { numFrets, baseFret } = chord;
 
@@ -206,6 +218,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
         // Scale barHeight with dotRadius so it looks proportionally correct
         // at all sizes (sm/md/lg). 1.02 = 1.2 × 0.85 (15% thinner than previous).
         const barHeight = config.dotRadius * 1.02;
+        const barreColor = libraryMode ? LIBRARY_BARRE_COLOR : barre.color;
         return (
           <rect
             key={`barre-${idx}`}
@@ -214,7 +227,7 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
             width={x2 - x1}
             height={barHeight}
             rx={barHeight / 2}
-            fill={barre.color}
+            fill={barreColor}
             fillOpacity={0.9}
           />
         );
@@ -223,9 +236,18 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
       {/* Markers */}
       {chord.markers.map((marker, idx) => {
         const cx = getStringX(marker.string);
+        // In libraryMode use the same y-offset (+1px) as ChordDiagram for label centering
         const cy = getFretY(marker.fret) - fretSpacing / 2;
         const r = config.dotRadius;
-        const textFill = isLightColor(marker.color) ? '#1a1a1a' : '#fafafa';
+
+        // Resolve colors: library mode enforces amber/cyan/white scheme
+        const fillColor = libraryMode
+          ? (marker.shape === 'diamond' ? LIBRARY_DIAMOND_COLOR : LIBRARY_CIRCLE_COLOR)
+          : marker.color;
+        const textFill = libraryMode
+          ? LIBRARY_LABEL_FILL
+          : (isLightColor(marker.color) ? '#1a1a1a' : '#fafafa');
+        const fontWeight = libraryMode ? 900 : 700; // font-black = 900, matches ChordDiagram
         const labelText = marker.label || (marker.finger > 0 ? String(marker.finger) : '');
 
         if (marker.shape === 'diamond') {
@@ -234,18 +256,18 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
             <g key={`marker-${idx}`}>
               <polygon
                 points={`${cx},${cy - dr} ${cx + dr},${cy} ${cx},${cy + dr} ${cx - dr},${cy}`}
-                fill={marker.color}
+                fill={fillColor}
               />
               {labelText && (
                 <text
                   x={cx}
-                  y={cy}
+                  y={cy + (libraryMode ? 1 : 0)}
                   textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={r * 0.95}
+                  dominantBaseline={libraryMode ? 'middle' : 'central'}
+                  fontSize={libraryMode ? r * 1.05 : r * 0.95}
                   fill={textFill}
                   fontFamily="DM Sans, sans-serif"
-                  fontWeight={700}
+                  fontWeight={fontWeight}
                   style={{ fontFeatureSettings: '"tnum"' }}
                 >
                   {labelText}
@@ -257,17 +279,17 @@ export default function CustomChordDiagram({ chord, size = 'md' }: CustomChordDi
 
         return (
           <g key={`marker-${idx}`}>
-            <circle cx={cx} cy={cy} r={r} fill={marker.color} />
+            <circle cx={cx} cy={cy} r={r} fill={fillColor} />
             {labelText && (
               <text
                 x={cx}
-                y={cy}
+                y={cy + (libraryMode ? 1 : 0)}
                 textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={r * 0.9}
+                dominantBaseline={libraryMode ? 'middle' : 'central'}
+                fontSize={libraryMode ? r * 0.9 : r * 0.9}
                 fill={textFill}
                 fontFamily="DM Sans, sans-serif"
-                fontWeight={700}
+                fontWeight={fontWeight}
               >
                 {labelText}
               </text>

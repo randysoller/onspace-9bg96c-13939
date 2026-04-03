@@ -127,6 +127,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
                 updatedAt: 0,
               }}
               size="sm"
+              libraryMode
             />
           ) : (
             <ChordDiagram chord={chord} size="sm" />

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, LogIn, LogOut, BarChart3, Trophy, Target, Music2, TrendingUp, Settings as SettingsIcon, BookOpen, Zap } from 'lucide-react';
+import { Music, Home, Library, Edit, LogIn, LogOut } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -32,17 +32,7 @@ const NAV_ITEMS = [
   { path: '/editor',  label: 'Editor',  icon: Edit },
 ] as const;
 
-const USER_MENU_ITEMS = [
-  { path: '/lessons',      label: 'Lessons',      icon: BookOpen },
-  { path: '/challenges',   label: 'Challenges',   icon: Zap },
-  { path: '/songs',        label: 'Songs',        icon: Music2 },
-  { path: '/analytics',    label: 'Analytics',    icon: TrendingUp },
-  { path: '/goals',        label: 'Goals',        icon: Target },
-  { path: '/achievements', label: 'Achievements', icon: Trophy },
-  { path: '/leaderboard',  label: 'Leaderboard',  icon: Trophy },
-  { path: '/history',      label: 'History',      icon: BarChart3 },
-  { path: '/settings',     label: 'Settings',     icon: SettingsIcon },
-] as const;
+
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -104,27 +94,6 @@ export const Header = () => {
               <MetronomeIcon className="w-5 h-5" />
               <span className="font-medium">Metronome</span>
             </button>
-
-            {/* Authenticated user menu */}
-            {user && USER_MENU_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={closeMetronome}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-sm ${
-                    isActive
-                      ? 'bg-amber-500/20 text-amber-500'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              );
-            })}
 
             {/* Auth */}
             {user ? (

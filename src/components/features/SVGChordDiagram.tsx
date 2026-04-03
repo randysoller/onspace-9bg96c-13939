@@ -212,9 +212,9 @@ interface SizeConfig {
 }
 
 const SIZE_CONFIGS: Record<'sm' | 'md' | 'lg', SizeConfig> = {
-  sm: { width: 100, height: 130, dotRadius: 7,    fontSize: 14, topY: 18, fretLabelSize: 9  },
-  md: { width: 140, height: 175, dotRadius: 9.5,  fontSize: 18, topY: 22, fretLabelSize: 11 },
-  lg: { width: 200, height: 250, dotRadius: 13,   fontSize: 24, topY: 30, fretLabelSize: 14 },
+  sm: { width: 100, height: 130, dotRadius: 7,    fontSize: 14, topY: 26, fretLabelSize: 9  },
+  md: { width: 140, height: 175, dotRadius: 9.5,  fontSize: 18, topY: 32, fretLabelSize: 11 },
+  lg: { width: 200, height: 250, dotRadius: 13,   fontSize: 24, topY: 42, fretLabelSize: 14 },
 };
 
 const STRING_WIDTHS   = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7];
@@ -361,11 +361,11 @@ function SVGChordDiagramBase({
       {/* Open / Muted indicators above nut */}
       {Array.from({ length: 6 }, (_, i) => {
         const cx = sx(i);
-        const cy = padTop - config.dotRadius * 1.2;
+        const cy = padTop - config.dotRadius * 2.0;
         const r  = config.dotRadius * 0.7;
 
         if (mutedStrings.has(i)) {
-          const d = r * 0.6;
+          const d = r * 0.85;
           return (
             <g key={`head-${i}`}>
               <line x1={cx - d} y1={cy - d} x2={cx + d} y2={cy + d} stroke="hsl(30 7% 47%)" strokeWidth={1.5} />
@@ -437,7 +437,7 @@ function SVGChordDiagramBase({
                   x={cx} y={cy + 1}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize={r * 1.05}
+                  fontSize={r * 1.58}
                   fill={tFill}
                   fontFamily="DM Sans, sans-serif"
                   fontWeight={fontWeight}
@@ -458,7 +458,7 @@ function SVGChordDiagramBase({
                 x={cx} y={cy + 1}
                 textAnchor="middle"
                 dominantBaseline="middle"
-                fontSize={r * 0.9}
+                fontSize={r * 1.35}
                 fill={tFill}
                 fontFamily="DM Sans, sans-serif"
                 fontWeight={fontWeight}

@@ -1,18 +1,18 @@
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { usePresetStore } from '@/stores/presetStore';
+import { useCustomChordStore } from '@/stores/customChordStore';
 
 /**
- * Hook to load user data from backend when authenticated
+ * Hook to sync user data from Supabase when authenticated.
+ * Presets are localStorage-only; custom chords are synced from Supabase.
  */
 export const useBackendSync = () => {
   const { user, loading } = useAuthStore();
-  const { loadPresetsFromBackend } = usePresetStore();
+  const syncFromSupabase = useCustomChordStore(s => s.syncFromSupabase);
 
   useEffect(() => {
-    if (!loading && user) {
-      // Load presets from backend
-      loadPresetsFromBackend();
+    if (!loading && user && typeof syncFromSupabase === 'function') {
+      syncFromSupabase();
     }
   }, [user, loading]);
 };

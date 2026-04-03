@@ -69,6 +69,42 @@ export default function ChordEditor() {
     });
   };
 
+  const handleDownloadAdminTs = () => {
+    if (!user?.id) return;
+    const content = [
+      `/**`,
+      ` * Admin access control for FretMaster.`,
+      ` *`,
+      ` * To grant admin access:`,
+      ` *  1. Sign up / log in with your account.`,
+      ` *  2. Open DevTools Console and run:`,
+      ` *       (await import('/src/lib/supabase.ts')).supabase.auth.getUser().then(d => console.log(d.data.user?.id))`,
+      ` *  3. Paste the printed UUID into ADMIN_USER_IDS below.`,
+      ` *  4. Only users whose ID appears in this list can open the Chord Editor.`,
+      ` */`,
+      ``,
+      `export const ADMIN_USER_IDS: ReadonlySet<string> = new Set([`,
+      `  '${user.id}',`,
+      `]);`,
+      ``,
+      `export function isAdmin(userId: string | undefined | null): boolean {`,
+      `  if (!userId) return false;`,
+      `  return ADMIN_USER_IDS.has(userId);`,
+      `}`,
+      ``,
+    ].join('\n');
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'admin.ts';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const canSave =
     currentChord.name.trim() !== '' &&
     currentChord.symbol.trim() !== '' &&
@@ -225,26 +261,38 @@ export default function ChordEditor() {
               <div className="rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] p-3 text-left">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <p className="text-[10px] font-display uppercase tracking-wider text-[hsl(var(--text-muted))]">Your user ID</p>
-                  <button
-                    onClick={handleCopyUserId}
-                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded transition-all ${
-                      copiedId
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'bg-[hsl(var(--bg-overlay))] text-[hsl(var(--text-muted))] border border-[hsl(var(--border-subtle))] hover:text-[hsl(var(--color-primary))] hover:border-[hsl(var(--color-primary)/0.4)]'
-                    }`}
-                    aria-label="Copy user ID to clipboard"
-                  >
-                    {copiedId ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleCopyUserId}
+                      className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded transition-all ${
+                        copiedId
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-[hsl(var(--bg-overlay))] text-[hsl(var(--text-muted))] border border-[hsl(var(--border-subtle))] hover:text-[hsl(var(--color-primary))] hover:border-[hsl(var(--color-primary)/0.4)]'
+                      }`}
+                      aria-label="Copy user ID to clipboard"
+                    >
+                      {copiedId ? (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      {copiedId ? 'Copied!' : 'Copy'}
+                    </button>
+                    <button
+                      onClick={handleDownloadAdminTs}
+                      className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded transition-all bg-[hsl(var(--bg-overlay))] text-[hsl(var(--text-muted))] border border-[hsl(var(--border-subtle))] hover:text-[hsl(var(--color-primary))] hover:border-[hsl(var(--color-primary)/0.4)]"
+                      aria-label="Download pre-filled admin.ts"
+                    >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
-                    ) : (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                    )}
-                    {copiedId ? 'Copied!' : 'Copy'}
-                  </button>
+                      Download
+                    </button>
+                  </div>
                 </div>
                 <p className="font-mono text-xs text-[hsl(var(--color-primary))] break-all select-all">{user.id}</p>
               </div>

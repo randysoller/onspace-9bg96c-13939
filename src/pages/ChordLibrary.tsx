@@ -1,9 +1,8 @@
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
-  Volume2, Library, MousePointer, Plus, Save, Heart, Edit,
+  Volume2, Library, MousePointer, Save, Heart, Edit,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
   CheckCircle2, Pencil, X,
 } from 'lucide-react';
@@ -19,21 +18,9 @@ import { useCustomChordStore } from '@/stores/customChordStore';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
 import { customToLibraryChord } from '@/types/customChord';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/authStore';
 
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
-
-// ─── Effective Chord List ──────────────────────────────────────────────────────
-function getEffectiveChords(): ChordData[] {
-  const { customChords, hiddenStandardChords } = useCustomChordStore.getState();
-  const replacedIds = new Set(
-    customChords.filter((c) => c.sourceChordId).map((c) => c.sourceChordId!)
-  );
-  const standardChords = CHORD_DATABASE.filter(
-    (c) => !replacedIds.has(c.id) && !hiddenStandardChords.has(c.id)
-  );
-  const converted = customChords.map(customToLibraryChord);
-  return [...standardChords, ...converted];
-}
 
 // ─── ChordCard ─────────────────────────────────────────────────────────────────
 
@@ -206,23 +193,11 @@ export default function ChordLibrary() {
   });
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
-  // DEFINITIVE APPROACH: target <main id="main-content"> directly as an explicit
-  // overflow-y:auto scroll container (set in AppLayout). This eliminates ALL
-  // previous failure modes:
-  //   • window.scrollY / window.scrollTo() were unreliable because html+body
-  //     both have height:100% in index.css — the actual scroll container was
-  //     ambiguous and browser-dependent.
-  //   • React Router clipping window scroll when navigating to shorter pages
-  //     was corrupting the saved value.
-  //   • tabIndex={-1} focus-scroll was overriding restoration (now removed).
-  // By making <main> the scroll container we control exactly what scrolls and
-  // what property to read — scrollTop is unambiguous.
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
 
   const getScrollEl = () => document.getElementById('main-content');
 
-  // SAVE: track scrollTop on the explicit container; flush to store on unmount.
   useEffect(() => {
     const el = getScrollEl();
     if (!el) return;
@@ -236,8 +211,6 @@ export default function ChordLibrary() {
     };
   }, [setSavedScrollY]);
 
-  // RESTORE: after mount, set scrollTop directly on the container.
-  // No window.scrollTo — no ambiguity.
   useEffect(() => {
     if (!savedScrollY || restoredRef.current) return;
     restoredRef.current = true;
@@ -247,11 +220,37 @@ export default function ChordLibrary() {
   }, [savedScrollY]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
-  const { editStandardChord, editChord, customChords, hiddenStandardChords } = useCustomChordStore();
+
+  // ── Custom chord store — subscribed so memo re-runs on syncFromSupabase ───────
+  const { editStandardChord, editChord, customChords, hiddenStandardChords, syncFromSupabase } = useCustomChordStore();
+  const user = useAuthStore(s => s.user);
+
+  // Manual sync button — lets user force-pull from Supabase if library looks stale
+  const [syncing, setSyncing] = useState(false);
+  const handleManualSync = async () => {
+    if (!user?.id) { toast.error('Sign in to sync your chords'); return; }
+    setSyncing(true);
+    await syncFromSupabase(user.id);
+    setSyncing(false);
+    toast.success('Library synced from cloud');
+  };
+
   const { favoriteIds, toggleFavorite } = useChordFavoritesStore();
   const { playChord } = useChordAudio();
 
-  const allChords = useMemo(() => getEffectiveChords(), [customChords, hiddenStandardChords]);
+  // ── Effective chord list ─────────────────────────────────────────────────────
+  // Built directly from subscribed Zustand values (not getState() snapshot) so
+  // this memo re-runs correctly whenever syncFromSupabase updates the store.
+  const allChords = useMemo(() => {
+    const replacedIds = new Set(
+      customChords.filter(c => c.sourceChordId).map(c => c.sourceChordId!)
+    );
+    const standardChords = CHORD_DATABASE.filter(
+      c => !replacedIds.has(c.id) && !hiddenStandardChords.has(c.id)
+    );
+    const converted = customChords.map(customToLibraryChord);
+    return [...standardChords, ...converted];
+  }, [customChords, hiddenStandardChords]);
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
@@ -431,10 +430,31 @@ export default function ChordLibrary() {
           <div className="flex items-center gap-3 mb-2">
             <Guitar className="w-7 h-7 text-amber-500" />
           </div>
-          <h1 className="text-4xl font-bold mb-2">Chord Library</h1>
-          <p className="text-sm text-zinc-500">
-            Browse all chord diagrams — tap the checkbox to select chords for a practice preset
-          </p>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-bold mb-1">Chord Library</h1>
+              <p className="text-sm text-zinc-500">
+                Browse all chord diagrams — tap the checkbox to select chords for a practice preset
+              </p>
+            </div>
+            {/* Cloud sync button — visible when logged in */}
+            {user && (
+              <button
+                onClick={handleManualSync}
+                disabled={syncing}
+                className="flex-shrink-0 flex items-center gap-1.5 text-xs text-zinc-500 hover:text-amber-400 disabled:opacity-50 transition-colors pb-0.5"
+              >
+                <svg
+                  className={`w-3.5 h-3.5 ${syncing ? 'animate-spin' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {syncing ? 'Syncing…' : 'Sync'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Edit Pack Banner */}
@@ -463,7 +483,6 @@ export default function ChordLibrary() {
 
         {/* Preset Dropdown */}
         <div className="mb-4 relative">
-          {/* Collapsed trigger */}
           <button
             onClick={() => setShowPresetMenu(!showPresetMenu)}
             className={`w-full border rounded-lg px-4 py-3 flex items-center justify-between transition-colors ${
@@ -490,11 +509,9 @@ export default function ChordLibrary() {
             />
           </button>
 
-          {/* Expanded panel */}
           {showPresetMenu && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 z-10 overflow-hidden">
               
-              {/* ── Curated Chord Packs ──────────────────────────────────── */}
               <div className="p-3 border-b border-zinc-800">
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
                   Curated Packs
@@ -516,15 +533,10 @@ export default function ChordLibrary() {
                             : 'border-zinc-800 cursor-default'
                         }`}
                       >
-                        {/* Left color accent stripe */}
                         <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
-
-                        {/* Icon */}
                         <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ml-1 ${pack.iconBg}`}>
                           {pack.icon}
                         </div>
-
-                        {/* Text */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-sm font-bold text-white">{pack.title}</span>
@@ -540,8 +552,6 @@ export default function ChordLibrary() {
                           </div>
                           <p className="text-xs text-zinc-500 mt-0.5 leading-snug">{pack.description}</p>
                         </div>
-
-                        {/* Right action */}
                         {isPopulated ? (
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {isActive && <CheckCircle2 className="w-4 h-4 text-amber-400" />}
@@ -568,12 +578,10 @@ export default function ChordLibrary() {
                 </div>
               </div>
 
-              {/* ── Save Selected Chords to a Pack ───────────────────────── */}
               <div className="p-3 border-b border-zinc-800">
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
                   Save Selected Chords to a Pack
                 </div>
-
                 {selectedChords.size === 0 ? (
                   <p className="text-xs text-zinc-600 px-1 mb-3">
                     Select chords from the list below, then tap a pack slot to save them.
@@ -587,8 +595,6 @@ export default function ChordLibrary() {
                     {selectedChords.size} chord{selectedChords.size !== 1 ? 's' : ''} selected — choose a pack slot:
                   </p>
                 )}
-
-                {/* Pack slot buttons */}
                 <div className="space-y-2 mb-3">
                   {CHORD_PACKS.map((pack) => {
                     const assigned = packAssignments[pack.id];
@@ -606,34 +612,24 @@ export default function ChordLibrary() {
                             : 'bg-zinc-900 border-zinc-800 text-zinc-500'
                         }`}
                       >
-                        {/* Accent stripe */}
                         <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
-
                         <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ml-1 ${pack.iconBg}`}>
                           <span className="scale-75">{pack.icon}</span>
                         </div>
-
                         <span className="flex-1 text-left text-xs font-semibold">{pack.title}</span>
-
                         {isPopulated && (
-                          <span className="text-[10px] text-zinc-400 shrink-0">
-                            {assigned.length} saved
-                          </span>
+                          <span className="text-[10px] text-zinc-400 shrink-0">{assigned.length} saved</span>
                         )}
-
                         <Save className="w-3.5 h-3.5 shrink-0 opacity-70" />
                       </button>
                     );
                   })}
                 </div>
-
-                {/* Divider */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex-1 h-px bg-zinc-800" />
                   <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">or name your own</span>
                   <div className="flex-1 h-px bg-zinc-800" />
                 </div>
-
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -652,7 +648,6 @@ export default function ChordLibrary() {
                 </div>
               </div>
 
-              {/* ── Saved User Presets ────────────────────────────────────── */}
               {userPresets && userPresets.length > 0 ? (
                 <div className="p-3">
                   <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">Saved Presets</div>
@@ -698,7 +693,7 @@ export default function ChordLibrary() {
           </button>
         </div>
 
-        {/* Filter Pills — category + favorites */}
+        {/* Filter Pills */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           <button
             onClick={() => { storeClearCategories(); setShowFavoritesOnly(false); }}
@@ -710,7 +705,6 @@ export default function ChordLibrary() {
           >
             All
           </button>
-
           <button
             onClick={() => toggleCategoryFilter('open')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
@@ -722,7 +716,6 @@ export default function ChordLibrary() {
             <Music className="w-3.5 h-3.5" />
             Open
           </button>
-
           <button
             onClick={() => toggleCategoryFilter('barre')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
@@ -734,7 +727,6 @@ export default function ChordLibrary() {
             <BarChart3 className="w-3.5 h-3.5" />
             Barre
           </button>
-
           <button
             onClick={() => toggleCategoryFilter('movable')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
@@ -746,7 +738,6 @@ export default function ChordLibrary() {
             <Move className="w-3.5 h-3.5" />
             Movable
           </button>
-
           <button
             onClick={() => toggleCategoryFilter('custom')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
@@ -758,8 +749,6 @@ export default function ChordLibrary() {
             <Edit className="w-3.5 h-3.5" />
             Custom
           </button>
-
-          {/* Favorites filter pill */}
           <button
             onClick={() => setShowFavoritesOnly((prev) => !prev)}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
@@ -828,7 +817,6 @@ export default function ChordLibrary() {
                   : 'Try adjusting your search or filters to find chords.'}
               </p>
             </div>
-
             {!showFavoritesOnly && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                 <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-left">

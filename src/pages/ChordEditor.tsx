@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import InteractiveFretboard from '@/components/features/InteractiveFretboard';
 import CustomChordDiagram from '@/components/features/CustomChordDiagram';
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/authStore';
 import { CHORD_DATABASE } from '@/constants/chords';
 import { customToLibraryChord } from '@/types/customChord';
 import type { ChordData } from '@/types/chord';
@@ -29,6 +30,8 @@ const STRING_NAMES = ['E', 'A', 'D', 'G', 'B', 'e'];
 export default function ChordEditor() {
   const navigate = useNavigate();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const user = useAuthStore(s => s.user);
+  const authLoading = useAuthStore(s => s.loading);
 
   const {
     currentChord,
@@ -179,6 +182,29 @@ export default function ChordEditor() {
     <div className="stage-gradient min-h-[calc(100vh-58px)]">
       <div className="px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-7xl mx-auto">
+
+          {/* ── Auth Warning Banner ── */}
+          {!authLoading && !user && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-amber-400 mb-0.5">Sign in to save chords permanently</p>
+                <p className="text-xs text-amber-300/70 leading-relaxed">
+                  Without an account, chords only persist in this browser window. They will be lost if you open a different URL or clear your browser data.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/auth')}
+                className="flex-shrink-0 bg-amber-500 hover:bg-amber-600 text-zinc-950 text-xs font-bold px-3 py-1.5 rounded-md transition-colors"
+              >
+                Sign In
+              </button>
+            </div>
+          )}
 
           {/* ── Header ── */}
           <div className="mb-6 sm:mb-8">

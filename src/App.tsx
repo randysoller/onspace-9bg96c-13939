@@ -37,14 +37,19 @@ function App() {
   const user = useAuthStore(s => s.user);
   const syncFromSupabase = useCustomChordStore(s => s.syncFromSupabase);
 
-  // Once the user is authenticated, sync their custom chords from Supabase.
-  // This runs once per login (userId change) and is origin-agnostic — it works
-  // regardless of which preview/publish URL the app is opened from.
+  // Sync custom chords from Supabase whenever the user is authenticated.
+  // We also listen to the authStore `loading` flag so we fire ONCE as soon
+  // as auth resolves (covers page-reload where user was already logged in).
+  const authLoading = useAuthStore(s => s.loading);
   useEffect(() => {
+    // Don't sync while auth is still initialising
+    if (authLoading) return;
     if (user?.id) {
       syncFromSupabase(user.id);
     }
-  }, [user?.id, syncFromSupabase]);
+  // Re-run whenever the resolved user changes OR auth finishes loading
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, authLoading]);
 
   return (
     <ErrorBoundary>

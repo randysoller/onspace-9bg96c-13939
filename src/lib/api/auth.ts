@@ -1,34 +1,22 @@
 import { supabase } from '@/lib/supabase';
 
 export const authApi = {
-  async sendOtp(email: string) {
-    const { error } = await supabase.auth.signInWithOtp({
+  async signUp(email: string, password: string, username: string) {
+    const { data, error } = await supabase.auth.signUp({
       email,
+      password,
       options: {
-        shouldCreateUser: true,
-        // Always redirect back to the current app origin so the magic-link
-        // email never points to localhost or a stale Supabase Site URL setting.
-        emailRedirectTo: window.location.origin,
+        data: { username },
       },
     });
     if (error) throw error;
-  },
-
-  async verifyOtpAndSetPassword(email: string, token: string, password: string, username: string) {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
-    if (error) throw error;
-
-    const { data: updateData, error: updateError } = await supabase.auth.updateUser({
-      password,
-      data: { username },
-    });
-    if (updateError) throw updateError;
-    
-    return updateData.user;
+    // If email confirmation is disabled in Supabase (recommended for dev),
+    // a session is returned immediately. If confirmation is still enabled,
+    // data.session will be null and we surface a friendly message.
+    if (!data.session) {
+      throw new Error('Check your email to confirm your account, then sign in.');
+    }
+    return data.user;
   },
 
   async signInWithPassword(email: string, password: string) {

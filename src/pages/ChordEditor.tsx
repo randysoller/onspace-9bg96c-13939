@@ -59,6 +59,15 @@ export default function ChordEditor() {
 
   const adminAccess = isAdmin(user?.id);
   const adminSetupMode = ADMIN_USER_IDS.size === 0; // no admins configured yet
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleCopyUserId = () => {
+    if (!user?.id) return;
+    navigator.clipboard.writeText(user.id).then(() => {
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    });
+  };
 
   const canSave =
     currentChord.name.trim() !== '' &&
@@ -214,7 +223,29 @@ export default function ChordEditor() {
                 No admins configured yet. Add your user ID to <code className="text-[hsl(var(--color-primary))] bg-[hsl(var(--bg-surface))] px-1 py-0.5 rounded text-xs">src/lib/admin.ts</code> to unlock the editor.
               </p>
               <div className="rounded-lg bg-[hsl(var(--bg-surface))] border border-[hsl(var(--border-subtle))] p-3 text-left">
-                <p className="text-[10px] font-display uppercase tracking-wider text-[hsl(var(--text-muted))] mb-1">Your user ID</p>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <p className="text-[10px] font-display uppercase tracking-wider text-[hsl(var(--text-muted))]">Your user ID</p>
+                  <button
+                    onClick={handleCopyUserId}
+                    className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded transition-all ${
+                      copiedId
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-[hsl(var(--bg-overlay))] text-[hsl(var(--text-muted))] border border-[hsl(var(--border-subtle))] hover:text-[hsl(var(--color-primary))] hover:border-[hsl(var(--color-primary)/0.4)]'
+                    }`}
+                    aria-label="Copy user ID to clipboard"
+                  >
+                    {copiedId ? (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                    {copiedId ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
                 <p className="font-mono text-xs text-[hsl(var(--color-primary))] break-all select-all">{user.id}</p>
               </div>
               <p className="text-xs text-[hsl(var(--text-muted))] mt-3 leading-relaxed">

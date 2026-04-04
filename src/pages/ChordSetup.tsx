@@ -56,10 +56,24 @@ const ALL_CHORD_TYPES: ChordType[] = [
   'major13', '13th', 'minor13',
 ];
 
-const TYPE_GROUPS: { label: string; types: ChordType[] }[] = [
+interface TypeGroup {
+  label: string;
+  types: ChordType[];
+  subgroups?: { label: string; types: ChordType[] }[];
+}
+
+const TYPE_GROUPS: TypeGroup[] = [
   { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', 'major6', 'minor6', 'slash'] },
   { label: '7th Chords', types: ['major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7'] },
-  { label: 'Extended', types: ['add9', 'major9', '9th', 'minor9', 'major11', '11th', 'minor11', 'major13', '13th', 'minor13'] },
+  {
+    label: 'Extended',
+    types: ['add9', 'major9', '9th', 'minor9', 'major11', '11th', 'minor11', 'major13', '13th', 'minor13'],
+    subgroups: [
+      { label: '9th Chords', types: ['add9', 'major9', '9th', 'minor9'] },
+      { label: '11th Chords', types: ['major11', '11th', 'minor11'] },
+      { label: '13th Chords', types: ['major13', '13th', 'minor13'] },
+    ],
+  },
 ];
 
 const CATEGORY_ICONS: Record<ChordCategory, React.ReactNode> = {
@@ -304,7 +318,7 @@ function TypeSheetContent({
 }) {
   const py = isMobile ? 'py-3.5' : 'py-2.5';
   const textSize = isMobile ? 'text-base' : 'text-sm';
-  
+
   return (
     <div>
       {/* All Types Row */}
@@ -317,18 +331,18 @@ function TypeSheetContent({
           All Types
         </span>
       </button>
-      
+
       {/* Grouped Type Rows */}
       {TYPE_GROUPS.map((group) => {
         const allSelected = group.types.every((t) => chordTypes.has(t));
         const someSelected = group.types.some((t) => chordTypes.has(t));
-        
+
         return (
           <div key={group.label}>
             {/* Group Header */}
             <button
               onClick={() => onToggleGroup(group.types)}
-              className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-[hsl(var(--bg-overlay))] transition-colors mt-2`}
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-[hsl(var(--bg-overlay))] transition-colors mt-2"
             >
               <div
                 className={`size-5 rounded border flex items-center justify-center shrink-0 ${
@@ -349,22 +363,74 @@ function TypeSheetContent({
                 {group.label}
               </span>
             </button>
-            
-            {/* Individual Type Rows */}
-            {group.types.map((type) => (
-              <button
-                key={type}
-                onClick={() => onToggleType(type)}
-                className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
-                  chordTypes.has(type) ? 'bg-emerald-500/8' : ''
-                }`}
-              >
-                <CheckboxIcon checked={chordTypes.has(type)} color="emerald" />
-                <span className={`font-body font-medium ${textSize} text-[hsl(var(--text-default))]`}>
-                  {CHORD_TYPE_LABELS[type]}
-                </span>
-              </button>
-            ))}
+
+            {/* Flat type rows (no subgroups) */}
+            {!group.subgroups &&
+              group.types.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => onToggleType(type)}
+                  className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
+                    chordTypes.has(type) ? 'bg-emerald-500/8' : ''
+                  }`}
+                >
+                  <CheckboxIcon checked={chordTypes.has(type)} color="emerald" />
+                  <span className={`font-body font-medium ${textSize} text-[hsl(var(--text-default))]`}>
+                    {CHORD_TYPE_LABELS[type]}
+                  </span>
+                </button>
+              ))}
+
+            {/* Sub-grouped type rows (Extended) */}
+            {group.subgroups &&
+              group.subgroups.map((sub) => {
+                const subAll = sub.types.every((t) => chordTypes.has(t));
+                const subSome = sub.types.some((t) => chordTypes.has(t));
+                return (
+                  <div key={sub.label}>
+                    {/* Sub-group header */}
+                    <button
+                      onClick={() => onToggleGroup(sub.types)}
+                      className="w-full flex items-center gap-3 pl-8 pr-4 py-1.5 hover:bg-[hsl(var(--bg-overlay))] transition-colors mt-1"
+                    >
+                      <div
+                        className={`size-4 rounded border flex items-center justify-center shrink-0 ${
+                          subAll
+                            ? 'bg-emerald-500/70 border-emerald-500/70'
+                            : subSome
+                            ? 'border-emerald-500/60 bg-emerald-500/20'
+                            : 'border-[hsl(var(--border-subtle))]'
+                        }`}
+                      >
+                        {subAll ? (
+                          <Check className="size-2.5 text-white" />
+                        ) : subSome ? (
+                          <div className="size-1.5 bg-emerald-500/80 rounded-sm" />
+                        ) : null}
+                      </div>
+                      <span className="font-display text-[10px] font-semibold text-[hsl(var(--text-muted)/0.7)] uppercase tracking-widest">
+                        {sub.label}
+                      </span>
+                    </button>
+
+                    {/* Sub-group type rows */}
+                    {sub.types.map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => onToggleType(type)}
+                        className={`w-full flex items-center gap-3 pl-10 pr-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
+                          chordTypes.has(type) ? 'bg-emerald-500/8' : ''
+                        }`}
+                      >
+                        <CheckboxIcon checked={chordTypes.has(type)} color="emerald" />
+                        <span className={`font-body font-medium ${textSize} text-[hsl(var(--text-default))]`}>
+                          {CHORD_TYPE_LABELS[type]}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
           </div>
         );
       })}

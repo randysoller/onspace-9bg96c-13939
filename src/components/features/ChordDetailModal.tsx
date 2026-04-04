@@ -1,4 +1,5 @@
 import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect } from 'react';
 import { ChordData } from '@/types/chord';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import type { CustomChordData } from '@/types/customChord';
@@ -32,6 +33,17 @@ export default function ChordDetailModal({
 }: ChordDetailModalProps) {
   const canGoNext = currentIndex < totalChords - 1;
   const canGoPrevious = currentIndex > 0;
+
+  // Hide the fixed header so the modal card isn't clipped on mobile
+  useEffect(() => {
+    if (!isOpen) return;
+    const header = document.querySelector('header') as HTMLElement | null;
+    if (header) header.style.visibility = 'hidden';
+    return () => {
+      if (header) header.style.visibility = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Calculate which strings are muted, open, or fretted
@@ -65,7 +77,7 @@ export default function ChordDetailModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-20 pb-32 md:pt-24 md:pb-8">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-4 pb-4">
         <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
           {/* Header */}
           <div className="p-3 pb-2 border-b border-zinc-800/50 flex-shrink-0">

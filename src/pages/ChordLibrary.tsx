@@ -801,7 +801,8 @@ export default function ChordLibrary() {
           <select
             value={filterType}
             onChange={e => setFilterType(e.target.value as ChordType | 'all')}
-            className={`px-3 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all border appearance-none cursor-pointer ${
+            style={{ textAlign: 'center', textAlignLast: 'center' }}
+          className={`px-3 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all border appearance-none cursor-pointer ${
               filterType !== 'all'
                 ? 'bg-amber-500 text-zinc-950 border-amber-500'
                 : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:border-zinc-700'
@@ -832,17 +833,7 @@ export default function ChordLibrary() {
             <option value="minor13">Minor 13</option>
           </select>
 
-          <button
-            onClick={() => toggleCategoryFilter('custom')}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              filterCategories.includes('custom')
-                ? 'bg-amber-500 text-zinc-950'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            <Edit className="w-3.5 h-3.5" />
-            Custom
-          </button>
+
           <button
             onClick={() => setShowFavoritesOnly((prev) => !prev)}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${

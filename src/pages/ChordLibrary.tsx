@@ -170,7 +170,6 @@ export default function ChordLibrary() {
     clearCategories: storeClearCategories,
     filterTypes,
     setFilterTypes,
-    toggleType: storeToggleType,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
@@ -185,6 +184,10 @@ export default function ChordLibrary() {
     'major11', '11th', 'minor11',
     'major13', '13th', 'minor13',
   ];
+
+  // Derived single-select value from persisted array (empty = 'all')
+  const filterType: ChordType | 'all' = filterTypes.length === 1 ? filterTypes[0] : 'all';
+  const setFilterType = (val: ChordType | 'all') => setFilterTypes(val === 'all' ? [] : [val]);
 
   // Derived mutable set from persisted array
   const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
@@ -808,21 +811,22 @@ export default function ChordLibrary() {
             Movable
           </button>
 
-          {/* Type filter pills — multi-select, same scrollable row as category pills */}
-          {TYPE_FILTER_ORDER.map((type) => (
-            <button
-              key={type}
-              onClick={() => storeToggleType(type)}
-              className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
-                filterTypes.includes(type)
-                  ? 'bg-amber-500 text-zinc-950'
-                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-              }`}
-              aria-pressed={filterTypes.includes(type)}
-            >
-              {CHORD_TYPE_LABELS[type]}
-            </button>
-          ))}
+          {/* Type filter dropdown — single-select, persisted via chordLibraryStore */}
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as ChordType | 'all')}
+            style={{ textAlign: 'center', textAlignLast: 'center' }}
+            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none ${
+              filterType !== 'all'
+                ? 'bg-amber-500 text-zinc-950 border border-amber-500'
+                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+            }`}
+          >
+            <option value="all">Type</option>
+            {TYPE_FILTER_ORDER.map((type) => (
+              <option key={type} value={type}>{CHORD_TYPE_LABELS[type]}</option>
+            ))}
+          </select>
 
 
           <button

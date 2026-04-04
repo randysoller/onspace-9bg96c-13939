@@ -48,28 +48,18 @@ import heroImg from '@/assets/hero-guitar.jpg';
 const ALL_CATEGORIES: ChordCategory[] = ['open', 'barre', 'movable'];
 const BARRE_ROOTS: BarreRoot[] = [6, 5, 4];
 const ALL_CHORD_TYPES: ChordType[] = [
-  'major',
-  'minor',
-  'augmented',
-  'slash',
-  'diminished',
-  'sus2',
-  'sus4',
-  'major7',
-  'dominant7',
-  'minor7',
-  'aug7',
-  'halfDim7',
-  'dim7',
-  '9th',
-  '11th',
-  '13th',
+  'major', 'minor', 'augmented', 'slash', 'diminished',
+  'sus2', 'sus4', 'major6', 'minor6',
+  'major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7', 'add9',
+  'major9', '9th', 'minor9',
+  'major11', '11th', 'minor11',
+  'major13', '13th', 'minor13',
 ];
 
 const TYPE_GROUPS: { label: string; types: ChordType[] }[] = [
-  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', 'slash'] },
+  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', 'major6', 'minor6', 'slash'] },
   { label: '7th Chords', types: ['major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7'] },
-  { label: 'Extended', types: ['9th', '11th', '13th'] },
+  { label: 'Extended', types: ['add9', 'major9', '9th', 'minor9', 'major11', '11th', 'minor11', 'major13', '13th', 'minor13'] },
 ];
 
 const CATEGORY_ICONS: Record<ChordCategory, React.ReactNode> = {

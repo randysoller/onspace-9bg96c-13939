@@ -40,13 +40,13 @@ export const CHORD_TYPE_LABELS: Record<ChordType | 'all', string> = {
   halfDim7: 'Minor 7♭5',
   dim7: 'Diminished 7',
   major9: 'Major 9',
-  '9th': 'Dominant 9',
+  '9th': 'Dominant 9th',
   minor9: 'Minor 9',
   major11: 'Major 11',
-  '11th': 'Dominant 11',
+  '11th': 'Dominant 11th',
   minor11: 'Minor 11',
   major13: 'Major 13',
-  '13th': 'Dominant 13',
+  '13th': 'Dominant 13th',
   minor13: 'Minor 13',
 };
 

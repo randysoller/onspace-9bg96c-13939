@@ -7,7 +7,8 @@ import {
   CheckCircle2, Pencil, X,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
-import type { ChordData } from '@/types/chord';
+import type { ChordData, ChordType } from '@/types/chord';
+import { CHORD_TYPE_LABELS } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import { useChordAudio } from '@/hooks/useChordAudio';
@@ -178,6 +179,7 @@ export default function ChordLibrary() {
 
   // ── Local-only state (intentionally resets each visit) ───────────────────────
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [filterType, setFilterType] = useState<ChordType | 'all'>('all');
   const [detailModalChord, setDetailModalChord] = useState<(ChordData & { isCustom?: boolean }) | null>(null);
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
@@ -279,11 +281,14 @@ export default function ChordLibrary() {
         filterCategories.length === 0 ||
         filterCategories.includes(chord.category as any);
 
+      const typeMatch =
+        filterType === 'all' || chord.type === filterType;
+
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
-      return searchMatch && categoryMatch && favoriteMatch;
+      return searchMatch && categoryMatch && typeMatch && favoriteMatch;
     });
-  }, [allChords, searchQuery, filterCategories, showFavoritesOnly, favoriteIds]);
+  }, [allChords, searchQuery, filterCategories, filterType, showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -749,7 +754,7 @@ export default function ChordLibrary() {
         {/* Filter Pills */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           <button
-            onClick={() => { storeClearCategories(); setShowFavoritesOnly(false); }}
+            onClick={() => { storeClearCategories(); setShowFavoritesOnly(false); setFilterType('all'); }}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
               filterCategories.length === 0 && !showFavoritesOnly
                 ? 'bg-amber-500 text-zinc-950'
@@ -791,6 +796,42 @@ export default function ChordLibrary() {
             <Move className="w-3.5 h-3.5" />
             Movable
           </button>
+
+          {/* Type filter dropdown — same label set as ChordEditor */}
+          <select
+            value={filterType}
+            onChange={e => setFilterType(e.target.value as ChordType | 'all')}
+            className={`px-3 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all border appearance-none cursor-pointer ${
+              filterType !== 'all'
+                ? 'bg-amber-500 text-zinc-950 border-amber-500'
+                : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:border-zinc-700'
+            }`}
+            aria-label="Filter by chord type"
+          >
+            <option value="all">Type</option>
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+            <option value="augmented">Augmented</option>
+            <option value="slash">Slash</option>
+            <option value="diminished">Diminished</option>
+            <option value="suspended">Suspended</option>
+            <option value="major7">Major 7</option>
+            <option value="dominant7">Dominant 7th</option>
+            <option value="minor7">Minor 7</option>
+            <option value="aug7">Augmented 7th</option>
+            <option value="halfDim7">Minor 7♭5</option>
+            <option value="dim7">Diminished 7</option>
+            <option value="major9">Major 9</option>
+            <option value="9th">Dominant 9th</option>
+            <option value="minor9">Minor 9</option>
+            <option value="major11">Major 11</option>
+            <option value="11th">Dominant 11th</option>
+            <option value="minor11">Minor 11</option>
+            <option value="major13">Major 13</option>
+            <option value="13th">Dominant 13th</option>
+            <option value="minor13">Minor 13</option>
+          </select>
+
           <button
             onClick={() => toggleCategoryFilter('custom')}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${

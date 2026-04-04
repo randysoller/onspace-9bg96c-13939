@@ -4,7 +4,10 @@ export type BarreRoot = 6 | 5 | 4;
 export type ChordType =
   | 'major' | 'minor' | 'augmented' | 'slash' | 'diminished'
   | 'suspended' | 'major7' | 'dominant7' | 'minor7' | 'aug7'
-  | 'halfDim7' | 'dim7' | '9th' | '11th' | '13th';
+  | 'halfDim7' | 'dim7'
+  | 'major9' | '9th' | 'minor9'
+  | 'major11' | '11th' | 'minor11'
+  | 'major13' | '13th' | 'minor13';
 
 export interface ChordData {
   id: string;
@@ -30,15 +33,21 @@ export const CHORD_TYPE_LABELS: Record<ChordType | 'all', string> = {
   slash: 'Slash',
   diminished: 'Diminished',
   suspended: 'Suspended',
-  major7: 'Major 7th',
+  major7: 'Major 7',
   dominant7: 'Dominant 7th',
-  minor7: 'Minor 7th',
+  minor7: 'Minor 7',
   aug7: 'Augmented 7th',
-  halfDim7: 'Half Dim 7th',
-  dim7: 'Fully Dim 7th',
-  '9th': '9th',
-  '11th': '11th',
-  '13th': '13th',
+  halfDim7: 'Minor 7♭5',
+  dim7: 'Diminished 7',
+  major9: 'Major 9',
+  '9th': 'Dominant 9',
+  minor9: 'Minor 9',
+  major11: 'Major 11',
+  '11th': 'Dominant 11',
+  minor11: 'Minor 11',
+  major13: 'Major 13',
+  '13th': 'Dominant 13',
+  minor13: 'Minor 13',
 };
 
 export const CATEGORY_LABELS: Record<ChordCategory | 'all', string> = {

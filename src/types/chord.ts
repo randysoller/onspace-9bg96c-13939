@@ -3,7 +3,7 @@ export type BarreRoot = 6 | 5 | 4;
 
 export type ChordType =
   | 'major' | 'minor' | 'augmented' | 'slash' | 'diminished'
-  | 'suspended' | 'major6' | 'minor6' | 'major7' | 'dominant7' | 'minor7' | 'aug7'
+  | 'sus2' | 'sus4' | 'major6' | 'minor6' | 'major7' | 'dominant7' | 'minor7' | 'aug7'
   | 'halfDim7' | 'dim7' | 'add9'
   | 'major9' | '9th' | 'minor9'
   | 'major11' | '11th' | 'minor11'
@@ -32,7 +32,8 @@ export const CHORD_TYPE_LABELS: Record<ChordType | 'all', string> = {
   augmented: 'Augmented',
   slash: 'Slash',
   diminished: 'Diminished',
-  suspended: 'Suspended',
+  sus2: 'Suspended 2',
+  sus4: 'Suspended 4',
   major6: 'Major 6',
   minor6: 'Minor 6',
   major7: 'Major 7',

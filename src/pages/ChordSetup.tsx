@@ -53,7 +53,8 @@ const ALL_CHORD_TYPES: ChordType[] = [
   'augmented',
   'slash',
   'diminished',
-  'suspended',
+  'sus2',
+  'sus4',
   'major7',
   'dominant7',
   'minor7',
@@ -66,7 +67,7 @@ const ALL_CHORD_TYPES: ChordType[] = [
 ];
 
 const TYPE_GROUPS: { label: string; types: ChordType[] }[] = [
-  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'suspended', 'slash'] },
+  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', 'slash'] },
   { label: '7th Chords', types: ['major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7'] },
   { label: 'Extended', types: ['9th', '11th', '13th'] },
 ];

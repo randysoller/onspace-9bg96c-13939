@@ -68,21 +68,21 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
   // OPEN CHORDS - Suspended
   // ============================================================================
-  { id: 'open-asus2', name: 'Asus2', symbol: 'Asus2', category: 'open', type: 'suspended',
+  { id: 'open-asus2', name: 'Asus2', symbol: 'Asus2', category: 'open', type: 'sus2',
     frets: [-1, 0, 2, 2, 0, 0], fingers: [0, 0, 2, 3, 0, 0], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-asus4', name: 'Asus4', symbol: 'Asus4', category: 'open', type: 'suspended',
+  { id: 'open-asus4', name: 'Asus4', symbol: 'Asus4', category: 'open', type: 'sus4',
     frets: [-1, 0, 2, 2, 3, 0], fingers: [0, 0, 1, 2, 4, 0], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-csus2', name: 'Csus2', symbol: 'Csus2', category: 'open', type: 'suspended',
+  { id: 'open-csus2', name: 'Csus2', symbol: 'Csus2', category: 'open', type: 'sus2',
     frets: [-1, 3, 0, 0, 3, 3], fingers: [0, 2, 0, 0, 3, 4], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-csus4', name: 'Csus4', symbol: 'Csus4', category: 'open', type: 'suspended',
+  { id: 'open-csus4', name: 'Csus4', symbol: 'Csus4', category: 'open', type: 'sus4',
     frets: [-1, 3, 3, 0, 1, 1], fingers: [0, 2, 3, 0, 1, 1], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-dsus2', name: 'Dsus2', symbol: 'Dsus2', category: 'open', type: 'suspended',
+  { id: 'open-dsus2', name: 'Dsus2', symbol: 'Dsus2', category: 'open', type: 'sus2',
     frets: [-1, -1, 0, 2, 3, 0], fingers: [0, 0, 0, 1, 3, 0], baseFret: 1, rootNoteString: 2 },
-  { id: 'open-dsus4', name: 'Dsus4', symbol: 'Dsus4', category: 'open', type: 'suspended',
+  { id: 'open-dsus4', name: 'Dsus4', symbol: 'Dsus4', category: 'open', type: 'sus4',
     frets: [-1, -1, 0, 2, 3, 3], fingers: [0, 0, 0, 1, 2, 3], baseFret: 1, rootNoteString: 2 },
-  { id: 'open-esus4', name: 'Esus4', symbol: 'Esus4', category: 'open', type: 'suspended',
+  { id: 'open-esus4', name: 'Esus4', symbol: 'Esus4', category: 'open', type: 'sus4',
     frets: [0, 2, 2, 2, 0, 0], fingers: [0, 1, 1, 1, 0, 0], baseFret: 1, rootNoteString: 0 },
-  { id: 'open-gsus4', name: 'Gsus4', symbol: 'Gsus4', category: 'open', type: 'suspended',
+  { id: 'open-gsus4', name: 'Gsus4', symbol: 'Gsus4', category: 'open', type: 'sus4',
     frets: [3, 3, 0, 0, 1, 3], fingers: [2, 3, 0, 0, 1, 4], baseFret: 1, rootNoteString: 0 },
 
   // ============================================================================
@@ -186,10 +186,10 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
   // BARRE CHORDS - Suspended
   // ============================================================================
-  { id: 'barre-fsus4', name: 'Fsus4', symbol: 'Fsus4', category: 'barre', type: 'suspended',
+  { id: 'barre-fsus4', name: 'Fsus4', symbol: 'Fsus4', category: 'barre', type: 'sus4',
     frets: [1, 3, 3, 3, 1, 1], fingers: [1, 2, 3, 4, 1, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-bbsus4', name: 'Bbsus4', symbol: 'Bbsus4', category: 'barre', type: 'suspended',
+  { id: 'barre-bbsus4', name: 'Bbsus4', symbol: 'Bbsus4', category: 'barre', type: 'sus4',
     frets: [-1, 1, 3, 3, 4, 1], fingers: [0, 1, 2, 3, 4, 1], baseFret: 1, barres: [1],
     rootString: 5, rootNoteString: 1 },
 

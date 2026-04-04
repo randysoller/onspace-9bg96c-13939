@@ -492,7 +492,7 @@ function qualityToChordType(quality: string): string[] {
     min7: ['minor7'],
     halfDim7: ['halfDim7'],
     dim7: ['dim7'],
-    sus4: ['suspended'],
+    sus4: ['sus4', 'sus2'],
   };
   return map[quality] ?? [];
 }

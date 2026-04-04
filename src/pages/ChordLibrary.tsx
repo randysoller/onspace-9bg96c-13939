@@ -168,18 +168,24 @@ export default function ChordLibrary() {
     filterCategories,
     toggleCategory: storeToggleCategory,
     clearCategories: storeClearCategories,
+    filterTypes,
+    setFilterTypes,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
     setSavedScrollY,
   } = useChordLibraryStore();
 
+  // Derive single-select value from the persisted filterTypes array
+  const filterType: ChordType | 'all' = filterTypes.length === 1 ? filterTypes[0] : 'all';
+  const setFilterType = (val: ChordType | 'all') =>
+    setFilterTypes(val === 'all' ? [] : [val]);
+
   // Derived mutable set from persisted array
   const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
 
   // ── Local-only state (intentionally resets each visit) ───────────────────────
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
-  const [filterType, setFilterType] = useState<ChordType | 'all'>('all');
   const [detailModalChord, setDetailModalChord] = useState<(ChordData & { isCustom?: boolean }) | null>(null);
   const [detailModalIndex, setDetailModalIndex] = useState(0);
   const [showPresetMenu, setShowPresetMenu] = useState(false);
@@ -754,7 +760,7 @@ export default function ChordLibrary() {
         {/* Filter Pills */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
           <button
-            onClick={() => { storeClearCategories(); setShowFavoritesOnly(false); setFilterType('all'); }}
+            onClick={() => { storeClearCategories(); setFilterTypes([]); setShowFavoritesOnly(false); }}
             className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
               filterCategories.length === 0 && !showFavoritesOnly
                 ? 'bg-amber-500 text-zinc-950'

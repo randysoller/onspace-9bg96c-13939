@@ -77,7 +77,7 @@ export default function ChordDetailModal({
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-4 pb-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 pt-4 pb-16">
         <div className="bg-zinc-950 border-2 border-cyan-500/40 rounded-xl w-full max-w-sm shadow-2xl shadow-cyan-500/10 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
           {/* Header */}
           <div className="p-3 pb-2 border-b border-zinc-800/50 flex-shrink-0">

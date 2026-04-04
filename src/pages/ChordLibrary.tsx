@@ -170,16 +170,21 @@ export default function ChordLibrary() {
     clearCategories: storeClearCategories,
     filterTypes,
     setFilterTypes,
+    toggleType: storeToggleType,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
     setSavedScrollY,
   } = useChordLibraryStore();
 
-  // Derive single-select value from the persisted filterTypes array
-  const filterType: ChordType | 'all' = filterTypes.length === 1 ? filterTypes[0] : 'all';
-  const setFilterType = (val: ChordType | 'all') =>
-    setFilterTypes(val === 'all' ? [] : [val]);
+  // Type filter order — matches ChordEditor's EDITABLE_TYPES list
+  const TYPE_FILTER_ORDER: ChordType[] = [
+    'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended',
+    'major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
+    'major9', '9th', 'minor9',
+    'major11', '11th', 'minor11',
+    'major13', '13th', 'minor13',
+  ];
 
   // Derived mutable set from persisted array
   const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
@@ -288,13 +293,13 @@ export default function ChordLibrary() {
         filterCategories.includes(chord.category as any);
 
       const typeMatch =
-        filterType === 'all' || chord.type === filterType;
+        filterTypes.length === 0 || filterTypes.includes(chord.type as ChordType);
 
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch;
     });
-  }, [allChords, searchQuery, filterCategories, filterType, showFavoritesOnly, favoriteIds]);
+  }, [allChords, searchQuery, filterCategories, filterTypes, showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -803,41 +808,21 @@ export default function ChordLibrary() {
             Movable
           </button>
 
-          {/* Type filter dropdown — same label set as ChordEditor */}
-          <select
-            value={filterType}
-            onChange={e => setFilterType(e.target.value as ChordType | 'all')}
-            style={{ textAlign: 'center', textAlignLast: 'center' }}
-          className={`px-3 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all border appearance-none cursor-pointer ${
-              filterType !== 'all'
-                ? 'bg-amber-500 text-zinc-950 border-amber-500'
-                : 'bg-zinc-900/50 text-zinc-400 border-zinc-800 hover:border-zinc-700'
-            }`}
-            aria-label="Filter by chord type"
-          >
-            <option value="all">Type</option>
-            <option value="major">Major</option>
-            <option value="minor">Minor</option>
-            <option value="augmented">Augmented</option>
-            <option value="slash">Slash</option>
-            <option value="diminished">Diminished</option>
-            <option value="suspended">Suspended</option>
-            <option value="major7">Major 7</option>
-            <option value="dominant7">Dominant 7th</option>
-            <option value="minor7">Minor 7</option>
-            <option value="aug7">Augmented 7th</option>
-            <option value="halfDim7">Minor 7♭5</option>
-            <option value="dim7">Diminished 7</option>
-            <option value="major9">Major 9</option>
-            <option value="9th">Dominant 9th</option>
-            <option value="minor9">Minor 9</option>
-            <option value="major11">Major 11</option>
-            <option value="11th">Dominant 11th</option>
-            <option value="minor11">Minor 11</option>
-            <option value="major13">Major 13</option>
-            <option value="13th">Dominant 13th</option>
-            <option value="minor13">Minor 13</option>
-          </select>
+          {/* Type filter pills — multi-select, same scrollable row as category pills */}
+          {TYPE_FILTER_ORDER.map((type) => (
+            <button
+              key={type}
+              onClick={() => storeToggleType(type)}
+              className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
+                filterTypes.includes(type)
+                  ? 'bg-amber-500 text-zinc-950'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+              aria-pressed={filterTypes.includes(type)}
+            >
+              {CHORD_TYPE_LABELS[type]}
+            </button>
+          ))}
 
 
           <button

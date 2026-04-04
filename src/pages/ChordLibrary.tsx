@@ -178,7 +178,7 @@ export default function ChordLibrary() {
 
   // Type filter order — matches ChordEditor's EDITABLE_TYPES list
   const TYPE_FILTER_ORDER: ChordType[] = [
-    'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended',
+    'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended', 'major6', 'minor6',
     'major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
     'major9', '9th', 'minor9',
     'major11', '11th', 'minor11',

@@ -19,7 +19,7 @@ import { customToLibraryChord } from '@/types/customChord';
 import type { ChordData } from '@/types/chord';
 
 const EDITABLE_TYPES: ChordType[] = [
-  'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended',
+  'major', 'minor', 'augmented', 'slash', 'diminished', 'suspended', 'major6', 'minor6',
   'major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
   'major9', '9th', 'minor9',
   'major11', '11th', 'minor11',

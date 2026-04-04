@@ -56,16 +56,16 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     category: 'major',
   },
   {
-    name: 'Major 6th',
+    name: 'Major 6th',    // Maps to ChordType 'major6'; displayed as e.g. 'C6'
     symbol: '6',
-    intervals: [0, 4, 7, 9], // + Major 6th
+    intervals: [0, 4, 7, 9], // Root, Major 3rd, Perfect 5th, Major 6th
     chroma: createTemplate([0, 4, 7, 9]),
     category: 'major',
   },
   {
-    name: 'Major Add9',
+    name: 'Add 9',        // Maps to ChordType 'add9'; displayed as e.g. 'Cadd9'
     symbol: 'add9',
-    intervals: [0, 4, 7, 14], // + Major 9th (2nd octave)
+    intervals: [0, 4, 7, 14], // Root, Major 3rd, Perfect 5th, Major 9th
     chroma: createTemplate([0, 2, 4, 7]),
     category: 'major',
   },
@@ -86,9 +86,9 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     category: 'minor',
   },
   {
-    name: 'Minor 6th',
+    name: 'Minor 6th',    // Maps to ChordType 'minor6'; displayed as e.g. 'Cm6'
     symbol: 'm6',
-    intervals: [0, 3, 7, 9], // + Major 6th
+    intervals: [0, 3, 7, 9], // Root, Minor 3rd, Perfect 5th, Major 6th
     chroma: createTemplate([0, 3, 7, 9]),
     category: 'minor',
   },

@@ -559,6 +559,170 @@ export const CHORD_DATABASE: ChordData[] = [
     rootString: 5, rootNoteString: 1 },
 
   // ============================================================================
+  // BARRE CHORDS - Minor 7th (A-shape, Root 5)
+  // Barre at fret N: frets [-1, N, N+2, N, N+1, N], fingers [0,1,3,1,2,1]
+  // 5th string notes: Bb=1, B=2, C=3, Db/C#=4, D=5, Eb/D#=6,
+  //                   E=7, F=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+  // ============================================================================
+
+  // Bb / A#  (fret 1)
+  { id: 'barre-r5-bb-min7', name: 'Bb Minor 7th Root 5 Barre', symbol: 'Bbm7', category: 'barre', type: 'minor7',
+    frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-min7', name: 'A# Minor 7th Root 5 Barre', symbol: 'A#m7', category: 'barre', type: 'minor7',
+    frets: [-1, 1, 3, 1, 2, 1], fingers: [0, 1, 3, 1, 2, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+
+  // B  (fret 2)
+  { id: 'barre-r5-b-min7', name: 'B Minor 7th Root 5 Barre', symbol: 'Bm7', category: 'barre', type: 'minor7',
+    frets: [-1, 2, 4, 2, 3, 2], fingers: [0, 1, 3, 1, 2, 1], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  // C  (fret 3)
+  { id: 'barre-r5-c-min7', name: 'C Minor 7th Root 5 Barre', symbol: 'Cm7', category: 'barre', type: 'minor7',
+    frets: [-1, 3, 5, 3, 4, 3], fingers: [0, 1, 3, 1, 2, 1], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  // C# / Db  (fret 4)
+  { id: 'barre-r5-csharp-min7', name: 'C# Minor 7th Root 5 Barre', symbol: 'C#m7', category: 'barre', type: 'minor7',
+    frets: [-1, 4, 6, 4, 5, 4], fingers: [0, 1, 3, 1, 2, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-min7', name: 'Db Minor 7th Root 5 Barre', symbol: 'Dbm7', category: 'barre', type: 'minor7',
+    frets: [-1, 4, 6, 4, 5, 4], fingers: [0, 1, 3, 1, 2, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+
+  // D  (fret 5)
+  { id: 'barre-r5-d-min7', name: 'D Minor 7th Root 5 Barre', symbol: 'Dm7', category: 'barre', type: 'minor7',
+    frets: [-1, 5, 7, 5, 6, 5], fingers: [0, 1, 3, 1, 2, 1], baseFret: 5, barres: [5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Eb / D#  (fret 6)
+  { id: 'barre-r5-eb-min7', name: 'Eb Minor 7th Root 5 Barre', symbol: 'Ebm7', category: 'barre', type: 'minor7',
+    frets: [-1, 6, 8, 6, 7, 6], fingers: [0, 1, 3, 1, 2, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-min7', name: 'D# Minor 7th Root 5 Barre', symbol: 'D#m7', category: 'barre', type: 'minor7',
+    frets: [-1, 6, 8, 6, 7, 6], fingers: [0, 1, 3, 1, 2, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  // E  (fret 7)
+  { id: 'barre-r5-e-min7', name: 'E Minor 7th Root 5 Barre', symbol: 'Em7', category: 'barre', type: 'minor7',
+    frets: [-1, 7, 9, 7, 8, 7], fingers: [0, 1, 3, 1, 2, 1], baseFret: 7, barres: [7],
+    rootString: 5, rootNoteString: 1 },
+
+  // F  (fret 8)
+  { id: 'barre-r5-f-min7', name: 'F Minor 7th Root 5 Barre', symbol: 'Fm7', category: 'barre', type: 'minor7',
+    frets: [-1, 8, 10, 8, 9, 8], fingers: [0, 1, 3, 1, 2, 1], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+
+  // F# / Gb  (fret 9)
+  { id: 'barre-r5-fsharp-min7', name: 'F# Minor 7th Root 5 Barre', symbol: 'F#m7', category: 'barre', type: 'minor7',
+    frets: [-1, 9, 11, 9, 10, 9], fingers: [0, 1, 3, 1, 2, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-min7', name: 'Gb Minor 7th Root 5 Barre', symbol: 'Gbm7', category: 'barre', type: 'minor7',
+    frets: [-1, 9, 11, 9, 10, 9], fingers: [0, 1, 3, 1, 2, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+
+  // G  (fret 10)
+  { id: 'barre-r5-g-min7', name: 'G Minor 7th Root 5 Barre', symbol: 'Gm7', category: 'barre', type: 'minor7',
+    frets: [-1, 10, 12, 10, 11, 10], fingers: [0, 1, 3, 1, 2, 1], baseFret: 10, barres: [10],
+    rootString: 5, rootNoteString: 1 },
+
+  // Ab / G#  (fret 11)
+  { id: 'barre-r5-ab-min7', name: 'Ab Minor 7th Root 5 Barre', symbol: 'Abm7', category: 'barre', type: 'minor7',
+    frets: [-1, 11, 13, 11, 12, 11], fingers: [0, 1, 3, 1, 2, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-min7', name: 'G# Minor 7th Root 5 Barre', symbol: 'G#m7', category: 'barre', type: 'minor7',
+    frets: [-1, 11, 13, 11, 12, 11], fingers: [0, 1, 3, 1, 2, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+
+  // A  (fret 12 — octave)
+  { id: 'barre-r5-a-min7', name: 'A Minor 7th Root 5 Barre', symbol: 'Am7', category: 'barre', type: 'minor7',
+    frets: [-1, 12, 14, 12, 13, 12], fingers: [0, 1, 3, 1, 2, 1], baseFret: 12, barres: [12],
+    rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
+  // BARRE CHORDS - Dominant 7th Full Barre (A-shape, Root 5) — 6-string voicing
+  // Barre at fret N: frets [-1, N, N+2, N, N+2, N], fingers [0,1,3,1,4,1]
+  // 5th string notes: Bb=1, B=2, C=3, Db/C#=4, D=5, Eb/D#=6,
+  //                   E=7, F=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+  // ============================================================================
+
+  // Bb / A#  (fret 1)
+  { id: 'barre-r5-bb-dom7b', name: 'Bb Dominant 7th Root 5 Barre', symbol: 'Bb7', category: 'barre', type: 'dominant7',
+    frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-dom7b', name: 'A# Dominant 7th Root 5 Barre', symbol: 'A#7', category: 'barre', type: 'dominant7',
+    frets: [-1, 1, 3, 1, 3, 1], fingers: [0, 1, 3, 1, 4, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+
+  // B  (fret 2)
+  { id: 'barre-r5-b-dom7b', name: 'B Dominant 7th Root 5 Barre', symbol: 'B7', category: 'barre', type: 'dominant7',
+    frets: [-1, 2, 4, 2, 4, 2], fingers: [0, 1, 3, 1, 4, 1], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  // C  (fret 3)
+  { id: 'barre-r5-c-dom7b', name: 'C Dominant 7th Root 5 Barre', symbol: 'C7', category: 'barre', type: 'dominant7',
+    frets: [-1, 3, 5, 3, 5, 3], fingers: [0, 1, 3, 1, 4, 1], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  // C# / Db  (fret 4)
+  { id: 'barre-r5-csharp-dom7b', name: 'C# Dominant 7th Root 5 Barre', symbol: 'C#7', category: 'barre', type: 'dominant7',
+    frets: [-1, 4, 6, 4, 6, 4], fingers: [0, 1, 3, 1, 4, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-dom7b', name: 'Db Dominant 7th Root 5 Barre', symbol: 'Db7', category: 'barre', type: 'dominant7',
+    frets: [-1, 4, 6, 4, 6, 4], fingers: [0, 1, 3, 1, 4, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+
+  // D  (fret 5)
+  { id: 'barre-r5-d-dom7b', name: 'D Dominant 7th Root 5 Barre', symbol: 'D7', category: 'barre', type: 'dominant7',
+    frets: [-1, 5, 7, 5, 7, 5], fingers: [0, 1, 3, 1, 4, 1], baseFret: 5, barres: [5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Eb / D#  (fret 6)
+  { id: 'barre-r5-eb-dom7b', name: 'Eb Dominant 7th Root 5 Barre', symbol: 'Eb7', category: 'barre', type: 'dominant7',
+    frets: [-1, 6, 8, 6, 8, 6], fingers: [0, 1, 3, 1, 4, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-dom7b', name: 'D# Dominant 7th Root 5 Barre', symbol: 'D#7', category: 'barre', type: 'dominant7',
+    frets: [-1, 6, 8, 6, 8, 6], fingers: [0, 1, 3, 1, 4, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  // E  (fret 7)
+  { id: 'barre-r5-e-dom7b', name: 'E Dominant 7th Root 5 Barre', symbol: 'E7', category: 'barre', type: 'dominant7',
+    frets: [-1, 7, 9, 7, 9, 7], fingers: [0, 1, 3, 1, 4, 1], baseFret: 7, barres: [7],
+    rootString: 5, rootNoteString: 1 },
+
+  // F  (fret 8)
+  { id: 'barre-r5-f-dom7b', name: 'F Dominant 7th Root 5 Barre', symbol: 'F7', category: 'barre', type: 'dominant7',
+    frets: [-1, 8, 10, 8, 10, 8], fingers: [0, 1, 3, 1, 4, 1], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+
+  // F# / Gb  (fret 9)
+  { id: 'barre-r5-fsharp-dom7b', name: 'F# Dominant 7th Root 5 Barre', symbol: 'F#7', category: 'barre', type: 'dominant7',
+    frets: [-1, 9, 11, 9, 11, 9], fingers: [0, 1, 3, 1, 4, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-dom7b', name: 'Gb Dominant 7th Root 5 Barre', symbol: 'Gb7', category: 'barre', type: 'dominant7',
+    frets: [-1, 9, 11, 9, 11, 9], fingers: [0, 1, 3, 1, 4, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+
+  // G  (fret 10)
+  { id: 'barre-r5-g-dom7b', name: 'G Dominant 7th Root 5 Barre', symbol: 'G7', category: 'barre', type: 'dominant7',
+    frets: [-1, 10, 12, 10, 12, 10], fingers: [0, 1, 3, 1, 4, 1], baseFret: 10, barres: [10],
+    rootString: 5, rootNoteString: 1 },
+
+  // Ab / G#  (fret 11)
+  { id: 'barre-r5-ab-dom7b', name: 'Ab Dominant 7th Root 5 Barre', symbol: 'Ab7', category: 'barre', type: 'dominant7',
+    frets: [-1, 11, 13, 11, 13, 11], fingers: [0, 1, 3, 1, 4, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-dom7b', name: 'G# Dominant 7th Root 5 Barre', symbol: 'G#7', category: 'barre', type: 'dominant7',
+    frets: [-1, 11, 13, 11, 13, 11], fingers: [0, 1, 3, 1, 4, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+
+  // A  (fret 12 — octave)
+  { id: 'barre-r5-a-dom7b', name: 'A Dominant 7th Root 5 Barre', symbol: 'A7', category: 'barre', type: 'dominant7',
+    frets: [-1, 12, 14, 12, 14, 12], fingers: [0, 1, 3, 1, 4, 1], baseFret: 12, barres: [12],
+    rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
   // BARRE CHORDS - Minor (E-shape, Root 6)
   // Barre at fret N: frets [N, N+2, N+2, N, N, N], fingers [1,3,4,1,1,1]
   // ============================================================================

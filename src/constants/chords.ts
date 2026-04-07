@@ -135,93 +135,93 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
 
   // F  (fret 1)
-  { id: 'barre-f-major', name: 'F Major', symbol: 'F', category: 'barre', type: 'major',
+  { id: 'barre-f-major', name: 'F Major Root 6 Barre', symbol: 'F', category: 'barre', type: 'major',
     frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
 
   // F# / Gb  (fret 2)
-  { id: 'barre-fsharp-major', name: 'F# Major', symbol: 'F#', category: 'barre', type: 'major',
+  { id: 'barre-fsharp-major', name: 'F# Major Root 6 Barre', symbol: 'F#', category: 'barre', type: 'major',
     frets: [2, 4, 4, 3, 2, 2], fingers: [1, 3, 4, 2, 1, 1], baseFret: 2, barres: [2],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-gb-major', name: 'Gb Major', symbol: 'Gb', category: 'barre', type: 'major',
+  { id: 'barre-gb-major', name: 'Gb Major Root 6 Barre', symbol: 'Gb', category: 'barre', type: 'major',
     frets: [2, 4, 4, 3, 2, 2], fingers: [1, 3, 4, 2, 1, 1], baseFret: 2, barres: [2],
     rootString: 6, rootNoteString: 0 },
 
   // G  (fret 3)
-  { id: 'barre-g-major-e6', name: 'G Major', symbol: 'G', category: 'barre', type: 'major',
+  { id: 'barre-g-major-e6', name: 'G Major Root 6 Barre', symbol: 'G', category: 'barre', type: 'major',
     frets: [3, 5, 5, 4, 3, 3], fingers: [1, 3, 4, 2, 1, 1], baseFret: 3, barres: [3],
     rootString: 6, rootNoteString: 0 },
 
   // G# / Ab  (fret 4)
-  { id: 'barre-gsharp-major', name: 'G# Major', symbol: 'G#', category: 'barre', type: 'major',
+  { id: 'barre-gsharp-major', name: 'G# Major Root 6 Barre', symbol: 'G#', category: 'barre', type: 'major',
     frets: [4, 6, 6, 5, 4, 4], fingers: [1, 3, 4, 2, 1, 1], baseFret: 4, barres: [4],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-ab-major', name: 'Ab Major', symbol: 'Ab', category: 'barre', type: 'major',
+  { id: 'barre-ab-major', name: 'Ab Major Root 6 Barre', symbol: 'Ab', category: 'barre', type: 'major',
     frets: [4, 6, 6, 5, 4, 4], fingers: [1, 3, 4, 2, 1, 1], baseFret: 4, barres: [4],
     rootString: 6, rootNoteString: 0 },
 
   // A  (fret 5)
-  { id: 'barre-a-major', name: 'A Major', symbol: 'A', category: 'barre', type: 'major',
+  { id: 'barre-a-major', name: 'A Major Root 6 Barre', symbol: 'A', category: 'barre', type: 'major',
     frets: [5, 7, 7, 6, 5, 5], fingers: [1, 3, 4, 2, 1, 1], baseFret: 5, barres: [5],
     rootString: 6, rootNoteString: 0 },
 
   // A# / Bb  (fret 6)
-  { id: 'barre-asharp-major', name: 'A# Major', symbol: 'A#', category: 'barre', type: 'major',
+  { id: 'barre-asharp-major', name: 'A# Major Root 6 Barre', symbol: 'A#', category: 'barre', type: 'major',
     frets: [6, 8, 8, 7, 6, 6], fingers: [1, 3, 4, 2, 1, 1], baseFret: 6, barres: [6],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-bb-major-e6', name: 'Bb Major', symbol: 'Bb', category: 'barre', type: 'major',
+  { id: 'barre-bb-major-e6', name: 'Bb Major Root 6 Barre', symbol: 'Bb', category: 'barre', type: 'major',
     frets: [6, 8, 8, 7, 6, 6], fingers: [1, 3, 4, 2, 1, 1], baseFret: 6, barres: [6],
     rootString: 6, rootNoteString: 0 },
 
   // B / Cb  (fret 7)
-  { id: 'barre-b-major-e6', name: 'B Major', symbol: 'B', category: 'barre', type: 'major',
+  { id: 'barre-b-major-e6', name: 'B Major Root 6 Barre', symbol: 'B', category: 'barre', type: 'major',
     frets: [7, 9, 9, 8, 7, 7], fingers: [1, 3, 4, 2, 1, 1], baseFret: 7, barres: [7],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-cb-major', name: 'Cb Major', symbol: 'Cb', category: 'barre', type: 'major',
+  { id: 'barre-cb-major', name: 'Cb Major Root 6 Barre', symbol: 'Cb', category: 'barre', type: 'major',
     frets: [7, 9, 9, 8, 7, 7], fingers: [1, 3, 4, 2, 1, 1], baseFret: 7, barres: [7],
     rootString: 6, rootNoteString: 0 },
 
   // C / B#  (fret 8)
-  { id: 'barre-c-major-e6', name: 'C Major', symbol: 'C', category: 'barre', type: 'major',
+  { id: 'barre-c-major-e6', name: 'C Major Root 6 Barre', symbol: 'C', category: 'barre', type: 'major',
     frets: [8, 10, 10, 9, 8, 8], fingers: [1, 3, 4, 2, 1, 1], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-bsharp-major', name: 'B# Major', symbol: 'B#', category: 'barre', type: 'major',
+  { id: 'barre-bsharp-major', name: 'B# Major Root 6 Barre', symbol: 'B#', category: 'barre', type: 'major',
     frets: [8, 10, 10, 9, 8, 8], fingers: [1, 3, 4, 2, 1, 1], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
 
   // C# / Db  (fret 9)
-  { id: 'barre-csharp-major-e6', name: 'C# Major', symbol: 'C#', category: 'barre', type: 'major',
+  { id: 'barre-csharp-major-e6', name: 'C# Major Root 6 Barre', symbol: 'C#', category: 'barre', type: 'major',
     frets: [9, 11, 11, 10, 9, 9], fingers: [1, 3, 4, 2, 1, 1], baseFret: 9, barres: [9],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-db-major-e6', name: 'Db Major', symbol: 'Db', category: 'barre', type: 'major',
+  { id: 'barre-db-major-e6', name: 'Db Major Root 6 Barre', symbol: 'Db', category: 'barre', type: 'major',
     frets: [9, 11, 11, 10, 9, 9], fingers: [1, 3, 4, 2, 1, 1], baseFret: 9, barres: [9],
     rootString: 6, rootNoteString: 0 },
 
   // D  (fret 10)
-  { id: 'barre-d-major-e6', name: 'D Major', symbol: 'D', category: 'barre', type: 'major',
+  { id: 'barre-d-major-e6', name: 'D Major Root 6 Barre', symbol: 'D', category: 'barre', type: 'major',
     frets: [10, 12, 12, 11, 10, 10], fingers: [1, 3, 4, 2, 1, 1], baseFret: 10, barres: [10],
     rootString: 6, rootNoteString: 0 },
 
   // D# / Eb  (fret 11)
-  { id: 'barre-dsharp-major-e6', name: 'D# Major', symbol: 'D#', category: 'barre', type: 'major',
+  { id: 'barre-dsharp-major-e6', name: 'D# Major Root 6 Barre', symbol: 'D#', category: 'barre', type: 'major',
     frets: [11, 13, 13, 12, 11, 11], fingers: [1, 3, 4, 2, 1, 1], baseFret: 11, barres: [11],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-eb-major-e6', name: 'Eb Major', symbol: 'Eb', category: 'barre', type: 'major',
+  { id: 'barre-eb-major-e6', name: 'Eb Major Root 6 Barre', symbol: 'Eb', category: 'barre', type: 'major',
     frets: [11, 13, 13, 12, 11, 11], fingers: [1, 3, 4, 2, 1, 1], baseFret: 11, barres: [11],
     rootString: 6, rootNoteString: 0 },
 
   // E  (fret 12 — octave)
-  { id: 'barre-e-major-e6-12', name: 'E Major', symbol: 'E', category: 'barre', type: 'major',
+  { id: 'barre-e-major-e6-12', name: 'E Major Root 6 Barre', symbol: 'E', category: 'barre', type: 'major',
     frets: [12, 14, 14, 13, 12, 12], fingers: [1, 3, 4, 2, 1, 1], baseFret: 12, barres: [12],
     rootString: 6, rootNoteString: 0 },
 
   // Fb (enharmonic E)  (fret 12)
-  { id: 'barre-fb-major', name: 'Fb Major', symbol: 'Fb', category: 'barre', type: 'major',
+  { id: 'barre-fb-major', name: 'Fb Major Root 6 Barre', symbol: 'Fb', category: 'barre', type: 'major',
     frets: [12, 14, 14, 13, 12, 12], fingers: [1, 3, 4, 2, 1, 1], baseFret: 12, barres: [12],
     rootString: 6, rootNoteString: 0 },
 
   // E# (enharmonic F)  (fret 1 — same as F)
-  { id: 'barre-esharp-major', name: 'E# Major', symbol: 'E#', category: 'barre', type: 'major',
+  { id: 'barre-esharp-major', name: 'E# Major Root 6 Barre', symbol: 'E#', category: 'barre', type: 'major',
     frets: [1, 3, 3, 2, 1, 1], fingers: [1, 3, 4, 2, 1, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
 

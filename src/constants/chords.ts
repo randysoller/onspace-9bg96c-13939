@@ -1403,6 +1403,104 @@ export const CHORD_DATABASE: ChordData[] = [
     rootString: 6, rootNoteString: 0 },
 
   // ============================================================================
+  // BARRE CHORDS - Minor 9th (E-shape, Root 6)
+  // Barre at fret N: frets [N, N+2, N, N, N, N+2], fingers [1,3,1,1,1,4]
+  // 6th string notes: F=1, F#/Gb=2, G=3, Ab/G#=4, A=5, Bb/A#=6,
+  //                   B/Cb=7, C/B#=8, Db/C#=9, D=10, Eb/D#=11, E=12
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'barre-e6-fm9', name: 'F Minor 9 Root 6 Barre', symbol: 'Fm9', category: 'barre', type: 'minor9th',
+    frets: [1, 3, 1, 1, 1, 3], fingers: [1, 3, 1, 1, 1, 4], baseFret: 1, barres: [1],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'barre-e6-fsharpm9', name: 'F# Minor 9 Root 6 Barre', symbol: 'F#m9', category: 'barre', type: 'minor9th',
+    frets: [2, 4, 2, 2, 2, 4], fingers: [1, 3, 1, 1, 1, 4], baseFret: 2, barres: [2],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-gbm9', name: 'Gb Minor 9 Root 6 Barre', symbol: 'Gbm9', category: 'barre', type: 'minor9th',
+    frets: [2, 4, 2, 2, 2, 4], fingers: [1, 3, 1, 1, 1, 4], baseFret: 2, barres: [2],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'barre-e6-gm9', name: 'G Minor 9 Root 6 Barre', symbol: 'Gm9', category: 'barre', type: 'minor9th',
+    frets: [3, 5, 3, 3, 3, 5], fingers: [1, 3, 1, 1, 1, 4], baseFret: 3, barres: [3],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'barre-e6-gsharpm9', name: 'G# Minor 9 Root 6 Barre', symbol: 'G#m9', category: 'barre', type: 'minor9th',
+    frets: [4, 6, 4, 4, 4, 6], fingers: [1, 3, 1, 1, 1, 4], baseFret: 4, barres: [4],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-abm9', name: 'Ab Minor 9 Root 6 Barre', symbol: 'Abm9', category: 'barre', type: 'minor9th',
+    frets: [4, 6, 4, 4, 4, 6], fingers: [1, 3, 1, 1, 1, 4], baseFret: 4, barres: [4],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'barre-e6-am9', name: 'A Minor 9 Root 6 Barre', symbol: 'Am9', category: 'barre', type: 'minor9th',
+    frets: [5, 7, 5, 5, 5, 7], fingers: [1, 3, 1, 1, 1, 4], baseFret: 5, barres: [5],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'barre-e6-asharpm9', name: 'A# Minor 9 Root 6 Barre', symbol: 'A#m9', category: 'barre', type: 'minor9th',
+    frets: [6, 8, 6, 6, 6, 8], fingers: [1, 3, 1, 1, 1, 4], baseFret: 6, barres: [6],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bbm9', name: 'Bb Minor 9 Root 6 Barre', symbol: 'Bbm9', category: 'barre', type: 'minor9th',
+    frets: [6, 8, 6, 6, 6, 8], fingers: [1, 3, 1, 1, 1, 4], baseFret: 6, barres: [6],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'barre-e6-bm9', name: 'B Minor 9 Root 6 Barre', symbol: 'Bm9', category: 'barre', type: 'minor9th',
+    frets: [7, 9, 7, 7, 7, 9], fingers: [1, 3, 1, 1, 1, 4], baseFret: 7, barres: [7],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-cbm9', name: 'Cb Minor 9 Root 6 Barre', symbol: 'Cbm9', category: 'barre', type: 'minor9th',
+    frets: [7, 9, 7, 7, 7, 9], fingers: [1, 3, 1, 1, 1, 4], baseFret: 7, barres: [7],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'barre-e6-cm9', name: 'C Minor 9 Root 6 Barre', symbol: 'Cm9', category: 'barre', type: 'minor9th',
+    frets: [8, 10, 8, 8, 8, 10], fingers: [1, 3, 1, 1, 1, 4], baseFret: 8, barres: [8],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bsharpm9', name: 'B# Minor 9 Root 6 Barre', symbol: 'B#m9', category: 'barre', type: 'minor9th',
+    frets: [8, 10, 8, 8, 8, 10], fingers: [1, 3, 1, 1, 1, 4], baseFret: 8, barres: [8],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'barre-e6-csharpm9', name: 'C# Minor 9 Root 6 Barre', symbol: 'C#m9', category: 'barre', type: 'minor9th',
+    frets: [9, 11, 9, 9, 9, 11], fingers: [1, 3, 1, 1, 1, 4], baseFret: 9, barres: [9],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-dbm9', name: 'Db Minor 9 Root 6 Barre', symbol: 'Dbm9', category: 'barre', type: 'minor9th',
+    frets: [9, 11, 9, 9, 9, 11], fingers: [1, 3, 1, 1, 1, 4], baseFret: 9, barres: [9],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'barre-e6-dm9', name: 'D Minor 9 Root 6 Barre', symbol: 'Dm9', category: 'barre', type: 'minor9th',
+    frets: [10, 12, 10, 10, 10, 12], fingers: [1, 3, 1, 1, 1, 4], baseFret: 10, barres: [10],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'barre-e6-dsharpm9', name: 'D# Minor 9 Root 6 Barre', symbol: 'D#m9', category: 'barre', type: 'minor9th',
+    frets: [11, 13, 11, 11, 11, 13], fingers: [1, 3, 1, 1, 1, 4], baseFret: 11, barres: [11],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-ebm9', name: 'Eb Minor 9 Root 6 Barre', symbol: 'Ebm9', category: 'barre', type: 'minor9th',
+    frets: [11, 13, 11, 11, 11, 13], fingers: [1, 3, 1, 1, 1, 4], baseFret: 11, barres: [11],
+    rootString: 6, rootNoteString: 0 },
+
+  // E  (fret 12 — octave)
+  { id: 'barre-e6-em9-12', name: 'E Minor 9 Root 6 Barre', symbol: 'Em9', category: 'barre', type: 'minor9th',
+    frets: [12, 14, 12, 12, 12, 14], fingers: [1, 3, 1, 1, 1, 4], baseFret: 12, barres: [12],
+    rootString: 6, rootNoteString: 0 },
+
+  // Fb (enharmonic E)  (fret 12)
+  { id: 'barre-e6-fbm9', name: 'Fb Minor 9 Root 6 Barre', symbol: 'Fbm9', category: 'barre', type: 'minor9th',
+    frets: [12, 14, 12, 12, 12, 14], fingers: [1, 3, 1, 1, 1, 4], baseFret: 12, barres: [12],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F)  (fret 1)
+  { id: 'barre-e6-esharpm9', name: 'E# Minor 9 Root 6 Barre', symbol: 'E#m9', category: 'barre', type: 'minor9th',
+    frets: [1, 3, 1, 1, 1, 3], fingers: [1, 3, 1, 1, 1, 4], baseFret: 1, barres: [1],
+    rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
   // BARRE CHORDS - Sus2 (A-shape, Root 5)
   // Barre at fret N: frets [-1, N, N+2, N+2, N, N], fingers [0,1,3,4,1,1]
   // Dual barres at N and N+2 (index finger + ring/pinky pair)

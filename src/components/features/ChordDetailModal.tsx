@@ -104,9 +104,9 @@ export default function ChordDetailModal({
               </div>
               <button
                 onClick={onClose}
-                className="text-zinc-500 hover:text-white transition-colors -mt-1 -mr-1"
+                className="text-zinc-400 hover:text-white transition-colors -mt-1 -mr-1 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-7 h-7" />
               </button>
             </div>
             <div className="text-zinc-400 text-sm">

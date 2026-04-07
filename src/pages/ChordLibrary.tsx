@@ -7,7 +7,7 @@ import {
   CheckCircle2, Pencil, X,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
-import type { ChordData, ChordType } from '@/types/chord';
+import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
@@ -170,6 +170,9 @@ export default function ChordLibrary() {
     clearCategories: storeClearCategories,
     filterTypes,
     setFilterTypes,
+    filterBarreRoots,
+    toggleBarreRoot: storeToggleBarreRoot,
+    clearBarreRoots: storeClearBarreRoots,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
@@ -300,7 +303,17 @@ export default function ChordLibrary() {
 
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
-      return searchMatch && categoryMatch && typeMatch && favoriteMatch;
+      // Root string filter: only applies when filterBarreRoots is non-empty
+      // Maps rootNoteString (0-indexed) to guitar string number (1=high e, 6=low E)
+      const rootStringMatch =
+        filterBarreRoots.length === 0 ||
+        (() => {
+          // rootNoteString: 0=low E (6th), 1=A (5th), 2=D (4th), 3=G (3rd), 4=B (2nd), 5=high e (1st)
+          const stringNumber = (6 - chord.rootNoteString) as BarreRoot;
+          return filterBarreRoots.includes(stringNumber);
+        })();
+
+      return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch;
     });
   }, [allChords, searchQuery, filterCategories, filterTypes, showFavoritesOnly, favoriteIds]);
 
@@ -417,6 +430,27 @@ export default function ChordLibrary() {
   };
 
   const favoriteCount = favoriteIds.size;
+
+  // Root string options
+  const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
+    { value: 6, label: '6th String' },
+    { value: 5, label: '5th String' },
+    { value: 4, label: '4th String' },
+  ];
+
+  const [showRootMenu, setShowRootMenu] = useState(false);
+  const rootMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close root menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (rootMenuRef.current && !rootMenuRef.current.contains(e.target as Node)) {
+        setShowRootMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // ── Chord Pack definitions ──────────────────────────────────────────────────
   const CHORD_PACKS = [
@@ -766,85 +800,179 @@ export default function ChordLibrary() {
         </div>
 
         {/* Filter Pills */}
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
-          <button
-            onClick={() => { storeClearCategories(); setFilterTypes([]); setShowFavoritesOnly(false); }}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all ${
-              filterCategories.length === 0 && !showFavoritesOnly
-                ? 'bg-amber-500 text-zinc-950'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => toggleCategoryFilter('open')}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              filterCategories.includes('open')
-                ? 'bg-emerald-500 text-white'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            <Music className="w-3.5 h-3.5" />
-            Open
-          </button>
-          <button
-            onClick={() => toggleCategoryFilter('barre')}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              filterCategories.includes('barre')
-                ? 'bg-purple-500 text-white'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            Barre
-          </button>
-          <button
-            onClick={() => toggleCategoryFilter('movable')}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              filterCategories.includes('movable')
-                ? 'bg-yellow-400 text-zinc-950'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            <Move className="w-3.5 h-3.5" />
-            Movable
-          </button>
+        <div className="mb-4">
+          {/* Row 1: Category + Favorites */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-hide">
+            <button
+              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); setShowFavoritesOnly(false); }}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 ${
+                filterCategories.length === 0 && filterBarreRoots.length === 0 && !showFavoritesOnly
+                  ? 'bg-amber-500 text-zinc-950'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => toggleCategoryFilter('open')}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+                filterCategories.includes('open')
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <Music className="w-3 h-3" />
+              Open
+            </button>
+            <button
+              onClick={() => toggleCategoryFilter('barre')}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+                filterCategories.includes('barre')
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <BarChart3 className="w-3 h-3" />
+              Barre
+            </button>
+            <button
+              onClick={() => toggleCategoryFilter('movable')}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+                filterCategories.includes('movable')
+                  ? 'bg-yellow-400 text-zinc-950'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <Move className="w-3 h-3" />
+              Movable
+            </button>
 
-          {/* Type filter dropdown — single-select, persisted via chordLibraryStore */}
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value as ChordType | 'all')}
-            style={{ textAlign: 'center', textAlignLast: 'center' }}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none ${
-              filterType !== 'all'
-                ? 'bg-amber-500 text-zinc-950 border border-amber-500'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-            }`}
-          >
-            <option value="all">Type</option>
-            {TYPE_FILTER_ORDER.map((type) => (
-              <option key={type} value={type}>{CHORD_TYPE_LABELS[type]}</option>
-            ))}
-          </select>
+            {/* Type filter — compact select pill */}
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as ChordType | 'all')}
+              style={{ textAlign: 'center', textAlignLast: 'center' }}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none flex-shrink-0 ${
+                filterType !== 'all'
+                  ? 'bg-amber-500 text-zinc-950 border border-amber-500'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+              }`}
+            >
+              <option value="all">Type</option>
+              {TYPE_FILTER_ORDER.map((type) => (
+                <option key={type} value={type}>{CHORD_TYPE_LABELS[type]}</option>
+              ))}
+            </select>
 
+            {/* Root String filter — custom dropdown pill */}
+            <div className="relative flex-shrink-0" ref={rootMenuRef}>
+              <button
+                onClick={() => setShowRootMenu((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  filterBarreRoots.length > 0
+                    ? 'bg-indigo-500 text-white border border-indigo-500'
+                    : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                <Guitar className="w-3 h-3" />
+                {filterBarreRoots.length > 0
+                  ? filterBarreRoots.map(r => `${r}th`).join(', ')
+                  : 'Root'}
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
+                  showRootMenu ? 'rotate-180' : ''
+                }`} />
+              </button>
 
-          <button
-            onClick={() => setShowFavoritesOnly((prev) => !prev)}
-            className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap flex items-center gap-2 transition-all ${
-              showFavoritesOnly
-                ? 'bg-rose-500 text-white'
-                : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 ${showFavoritesOnly ? 'fill-white' : ''}`} />
-            Favorites
-            {favoriteCount > 0 && (
-              <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${showFavoritesOnly ? 'bg-white/20' : 'bg-zinc-800 text-zinc-400'}`}>
-                {favoriteCount}
-              </span>
-            )}
-          </button>
+              {showRootMenu && (
+                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[160px] overflow-hidden">
+                  <div className="px-3 pt-2.5 pb-1">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
+                  </div>
+                  {ROOT_STRING_OPTIONS.map(({ value, label }) => {
+                    const isActive = filterBarreRoots.includes(value);
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => storeToggleBarreRoot(value)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                          isActive
+                            ? 'text-indigo-300 bg-indigo-500/15'
+                            : 'text-zinc-300 hover:bg-zinc-800'
+                        }`}
+                      >
+                        <span>{label}</span>
+                        {isActive && (
+                          <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filterBarreRoots.length > 0 && (
+                    <>
+                      <div className="mx-3 border-t border-zinc-800" />
+                      <button
+                        onClick={() => { storeClearBarreRoots(); setShowRootMenu(false); }}
+                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                      >
+                        Clear root filter
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowFavoritesOnly((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+                showFavoritesOnly
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'
+              }`}
+            >
+              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              Favs
+              {favoriteCount > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  showFavoritesOnly ? 'bg-white/20' : 'bg-zinc-800 text-zinc-400'
+                }`}>
+                  {favoriteCount}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Active filter summary badges */}
+          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterType !== 'all' || showFavoritesOnly) && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {filterCategories.map(cat => (
+                <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] font-semibold text-zinc-300">
+                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  <button onClick={() => toggleCategoryFilter(cat)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              ))}
+              {filterType !== 'all' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-semibold text-amber-300">
+                  {CHORD_TYPE_LABELS[filterType]}
+                  <button onClick={() => setFilterType('all')} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              )}
+              {filterBarreRoots.map(r => (
+                <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[10px] font-semibold text-indigo-300">
+                  Root {r}th
+                  <button onClick={() => storeToggleBarreRoot(r)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              ))}
+              {showFavoritesOnly && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-semibold text-rose-300">
+                  Favorites
+                  <button onClick={() => setShowFavoritesOnly(false)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Results Count & Legend */}

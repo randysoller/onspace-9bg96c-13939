@@ -799,13 +799,13 @@ export default function ChordLibrary() {
           </button>
         </div>
 
-        {/* Filter Pills */}
+        {/* Filter Pills — two static rows, no scroll */}
         <div className="mb-4">
-          {/* Row 1: Category + Favorites */}
-          <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-hide">
+          {/* Row 1: All + Category */}
+          <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
               onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); setShowFavoritesOnly(false); }}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
                 filterCategories.length === 0 && filterBarreRoots.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -826,7 +826,7 @@ export default function ChordLibrary() {
             </button>
             <button
               onClick={() => toggleCategoryFilter('barre')}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
                 filterCategories.includes('barre')
                   ? 'bg-purple-500 text-white'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -837,7 +837,7 @@ export default function ChordLibrary() {
             </button>
             <button
               onClick={() => toggleCategoryFilter('movable')}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
                 filterCategories.includes('movable')
                   ? 'bg-yellow-400 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -847,12 +847,16 @@ export default function ChordLibrary() {
               Movable
             </button>
 
+          </div>
+
+          {/* Row 2: Type, Root, Favs */}
+          <div className="flex gap-1.5 flex-wrap">
             {/* Type filter — compact select pill */}
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as ChordType | 'all')}
               style={{ textAlign: 'center', textAlignLast: 'center' }}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none ${
                 filterType !== 'all'
                   ? 'bg-amber-500 text-zinc-950 border border-amber-500'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -865,7 +869,7 @@ export default function ChordLibrary() {
             </select>
 
             {/* Root String filter — custom dropdown pill */}
-            <div className="relative flex-shrink-0" ref={rootMenuRef}>
+            <div className="relative" ref={rootMenuRef}>
               <button
                 onClick={() => setShowRootMenu((prev) => !prev)}
                 className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
@@ -926,7 +930,7 @@ export default function ChordLibrary() {
 
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
                 showFavoritesOnly
                   ? 'bg-rose-500 text-white'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'

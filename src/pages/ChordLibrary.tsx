@@ -171,6 +171,7 @@ export default function ChordLibrary() {
     filterTypes,
     setFilterTypes,
     filterBarreRoots,
+    toggleType: storeToggleType,
     toggleBarreRoot: storeToggleBarreRoot,
     clearBarreRoots: storeClearBarreRoots,
     activeLibraryPresetId,
@@ -187,10 +188,6 @@ export default function ChordLibrary() {
     'major11', '11th', 'minor11',
     'major13', '13th', 'minor13',
   ];
-
-  // Derived single-select value from persisted array (empty = 'all')
-  const filterType: ChordType | 'all' = filterTypes.length === 1 ? filterTypes[0] : 'all';
-  const setFilterType = (val: ChordType | 'all') => setFilterTypes(val === 'all' ? [] : [val]);
 
   // Derived mutable set from persisted array
   const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
@@ -440,12 +437,17 @@ export default function ChordLibrary() {
 
   const [showRootMenu, setShowRootMenu] = useState(false);
   const rootMenuRef = useRef<HTMLDivElement>(null);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const typeMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close root menu on outside click
+  // Close menus on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (rootMenuRef.current && !rootMenuRef.current.contains(e.target as Node)) {
         setShowRootMenu(false);
+      }
+      if (typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
+        setShowTypeMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -806,7 +808,7 @@ export default function ChordLibrary() {
             <button
               onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); setShowFavoritesOnly(false); }}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
-                filterCategories.length === 0 && filterBarreRoots.length === 0 && !showFavoritesOnly
+                filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
@@ -851,22 +853,69 @@ export default function ChordLibrary() {
 
           {/* Row 2: Type, Root, Favs */}
           <div className="flex gap-1.5 flex-wrap">
-            {/* Type filter — compact select pill */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value as ChordType | 'all')}
-              style={{ textAlign: 'center', textAlignLast: 'center' }}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all cursor-pointer focus:outline-none appearance-none ${
-                filterType !== 'all'
-                  ? 'bg-amber-500 text-zinc-950 border border-amber-500'
-                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-              }`}
-            >
-              <option value="all">Type</option>
-              {TYPE_FILTER_ORDER.map((type) => (
-                <option key={type} value={type}>{CHORD_TYPE_LABELS[type]}</option>
-              ))}
-            </select>
+            {/* Type filter — multi-select dropdown pill */}
+            <div className="relative" ref={typeMenuRef}>
+              <button
+                onClick={() => setShowTypeMenu((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  filterTypes.length > 0
+                    ? 'bg-amber-500 text-zinc-950 border border-amber-500'
+                    : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                <Music className="w-3 h-3" />
+                {filterTypes.length > 0
+                  ? filterTypes.length === 1
+                    ? CHORD_TYPE_LABELS[filterTypes[0]]
+                    : `${filterTypes.length} Types`
+                  : 'Type'}
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
+                  showTypeMenu ? 'rotate-180' : ''
+                }`} />
+              </button>
+
+              {showTypeMenu && (
+                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[200px] overflow-hidden">
+                  <div className="px-3 pt-2.5 pb-1">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {TYPE_FILTER_ORDER.map((type) => {
+                      const isActive = filterTypes.includes(type);
+                      return (
+                        <button
+                          key={type}
+                          onClick={() => storeToggleType(type)}
+                          className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            isActive
+                              ? 'text-amber-300 bg-amber-500/15'
+                              : 'text-zinc-300 hover:bg-zinc-800'
+                          }`}
+                        >
+                          <span>{CHORD_TYPE_LABELS[type]}</span>
+                          {isActive && (
+                            <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {filterTypes.length > 0 && (
+                    <>
+                      <div className="mx-3 border-t border-zinc-800" />
+                      <button
+                        onClick={() => { setFilterTypes([]); setShowTypeMenu(false); }}
+                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                      >
+                        Clear type filter
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Root String filter — custom dropdown pill */}
             <div className="relative" ref={rootMenuRef}>
@@ -949,7 +998,7 @@ export default function ChordLibrary() {
           </div>
 
           {/* Active filter summary badges */}
-          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterType !== 'all' || showFavoritesOnly) && (
+          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterTypes.length > 0 || showFavoritesOnly) && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {filterCategories.map(cat => (
                 <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] font-semibold text-zinc-300">
@@ -957,12 +1006,12 @@ export default function ChordLibrary() {
                   <button onClick={() => toggleCategoryFilter(cat)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
                 </span>
               ))}
-              {filterType !== 'all' && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-semibold text-amber-300">
-                  {CHORD_TYPE_LABELS[filterType]}
-                  <button onClick={() => setFilterType('all')} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+              {filterTypes.map(type => (
+                <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-semibold text-amber-300">
+                  {CHORD_TYPE_LABELS[type]}
+                  <button onClick={() => storeToggleType(type)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
                 </span>
-              )}
+              ))}
               {filterBarreRoots.map(r => (
                 <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[10px] font-semibold text-indigo-300">
                   Root {r}th

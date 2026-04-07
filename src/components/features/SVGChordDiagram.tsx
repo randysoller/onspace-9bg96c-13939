@@ -101,13 +101,22 @@ function normalizeStandard(chord: ChordData): RenderData {
   const openStrings   = new Set<number>();
   const openDiamonds  = new Set<number>();
 
-  // Track which strings are covered by a barre so we can skip individual dots
+  // Track which strings are covered by a barre so we can skip individual dots.
+  // Only mark strings as barre-covered when the barre spans ≥2 strings;
+  // single-string "barres" (e.g. A-shape root-5) must fall through to the
+  // regular marker path so the root diamond is rendered correctly.
   const barreStrings = new Set<number>();
   const barreFrets   = new Set<number>();
   if (chord.barres) {
     for (const barreFret of chord.barres) {
-      barreFrets.add(barreFret);
-      chord.frets.forEach((f, idx) => { if (f === barreFret) barreStrings.add(idx); });
+      const stringsAtFret = chord.frets
+        .map((f, idx) => ({ f, idx }))
+        .filter(x => x.f === barreFret)
+        .map(x => x.idx);
+      if (stringsAtFret.length >= 2) {
+        barreFrets.add(barreFret);
+        stringsAtFret.forEach(idx => barreStrings.add(idx));
+      }
     }
   }
 

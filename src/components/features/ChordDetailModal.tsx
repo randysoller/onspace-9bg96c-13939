@@ -115,9 +115,12 @@ export default function ChordDetailModal({
           </div>
 
           {/* Diagram Section */}
-          <div className="p-3 flex gap-3 items-start flex-shrink-0">
-            {/* Diagram + tab shifted right so the high-E string edge tracks the play button's right edge */}
-            <div className="flex gap-3 items-start ml-6 flex-shrink-0">
+          <div className="p-3 flex gap-3 items-start flex-shrink-0 overflow-hidden">
+            {/* Scale the diagram+tab block to 85% so barre chord SVGs (wider canvas) fit inside max-w-sm */}
+            <div
+              className="flex gap-3 items-start ml-6"
+              style={{ transform: 'scale(0.85)', transformOrigin: 'top left', marginBottom: '-38px' }}
+            >
             <div className="flex-shrink-0">
               {(chord as any).isCustom ? (
                 <SVGChordDiagram

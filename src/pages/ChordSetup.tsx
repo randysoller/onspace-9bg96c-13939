@@ -405,19 +405,16 @@ export default function ChordSetup() {
   const rootDropdownRef = useRef<HTMLDivElement>(null);
   const positionDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Use keyFilter?.noteName (primitive string) instead of the keyFilter object reference
-  // to ensure value-based dependency comparison in useMemo.
-  // Use a stable primitive sentinel for keyFilter so the memo re-runs on ANY value change,
-  // including when the same key is re-selected after localStorage hydration produces
-  // a new object reference with an identical noteName string.
+  // Use a stable primitive sentinel for keyFilter to ensure value-based
+  // dependency comparison in useMemo — avoids React Object.is reference failures
+  // when Zustand persist/merge creates new KeySignature object references.
   const keyFilterSentinel = keyFilter ? keyFilter.noteName : '__none__';
   const availableCount = useMemo(
     () => getAvailableCount(),
-    // The eslint-disable-next-line comment was removed.
-    // All dependencies should be explicitly listed for react-hooks/exhaustive-deps.
-    [showFavoritesOnly, favoriteIds, categories, chordTypes,
-     barreRoots, keyFilterSentinel, filterPositions.size, filterPositions,
-     activePresetId, presets, getAvailableCount]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [showFavoritesOnly, favoriteIds.size, categories.size, chordTypes.size,
+     barreRoots.size, keyFilterSentinel, filterPositions.size,
+     activePresetId, presets.length, getAvailableCount]
   );
 
   const activePreset = presets.find((p) => p.id === activePresetId);

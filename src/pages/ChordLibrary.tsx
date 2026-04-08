@@ -217,6 +217,13 @@ export default function ChordLibrary() {
     }
   });
 
+  // ── Stable primitive keys for memo + effect dependencies ────────────────────
+  // filterKey (object) and favoriteIds (Set) must NOT go directly into dependency
+  // arrays — React uses Object.is (reference equality) for deps, which fails when
+  // Zustand persist/merge recreates object references on hydration.
+  // Convert both to stable primitives so React compares by VALUE, not reference.
+  const filterKeyDep = filterKey ? filterKey.noteName : '__none__';
+
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
@@ -258,7 +265,8 @@ export default function ChordLibrary() {
     restoredRef.current = true; // prevent restoration from firing later
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
-  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName, showFavoritesOnly]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKeyDep, showFavoritesOnly]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
 
@@ -307,41 +315,47 @@ export default function ChordLibrary() {
     return [...standardChords, ...converted];
   }, [customChords, hiddenStandardChords]);
 
+  // ── Stable favorite IDs dep (Set → sorted string for value comparison) ──────
+  const favoriteIdsDep = useMemo(() => [...favoriteIds].sort().join(','), [favoriteIds]);
+
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
-    // Key filter: same major-scale matching as practiceStore
-    // Pre-compute scaleNotes ONCE per memo execution (not per-chord)
-    const keyRootIdx = filterKey ? NOTE_NAMES.indexOf(filterKey.noteName as string) : -1;
-    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
-    const scaleNotes = keyRootIdx >= 0
-      ? new Set(majorIntervals.map((i) => (keyRootIdx + i) % 12))
-      : null;
+    // Pre-compute key scale notes ONCE (not per-chord)
     const noteBase: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
+    let scaleNotes: Set<number> | null = null;
+    if (filterKey) {
+      const keyRootIdx = NOTE_NAMES.indexOf(filterKey.noteName as string);
+      if (keyRootIdx >= 0) {
+        scaleNotes = new Set(majorIntervals.map((i) => (keyRootIdx + i) % 12));
+      }
+    }
 
-    const result = allChords.filter((chord) => {
+    return allChords.filter((chord) => {
+      // Search
       const searchMatch =
         !searchQuery ||
         chord.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
         chord.name.toLowerCase().includes(searchQuery.toLowerCase());
 
+      // Category
       const categoryMatch =
         filterCategories.length === 0 ||
         filterCategories.includes(chord.category as any);
 
+      // Type
       const typeMatch =
         filterTypes.length === 0 || filterTypes.includes(chord.type as ChordType);
 
+      // Favorites
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
-      // Root string filter
+      // Root string
       const rootStringMatch =
         filterBarreRoots.length === 0 ||
-        (() => {
-          const stringNumber = (6 - chord.rootNoteString) as BarreRoot;
-          return filterBarreRoots.includes(stringNumber);
-        })();
+        filterBarreRoots.includes((6 - chord.rootNoteString) as BarreRoot);
 
-      // Position filter (neck position range)
+      // Position
       let positionMatch = true;
       if (filterPositions.length > 0) {
         positionMatch = false;
@@ -353,14 +367,14 @@ export default function ChordLibrary() {
         }
       }
 
-      // Key filter
+      // Key filter — compare chord root semitone against major scale
       let keyMatch = true;
       if (scaleNotes) {
-        const match = chord.symbol.match(/^([A-G])([#b]?)/);
-        if (match) {
-          let semitone = noteBase[match[1]] ?? -1;
-          if (match[2] === '#') semitone = (semitone + 1) % 12;
-          if (match[2] === 'b') semitone = (semitone + 11) % 12;
+        const m = chord.symbol.match(/^([A-G])([#b]?)/);
+        if (m) {
+          let semitone = noteBase[m[1]] ?? -1;
+          if (m[2] === '#') semitone = (semitone + 1) % 12;
+          if (m[2] === 'b') semitone = (semitone + 11) % 12;
           keyMatch = semitone >= 0 && scaleNotes.has(semitone);
         } else {
           keyMatch = false;
@@ -369,16 +383,11 @@ export default function ChordLibrary() {
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
     });
-    return result;
-  // filterKey?.noteName (primitive string) ensures value-based comparison — prevents stale
-  // reference equality issues when the same KeySignature object is stored across re-renders.
-  // Use a stable string key derived from filterKey so React detects value changes even
-  // when the same KeySignature object reference is stored vs restored from localStorage.
+  // Use primitive deps only — avoids Object.is reference-equality failures with
+  // objects (filterKey) and Sets (favoriteIds) in React 18 concurrent mode.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
-    // Primitive sentinel: changes whenever the key selection changes (null → 'G', 'G' → 'D', etc.)
-    filterKey ? `${filterKey.noteName}` : '__none__',
-    showFavoritesOnly, favoriteIds]);
+      filterKeyDep, showFavoritesOnly, favoriteIdsDep]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

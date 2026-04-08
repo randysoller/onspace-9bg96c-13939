@@ -116,9 +116,8 @@ export default function ChordDetailModal({
 
           {/* Diagram Section */}
           <div className="p-3 flex gap-3 items-start flex-shrink-0">
-            {/* Unified SVGChordDiagram handles both standard and custom chords.
-                 isCustom prop switches the normalisation path; libraryMode enforces
-                 the amber/cyan/white colour scheme in both cases. */}
+            {/* Diagram + tab shifted right so the high-E string edge tracks the play button's right edge */}
+            <div className="flex gap-3 items-start ml-auto flex-shrink-0">
             <div className="flex-shrink-0">
               {(chord as any).isCustom ? (
                 <SVGChordDiagram
@@ -149,7 +148,7 @@ export default function ChordDetailModal({
             </div>
 
             {/* Tablature Notation */}
-            <div className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg flex-shrink-0 self-start mt-9">
+            <div className="bg-white rounded-lg px-3 py-2 pb-3 text-base font-mono shadow-lg flex-shrink-0 self-start mt-9 mr-1">
               {[...chord.frets].reverse().map((fret, idx) => (
                 <div key={idx} className="flex gap-1 items-center py-0.5">
                   <span className="text-zinc-800 font-bold w-3">{REVERSED_STRINGS[idx]}</span>
@@ -164,6 +163,7 @@ export default function ChordDetailModal({
               <div className="text-center text-black font-bold mt-2" style={{ fontSize: '18px' }}>
                 Tab
               </div>
+            </div>
             </div>
           </div>
 

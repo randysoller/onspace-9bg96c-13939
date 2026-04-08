@@ -299,7 +299,7 @@ function SVGChordDiagramBase({
       {/* Base fret label */}
       {baseFret > 1 && (
         <text
-          x={padLeft - config.dotRadius - 3}
+          x={padLeft - config.dotRadius - 11}
           y={fy(1) - fretSpacing / 2}
           textAnchor="end"
           fontSize={config.fretLabelSize}

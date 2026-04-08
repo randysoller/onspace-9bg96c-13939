@@ -405,9 +405,11 @@ export default function ChordSetup() {
   const rootDropdownRef = useRef<HTMLDivElement>(null);
   const positionDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Use keyFilter?.noteName (primitive string) instead of the keyFilter object reference
+  // to ensure value-based dependency comparison in useMemo.
   const availableCount = useMemo(() => getAvailableCount(), [
     showFavoritesOnly, favoriteIds, categories, chordTypes,
-    barreRoots, keyFilter, filterPositions, activePresetId, presets, getAvailableCount,
+    barreRoots, keyFilter?.noteName ?? '', filterPositions.size, filterPositions, activePresetId, presets, getAvailableCount,
   ]);
 
   const activePreset = presets.find((p) => p.id === activePresetId);

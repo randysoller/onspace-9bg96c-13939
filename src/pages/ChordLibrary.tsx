@@ -294,12 +294,19 @@ export default function ChordLibrary() {
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
     // Key filter: same major-scale matching as practiceStore
-    const keyRootIdx = filterKey ? NOTE_NAMES.indexOf(filterKey.noteName) : -1;
+    // Pre-compute scaleNotes ONCE per memo execution (not per-chord)
+    const keyRootIdx = filterKey ? NOTE_NAMES.indexOf(filterKey.noteName as string) : -1;
     const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
     const scaleNotes = keyRootIdx >= 0
       ? new Set(majorIntervals.map((i) => (keyRootIdx + i) % 12))
       : null;
     const noteBase: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+    console.log(
+      '[ChordLibrary] filteredChords memo running | filterKey:', filterKey?.noteName ?? 'null',
+      '| keyRootIdx:', keyRootIdx,
+      '| scaleNotes:', scaleNotes ? [...scaleNotes] : null
+    );
 
     return allChords.filter((chord) => {
       const searchMatch =
@@ -352,7 +359,11 @@ export default function ChordLibrary() {
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
     });
-  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey, showFavoritesOnly, favoriteIds]);
+    // Use filterKey?.noteName (primitive string) as dependency instead of the object reference.
+  // Object.is compares by reference, so using the raw KeySignature object can cause the memo
+  // to NOT re-run when the same key object reference is re-set or when the object is rebuilt
+  // from localStorage persistence. A stable primitive string guarantees value-based comparison.
+  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName ?? '', showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

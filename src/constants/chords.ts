@@ -1583,6 +1583,26 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 12, 14, 14, 12, 12], fingers: [0, 1, 3, 4, 1, 1], baseFret: 12, barres: [12, 14],
     rootString: 5, rootNoteString: 1 },
 
+  // Cb (enharmonic B, fret 2)
+  { id: 'barre-r5-cb-sus2', name: 'Cb Sus2 Root 5 Barre', symbol: 'Cbsus2', category: 'barre', type: 'sus2',
+    frets: [-1, 2, 4, 4, 2, 2], fingers: [0, 1, 3, 4, 1, 1], baseFret: 2, barres: [2, 4],
+    rootString: 5, rootNoteString: 1 },
+
+  // B# (enharmonic C, fret 3)
+  { id: 'barre-r5-bsharp-sus2', name: 'B# Sus2 Root 5 Barre', symbol: 'B#sus2', category: 'barre', type: 'sus2',
+    frets: [-1, 3, 5, 5, 3, 3], fingers: [0, 1, 3, 4, 1, 1], baseFret: 3, barres: [3, 5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Fb (enharmonic Eb, fret 6)
+  { id: 'barre-r5-fb-sus2', name: 'Fb Sus2 Root 5 Barre', symbol: 'Fbsus2', category: 'barre', type: 'sus2',
+    frets: [-1, 6, 8, 8, 6, 6], fingers: [0, 1, 3, 4, 1, 1], baseFret: 6, barres: [6, 8],
+    rootString: 5, rootNoteString: 1 },
+
+  // E# (enharmonic F, fret 8)
+  { id: 'barre-r5-esharp-sus2', name: 'E# Sus2 Root 5 Barre', symbol: 'E#sus2', category: 'barre', type: 'sus2',
+    frets: [-1, 8, 10, 10, 8, 8], fingers: [0, 1, 3, 4, 1, 1], baseFret: 8, barres: [8, 10],
+    rootString: 5, rootNoteString: 1 },
+
   // ============================================================================
   // BARRE CHORDS - Suspended 4 (A-shape, Root 5)
   // Barre at fret N: frets [-1, N, N+2, N+2, N+3, -1], fingers [0,1,3,3,4,0]

@@ -10,7 +10,7 @@ import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
-import { KEY_SIGNATURES, NOTE_NAMES } from '@/constants/scales';
+import { KEY_SIGNATURES } from '@/constants/scales';
 import type { PositionFilter } from '@/stores/chordLibraryStore';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
@@ -24,6 +24,24 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
+
+// Note name → semitone index (constant, defined outside component)
+const NOTE_SEMITONE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+function chordRootSemitone(symbol: string): number {
+  const m = symbol.match(/^([A-G])([#b]?)/);
+  if (!m) return -1;
+  let s = NOTE_SEMITONE[m[1]] ?? -1;
+  if (m[2] === '#') s = (s + 1) % 12;
+  if (m[2] === 'b') s = (s + 11) % 12;
+  return s;
+}
+
+function buildMajorScaleNotes(noteName: string): Set<number> | null {
+  const idx = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'].indexOf(noteName);
+  if (idx < 0) return null;
+  return new Set([0,2,4,5,7,9,11].map(i => (idx + i) % 12));
+}
 
 // ─── ChordCard ─────────────────────────────────────────────────────────────────
 
@@ -218,22 +236,16 @@ export default function ChordLibrary() {
   });
 
   // ── Stable key filter sentinel ────────────────────────────────────────────────
-  // Encodes both the noteName AND display so switching between enharmonic keys
-  // (e.g. D♭ ↔ C♯) is always detected even when noteName is the same string.
   const filterKeyDep = filterKey ? `${filterKey.noteName}|${filterKey.display}` : '';
 
-  // ── Pre-computed scale notes (own memo, clear dep chain) ─────────────────────
-  // By isolating scale-note computation here, filteredChords can depend on the
-  // stable Set reference rather than the filterKey object, eliminating all
-  // Object.is reference-equality issues with the Zustand-persisted object.
-  const NOTE_BASE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  const activeScaleNotes = useMemo((): Set<number> | null => {
-    if (!filterKey) return null;
-    const idx = (NOTE_NAMES as readonly string[]).indexOf(filterKey.noteName);
-    if (idx < 0) return null;
-    return new Set([0, 2, 4, 5, 7, 9, 11].map((i) => (idx + i) % 12));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKeyDep]);
+  // ── Pre-computed scale notes ─────────────────────────────────────────────────
+  // Uses module-level pure functions — no closure over component state, no
+  // reference-equality issues with Zustand-persisted KeySignature objects.
+  const activeScaleNotes = useMemo(
+    () => filterKey ? buildMajorScaleNotes(filterKey.noteName) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filterKeyDep]
+  );
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
@@ -333,58 +345,36 @@ export default function ChordLibrary() {
   const filteredChords = useMemo(() => {
     return allChords.filter((chord) => {
       // Search
-      const searchMatch =
-        !searchQuery ||
-        chord.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        chord.name.toLowerCase().includes(searchQuery.toLowerCase());
-
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!chord.symbol.toLowerCase().includes(q) && !chord.name.toLowerCase().includes(q)) return false;
+      }
       // Category
-      const categoryMatch =
-        filterCategories.length === 0 ||
-        filterCategories.includes(chord.category as any);
-
+      if (filterCategories.length > 0 && !filterCategories.includes(chord.category as any)) return false;
       // Type
-      const typeMatch =
-        filterTypes.length === 0 || filterTypes.includes(chord.type as ChordType);
-
+      if (filterTypes.length > 0 && !filterTypes.includes(chord.type as ChordType)) return false;
       // Favorites
-      const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
-
+      if (showFavoritesOnly && !favoriteIds.has(chord.id)) return false;
       // Root string
-      const rootStringMatch =
-        filterBarreRoots.length === 0 ||
-        filterBarreRoots.includes((6 - chord.rootNoteString) as BarreRoot);
-
+      if (filterBarreRoots.length > 0 && !filterBarreRoots.includes((6 - chord.rootNoteString) as BarreRoot)) return false;
       // Position
-      let positionMatch = true;
       if (filterPositions.length > 0) {
-        positionMatch = false;
-        for (const pos of filterPositions) {
-          if (pos === 'open' && chord.category === 'open') { positionMatch = true; break; }
-          if (pos === 'low' && chord.category !== 'open' && chord.baseFret >= 1 && chord.baseFret <= 4) { positionMatch = true; break; }
-          if (pos === 'mid' && chord.baseFret >= 5 && chord.baseFret <= 8) { positionMatch = true; break; }
-          if (pos === 'high' && chord.baseFret >= 9 && chord.baseFret <= 12) { positionMatch = true; break; }
-        }
+        const pos = filterPositions;
+        const inPos = pos.some(p =>
+          (p === 'open' && chord.category === 'open') ||
+          (p === 'low' && chord.category !== 'open' && chord.baseFret >= 1 && chord.baseFret <= 4) ||
+          (p === 'mid' && chord.baseFret >= 5 && chord.baseFret <= 8) ||
+          (p === 'high' && chord.baseFret >= 9 && chord.baseFret <= 12)
+        );
+        if (!inPos) return false;
       }
-
-      // Key filter — use pre-computed activeScaleNotes (separate memo, no stale closure risk)
-      let keyMatch = true;
+      // Key filter — uses pure module-level function, no stale-closure risk
       if (activeScaleNotes) {
-        const m = chord.symbol.match(/^([A-G])([#b]?)/);
-        if (m) {
-          let semitone = NOTE_BASE[m[1]] ?? -1;
-          if (m[2] === '#') semitone = (semitone + 1) % 12;
-          if (m[2] === 'b') semitone = (semitone + 11) % 12;
-          keyMatch = semitone >= 0 && activeScaleNotes.has(semitone);
-        } else {
-          keyMatch = false;
-        }
+        const semitone = chordRootSemitone(chord.symbol);
+        if (semitone < 0 || !activeScaleNotes.has(semitone)) return false;
       }
-
-      return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
+      return true;
     });
-  // activeScaleNotes is a stable Set reference (changes only when key filter changes)
-  // so it is safe to list directly — no Object.is issues.
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
       activeScaleNotes, showFavoritesOnly, favoriteIdsDep]);
 
@@ -1263,7 +1253,7 @@ export default function ChordLibrary() {
             <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
             {filterKey && (
               <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400">
-                {filterKey.display} Major
+                {filterKey.display} Major — {filteredChords.length} chords
               </span>
             )}
           </div>

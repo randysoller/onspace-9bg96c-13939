@@ -1,11 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { ChordCategory, ChordType, BarreRoot } from '@/types/chord';
+import type { KeySignature } from '@/constants/scales';
+
+export type PositionFilter = 'open' | 'low' | 'mid' | 'high';
 
 interface ChordLibraryState {
   filterCategories: ChordCategory[];
   filterTypes: ChordType[];
   filterBarreRoots: BarreRoot[];
+  filterPositions: PositionFilter[];
+  filterKey: KeySignature | null;
   searchQuery: string;
   activeLibraryPresetId: string | null;
   selectedChordIds: string[];
@@ -18,6 +23,9 @@ interface ChordLibraryState {
   clearTypes: () => void;
   toggleBarreRoot: (root: BarreRoot) => void;
   clearBarreRoots: () => void;
+  togglePosition: (pos: PositionFilter) => void;
+  clearPositions: () => void;
+  setFilterKey: (ks: KeySignature | null) => void;
   setSearchQuery: (q: string) => void;
   setActiveLibraryPreset: (id: string | null) => void;
   toggleChordSelection: (id: string) => void;
@@ -33,6 +41,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
       filterCategories: [],
       filterTypes: [],
       filterBarreRoots: [],
+      filterPositions: [],
+      filterKey: null,
       searchQuery: '',
       activeLibraryPresetId: null,
       selectedChordIds: [],
@@ -88,6 +98,20 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
 
       clearBarreRoots: () => set({ filterBarreRoots: [] }),
 
+      togglePosition: (pos) =>
+        set((state) => {
+          const has = state.filterPositions.includes(pos);
+          return {
+            filterPositions: has
+              ? state.filterPositions.filter((p) => p !== pos)
+              : [...state.filterPositions, pos],
+          };
+        }),
+
+      clearPositions: () => set({ filterPositions: [] }),
+
+      setFilterKey: (ks) => set({ filterKey: ks }),
+
       setSearchQuery: (q) => set({ searchQuery: q }),
 
       setActiveLibraryPreset: (id) => set({ activeLibraryPresetId: id }),
@@ -113,6 +137,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
           filterCategories: [],
           filterTypes: [],
           filterBarreRoots: [],
+          filterPositions: [],
+          filterKey: null,
           searchQuery: '',
           activeLibraryPresetId: null,
         }),
@@ -123,6 +149,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
         filterCategories: state.filterCategories,
         filterTypes: state.filterTypes,
         filterBarreRoots: state.filterBarreRoots,
+        filterPositions: state.filterPositions,
+        filterKey: state.filterKey,
         searchQuery: state.searchQuery,
         activeLibraryPresetId: state.activeLibraryPresetId,
         selectedChordIds: state.selectedChordIds,
@@ -135,6 +163,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
               filterCategories: persisted.filterCategories ?? [],
               filterTypes: persisted.filterTypes ?? [],
               filterBarreRoots: persisted.filterBarreRoots ?? [],
+              filterPositions: persisted.filterPositions ?? [],
+              filterKey: persisted.filterKey ?? null,
               searchQuery: persisted.searchQuery ?? '',
               activeLibraryPresetId: persisted.activeLibraryPresetId ?? null,
               selectedChordIds: persisted.selectedChordIds ?? [],

@@ -4,11 +4,14 @@ import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, MousePointer, Save, Heart, Edit,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
-  CheckCircle2, Pencil, X,
+  CheckCircle2, Pencil, X, KeyRound, MapPin,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
+import type { KeySignature } from '@/constants/scales';
+import { KEY_SIGNATURES, NOTE_NAMES } from '@/constants/scales';
+import type { PositionFilter } from '@/stores/chordLibraryStore';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
 import { useChordAudio } from '@/hooks/useChordAudio';
@@ -174,6 +177,11 @@ export default function ChordLibrary() {
     toggleType: storeToggleType,
     toggleBarreRoot: storeToggleBarreRoot,
     clearBarreRoots: storeClearBarreRoots,
+    filterPositions,
+    togglePosition: storeTogglePosition,
+    clearPositions: storeClearPositions,
+    filterKey,
+    setFilterKey,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
@@ -285,6 +293,14 @@ export default function ChordLibrary() {
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
+    // Key filter: same major-scale matching as practiceStore
+    const keyRootIdx = filterKey ? NOTE_NAMES.indexOf(filterKey.noteName) : -1;
+    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
+    const scaleNotes = keyRootIdx >= 0
+      ? new Set(majorIntervals.map((i) => (keyRootIdx + i) % 12))
+      : null;
+    const noteBase: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
     return allChords.filter((chord) => {
       const searchMatch =
         !searchQuery ||
@@ -300,19 +316,43 @@ export default function ChordLibrary() {
 
       const favoriteMatch = !showFavoritesOnly || favoriteIds.has(chord.id);
 
-      // Root string filter: only applies when filterBarreRoots is non-empty
-      // Maps rootNoteString (0-indexed) to guitar string number (1=high e, 6=low E)
+      // Root string filter
       const rootStringMatch =
         filterBarreRoots.length === 0 ||
         (() => {
-          // rootNoteString: 0=low E (6th), 1=A (5th), 2=D (4th), 3=G (3rd), 4=B (2nd), 5=high e (1st)
           const stringNumber = (6 - chord.rootNoteString) as BarreRoot;
           return filterBarreRoots.includes(stringNumber);
         })();
 
-      return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch;
+      // Position filter (neck position range)
+      let positionMatch = true;
+      if (filterPositions.length > 0) {
+        positionMatch = false;
+        for (const pos of filterPositions) {
+          if (pos === 'open' && chord.category === 'open') { positionMatch = true; break; }
+          if (pos === 'low' && chord.category !== 'open' && chord.baseFret >= 1 && chord.baseFret <= 4) { positionMatch = true; break; }
+          if (pos === 'mid' && chord.baseFret >= 5 && chord.baseFret <= 8) { positionMatch = true; break; }
+          if (pos === 'high' && chord.baseFret >= 9 && chord.baseFret <= 12) { positionMatch = true; break; }
+        }
+      }
+
+      // Key filter
+      let keyMatch = true;
+      if (scaleNotes) {
+        const match = chord.symbol.match(/^([A-G])([#b]?)/);
+        if (match) {
+          let semitone = noteBase[match[1]] ?? -1;
+          if (match[2] === '#') semitone = (semitone + 1) % 12;
+          if (match[2] === 'b') semitone = (semitone + 11) % 12;
+          keyMatch = semitone >= 0 && scaleNotes.has(semitone);
+        } else {
+          keyMatch = false;
+        }
+      }
+
+      return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
     });
-  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, showFavoritesOnly, favoriteIds]);
+  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey, showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -439,6 +479,10 @@ export default function ChordLibrary() {
   const rootMenuRef = useRef<HTMLDivElement>(null);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const typeMenuRef = useRef<HTMLDivElement>(null);
+  const [showPositionMenu, setShowPositionMenu] = useState(false);
+  const positionMenuRef = useRef<HTMLDivElement>(null);
+  const [showKeyMenu, setShowKeyMenu] = useState(false);
+  const keyMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menus on outside click
   useEffect(() => {
@@ -448,6 +492,12 @@ export default function ChordLibrary() {
       }
       if (typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
         setShowTypeMenu(false);
+      }
+      if (positionMenuRef.current && !positionMenuRef.current.contains(e.target as Node)) {
+        setShowPositionMenu(false);
+      }
+      if (keyMenuRef.current && !keyMenuRef.current.contains(e.target as Node)) {
+        setShowKeyMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -806,9 +856,9 @@ export default function ChordLibrary() {
           {/* Row 1: All + Category */}
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
-              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); setShowFavoritesOnly(false); }}
+              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setFilterKey(null); setShowFavoritesOnly(false); }}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
-                filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && !showFavoritesOnly
+                filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !filterKey && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
@@ -995,10 +1045,142 @@ export default function ChordLibrary() {
                 </span>
               )}
             </button>
+
+            {/* Position filter — multi-select dropdown pill */}
+            <div className="relative" ref={positionMenuRef}>
+              <button
+                onClick={() => setShowPositionMenu((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  filterPositions.length > 0
+                    ? 'bg-sky-500 text-white border border-sky-500'
+                    : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                <MapPin className="w-3 h-3" />
+                {filterPositions.length > 0
+                  ? filterPositions.length === 1
+                    ? { open: 'Open', low: 'Low', mid: 'Mid', high: 'High' }[filterPositions[0]]
+                    : `${filterPositions.length} Positions`
+                  : 'Position'}
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
+                  showPositionMenu ? 'rotate-180' : ''
+                }`} />
+              </button>
+
+              {showPositionMenu && (
+                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[180px] overflow-hidden">
+                  <div className="px-3 pt-2.5 pb-1">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
+                  </div>
+                  {([
+                    { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
+                    { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
+                    { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
+                    { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
+                  ]).map(({ value, label, sub }) => {
+                    const isActive = filterPositions.includes(value);
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => storeTogglePosition(value)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                          isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
+                        }`}
+                      >
+                        <div>
+                          <div>{label}</div>
+                          <div className="text-[10px] font-normal text-zinc-500">{sub}</div>
+                        </div>
+                        {isActive && (
+                          <svg className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filterPositions.length > 0 && (
+                    <>
+                      <div className="mx-3 border-t border-zinc-800" />
+                      <button
+                        onClick={() => { storeClearPositions(); setShowPositionMenu(false); }}
+                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                      >
+                        Clear position filter
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Key filter — single-select dropdown pill */}
+            <div className="relative" ref={keyMenuRef}>
+              <button
+                onClick={() => setShowKeyMenu((prev) => !prev)}
+                className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                  filterKey
+                    ? 'bg-emerald-500 text-white border border-emerald-500'
+                    : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
+                }`}
+              >
+                <KeyRound className="w-3 h-3" />
+                {filterKey ? `${filterKey.display} Major` : 'Key'}
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
+                  showKeyMenu ? 'rotate-180' : ''
+                }`} />
+              </button>
+
+              {showKeyMenu && (
+                <div className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-72 max-h-72 overflow-y-auto">
+                  <div className="px-3 pt-2.5 pb-1">
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Major Key</p>
+                  </div>
+                  <button
+                    onClick={() => { setFilterKey(null); setShowKeyMenu(false); }}
+                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                      !filterKey ? 'text-emerald-300 bg-emerald-500/15' : 'text-zinc-300 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <span>All Keys</span>
+                    {!filterKey && (
+                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className="mx-3 border-t border-zinc-800" />
+                  {KEY_SIGNATURES.map((ks) => {
+                    const isActive = filterKey?.display === ks.display;
+                    return (
+                      <button
+                        key={ks.display}
+                        onClick={() => { setFilterKey(ks); setShowKeyMenu(false); }}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                          isActive ? 'text-emerald-300 bg-emerald-500/15' : 'text-zinc-300 hover:bg-zinc-800'
+                        }`}
+                      >
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-bold min-w-[32px]">{ks.display}</span>
+                          <span className="text-[10px] font-normal text-zinc-500">
+                            {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
+                          </span>
+                        </div>
+                        {isActive && (
+                          <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Active filter summary badges */}
-          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterTypes.length > 0 || showFavoritesOnly) && (
+          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterTypes.length > 0 || filterPositions.length > 0 || filterKey || showFavoritesOnly) && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {filterCategories.map(cat => (
                 <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] font-semibold text-zinc-300">
@@ -1018,6 +1200,18 @@ export default function ChordLibrary() {
                   <button onClick={() => storeToggleBarreRoot(r)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
                 </span>
               ))}
+              {filterPositions.map(pos => (
+                <span key={pos} className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-500/20 border border-sky-500/30 rounded-full text-[10px] font-semibold text-sky-300">
+                  {{ open: 'Open', low: 'Low (1–4)', mid: 'Mid (5–8)', high: 'High (9–12)' }[pos]}
+                  <button onClick={() => storeTogglePosition(pos)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              ))}
+              {filterKey && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-semibold text-emerald-300">
+                  {filterKey.display} Major
+                  <button onClick={() => setFilterKey(null)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
+                </span>
+              )}
               {showFavoritesOnly && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-semibold text-rose-300">
                   Favorites

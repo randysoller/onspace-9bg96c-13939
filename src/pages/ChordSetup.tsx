@@ -539,7 +539,7 @@ export default function ChordSetup() {
                 <button
                   onClick={clearAll}
                   className={`${basePill} ${
-                    categories.size === 0 && chordTypes.size === 0 && barreRoots.size === 0 && !keyFilter && !showFavoritesOnly
+                    categories.size === 0 && chordTypes.size === 0 && barreRoots.size === 0 && filterPositions.size === 0 && !keyFilter && !showFavoritesOnly
                       ? 'bg-[hsl(var(--color-primary))] text-white border-[hsl(var(--color-primary))]'
                       : inactivePill
                   }`}
@@ -941,6 +941,14 @@ export default function ChordSetup() {
                         <span className="text-[hsl(var(--text-subtle))]">Root String</span>
                         <span className="text-[hsl(var(--text-default))] font-medium">
                           {[...barreRoots].map((r) => `${r}th`).join(', ')}
+                        </span>
+                      </div>
+                    )}
+                    {filterPositions.size > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-[hsl(var(--text-subtle))]">Position</span>
+                        <span className="text-[hsl(var(--text-default))] font-medium">
+                          {[...filterPositions].map(p => ({ open: 'Open', low: 'Low (1–4)', mid: 'Mid (5–8)', high: 'High (9–12)' }[p])).join(', ')}
                         </span>
                       </div>
                     )}

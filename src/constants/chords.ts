@@ -1604,8 +1604,18 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 2, 4, 4, 5, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 2, barres: [2, 4],
     rootString: 5, rootNoteString: 1 },
 
+  // B  (fret 2) — Cb enharmonic
+  { id: 'barre-r5-cb-sus4', name: 'Cb Suspended 4 Root 5 Barre', symbol: 'Cbsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 2, 4, 4, 5, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 2, barres: [2, 4],
+    rootString: 5, rootNoteString: 1 },
+
   // C  (fret 3)
   { id: 'barre-r5-c-sus4', name: 'C Suspended 4 Root 5 Barre', symbol: 'Csus4', category: 'barre', type: 'sus4',
+    frets: [-1, 3, 5, 5, 6, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 3, barres: [3, 5],
+    rootString: 5, rootNoteString: 1 },
+
+  // C  (fret 3) — B# enharmonic
+  { id: 'barre-r5-bsharp-sus4', name: 'B# Suspended 4 Root 5 Barre', symbol: 'B#sus4', category: 'barre', type: 'sus4',
     frets: [-1, 3, 5, 5, 6, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 3, barres: [3, 5],
     rootString: 5, rootNoteString: 1 },
 
@@ -1630,6 +1640,11 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 6, 8, 8, 9, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 6, barres: [6, 8],
     rootString: 5, rootNoteString: 1 },
 
+  // Eb / D#  (fret 6) — Fb enharmonic
+  { id: 'barre-r5-fb-sus4', name: 'Fb Suspended 4 Root 5 Barre', symbol: 'Fbsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 6, 8, 8, 9, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 6, barres: [6, 8],
+    rootString: 5, rootNoteString: 1 },
+
   // E  (fret 7)
   { id: 'barre-r5-e-sus4', name: 'E Suspended 4 Root 5 Barre', symbol: 'Esus4', category: 'barre', type: 'sus4',
     frets: [-1, 7, 9, 9, 10, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 7, barres: [7, 9],
@@ -1637,6 +1652,11 @@ export const CHORD_DATABASE: ChordData[] = [
 
   // F  (fret 8)
   { id: 'barre-r5-f-sus4', name: 'F Suspended 4 Root 5 Barre', symbol: 'Fsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 8, 10, 10, 11, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 8, barres: [8, 10],
+    rootString: 5, rootNoteString: 1 },
+
+  // F  (fret 8) — E# enharmonic
+  { id: 'barre-r5-esharp-sus4', name: 'E# Suspended 4 Root 5 Barre', symbol: 'E#sus4', category: 'barre', type: 'sus4',
     frets: [-1, 8, 10, 10, 11, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 8, barres: [8, 10],
     rootString: 5, rootNoteString: 1 },
 

@@ -120,10 +120,10 @@ function filterChords(
     // Type filter
     const matchType = types.size === 0 || types.has(chord.type);
     
-    // Root string filter (only applies when barre/movable selected or all categories shown)
-    const hasRootFilter = categories.has('barre') || categories.has('movable') || allCats;
-    const matchRoot =
-      allRoots || !hasRootFilter || !chord.rootString || barreRoots.has(chord.rootString);
+    // Root string filter — derive string number from rootNoteString (always present)
+    // rootNoteString: 0=low E (6th), 1=A (5th), 2=D (4th), matching ChordLibrary logic
+    const derivedRootString = (6 - chord.rootNoteString) as BarreRoot;
+    const matchRoot = allRoots || barreRoots.has(derivedRootString);
     
     // Key filter (major scale matching)
     let matchKey = true;

@@ -18,7 +18,9 @@ export interface ChordData {
   frets: number[];        // length 6, index 0=low E, 5=high E. -1 = muted
   fingers: number[];      // fingering indicators
   baseFret: number;       // position on neck (1 = open position)
-  barres?: number[];      // fret numbers that are barred
+  barres?: number[];      // fret numbers that are barred (auto-spans all strings at that fret)
+  /** Explicit partial barre segments — use when a barre bar must NOT span the full string set at a fret */
+  partialBarres?: { fret: number; fromString: number; toString: number }[];
   rootString?: BarreRoot; // which string group the root is on
   rootNoteString: number; // 0-indexed string where root note lives (0=low E, 5=high E)
 }

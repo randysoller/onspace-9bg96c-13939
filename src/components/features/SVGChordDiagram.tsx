@@ -148,7 +148,7 @@ function normalizeStandard(chord: ChordData): RenderData {
     }
   }
 
-  // Barres
+  // Barres (auto-span: all strings at that fret)
   const barres: RenderBarre[] = [];
   for (const barreFret of chord.barres ?? []) {
     const strings = chord.frets
@@ -178,6 +178,18 @@ function normalizeStandard(chord: ChordData): RenderData {
       fret: relativeFret,
       fromString,
       toString,
+      color: LIB_BARRE_COLOR,
+    });
+  }
+
+  // Partial barres — explicit string range, no auto-spanning
+  for (const pb of chord.partialBarres ?? []) {
+    const relativeFret = pb.fret - baseFret + 1;
+    if (relativeFret < 1 || relativeFret > numFrets) continue;
+    barres.push({
+      fret: relativeFret,
+      fromString: pb.fromString,
+      toString:   pb.toString,
       color: LIB_BARRE_COLOR,
     });
   }

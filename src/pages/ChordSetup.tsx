@@ -1,3 +1,4 @@
+
 /**
  * Chord Setup Page — Complete practice configuration UI
  *
@@ -17,6 +18,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePracticeStore } from '@/stores/practiceStore';
+import type { PositionFilter } from '@/stores/practiceStore';
 import { usePresetStore } from '@/stores/presetStore';
 import { CATEGORY_LABELS, CHORD_TYPE_LABELS, BARRE_ROOT_LABELS } from '@/types/chord';
 import type { ChordCategory, ChordType, BarreRoot } from '@/types/chord';
@@ -36,6 +38,7 @@ import {
   Check,
   Bookmark,
   Heart,
+  MapPin,
 } from 'lucide-react';
 import PresetDropdown from '@/components/features/PresetDropdown';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
@@ -377,11 +380,12 @@ export default function ChordSetup() {
   const navigate = useNavigate();
 
   const {
-    categories, chordTypes, barreRoots, keyFilter,
+    categories, chordTypes, barreRoots, keyFilter, filterPositions,
     activePresetId, showFavoritesOnly,
     toggleCategory, clearCategories,
     toggleChordType, clearChordTypes,
     toggleBarreRoot, clearBarreRoots,
+    togglePosition, clearPositions,
     setKeyFilter, setActivePreset, setShowFavoritesOnly,
     startPractice, getAvailableCount,
   } = usePracticeStore();
@@ -392,17 +396,18 @@ export default function ChordSetup() {
   const presetStore = usePresetStore();
   const presets = presetStore.presets;
 
-  type SheetId = 'key' | 'type' | 'root' | null;
+  type SheetId = 'key' | 'type' | 'root' | 'position' | null;
   const [activeSheet, setActiveSheet] = useState<SheetId>(null);
 
   // Refs for desktop dropdowns (category is now direct pills — no dropdown ref needed)
   const keyDropdownRef  = useRef<HTMLDivElement>(null);
   const typeDropdownRef = useRef<HTMLDivElement>(null);
   const rootDropdownRef = useRef<HTMLDivElement>(null);
+  const positionDropdownRef = useRef<HTMLDivElement>(null);
 
   const availableCount = useMemo(() => getAvailableCount(), [
     showFavoritesOnly, favoriteIds, categories, chordTypes,
-    barreRoots, keyFilter, activePresetId, presets, getAvailableCount,
+    barreRoots, keyFilter, filterPositions, activePresetId, presets, getAvailableCount,
   ]);
 
   const activePreset = presets.find((p) => p.id === activePresetId);
@@ -444,7 +449,7 @@ export default function ChordSetup() {
   };
 
   const clearAll = () => {
-    clearCategories(); clearChordTypes(); clearBarreRoots();
+    clearCategories(); clearChordTypes(); clearBarreRoots(); clearPositions();
     setKeyFilter(null); setActivePreset(null); setShowFavoritesOnly(false);
   };
 
@@ -453,7 +458,7 @@ export default function ChordSetup() {
     if (!activeSheet || typeof window === 'undefined') return;
     if (window.innerWidth < 640) return;
     const refs: Record<string, React.RefObject<HTMLDivElement>> = {
-      key: keyDropdownRef, type: typeDropdownRef, root: rootDropdownRef,
+      key: keyDropdownRef, type: typeDropdownRef, root: rootDropdownRef, position: positionDropdownRef,
     };
     const handleClickOutside = (e: MouseEvent) => {
       const ref = refs[activeSheet];
@@ -579,7 +584,7 @@ export default function ChordSetup() {
                 </button>
               </div>
 
-              {/* Row 2: Key, Type, Root, Favs */}
+              {/* Row 2: Key, Type, Root, Position, Favs */}
               <div className="flex gap-1.5 flex-wrap">
 
                 {/* Key Chip */}
@@ -653,6 +658,10 @@ export default function ChordSetup() {
                     <ChevronDown className={`size-3 transition-transform duration-200 ${activeSheet === 'root' ? 'rotate-180' : ''}`} />
                   </button>
                   <AnimatePresence>
+                    {/* The `activeSheet === 'position'` block was incorrectly placed here.
+                        It should only render if activeSheet is 'position',
+                        and `rootDropdownRef` is only for the 'root' dropdown.
+                        Removed it from here. */}
                     {activeSheet === 'root' && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -697,6 +706,79 @@ export default function ChordSetup() {
                   </AnimatePresence>
                 </div>
 
+                {/* Position Chip */}
+                <div className="relative" ref={positionDropdownRef}>
+                  <button
+                    onClick={() => toggleSheet('position')}
+                    className={`${basePill} ${
+                      filterPositions.size > 0
+                        ? 'bg-sky-500/20 text-sky-400 border-sky-500/50'
+                        : inactivePill
+                    }`}
+                  >
+                    <MapPin className="size-3" />
+                    {filterPositions.size > 0
+                      ? filterPositions.size === 1
+                        ? { open: 'Open', low: 'Low', mid: 'Mid', high: 'High' }[[...filterPositions][0]]
+                        : `${filterPositions.size} Positions`
+                      : 'Position'}
+                    <ChevronDown className={`size-3 transition-transform duration-200 ${activeSheet === 'position' ? 'rotate-180' : ''}`} />
+                  </button>
+                  <AnimatePresence>
+                    {activeSheet === 'position' && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        className="hidden sm:block absolute left-0 top-full mt-2 w-56 rounded-xl border border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                      >
+                        <div className="px-3 pt-2.5 pb-1">
+                          <p className="text-[10px] font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Neck Position</p>
+                        </div>
+                        {([
+                          { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
+                          { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
+                          { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
+                          { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
+                        ]).map(({ value, label, sub }) => {
+                          const isActive = filterPositions.has(value);
+                          return (
+                            <button
+                              key={value}
+                              onClick={() => togglePosition(value)}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold transition-colors ${
+                                isActive
+                                  ? 'text-sky-400 bg-sky-500/15'
+                                  : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                              }`}
+                            >
+                              <div>
+                                <div>{label}</div>
+                                <div className="text-[10px] font-normal text-[hsl(var(--text-muted))]">{sub}</div>
+                              </div>
+                              {isActive && (
+                                <svg className="size-3.5 text-sky-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </button>
+                          );
+                        })}
+                        {filterPositions.size > 0 && (
+                          <>
+                            <div className="mx-3 border-t border-[hsl(var(--border-subtle))]" />
+                            <button
+                              onClick={() => { clearPositions(); setActiveSheet(null); }}
+                              className="w-full text-left px-3 py-2 text-[10px] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))] transition-colors"
+                            >
+                              Clear position filter
+                            </button>
+                          </>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
                 {/* Favorites Chip */}
                 <button
                   onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
@@ -724,7 +806,7 @@ export default function ChordSetup() {
           <div className="mb-4 sm:mb-6">
 
             {/* Active filter badges — appear before chord count, matching ChordLibrary pattern */}
-            {!isPresetMode && (keyFilter || categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || showFavoritesOnly) && (
+            {!isPresetMode && (keyFilter || categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || filterPositions.size > 0 || showFavoritesOnly) && (
               <div className="flex flex-wrap items-center gap-1.5 mb-3">
                 {showFavoritesOnly && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-body font-semibold text-rose-300">
@@ -762,6 +844,12 @@ export default function ChordSetup() {
                   <span key={root} className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[10px] font-body font-semibold text-indigo-300">
                     Root {root}th
                     <button onClick={() => toggleBarreRoot(root)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
+                ))}
+                {[...filterPositions].map((pos) => (
+                  <span key={pos} className="inline-flex items-center gap-1 px-2 py-0.5 bg-sky-500/20 border border-sky-500/30 rounded-full text-[10px] font-body font-semibold text-sky-300">
+                    {{ open: 'Open', low: 'Low (1–4)', mid: 'Mid (5–8)', high: 'High (9–12)' }[pos]}
+                    <button onClick={() => togglePosition(pos)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
                   </span>
                 ))}
                 <button onClick={clearAll} className="text-[10px] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))] underline underline-offset-2 transition-colors">
@@ -921,7 +1009,7 @@ export default function ChordSetup() {
               </div>
               <div className="px-4 pb-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between">
                 <h3 className="font-display font-bold text-base text-[hsl(var(--text-default))]">
-                  {activeSheet === 'key' ? 'Select Key' : activeSheet === 'root' ? 'Root String' : 'Chord Type'}
+                  {activeSheet === 'key' ? 'Select Key' : activeSheet === 'root' ? 'Root String' : activeSheet === 'position' ? 'Neck Position' : 'Chord Type'}
                 </h3>
                 <div className="flex items-center gap-2">
                   {activeSheet === 'type' && chordTypes.size > 0 && (
@@ -929,6 +1017,9 @@ export default function ChordSetup() {
                   )}
                   {activeSheet === 'root' && barreRoots.size > 0 && (
                     <button onClick={clearBarreRoots} className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2">Clear</button>
+                  )}
+                  {activeSheet === 'position' && filterPositions.size > 0 && (
+                    <button onClick={clearPositions} className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2">Clear</button>
                   )}
                   <button onClick={() => setActiveSheet(null)} className="size-7 flex items-center justify-center text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] transition-colors">
                     <X className="size-4" />
@@ -941,6 +1032,40 @@ export default function ChordSetup() {
                 )}
                 {activeSheet === 'type' && (
                   <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={true} />
+                )}
+                {activeSheet === 'position' && (
+                  <div>
+                    <div className="px-4 pt-3 pb-1">
+                      <p className="text-[10px] font-body font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Neck Position</p>
+                    </div>
+                    {([
+                      { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
+                      { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
+                      { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
+                      { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
+                    ]).map(({ value, label, sub }) => {
+                      const isActive = filterPositions.has(value);
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => togglePosition(value)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-body font-medium transition-colors ${
+                            isActive ? 'text-sky-400 bg-sky-500/15' : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                          }`}
+                        >
+                          <div className={`size-5 rounded border flex items-center justify-center shrink-0 ${
+                            isActive ? 'bg-sky-500 border-sky-500' : 'border-[hsl(var(--border-default))]'
+                          }`}>
+                            {isActive && <Check className="size-3 text-white" />}
+                          </div>
+                          <div>
+                            <div>{label}</div>
+                            <div className="text-xs text-[hsl(var(--text-muted))]">{sub}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
                 {activeSheet === 'root' && (
                   <div>

@@ -9,6 +9,8 @@ import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordCategory, ChordType, BarreRoot } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
 import { NOTE_NAMES } from '@/constants/scales';
+
+export type PositionFilter = 'open' | 'low' | 'mid' | 'high';
 import { useCustomChordStore } from './customChordStore';
 import { usePresetStore } from './presetStore';
 import { useChordFavoritesStore } from './chordFavoritesStore';
@@ -22,6 +24,7 @@ interface PracticeState {
   chordTypes: Set<ChordType>;
   barreRoots: Set<BarreRoot>;
   keyFilter: KeySignature | null;
+  filterPositions: Set<PositionFilter>;
   activePresetId: string | null;
   timerDuration: TimerDuration;
   showFavoritesOnly: boolean;
@@ -41,6 +44,8 @@ interface PracticeState {
   toggleBarreRoot: (root: BarreRoot) => void;
   clearBarreRoots: () => void;
   setKeyFilter: (ks: KeySignature | null) => void;
+  togglePosition: (pos: PositionFilter) => void;
+  clearPositions: () => void;
   setActivePreset: (id: string | null) => void;
   setTimerDuration: (duration: TimerDuration) => void;
   setShowFavoritesOnly: (value: boolean) => void;
@@ -105,7 +110,8 @@ function filterChords(
   types: Set<ChordType>,
   barreRoots: Set<BarreRoot>,
   keyFilter: KeySignature | null,
-  showFavoritesOnly: boolean = false
+  showFavoritesOnly: boolean = false,
+  filterPositions: Set<PositionFilter> = new Set()
 ): ChordData[] {
   const favoriteIds = showFavoritesOnly
     ? useChordFavoritesStore.getState().favoriteIds
@@ -135,9 +141,21 @@ function filterChords(
       matchKey = chordRoot >= 0 && scaleNotes.has(chordRoot);
     }
     
+    // Position filter (neck position range)
+    let matchPosition = true;
+    if (filterPositions.size > 0) {
+      matchPosition = false;
+      for (const pos of filterPositions) {
+        if (pos === 'open' && chord.category === 'open') { matchPosition = true; break; }
+        if (pos === 'low' && chord.category !== 'open' && chord.baseFret >= 1 && chord.baseFret <= 4) { matchPosition = true; break; }
+        if (pos === 'mid' && chord.baseFret >= 5 && chord.baseFret <= 8) { matchPosition = true; break; }
+        if (pos === 'high' && chord.baseFret >= 9 && chord.baseFret <= 12) { matchPosition = true; break; }
+      }
+    }
+
     const matchFavorite = !favoriteIds || favoriteIds.has(chord.id);
 
-    return matchCategory && matchType && matchRoot && matchKey && matchFavorite;
+    return matchCategory && matchType && matchRoot && matchKey && matchFavorite && matchPosition;
   });
 }
 
@@ -149,6 +167,7 @@ export const usePracticeStore = create<PracticeState>()(
       chordTypes: new Set<ChordType>(),
       barreRoots: new Set<BarreRoot>(),
       keyFilter: null,
+      filterPositions: new Set<PositionFilter>(),
       activePresetId: null,
       timerDuration: 0,
       showFavoritesOnly: false,
@@ -230,7 +249,23 @@ export const usePracticeStore = create<PracticeState>()(
       setKeyFilter: (ks) => {
         set({ keyFilter: ks, activePresetId: null });
       },
-      
+
+      togglePosition: (pos) => {
+        set((state) => {
+          const filterPositions = new Set(state.filterPositions);
+          if (filterPositions.has(pos)) {
+            filterPositions.delete(pos);
+          } else {
+            filterPositions.add(pos);
+          }
+          return { filterPositions, activePresetId: null };
+        });
+      },
+
+      clearPositions: () => {
+        set({ filterPositions: new Set<PositionFilter>(), activePresetId: null });
+      },
+
       setActivePreset: (id) => {
         set({ activePresetId: id });
       },
@@ -258,7 +293,7 @@ export const usePracticeStore = create<PracticeState>()(
           }
         } else {
           // Otherwise, use manual filters
-          filtered = filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly);
+          filtered = filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly, state.filterPositions);
         }
         
         const shuffled = shuffleArray(filtered);
@@ -336,7 +371,7 @@ export const usePracticeStore = create<PracticeState>()(
           return 0;
         }
         
-        return filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly).length;
+        return filterChords(state.categories, state.chordTypes, state.barreRoots, state.keyFilter, state.showFavoritesOnly, state.filterPositions).length;
       },
     }),
     {
@@ -346,6 +381,7 @@ export const usePracticeStore = create<PracticeState>()(
         chordTypes: [...state.chordTypes] as ChordType[],
         barreRoots: [...state.barreRoots] as BarreRoot[],
         keyFilter: state.keyFilter,
+        filterPositions: [...state.filterPositions] as PositionFilter[],
         timerDuration: state.timerDuration,
         activePresetId: state.activePresetId,
         showFavoritesOnly: state.showFavoritesOnly,
@@ -358,6 +394,7 @@ export const usePracticeStore = create<PracticeState>()(
               chordTypes: new Set<ChordType>(persisted.chordTypes ?? []),
               barreRoots: new Set<BarreRoot>(persisted.barreRoots ?? []),
               keyFilter: persisted.keyFilter ?? null,
+              filterPositions: new Set<PositionFilter>(persisted.filterPositions ?? []),
               timerDuration: persisted.timerDuration ?? 0,
               activePresetId: persisted.activePresetId ?? null,
               showFavoritesOnly: persisted.showFavoritesOnly ?? false,

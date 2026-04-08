@@ -226,7 +226,9 @@ const SIZE_CONFIGS: Record<'sm' | 'md' | 'lg', SizeConfig> = {
   lg: { width: 214, height: 250, dotRadius: 13,   fontSize: 24, topY: 42, fretLabelSize: 26 },
 };
 
-const STRING_WIDTHS   = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7];
+// Graduated string widths proportional to real guitar string gauges
+// (light gauge .053/.042/.032/.024/.016/.012 → ratios 4.4:3.5:2.7:2.0:1.3:1.0 × 0.7px base)
+const STRING_WIDTHS   = [3.1, 2.5, 1.9, 1.4, 0.9, 0.7];
 const FRET_LABEL_EXTRA: Record<string, number> = { sm: 34, md: 28, lg: 68 };
 // Per-size gap between label right-edge and the first-string left-edge.
 // lg uses a wider gap so the label clears the 6th-string dots comfortably.

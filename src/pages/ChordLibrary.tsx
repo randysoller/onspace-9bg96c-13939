@@ -217,12 +217,23 @@ export default function ChordLibrary() {
     }
   });
 
-  // ── Stable primitive keys for memo + effect dependencies ────────────────────
-  // filterKey (object) and favoriteIds (Set) must NOT go directly into dependency
-  // arrays — React uses Object.is (reference equality) for deps, which fails when
-  // Zustand persist/merge recreates object references on hydration.
-  // Convert both to stable primitives so React compares by VALUE, not reference.
-  const filterKeyDep = filterKey ? filterKey.noteName : '__none__';
+  // ── Stable key filter sentinel ────────────────────────────────────────────────
+  // Encodes both the noteName AND display so switching between enharmonic keys
+  // (e.g. D♭ ↔ C♯) is always detected even when noteName is the same string.
+  const filterKeyDep = filterKey ? `${filterKey.noteName}|${filterKey.display}` : '';
+
+  // ── Pre-computed scale notes (own memo, clear dep chain) ─────────────────────
+  // By isolating scale-note computation here, filteredChords can depend on the
+  // stable Set reference rather than the filterKey object, eliminating all
+  // Object.is reference-equality issues with the Zustand-persisted object.
+  const NOTE_BASE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  const activeScaleNotes = useMemo((): Set<number> | null => {
+    if (!filterKey) return null;
+    const idx = (NOTE_NAMES as readonly string[]).indexOf(filterKey.noteName);
+    if (idx < 0) return null;
+    return new Set([0, 2, 4, 5, 7, 9, 11].map((i) => (idx + i) % 12));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterKeyDep]);
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
@@ -320,17 +331,6 @@ export default function ChordLibrary() {
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
-    // Pre-compute key scale notes ONCE (not per-chord)
-    const noteBase: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
-    let scaleNotes: Set<number> | null = null;
-    if (filterKey) {
-      const keyRootIdx = NOTE_NAMES.indexOf(filterKey.noteName as string);
-      if (keyRootIdx >= 0) {
-        scaleNotes = new Set(majorIntervals.map((i) => (keyRootIdx + i) % 12));
-      }
-    }
-
     return allChords.filter((chord) => {
       // Search
       const searchMatch =
@@ -367,15 +367,15 @@ export default function ChordLibrary() {
         }
       }
 
-      // Key filter — compare chord root semitone against major scale
+      // Key filter — use pre-computed activeScaleNotes (separate memo, no stale closure risk)
       let keyMatch = true;
-      if (scaleNotes) {
+      if (activeScaleNotes) {
         const m = chord.symbol.match(/^([A-G])([#b]?)/);
         if (m) {
-          let semitone = noteBase[m[1]] ?? -1;
+          let semitone = NOTE_BASE[m[1]] ?? -1;
           if (m[2] === '#') semitone = (semitone + 1) % 12;
           if (m[2] === 'b') semitone = (semitone + 11) % 12;
-          keyMatch = semitone >= 0 && scaleNotes.has(semitone);
+          keyMatch = semitone >= 0 && activeScaleNotes.has(semitone);
         } else {
           keyMatch = false;
         }
@@ -383,11 +383,10 @@ export default function ChordLibrary() {
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
     });
-  // Use primitive deps only — avoids Object.is reference-equality failures with
-  // objects (filterKey) and Sets (favoriteIds) in React 18 concurrent mode.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // activeScaleNotes is a stable Set reference (changes only when key filter changes)
+  // so it is safe to list directly — no Object.is issues.
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
-      filterKeyDep, showFavoritesOnly, favoriteIdsDep]);
+      activeScaleNotes, showFavoritesOnly, favoriteIdsDep]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

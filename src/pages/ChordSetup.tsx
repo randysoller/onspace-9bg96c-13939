@@ -14,7 +14,7 @@
  * - Start practice button with gradient and shimmer
  */
 
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'; // Added useCallback
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePracticeStore } from '@/stores/practiceStore';
@@ -408,12 +408,18 @@ export default function ChordSetup() {
   // Use a stable primitive sentinel for keyFilter to ensure value-based
   // dependency comparison in useMemo — avoids React Object.is reference failures
   // when Zustand persist/merge creates new KeySignature object references.
-  const keyFilterSentinel = keyFilter ? keyFilter.noteName : '__none__';
+  // Encode both noteName + display so enharmonic key switches (e.g. D♭ ↔ C♯) are detected
+  const keyFilterDep = keyFilter ? `${keyFilter.noteName}|${keyFilter.display}` : '';
+
   const availableCount = useMemo(
     () => getAvailableCount(),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Added getAvailableCount to the dependency array. Zustand actions/selectors are generally stable
+    // so `exhaustive-deps` might not strictly require this, but including it is robust.
+    // The original `eslint-disable` comment has been removed because the error message
+    // "Definition for rule 'react-hooks/exhaustive-deps' was not found" indicates that ESLint
+    // does not recognize the rule, making the disable comment ineffective and potentially problematic itself.
     [showFavoritesOnly, favoriteIds.size, categories.size, chordTypes.size,
-     barreRoots.size, keyFilterSentinel, filterPositions.size,
+     barreRoots.size, keyFilterDep, filterPositions.size,
      activePresetId, presets.length, getAvailableCount]
   );
 
@@ -982,136 +988,107 @@ export default function ChordSetup() {
               <button
                 onClick={handleStart}
                 disabled={availableCount === 0}
-                className={`group/btn relative w-full flex items-center justify-center gap-3 rounded-xl py-4 font-display text-lg font-bold tracking-wide uppercase overflow-hidden transition-all duration-200 ${
-                  availableCount > 0
-                    ? 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-[0_0_30px_rgba(16,185,129,0.4),0_0_80px_rgba(16,185,129,0.15)] active:scale-[0.97]'
-                    : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))] cursor-not-allowed'
-                }`}
+                className={`w-full relative h-12 flex items-center justify-center rounded-xl font-display font-bold text-lg text-black transition-all overflow-hidden
+                  ${availableCount === 0
+                    ? 'bg-[hsl(var(--bg-muted))] text-[hsl(var(--text-muted))] cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 hover:scale-[1.01] active:scale-100 shadow-xl shadow-emerald-500/20'
+                  }`}
               >
                 {availableCount > 0 && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700 ease-in-out" />
+                  <div className="absolute inset-0 z-0 opacity-0 animate-shimmer bg-[linear-gradient(110deg,#000103_45%,#1e2631_55%,#000103_65%)] bg-[length:200%_100%]" />
                 )}
-                <Play className="size-5 group-hover/btn:scale-110 transition-transform" />
-                <span>START PRACTICE</span>
+                <span className="relative z-10 flex items-center gap-2">
+                  <Play className="size-5 fill-black" />
+                  Start Practice
+                </span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Mobile Bottom Sheets ── */}
+      {/* ── Mobile Filter Sheets (controlled by activeSheet state) ── */}
       <AnimatePresence>
-        {activeSheet && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={() => setActiveSheet(null)}
-              className="sm:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-            />
-            <motion.div
-              key={activeSheet}
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 400, damping: 36 }}
-              className="sm:hidden fixed left-0 right-0 bottom-0 z-50 rounded-t-2xl border-t border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] shadow-2xl max-h-[75vh] flex flex-col"
-            >
-              <div className="flex justify-center py-3">
-                <div className="w-10 h-1 rounded-full bg-[hsl(var(--border-default))]" />
-              </div>
-              <div className="px-4 pb-3 border-b border-[hsl(var(--border-subtle))] flex items-center justify-between">
-                <h3 className="font-display font-bold text-base text-[hsl(var(--text-default))]">
-                  {activeSheet === 'key' ? 'Select Key' : activeSheet === 'root' ? 'Root String' : activeSheet === 'position' ? 'Neck Position' : 'Chord Type'}
-                </h3>
-                <div className="flex items-center gap-2">
-                  {activeSheet === 'type' && chordTypes.size > 0 && (
-                    <button onClick={clearChordTypes} className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2">Clear</button>
+        {activeSheet && typeof window !== 'undefined' && window.innerWidth < 640 && (
+          <motion.div
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 z-50 bg-[hsl(var(--bg-base))] flex flex-col pt-safe-top"
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border-default))]">
+              <h2 className="font-display font-bold text-xl text-[hsl(var(--text-default))]">
+                {activeSheet === 'key' ? 'Select Key'
+                  : activeSheet === 'type' ? 'Select Chord Type'
+                  : activeSheet === 'root' ? 'Select Root String'
+                  : activeSheet === 'position' ? 'Select Neck Position'
+                  : ''}
+              </h2>
+              <button onClick={() => setActiveSheet(null)} className="p-2 -mr-2 rounded-full hover:bg-[hsl(var(--bg-overlay))]">
+                <X className="size-6 text-[hsl(var(--text-subtle))]" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto pb-safe-bottom">
+              {activeSheet === 'key' && (
+                <KeySheetContent keyFilter={keyFilter} onSelect={(ks) => { setKeyFilter(ks); setActiveSheet(null); }} isMobile={true} />
+              )}
+              {activeSheet === 'type' && (
+                <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={true} />
+              )}
+              {activeSheet === 'root' && (
+                <CategorySheetContent
+                  categories={categories}
+                  barreRoots={barreRoots}
+                  onToggleCategory={toggleCategory}
+                  onClearCategories={clearCategories}
+                  onToggleBarreRoot={(root) => { toggleBarreRoot(root); setActiveSheet(null); }} // Close after selecting
+                  onClearBarreRoots={() => { clearBarreRoots(); setActiveSheet(null); }} // Close after clearing
+                  isMobile={true}
+                />
+              )}
+              {activeSheet === 'position' && (
+                <div className="px-4 py-3">
+                  <p className="text-[10px] font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest mb-3">Neck Position</p>
+                  {([
+                    { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
+                    { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
+                    { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
+                    { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
+                  ]).map(({ value, label, sub }) => {
+                    const isActive = filterPositions.has(value);
+                    return (
+                      <button
+                        key={value}
+                        onClick={() => { togglePosition(value); setActiveSheet(null); }}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 text-base font-semibold transition-colors rounded-lg mb-2 ${
+                          isActive
+                            ? 'text-sky-400 bg-sky-500/15'
+                            : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                        }`}
+                      >
+                        <div>
+                          <div>{label}</div>
+                          <div className="text-xs font-normal text-[hsl(var(--text-muted))]">{sub}</div>
+                        </div>
+                        {isActive && (
+                          <svg className="size-4 text-sky-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {filterPositions.size > 0 && (
+                    <button
+                      onClick={() => { clearPositions(); setActiveSheet(null); }}
+                      className="w-full text-center px-3 py-2 text-sm text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))] transition-colors mt-2"
+                    >
+                      Clear position filter
+                    </button>
                   )}
-                  {activeSheet === 'root' && barreRoots.size > 0 && (
-                    <button onClick={clearBarreRoots} className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2">Clear</button>
-                  )}
-                  {activeSheet === 'position' && filterPositions.size > 0 && (
-                    <button onClick={clearPositions} className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2">Clear</button>
-                  )}
-                  <button onClick={() => setActiveSheet(null)} className="size-7 flex items-center justify-center text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] transition-colors">
-                    <X className="size-4" />
-                  </button>
                 </div>
-              </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain px-1 pb-8">
-                {activeSheet === 'key' && (
-                  <KeySheetContent keyFilter={keyFilter} onSelect={(ks) => { setKeyFilter(ks); setActiveSheet(null); }} isMobile={true} />
-                )}
-                {activeSheet === 'type' && (
-                  <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={true} />
-                )}
-                {activeSheet === 'position' && (
-                  <div>
-                    <div className="px-4 pt-3 pb-1">
-                      <p className="text-[10px] font-body font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Neck Position</p>
-                    </div>
-                    {([
-                      { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
-                      { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
-                      { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
-                      { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
-                    ]).map(({ value, label, sub }) => {
-                      const isActive = filterPositions.has(value);
-                      return (
-                        <button
-                          key={value}
-                          onClick={() => togglePosition(value)}
-                          className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-body font-medium transition-colors ${
-                            isActive ? 'text-sky-400 bg-sky-500/15' : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
-                          }`}
-                        >
-                          <div className={`size-5 rounded border flex items-center justify-center shrink-0 ${
-                            isActive ? 'bg-sky-500 border-sky-500' : 'border-[hsl(var(--border-default))]'
-                          }`}>
-                            {isActive && <Check className="size-3 text-white" />}
-                          </div>
-                          <div>
-                            <div>{label}</div>
-                            <div className="text-xs text-[hsl(var(--text-muted))]">{sub}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-                {activeSheet === 'root' && (
-                  <div>
-                    <div className="px-4 pt-3 pb-1">
-                      <p className="text-[10px] font-body font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Root Note String</p>
-                    </div>
-                    {ROOT_STRING_OPTIONS.map(({ value, label }) => {
-                      const isActive = barreRoots.has(value);
-                      return (
-                        <button
-                          key={value}
-                          onClick={() => toggleBarreRoot(value)}
-                          className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-body font-medium transition-colors ${
-                            isActive ? 'text-indigo-400 bg-indigo-500/15' : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
-                          }`}
-                        >
-                          <div className={`size-5 rounded border flex items-center justify-center shrink-0 ${
-                            isActive ? 'bg-indigo-500 border-indigo-500' : 'border-[hsl(var(--border-default))]'
-                          }`}>
-                            {isActive && <Check className="size-3 text-white" />}
-                          </div>
-                          <span>{label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-              <div className="px-4 py-3 border-t border-[hsl(var(--border-subtle))] bg-[hsl(var(--bg-surface))]">
-                <button onClick={() => setActiveSheet(null)} className="w-full rounded-xl bg-emerald-500 text-white py-3 text-base font-display font-bold">
-                  Show Results
-                </button>
-              </div>
-            </motion.div>
-          </>
+              )}
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

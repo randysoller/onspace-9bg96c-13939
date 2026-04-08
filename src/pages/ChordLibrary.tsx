@@ -4,14 +4,11 @@ import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, MousePointer, Save, Heart, Edit,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
-  CheckCircle2, Pencil, X, KeyRound, MapPin,
+  CheckCircle2, Pencil, X, MapPin,
 } from 'lucide-react';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
-import type { KeySignature } from '@/constants/scales';
-import { KEY_SIGNATURES } from '@/constants/scales';
-import { chordRootSemitone, buildMajorScaleNotes } from '@/lib/chordFilters';
 import type { PositionFilter } from '@/stores/chordLibraryStore';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
@@ -25,20 +22,6 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
-
-// Sharp/flat note-name arrays for scale pill display (key dropdown only)
-const _SHARP_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const _FLAT_NAMES  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const _CHROMATIC   = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'] as const;
-
-/** Returns the 7 diatonic note names for a major key (sharp or flat spellings). */
-function getMajorScaleNotes(ks: import('@/constants/scales').KeySignature): string[] {
-  const names = ks.useFlats ? _FLAT_NAMES : _SHARP_NAMES;
-  const idx = _CHROMATIC.indexOf(ks.noteName as typeof _CHROMATIC[number]);
-  if (idx < 0) return [];
-  return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
-}
-// chordRootSemitone and buildMajorScaleNotes are imported from @/lib/chordFilters
 
 // ─── ChordCard ─────────────────────────────────────────────────────────────────
 
@@ -123,7 +106,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           </div>
         </div>
 
-          {/* Chord Diagram — SVGChordDiagram handles both standard and custom */}
+        {/* Chord Diagram — SVGChordDiagram handles both standard and custom */}
         <div className="flex-shrink-0">
           {(chord as any).isCustom ? (
             <SVGChordDiagram
@@ -195,8 +178,6 @@ export default function ChordLibrary() {
     filterPositions,
     togglePosition: storeTogglePosition,
     clearPositions: storeClearPositions,
-    filterKey,
-    setFilterKey,
     activeLibraryPresetId,
     setActiveLibraryPreset,
     savedScrollY,
@@ -232,16 +213,9 @@ export default function ChordLibrary() {
     }
   });
 
-  // filterKey is used as a DIRECT useMemo dependency throughout this component.
-  // Zustand always creates a new object reference on setFilterKey() — so
-  // Object.is(prevKey, newKey) === false is guaranteed whenever the key changes.
-  // No sentinel string, no intermediate memo — one object, one source of truth.
-
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
-  // filterChangedRef: set to true when any filter changes so scroll-restoration
-  // skips restoring the old position (filter scroll-to-top takes priority).
   const filterChangedRef = useRef(false);
 
   const getScrollEl = () => document.getElementById('main-content');
@@ -259,8 +233,6 @@ export default function ChordLibrary() {
     };
   }, [setSavedScrollY]);
 
-  // Restore scroll position on mount — but ONLY if no filter change is pending.
-  // Without this guard the restoration overwrites the filter scroll-to-top.
   useEffect(() => {
     if (!savedScrollY || restoredRef.current || filterChangedRef.current) return;
     restoredRef.current = true;
@@ -269,25 +241,23 @@ export default function ChordLibrary() {
     el.scrollTop = savedScrollY;
   }, [savedScrollY]);
 
-  // ── Scroll to top when any filter changes (so user sees updated count + list) ─
+  // ── Scroll to top when any filter changes ───────────────────────────────────
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
-    // Mark that a filter changed — blocks scroll restoration from overriding this.
     filterChangedRef.current = true;
-    restoredRef.current = true; // prevent restoration from firing later
+    restoredRef.current = true;
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey, showFavoritesOnly]);
+  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, showFavoritesOnly]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
 
-  // ── Custom chord store — subscribed so memo re-runs on syncFromSupabase ───────
+  // ── Custom chord store ───────────────────────────────────────────────────────
   const { editStandardChord, editChord, customChords, hiddenStandardChords, syncFromSupabase, syncStatus, lastSyncedAt } = useCustomChordStore();
   const user = useAuthStore(s => s.user);
 
-  // Manual sync button — lets user force-pull from Supabase if library looks stale
   const handleManualSync = async () => {
     if (!user?.id) { toast.error('Sign in to sync your chords'); return; }
     await syncFromSupabase(user.id);
@@ -298,7 +268,6 @@ export default function ChordLibrary() {
     }
   };
 
-  // Format last-synced timestamp as a short relative string
   const syncTimeLabel = lastSyncedAt
     ? (() => {
         const diffMs = Date.now() - lastSyncedAt;
@@ -315,8 +284,6 @@ export default function ChordLibrary() {
   const { playChord } = useChordAudio();
 
   // ── Effective chord list ─────────────────────────────────────────────────────
-  // Built directly from subscribed Zustand values (not getState() snapshot) so
-  // this memo re-runs correctly whenever syncFromSupabase updates the store.
   const allChords = useMemo(() => {
     const replacedIds = new Set(
       customChords.filter(c => c.sourceChordId).map(c => c.sourceChordId!)
@@ -328,16 +295,11 @@ export default function ChordLibrary() {
     return [...standardChords, ...converted];
   }, [customChords, hiddenStandardChords]);
 
-  // ── Stable favorite IDs dep (Set → sorted string for value comparison) ──────
+  // ── Stable favorite IDs dep ──────────────────────────────────────────────────
   const favoriteIdsDep = useMemo(() => [...favoriteIds].sort().join(','), [favoriteIds]);
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
-  // filterKey is listed as a DIRECT dependency — Zustand guarantees a new object
-  // reference on every setFilterKey() call. scaleNotes is computed inline inside
-  // this memo so there is no intermediate memo that could capture a stale closure.
   const filteredChords = useMemo(() => {
-    // Build the diatonic set once per memo run (O(1) per chord check below).
-    const scaleNotes = filterKey ? buildMajorScaleNotes(filterKey.noteName) : null;
     return allChords.filter((chord) => {
       // Search
       if (searchQuery) {
@@ -362,16 +324,10 @@ export default function ChordLibrary() {
         );
         if (!inPos) return false;
       }
-      // Key filter — scaleNotes computed at memo run time, no stale-closure risk.
-      if (scaleNotes) {
-        const semitone = chordRootSemitone(chord.symbol);
-        if (semitone < 0 || !scaleNotes.has(semitone)) return false;
-      }
       return true;
     });
-  // filterKey is the direct Zustand object — new reference on every setFilterKey().
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
-      filterKey, showFavoritesOnly, favoriteIdsDep]);
+      showFavoritesOnly, favoriteIdsDep]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
@@ -500,8 +456,6 @@ export default function ChordLibrary() {
   const typeMenuRef = useRef<HTMLDivElement>(null);
   const [showPositionMenu, setShowPositionMenu] = useState(false);
   const positionMenuRef = useRef<HTMLDivElement>(null);
-  const [showKeyMenu, setShowKeyMenu] = useState(false);
-  const keyMenuRef = useRef<HTMLDivElement>(null);
 
   // Close menus on outside click
   useEffect(() => {
@@ -514,9 +468,6 @@ export default function ChordLibrary() {
       }
       if (positionMenuRef.current && !positionMenuRef.current.contains(e.target as Node)) {
         setShowPositionMenu(false);
-      }
-      if (keyMenuRef.current && !keyMenuRef.current.contains(e.target as Node)) {
-        setShowKeyMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -581,11 +532,8 @@ export default function ChordLibrary() {
               <button
                 onClick={handleManualSync}
                 disabled={syncStatus === 'syncing'}
-                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed
-                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black
-                  "
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
                 style={{
-                  // Dynamic colours via inline style to avoid Tailwind purge issues with dynamic class names
                   ...(syncStatus === 'synced'
                     ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.35)', background: 'rgba(74,222,128,0.08)' }
                     : syncStatus === 'failed'
@@ -688,7 +636,7 @@ export default function ChordLibrary() {
 
           {showPresetMenu && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl shadow-black/60 z-10 overflow-hidden">
-              
+
               <div className="p-3 border-b border-zinc-800">
                 <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1 mb-2">
                   Curated Packs
@@ -875,9 +823,9 @@ export default function ChordLibrary() {
           {/* Row 1: All + Category */}
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
-              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setFilterKey(null); setShowFavoritesOnly(false); }}
+              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setShowFavoritesOnly(false); }}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
-                filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !filterKey && !showFavoritesOnly
+                filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
@@ -917,12 +865,11 @@ export default function ChordLibrary() {
               <Move className="w-3 h-3" />
               Movable
             </button>
-
           </div>
 
-          {/* Row 2: Type, Root, Favs */}
+          {/* Row 2: Type, Root, Favs, Position */}
           <div className="flex gap-1.5 flex-wrap">
-            {/* Type filter — multi-select dropdown pill */}
+            {/* Type filter */}
             <div className="relative" ref={typeMenuRef}>
               <button
                 onClick={() => setShowTypeMenu((prev) => !prev)}
@@ -938,9 +885,7 @@ export default function ChordLibrary() {
                     ? CHORD_TYPE_LABELS[filterTypes[0]]
                     : `${filterTypes.length} Types`
                   : 'Type'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
-                  showTypeMenu ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showTypeMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showTypeMenu && (
@@ -956,9 +901,7 @@ export default function ChordLibrary() {
                           key={type}
                           onClick={() => storeToggleType(type)}
                           className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold transition-colors ${
-                            isActive
-                              ? 'text-amber-300 bg-amber-500/15'
-                              : 'text-zinc-300 hover:bg-zinc-800'
+                            isActive ? 'text-amber-300 bg-amber-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                           }`}
                         >
                           <span>{CHORD_TYPE_LABELS[type]}</span>
@@ -986,7 +929,7 @@ export default function ChordLibrary() {
               )}
             </div>
 
-            {/* Root String filter — custom dropdown pill */}
+            {/* Root String filter */}
             <div className="relative" ref={rootMenuRef}>
               <button
                 onClick={() => setShowRootMenu((prev) => !prev)}
@@ -1000,9 +943,7 @@ export default function ChordLibrary() {
                 {filterBarreRoots.length > 0
                   ? filterBarreRoots.map(r => `${r}th`).join(', ')
                   : 'Root'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
-                  showRootMenu ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showRootMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showRootMenu && (
@@ -1017,9 +958,7 @@ export default function ChordLibrary() {
                         key={value}
                         onClick={() => storeToggleBarreRoot(value)}
                         className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
-                          isActive
-                            ? 'text-indigo-300 bg-indigo-500/15'
-                            : 'text-zinc-300 hover:bg-zinc-800'
+                          isActive ? 'text-indigo-300 bg-indigo-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
                         <span>{label}</span>
@@ -1046,6 +985,7 @@ export default function ChordLibrary() {
               )}
             </div>
 
+            {/* Favorites filter */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
@@ -1065,7 +1005,7 @@ export default function ChordLibrary() {
               )}
             </button>
 
-            {/* Position filter — multi-select dropdown pill */}
+            {/* Position filter */}
             <div className="relative" ref={positionMenuRef}>
               <button
                 onClick={() => setShowPositionMenu((prev) => !prev)}
@@ -1081,9 +1021,7 @@ export default function ChordLibrary() {
                     ? { open: 'Open', low: 'Low', mid: 'Mid', high: 'High' }[filterPositions[0]]
                     : `${filterPositions.length} Positions`
                   : 'Position'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
-                  showPositionMenu ? 'rotate-180' : ''
-                }`} />
+                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showPositionMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showPositionMenu && (
@@ -1132,91 +1070,10 @@ export default function ChordLibrary() {
                 </div>
               )}
             </div>
-
-            {/* Key filter — single-select dropdown pill */}
-            <div className="relative" ref={keyMenuRef}>
-              <button
-                onClick={() => setShowKeyMenu((prev) => !prev)}
-                className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
-                  filterKey
-                    ? 'bg-emerald-500 text-white border border-emerald-500'
-                    : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
-                }`}
-              >
-                <KeyRound className="w-3 h-3" />
-                {filterKey ? `${filterKey.display} Major` : 'Key'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${
-                  showKeyMenu ? 'rotate-180' : ''
-                }`} />
-              </button>
-
-              {showKeyMenu && (
-                <div className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-72 max-h-72 overflow-y-auto">
-                  <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Major Key</p>
-                  </div>
-                  <button
-                    onClick={() => { setFilterKey(null); setShowKeyMenu(false); }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
-                      !filterKey ? 'text-emerald-300 bg-emerald-500/15' : 'text-zinc-300 hover:bg-zinc-800'
-                    }`}
-                  >
-                    <span>All Keys</span>
-                    {!filterKey && (
-                      <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </button>
-                  <div className="mx-3 border-t border-zinc-800" />
-                  {KEY_SIGNATURES.map((ks) => {
-                    const isActive = filterKey?.display === ks.display;
-                    const scaleNotes = getMajorScaleNotes(ks);
-                    return (
-                      <button
-                        key={ks.display}
-                        onClick={() => { setFilterKey(ks); setShowKeyMenu(false); }}
-                        className={`w-full flex items-start justify-between px-3 py-2 text-xs font-semibold transition-colors ${
-                          isActive ? 'text-emerald-300 bg-emerald-500/15' : 'text-zinc-300 hover:bg-zinc-800'
-                        }`}
-                      >
-                        <div className="flex flex-col gap-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="font-bold min-w-[32px]">{ks.display}</span>
-                            <span className="text-[10px] font-normal text-zinc-500">
-                              {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-0.5">
-                            {scaleNotes.map(note => (
-                              <span
-                                key={note}
-                                className={`text-[9px] font-mono font-bold px-1 py-px rounded ${
-                                  isActive
-                                    ? 'bg-emerald-500/25 text-emerald-300'
-                                    : 'bg-zinc-800 text-zinc-500'
-                                }`}
-                              >
-                                {note}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        {isActive && (
-                          <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
 
           {/* Active filter summary badges */}
-          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterTypes.length > 0 || filterPositions.length > 0 || filterKey || showFavoritesOnly) && (
+          {(filterBarreRoots.length > 0 || filterCategories.length > 0 || filterTypes.length > 0 || filterPositions.length > 0 || showFavoritesOnly) && (
             <div className="flex flex-wrap gap-1.5 mt-2">
               {filterCategories.map(cat => (
                 <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] font-semibold text-zinc-300">
@@ -1242,12 +1099,6 @@ export default function ChordLibrary() {
                   <button onClick={() => storeTogglePosition(pos)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
                 </span>
               ))}
-              {filterKey && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-semibold text-emerald-300">
-                  {filterKey.display} Major
-                  <button onClick={() => setFilterKey(null)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
-                </span>
-              )}
               {showFavoritesOnly && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-semibold text-rose-300">
                   Favorites
@@ -1263,11 +1114,6 @@ export default function ChordLibrary() {
           <div className="text-sm flex items-center gap-2">
             <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
             <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
-            {filterKey && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400">
-                {filterKey.display} Major — {filteredChords.length} chords
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">

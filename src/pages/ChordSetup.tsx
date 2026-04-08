@@ -5,7 +5,7 @@
  * - Hero section with background image
  * - Sticky filter bar: two-row pill layout (matching ChordLibrary)
  *   Row 1: All / Open / Barre / Movable category pills
- *   Row 2: Key / Type / Root / Favs dropdown pills
+ *   Row 2: Type / Root / Position / Favs dropdown pills
  * - Preset dropdown with drag-and-drop reordering
  * - Desktop dropdowns vs mobile bottom sheets
  * - Active filter pills
@@ -13,7 +13,7 @@
  * - Start practice button with gradient and shimmer
  */
 
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'; // Added useCallback
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePracticeStore } from '@/stores/practiceStore';
@@ -21,15 +21,12 @@ import type { PositionFilter } from '@/stores/practiceStore';
 import { usePresetStore } from '@/stores/presetStore';
 import { CATEGORY_LABELS, CHORD_TYPE_LABELS, BARRE_ROOT_LABELS } from '@/types/chord';
 import type { ChordCategory, ChordType, BarreRoot } from '@/types/chord';
-import { KEY_SIGNATURES } from '@/constants/scales';
-import type { KeySignature } from '@/constants/scales';
 import {
   Play,
   Music,
   AlertCircle,
   ChevronDown,
   X,
-  KeyRound,
   Layers,
   Guitar,
   Grip,
@@ -39,18 +36,6 @@ import {
   Heart,
   MapPin,
 } from 'lucide-react';
-
-// Sharp/flat note-name arrays for scale pill display (key dropdown only)
-const _CS_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-const _CS_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
-const _CS_CHROM = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
-
-function getMajorScaleNotes(ks: KeySignature): string[] {
-  const names = ks.useFlats ? _CS_FLAT : _CS_SHARP;
-  const idx = _CS_CHROM.indexOf(ks.noteName as string);
-  if (idx < 0) return [];
-  return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
-}
 
 import PresetDropdown from '@/components/features/PresetDropdown';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
@@ -143,82 +128,6 @@ function CheckboxIcon({
 // ============================================================================
 // SHEET CONTENT COMPONENTS (used by both desktop dropdowns and mobile sheets)
 // ============================================================================
-
-function KeySheetContent({
-  keyFilter,
-  onSelect,
-  isMobile,
-}: {
-  keyFilter: KeySignature | null;
-  onSelect: (ks: KeySignature | null) => void;
-  isMobile?: boolean;
-}) {
-  const py = isMobile ? 'py-3' : 'py-2';
-  const textSize = isMobile ? 'text-base' : 'text-sm';
-  return (
-    <div>
-      <button
-        onClick={() => onSelect(null)}
-        className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors`}
-      >
-        <div className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-          keyFilter === null ? 'border-emerald-500 bg-emerald-500' : 'border-[hsl(var(--border-default))]'
-        }`}>
-          {keyFilter === null && <Check className="size-3 text-white" />}
-        </div>
-        <span className={`font-display font-semibold ${textSize} text-[hsl(var(--text-default))]`}>All Keys</span>
-      </button>
-      <div className="h-px bg-[hsl(var(--border-subtle))] my-1" />
-      {KEY_SIGNATURES.map((ks) => {
-        const isActive = keyFilter?.display === ks.display;
-        const scaleNotes = getMajorScaleNotes(ks);
-        return (
-          <button
-            key={ks.display}
-            onClick={() => onSelect(ks)}
-            className={`w-full flex items-start gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
-              isActive ? 'bg-emerald-500/8' : ''
-            }`}
-          >
-            <div className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
-              isActive ? 'border-emerald-500 bg-emerald-500' : 'border-[hsl(var(--border-default))]'
-            }`}>
-              {isActive && <Check className="size-3 text-white" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-2 mb-1">
-                <span className={`font-display font-bold ${textSize} text-[hsl(var(--text-default))] min-w-[36px]`}>
-                  {ks.display}
-                </span>
-                <span className="font-body text-xs text-[hsl(var(--text-subtle))]">Major</span>
-                <span className="font-body text-[10px] text-[hsl(var(--text-muted))] ml-auto">
-                  {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-0.5">
-                {scaleNotes.map(note => (
-                  <span
-                    key={note}
-                    className={`text-[9px] font-mono font-bold px-1 py-px rounded ${
-                      isActive
-                        ? 'bg-emerald-500/25 text-emerald-300'
-                        : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))]'
-                    }`}
-                  >
-                    {note}
-                  </span>
-                ))}
-              </div>
-            </div>
-            {isActive && (
-              <Check className="size-3.5 text-emerald-400 shrink-0 mt-1" />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 function CategorySheetContent({
   categories,
@@ -414,13 +323,13 @@ export default function ChordSetup() {
   const navigate = useNavigate();
 
   const {
-    categories, chordTypes, barreRoots, keyFilter, filterPositions,
+    categories, chordTypes, barreRoots, filterPositions,
     activePresetId, showFavoritesOnly,
     toggleCategory, clearCategories,
     toggleChordType, clearChordTypes,
     toggleBarreRoot, clearBarreRoots,
     togglePosition, clearPositions,
-    setKeyFilter, setActivePreset, setShowFavoritesOnly,
+    setActivePreset, setShowFavoritesOnly,
     startPractice, getAvailableCount,
   } = usePracticeStore();
 
@@ -430,28 +339,23 @@ export default function ChordSetup() {
   const presetStore = usePresetStore();
   const presets = presetStore.presets;
 
-  type SheetId = 'key' | 'type' | 'root' | 'position' | null;
+  type SheetId = 'type' | 'root' | 'position' | null;
   const [activeSheet, setActiveSheet] = useState<SheetId>(null);
 
-  // Refs for desktop dropdowns (category is now direct pills — no dropdown ref needed)
-  const keyDropdownRef  = useRef<HTMLDivElement>(null);
+  // Refs for desktop dropdowns
   const typeDropdownRef = useRef<HTMLDivElement>(null);
   const rootDropdownRef = useRef<HTMLDivElement>(null);
   const positionDropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Available chord count ─────────────────────────────────────────────────
-  // keyFilter is used as a DIRECT dependency — Zustand's setKeyFilter() always
-  // creates a new object reference, so Object.is(prev, next) === false is
-  // guaranteed on every change. No sentinel string needed.
   const availableCount = useMemo(
     () => getAvailableCount(),
     [showFavoritesOnly, favoriteIds.size, categories.size, chordTypes.size,
-     barreRoots.size, keyFilter, filterPositions.size,
+     barreRoots.size, filterPositions.size,
      activePresetId, presets.length, getAvailableCount]
   );
 
   const activePreset = presets.find((p) => p.id === activePresetId);
-  const hasBorreOrMovable = categories.has('barre') || categories.has('movable');
   const isPresetMode = !!activePreset;
 
   const toggleSheet = (id: SheetId) => setActiveSheet(activeSheet === id ? null : id);
@@ -490,7 +394,7 @@ export default function ChordSetup() {
 
   const clearAll = () => {
     clearCategories(); clearChordTypes(); clearBarreRoots(); clearPositions();
-    setKeyFilter(null); setActivePreset(null); setShowFavoritesOnly(false);
+    setActivePreset(null); setShowFavoritesOnly(false);
   };
 
   // Outside-click closes desktop dropdowns
@@ -498,7 +402,7 @@ export default function ChordSetup() {
     if (!activeSheet || typeof window === 'undefined') return;
     if (window.innerWidth < 640) return;
     const refs: Record<string, React.RefObject<HTMLDivElement>> = {
-      key: keyDropdownRef, type: typeDropdownRef, root: rootDropdownRef, position: positionDropdownRef,
+      type: typeDropdownRef, root: rootDropdownRef, position: positionDropdownRef,
     };
     const handleClickOutside = (e: MouseEvent) => {
       const ref = refs[activeSheet];
@@ -571,7 +475,7 @@ export default function ChordSetup() {
               </div>
             )}
 
-            {/* Filter Pills — two static rows, no scroll */}
+            {/* Filter Pills — two static rows */}
             <div className={isPresetMode ? 'opacity-40 pointer-events-none' : ''}>
 
               {/* Row 1: All + Category pills */}
@@ -579,7 +483,7 @@ export default function ChordSetup() {
                 <button
                   onClick={clearAll}
                   className={`${basePill} ${
-                    categories.size === 0 && chordTypes.size === 0 && barreRoots.size === 0 && filterPositions.size === 0 && !keyFilter && !showFavoritesOnly
+                    categories.size === 0 && chordTypes.size === 0 && barreRoots.size === 0 && filterPositions.size === 0 && !showFavoritesOnly
                       ? 'bg-[hsl(var(--color-primary))] text-white border-[hsl(var(--color-primary))]'
                       : inactivePill
                   }`}
@@ -590,9 +494,7 @@ export default function ChordSetup() {
                 <button
                   onClick={() => toggleCategory('open')}
                   className={`${basePill} ${
-                    categories.has('open')
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : inactivePill
+                    categories.has('open') ? 'bg-emerald-500 text-white border-emerald-500' : inactivePill
                   }`}
                 >
                   <Guitar className="size-3" />
@@ -602,9 +504,7 @@ export default function ChordSetup() {
                 <button
                   onClick={() => toggleCategory('barre')}
                   className={`${basePill} ${
-                    categories.has('barre')
-                      ? 'bg-purple-500 text-white border-purple-500'
-                      : inactivePill
+                    categories.has('barre') ? 'bg-purple-500 text-white border-purple-500' : inactivePill
                   }`}
                 >
                   <Grip className="size-3" />
@@ -614,9 +514,7 @@ export default function ChordSetup() {
                 <button
                   onClick={() => toggleCategory('movable')}
                   className={`${basePill} ${
-                    categories.has('movable')
-                      ? 'bg-yellow-400 text-zinc-950 border-yellow-400'
-                      : inactivePill
+                    categories.has('movable') ? 'bg-yellow-400 text-zinc-950 border-yellow-400' : inactivePill
                   }`}
                 >
                   <Music2 className="size-3" />
@@ -624,35 +522,8 @@ export default function ChordSetup() {
                 </button>
               </div>
 
-              {/* Row 2: Key, Type, Root, Position, Favs */}
+              {/* Row 2: Type, Root, Position, Favs */}
               <div className="flex gap-1.5 flex-wrap">
-
-                {/* Key Chip */}
-                <div className="relative" ref={keyDropdownRef}>
-                  <button
-                    onClick={() => toggleSheet('key')}
-                    className={`${basePill} ${
-                      keyFilter
-                        ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/50'
-                        : inactivePill
-                    }`}
-                  >
-                    <KeyRound className="size-3" />
-                    {keyFilter ? `${keyFilter.display} Major` : 'Key'}
-                    <ChevronDown className={`size-3 transition-transform duration-200 ${activeSheet === 'key' ? 'rotate-180' : ''}`} />
-                  </button>
-                  <AnimatePresence>
-                    {activeSheet === 'key' && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute left-0 top-full mt-2 w-80 rounded-xl border border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] shadow-2xl shadow-black/50 overflow-hidden z-50 max-h-[60vh] overflow-y-auto"
-                      >
-                        <KeySheetContent keyFilter={keyFilter} onSelect={(ks) => { setKeyFilter(ks); setActiveSheet(null); }} isMobile={false} />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
 
                 {/* Type Chip */}
                 <div className="relative" ref={typeDropdownRef}>
@@ -782,9 +653,7 @@ export default function ChordSetup() {
                               key={value}
                               onClick={() => togglePosition(value)}
                               className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold transition-colors ${
-                                isActive
-                                  ? 'text-sky-400 bg-sky-500/15'
-                                  : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                                isActive ? 'text-sky-400 bg-sky-500/15' : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
                               }`}
                             >
                               <div>
@@ -841,20 +710,14 @@ export default function ChordSetup() {
           {/* ── Active Filter Badge Row + Chord Count ── */}
           <div className="mb-4 sm:mb-6">
 
-            {/* Active filter badges — appear before chord count, matching ChordLibrary pattern */}
-            {!isPresetMode && (keyFilter || categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || filterPositions.size > 0 || showFavoritesOnly) && (
+            {/* Active filter badges */}
+            {!isPresetMode && (categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || filterPositions.size > 0 || showFavoritesOnly) && (
               <div className="flex flex-wrap items-center gap-1.5 mb-3">
                 {showFavoritesOnly && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-body font-semibold text-rose-300">
                     <Heart className="size-2.5 fill-current" />
                     Favorites
                     <button onClick={() => setShowFavoritesOnly(false)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
-                  </span>
-                )}
-                {keyFilter && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-body font-semibold text-emerald-300">
-                    {keyFilter.display} Major
-                    <button onClick={() => setKeyFilter(null)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
                   </span>
                 )}
                 {[...categories].map((cat) => (
@@ -966,12 +829,6 @@ export default function ChordSetup() {
                           : `${chordTypes.size} types`}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-[hsl(var(--text-subtle))]">Key</span>
-                      <span className="text-[hsl(var(--text-default))] font-medium">
-                        {keyFilter ? `${keyFilter.display} Major` : 'All'}
-                      </span>
-                    </div>
                     {barreRoots.size > 0 && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-[hsl(var(--text-subtle))]">Root String</span>
@@ -1034,7 +891,7 @@ export default function ChordSetup() {
         </div>
       </div>
 
-      {/* ── Mobile Filter Sheets (controlled by activeSheet state) ── */}
+      {/* ── Mobile Filter Sheets ── */}
       <AnimatePresence>
         {activeSheet && typeof window !== 'undefined' && window.innerWidth < 640 && (
           <motion.div
@@ -1044,8 +901,7 @@ export default function ChordSetup() {
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border-default))]">
               <h2 className="font-display font-bold text-xl text-[hsl(var(--text-default))]">
-                {activeSheet === 'key' ? 'Select Key'
-                  : activeSheet === 'type' ? 'Select Chord Type'
+                {activeSheet === 'type' ? 'Select Chord Type'
                   : activeSheet === 'root' ? 'Select Root String'
                   : activeSheet === 'position' ? 'Select Neck Position'
                   : ''}
@@ -1055,9 +911,6 @@ export default function ChordSetup() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto pb-safe-bottom">
-              {activeSheet === 'key' && (
-                <KeySheetContent keyFilter={keyFilter} onSelect={(ks) => { setKeyFilter(ks); setActiveSheet(null); }} isMobile={true} />
-              )}
               {activeSheet === 'type' && (
                 <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={true} />
               )}
@@ -1087,9 +940,7 @@ export default function ChordSetup() {
                         key={value}
                         onClick={() => { togglePosition(value); setActiveSheet(null); }}
                         className={`w-full flex items-center justify-between px-3 py-2.5 text-base font-semibold transition-colors rounded-lg mb-2 ${
-                          isActive
-                            ? 'text-sky-400 bg-sky-500/15'
-                            : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                          isActive ? 'text-sky-400 bg-sky-500/15' : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
                         }`}
                       >
                         <div>

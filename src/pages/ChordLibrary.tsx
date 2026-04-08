@@ -312,7 +312,7 @@ export default function ChordLibrary() {
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch;
     });
-  }, [allChords, searchQuery, filterCategories, filterTypes, showFavoritesOnly, favoriteIds]);
+  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

@@ -119,6 +119,18 @@ function filterChords(
   const allCats = categories.size === 0 || categories.size === 3;
   const allRoots = barreRoots.size === 0 || barreRoots.size === 3;
   
+  // Pre-compute key scale notes ONCE before the per-chord filter loop (not inside the callback).
+  // This prevents Object/Set construction on every chord and ensures the scale is computed
+  // from the correct keyFilter reference at call time.
+  let scaleNotes: Set<number> | null = null;
+  if (keyFilter) {
+    const rootIdx = NOTE_NAMES.indexOf(keyFilter.noteName as string);
+    if (rootIdx >= 0) {
+      const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
+      scaleNotes = new Set(majorIntervals.map((i) => (rootIdx + i) % 12));
+    }
+  }
+
   return getEffectiveChords().filter((chord) => {
     // Category filter
     const matchCategory = allCats || categories.has(chord.category);
@@ -131,12 +143,9 @@ function filterChords(
     const derivedRootString = (6 - chord.rootNoteString) as BarreRoot;
     const matchRoot = allRoots || barreRoots.has(derivedRootString);
     
-    // Key filter (major scale matching)
+    // Key filter (major scale matching) — scaleNotes computed once above
     let matchKey = true;
-    if (keyFilter) {
-      const rootIdx = NOTE_NAMES.indexOf(keyFilter.noteName);
-      const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
-      const scaleNotes = new Set(majorIntervals.map((i) => (rootIdx + i) % 12));
+    if (scaleNotes) {
       const chordRoot = getChordRootSemitone(chord.symbol);
       matchKey = chordRoot >= 0 && scaleNotes.has(chordRoot);
     }

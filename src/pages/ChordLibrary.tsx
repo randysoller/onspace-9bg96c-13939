@@ -244,6 +244,14 @@ export default function ChordLibrary() {
     el.scrollTop = savedScrollY;
   }, [savedScrollY]);
 
+  // ── Scroll to top when any filter changes (so user sees updated count + list) ─
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    const el = getScrollEl();
+    if (el) el.scrollTop = 0;
+  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName, showFavoritesOnly]);
+
   const { presets: userPresets, addPreset } = usePresetStore();
 
   // ── Custom chord store — subscribed so memo re-runs on syncFromSupabase ───────
@@ -302,13 +310,7 @@ export default function ChordLibrary() {
       : null;
     const noteBase: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
-    console.log(
-      '[ChordLibrary] filteredChords memo running | filterKey:', filterKey?.noteName ?? 'null',
-      '| keyRootIdx:', keyRootIdx,
-      '| scaleNotes:', scaleNotes ? [...scaleNotes] : null
-    );
-
-    return allChords.filter((chord) => {
+    const result = allChords.filter((chord) => {
       const searchMatch =
         !searchQuery ||
         chord.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -359,10 +361,9 @@ export default function ChordLibrary() {
 
       return searchMatch && categoryMatch && typeMatch && favoriteMatch && rootStringMatch && positionMatch && keyMatch;
     });
-    // Use filterKey?.noteName (primitive string) as dependency instead of the object reference.
-  // Object.is compares by reference, so using the raw KeySignature object can cause the memo
-  // to NOT re-run when the same key object reference is re-set or when the object is rebuilt
-  // from localStorage persistence. A stable primitive string guarantees value-based comparison.
+    return result;
+  // filterKey?.noteName (primitive string) ensures value-based comparison — prevents stale
+  // reference equality issues when the same KeySignature object is stored across re-renders.
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName ?? '', showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────

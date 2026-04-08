@@ -720,74 +720,72 @@ export default function ChordSetup() {
             </div>
           </div>
 
-          {/* ── Active Filter Pills + Chord Count ── */}
+          {/* ── Active Filter Badge Row + Chord Count ── */}
           <div className="mb-4 sm:mb-6">
-            <div className="text-sm font-body text-[hsl(var(--text-subtle))] mb-3">
-              <span className="text-emerald-500 font-display font-bold">{availableCount}</span>{' '}
-              chord{availableCount !== 1 ? 's' : ''} available
-            </div>
 
-            {(activePreset || keyFilter || categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || showFavoritesOnly) && (
-              <div className="flex flex-wrap items-center gap-2">
-                {activePreset && (
-                  <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
-                    <Bookmark className="size-3 fill-current" />
-                    <span>{activePreset.name}</span>
-                    <button onClick={() => setActivePreset(null)} className="hover:opacity-70"><X className="size-3" /></button>
-                  </div>
+            {/* Active filter badges — appear before chord count, matching ChordLibrary pattern */}
+            {!isPresetMode && (keyFilter || categories.size > 0 || chordTypes.size > 0 || barreRoots.size > 0 || showFavoritesOnly) && (
+              <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                {showFavoritesOnly && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-500/20 border border-rose-500/30 rounded-full text-[10px] font-body font-semibold text-rose-300">
+                    <Heart className="size-2.5 fill-current" />
+                    Favorites
+                    <button onClick={() => setShowFavoritesOnly(false)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
                 )}
-                {!isPresetMode && (
-                  <>
-                    {showFavoritesOnly && (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-rose-500/12 border border-rose-500/25 text-rose-400">
-                        <Heart className="size-3 fill-current" /><span>Favorites</span>
-                        <button onClick={() => setShowFavoritesOnly(false)} className="hover:opacity-70"><X className="size-3" /></button>
-                      </div>
-                    )}
-                    {keyFilter && (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
-                        <span>{keyFilter.display} Major</span>
-                        <button onClick={() => setKeyFilter(null)} className="hover:opacity-70"><X className="size-3" /></button>
-                      </div>
-                    )}
-                    {[...categories].map((cat) => {
-                      const catPill = cat === 'open' ? 'bg-emerald-500/12 border-emerald-500/25 text-emerald-500'
-                        : cat === 'barre' ? 'bg-purple-500/12 border-purple-500/25 text-purple-400'
-                        : cat === 'movable' ? 'bg-yellow-400/12 border-yellow-400/25 text-yellow-300'
-                        : 'bg-zinc-500/12 border-zinc-500/25 text-zinc-400';
-                      return (
-                        <div key={cat} className={`flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium border ${catPill}`}>
-                          <span>{CATEGORY_LABELS[cat].replace(' Chords', '')}</span>
-                          <button onClick={() => toggleCategory(cat)} className="hover:opacity-70"><X className="size-3" /></button>
-                        </div>
-                      );
-                    })}
-                    {chordTypes.size > 0 && chordTypes.size <= 3 ? (
-                      [...chordTypes].map((type) => (
-                        <div key={type} className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
-                          <span>{CHORD_TYPE_LABELS[type]}</span>
-                          <button onClick={() => toggleChordType(type)} className="hover:opacity-70"><X className="size-3" /></button>
-                        </div>
-                      ))
-                    ) : chordTypes.size > 3 ? (
-                      <div className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500">
-                        <span>{chordTypes.size} types</span>
-                        <button onClick={clearChordTypes} className="hover:opacity-70"><X className="size-3" /></button>
-                      </div>
-                    ) : null}
-                    {[...barreRoots].map((root) => (
-                      <div key={root} className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-indigo-500/12 border border-indigo-500/25 text-indigo-400">
-                        <span>Root {root}th</span>
-                        <button onClick={() => toggleBarreRoot(root)} className="hover:opacity-70"><X className="size-3" /></button>
-                      </div>
-                    ))}
-                  </>
+                {keyFilter && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-body font-semibold text-emerald-300">
+                    {keyFilter.display} Major
+                    <button onClick={() => setKeyFilter(null)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
                 )}
-                <button onClick={clearAll} className="text-[11px] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))] underline underline-offset-2">
+                {[...categories].map((cat) => (
+                  <span key={cat} className="inline-flex items-center gap-1 px-2 py-0.5 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] font-body font-semibold text-zinc-300">
+                    {CATEGORY_LABELS[cat].replace(' Chords', '')}
+                    <button onClick={() => toggleCategory(cat)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
+                ))}
+                {chordTypes.size > 0 && chordTypes.size <= 3 ? (
+                  [...chordTypes].map((type) => (
+                    <span key={type} className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-body font-semibold text-amber-300">
+                      {CHORD_TYPE_LABELS[type]}
+                      <button onClick={() => toggleChordType(type)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                    </span>
+                  ))
+                ) : chordTypes.size > 3 ? (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded-full text-[10px] font-body font-semibold text-amber-300">
+                    {chordTypes.size} types
+                    <button onClick={clearChordTypes} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
+                ) : null}
+                {[...barreRoots].map((root) => (
+                  <span key={root} className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[10px] font-body font-semibold text-indigo-300">
+                    Root {root}th
+                    <button onClick={() => toggleBarreRoot(root)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                  </span>
+                ))}
+                <button onClick={clearAll} className="text-[10px] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--semantic-error))] underline underline-offset-2 transition-colors">
                   Clear all
                 </button>
               </div>
             )}
+
+            {/* Active preset badge */}
+            {activePreset && (
+              <div className="flex items-center gap-1.5 mb-3">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-[10px] font-body font-semibold text-emerald-300">
+                  <Bookmark className="size-2.5 fill-current" />
+                  {activePreset.name}
+                  <button onClick={() => setActivePreset(null)} className="hover:text-white transition-colors"><X className="size-2.5" /></button>
+                </span>
+              </div>
+            )}
+
+            {/* Chord count */}
+            <div className="text-sm font-body text-[hsl(var(--text-subtle))]">
+              <span className="text-emerald-500 font-display font-bold">{availableCount}</span>{' '}
+              chord{availableCount !== 1 ? 's' : ''} available
+            </div>
           </div>
 
           {/* ── Practice Summary Card ── */}
@@ -850,7 +848,7 @@ export default function ChordSetup() {
                         {keyFilter ? `${keyFilter.display} Major` : 'All'}
                       </span>
                     </div>
-                    {hasBorreOrMovable && barreRoots.size > 0 && (
+                    {barreRoots.size > 0 && (
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-[hsl(var(--text-subtle))]">Root String</span>
                         <span className="text-[hsl(var(--text-default))] font-medium">

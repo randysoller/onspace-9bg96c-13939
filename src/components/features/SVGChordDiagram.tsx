@@ -259,12 +259,19 @@ function SVGChordDiagramBase({
   const svgHeight = config.height * fretRatio;
 
   // Grid geometry
+  // baseGridWidth is the open-chord grid width (fretLabelPad = 0).
+  // Barre chords get a wider SVG canvas to host the fret label, keeping
+  // the diagram grid identical in size to open chords.
   const fretLabelPad = baseFret > 1 ? FRET_LABEL_EXTRA[size] : 0;
   const padLeft   = fretLabelPad + config.dotRadius * 1.5;
   const padRight  = config.dotRadius * 1.5;
   const padTop    = config.topY;
   const padBottom = config.dotRadius * 2;
-  const gridWidth  = config.width - padLeft - padRight;
+  // Fixed grid width derived from open-chord geometry (dotRadius * 1.5 each side)
+  const baseGridWidth = config.width - config.dotRadius * 3;
+  const gridWidth  = baseGridWidth;
+  // SVG canvas widens for barre chords to fit the fret label outside the grid
+  const svgWidth   = padLeft + gridWidth + padRight;
   const gridHeight = svgHeight - padTop - padBottom;
   const stringSpacing = gridWidth / 5;
   const fretSpacing   = gridHeight / numFrets;
@@ -291,9 +298,9 @@ function SVGChordDiagramBase({
 
   return (
     <svg
-      width={config.width}
+      width={svgWidth}
       height={svgHeight}
-      viewBox={`0 0 ${config.width} ${svgHeight}`}
+      viewBox={`0 0 ${svgWidth} ${svgHeight}`}
       className={`svg-chord-diagram ${className}`}
       role="img"
       aria-label={data.ariaLabel}

@@ -117,7 +117,7 @@ export default function ChordDetailModal({
           {/* Diagram Section */}
           <div className="p-3 flex gap-3 items-start flex-shrink-0">
             {/* Diagram + tab shifted right so the high-E string edge tracks the play button's right edge */}
-            <div className="flex gap-3 items-start ml-auto flex-shrink-0">
+            <div className="flex gap-3 items-start ml-6 flex-shrink-0">
             <div className="flex-shrink-0">
               {(chord as any).isCustom ? (
                 <SVGChordDiagram

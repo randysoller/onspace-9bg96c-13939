@@ -227,7 +227,7 @@ const SIZE_CONFIGS: Record<'sm' | 'md' | 'lg', SizeConfig> = {
 };
 
 const STRING_WIDTHS   = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7];
-const FRET_LABEL_EXTRA: Record<string, number> = { sm: 10, md: 14, lg: 20 };
+const FRET_LABEL_EXTRA: Record<string, number> = { sm: 22, md: 28, lg: 38 };
 const FRET_INLAY_SINGLE = [3, 5, 7, 9, 15, 17, 19, 21];
 const FRET_INLAY_DOUBLE = [12, 24];
 
@@ -299,7 +299,7 @@ function SVGChordDiagramBase({
       {/* Base fret label */}
       {baseFret > 1 && (
         <text
-          x={padLeft - config.dotRadius - 11}
+          x={padLeft - config.dotRadius - 3}
           y={fy(1) - fretSpacing / 2}
           textAnchor="end"
           fontSize={config.fretLabelSize}

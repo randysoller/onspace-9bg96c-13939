@@ -220,6 +220,9 @@ export default function ChordLibrary() {
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
   const restoredRef = useRef(false);
+  // filterChangedRef: set to true when any filter changes so scroll-restoration
+  // skips restoring the old position (filter scroll-to-top takes priority).
+  const filterChangedRef = useRef(false);
 
   const getScrollEl = () => document.getElementById('main-content');
 
@@ -236,8 +239,10 @@ export default function ChordLibrary() {
     };
   }, [setSavedScrollY]);
 
+  // Restore scroll position on mount — but ONLY if no filter change is pending.
+  // Without this guard the restoration overwrites the filter scroll-to-top.
   useEffect(() => {
-    if (!savedScrollY || restoredRef.current) return;
+    if (!savedScrollY || restoredRef.current || filterChangedRef.current) return;
     restoredRef.current = true;
     const el = getScrollEl();
     if (!el) return;
@@ -248,6 +253,9 @@ export default function ChordLibrary() {
   const isFirstRender = useRef(true);
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return; }
+    // Mark that a filter changed — blocks scroll restoration from overriding this.
+    filterChangedRef.current = true;
+    restoredRef.current = true; // prevent restoration from firing later
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
   }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName, showFavoritesOnly]);
@@ -1236,9 +1244,14 @@ export default function ChordLibrary() {
 
         {/* Results Count & Legend */}
         <div className="mb-4 flex items-center justify-between">
-          <div className="text-sm">
-            <span className="text-amber-500 font-bold">{filteredChords.length}</span>
-            <span className="text-zinc-500"> chords</span>
+          <div className="text-sm flex items-center gap-2">
+            <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
+            <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
+            {filterKey && (
+              <span className="text-[10px] font-semibold px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full text-emerald-400">
+                {filterKey.display} Major
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">

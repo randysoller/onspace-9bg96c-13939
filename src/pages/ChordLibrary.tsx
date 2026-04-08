@@ -28,6 +28,19 @@ const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
 // Note name → semitone index (constant, defined outside component)
 const NOTE_SEMITONE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 
+// Sharp/flat note-name arrays for scale pill display
+const _SHARP_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const _FLAT_NAMES  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const _CHROMATIC   = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'] as const;
+
+/** Returns the 7 diatonic note names for a major key (sharp or flat spellings). */
+function getMajorScaleNotes(ks: import('@/constants/scales').KeySignature): string[] {
+  const names = ks.useFlats ? _FLAT_NAMES : _SHARP_NAMES;
+  const idx = _CHROMATIC.indexOf(ks.noteName as typeof _CHROMATIC[number]);
+  if (idx < 0) return [];
+  return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
+}
+
 function chordRootSemitone(symbol: string): number {
   const m = symbol.match(/^([A-G])([#b]?)/);
   if (!m) return -1;
@@ -1176,22 +1189,39 @@ export default function ChordLibrary() {
                   <div className="mx-3 border-t border-zinc-800" />
                   {KEY_SIGNATURES.map((ks) => {
                     const isActive = filterKey?.display === ks.display;
+                    const scaleNotes = getMajorScaleNotes(ks);
                     return (
                       <button
                         key={ks.display}
                         onClick={() => { setFilterKey(ks); setShowKeyMenu(false); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                        className={`w-full flex items-start justify-between px-3 py-2 text-xs font-semibold transition-colors ${
                           isActive ? 'text-emerald-300 bg-emerald-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <div className="flex items-baseline gap-2">
-                          <span className="font-bold min-w-[32px]">{ks.display}</span>
-                          <span className="text-[10px] font-normal text-zinc-500">
-                            {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
-                          </span>
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-bold min-w-[32px]">{ks.display}</span>
+                            <span className="text-[10px] font-normal text-zinc-500">
+                              {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-0.5">
+                            {scaleNotes.map(note => (
+                              <span
+                                key={note}
+                                className={`text-[9px] font-mono font-bold px-1 py-px rounded ${
+                                  isActive
+                                    ? 'bg-emerald-500/25 text-emerald-300'
+                                    : 'bg-zinc-800 text-zinc-500'
+                                }`}
+                              >
+                                {note}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                         {isActive && (
-                          <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                           </svg>
                         )}

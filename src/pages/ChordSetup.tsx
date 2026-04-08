@@ -40,6 +40,18 @@ import {
   Heart,
   MapPin,
 } from 'lucide-react';
+
+// Sharp/flat note-name arrays for scale pill display
+const _CS_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const _CS_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const _CS_CHROM = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+
+function getMajorScaleNotes(ks: KeySignature): string[] {
+  const names = ks.useFlats ? _CS_FLAT : _CS_SHARP;
+  const idx = _CS_CHROM.indexOf(ks.noteName as string);
+  if (idx < 0) return [];
+  return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
+}
 import PresetDropdown from '@/components/features/PresetDropdown';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
 import heroImg from '@/assets/hero-guitar.jpg';
@@ -141,7 +153,7 @@ function KeySheetContent({
   onSelect: (ks: KeySignature | null) => void;
   isMobile?: boolean;
 }) {
-  const py = isMobile ? 'py-3.5' : 'py-2.5';
+  const py = isMobile ? 'py-3' : 'py-2';
   const textSize = isMobile ? 'text-base' : 'text-sm';
   return (
     <div>
@@ -157,31 +169,53 @@ function KeySheetContent({
         <span className={`font-display font-semibold ${textSize} text-[hsl(var(--text-default))]`}>All Keys</span>
       </button>
       <div className="h-px bg-[hsl(var(--border-subtle))] my-1" />
-      {KEY_SIGNATURES.map((ks) => (
-        <button
-          key={ks.display}
-          onClick={() => onSelect(ks)}
-          className={`w-full flex items-center gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors`}
-        >
-          <div className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-            keyFilter?.display === ks.display ? 'border-emerald-500 bg-emerald-500' : 'border-[hsl(var(--border-default))]'
-          }`}>
-            {keyFilter?.display === ks.display && <Check className="size-3 text-white" />}
-          </div>
-          <div className="flex-1 flex items-baseline gap-2">
-            <span className={`font-display font-bold ${textSize} text-[hsl(var(--text-default))] min-w-[36px]`}>{ks.display}</span>
-            <span className="font-body text-xs text-[hsl(var(--text-subtle))]">Major</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-body text-xs text-[hsl(var(--text-muted))]">
-              {ks.count === 0 ? 'no sharps or flats' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
-            </span>
-            <span className="font-body text-[10px] text-[hsl(var(--text-subtle))] text-right min-w-[60px]">
-              {ks.notes.join(' ')}
-            </span>
-          </div>
-        </button>
-      ))}
+      {KEY_SIGNATURES.map((ks) => {
+        const isActive = keyFilter?.display === ks.display;
+        const scaleNotes = getMajorScaleNotes(ks);
+        return (
+          <button
+            key={ks.display}
+            onClick={() => onSelect(ks)}
+            className={`w-full flex items-start gap-3 px-4 ${py} hover:bg-[hsl(var(--bg-overlay))] transition-colors ${
+              isActive ? 'bg-emerald-500/8' : ''
+            }`}
+          >
+            <div className={`size-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${
+              isActive ? 'border-emerald-500 bg-emerald-500' : 'border-[hsl(var(--border-default))]'
+            }`}>
+              {isActive && <Check className="size-3 text-white" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className={`font-display font-bold ${textSize} text-[hsl(var(--text-default))] min-w-[36px]`}>
+                  {ks.display}
+                </span>
+                <span className="font-body text-xs text-[hsl(var(--text-subtle))]">Major</span>
+                <span className="font-body text-[10px] text-[hsl(var(--text-muted))] ml-auto">
+                  {ks.count === 0 ? 'no ♯/♭' : `${ks.count}${ks.type === 'sharp' ? '♯' : '♭'}`}
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-0.5">
+                {scaleNotes.map(note => (
+                  <span
+                    key={note}
+                    className={`text-[9px] font-mono font-bold px-1 py-px rounded ${
+                      isActive
+                        ? 'bg-emerald-500/25 text-emerald-300'
+                        : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-muted))]'
+                    }`}
+                  >
+                    {note}
+                  </span>
+                ))}
+              </div>
+            </div>
+            {isActive && (
+              <Check className="size-3.5 text-emerald-400 shrink-0 mt-1" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

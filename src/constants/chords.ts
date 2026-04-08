@@ -3307,4 +3307,100 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'mov-e6-esharp-maj9', name: 'E# Major 9 Root 6 Movable', symbol: 'E#maj9', category: 'movable', type: 'major9',
     frets: [2, 1, 3, 1, 2, -1], fingers: [2, 1, 3, 1, 4, 0], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // MOVABLE CHORDS - Major 13th (E-shape, Root 6)
+  // Frets [N,-1,N+1,N+1,N+2,-1], fingers [1,0,2,3,4,0]
+  // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+  //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'mov-e6-f-maj13', name: 'F Major 13 Root 6 Movable', symbol: 'Fmaj13', category: 'movable', type: 'major13',
+    frets: [1, -1, 2, 2, 3, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'mov-e6-fsharp-maj13', name: 'F# Major 13 Root 6 Movable', symbol: 'F#maj13', category: 'movable', type: 'major13',
+    frets: [2, -1, 3, 3, 4, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-gb-maj13', name: 'Gb Major 13 Root 6 Movable', symbol: 'Gbmaj13', category: 'movable', type: 'major13',
+    frets: [2, -1, 3, 3, 4, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'mov-e6-g-maj13', name: 'G Major 13 Root 6 Movable', symbol: 'Gmaj13', category: 'movable', type: 'major13',
+    frets: [3, -1, 4, 4, 5, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 3, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'mov-e6-gsharp-maj13', name: 'G# Major 13 Root 6 Movable', symbol: 'G#maj13', category: 'movable', type: 'major13',
+    frets: [4, -1, 5, 5, 6, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-ab-maj13', name: 'Ab Major 13 Root 6 Movable', symbol: 'Abmaj13', category: 'movable', type: 'major13',
+    frets: [4, -1, 5, 5, 6, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'mov-e6-a-maj13', name: 'A Major 13 Root 6 Movable', symbol: 'Amaj13', category: 'movable', type: 'major13',
+    frets: [5, -1, 6, 6, 7, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 5, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'mov-e6-asharp-maj13', name: 'A# Major 13 Root 6 Movable', symbol: 'A#maj13', category: 'movable', type: 'major13',
+    frets: [6, -1, 7, 7, 8, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bb-maj13', name: 'Bb Major 13 Root 6 Movable', symbol: 'Bbmaj13', category: 'movable', type: 'major13',
+    frets: [6, -1, 7, 7, 8, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'mov-e6-b-maj13', name: 'B Major 13 Root 6 Movable', symbol: 'Bmaj13', category: 'movable', type: 'major13',
+    frets: [7, -1, 8, 8, 9, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-cb-maj13', name: 'Cb Major 13 Root 6 Movable', symbol: 'Cbmaj13', category: 'movable', type: 'major13',
+    frets: [7, -1, 8, 8, 9, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'mov-e6-c-maj13', name: 'C Major 13 Root 6 Movable', symbol: 'Cmaj13', category: 'movable', type: 'major13',
+    frets: [8, -1, 9, 9, 10, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bsharp-maj13', name: 'B# Major 13 Root 6 Movable', symbol: 'B#maj13', category: 'movable', type: 'major13',
+    frets: [8, -1, 9, 9, 10, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'mov-e6-csharp-maj13', name: 'C# Major 13 Root 6 Movable', symbol: 'C#maj13', category: 'movable', type: 'major13',
+    frets: [9, -1, 10, 10, 11, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-db-maj13', name: 'Db Major 13 Root 6 Movable', symbol: 'Dbmaj13', category: 'movable', type: 'major13',
+    frets: [9, -1, 10, 10, 11, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'mov-e6-d-maj13', name: 'D Major 13 Root 6 Movable', symbol: 'Dmaj13', category: 'movable', type: 'major13',
+    frets: [10, -1, 11, 11, 12, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 10, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'mov-e6-dsharp-maj13', name: 'D# Major 13 Root 6 Movable', symbol: 'D#maj13', category: 'movable', type: 'major13',
+    frets: [11, -1, 12, 12, 13, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-eb-maj13', name: 'Eb Major 13 Root 6 Movable', symbol: 'Ebmaj13', category: 'movable', type: 'major13',
+    frets: [11, -1, 12, 12, 13, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E / Fb  (fret 12 — octave)
+  { id: 'mov-e6-e-maj13-12', name: 'E Major 13 Root 6 Movable', symbol: 'Emaj13', category: 'movable', type: 'major13',
+    frets: [12, -1, 13, 13, 14, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-fb-maj13', name: 'Fb Major 13 Root 6 Movable', symbol: 'Fbmaj13', category: 'movable', type: 'major13',
+    frets: [12, -1, 13, 13, 14, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F, fret 1)
+  { id: 'mov-e6-esharp-maj13', name: 'E# Major 13 Root 6 Movable', symbol: 'E#maj13', category: 'movable', type: 'major13',
+    frets: [1, -1, 2, 2, 3, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
 ];

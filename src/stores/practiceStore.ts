@@ -8,7 +8,7 @@ import { persist } from 'zustand/middleware';
 import { CHORD_DATABASE } from '@/constants/chords';
 import type { ChordData, ChordCategory, ChordType, BarreRoot } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
-import { NOTE_NAMES } from '@/constants/scales';
+import { chordRootSemitone, buildMajorScaleNotes } from '@/lib/chordFilters';
 
 export type PositionFilter = 'open' | 'low' | 'mid' | 'high';
 import { useCustomChordStore } from './customChordStore';
@@ -88,22 +88,6 @@ function getEffectiveChords(): ChordData[] {
   return [...standardChords, ...converted];
 }
 
-// Get chord root semitone
-function getChordRootSemitone(symbol: string): number {
-  const match = symbol.match(/^([A-G])([#b]?)/);
-  if (!match) return -1;
-  
-  const noteBase: Record<string, number> = {
-    C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11,
-  };
-  
-  let semitone = noteBase[match[1]] ?? -1;
-  if (match[2] === '#') semitone = (semitone + 1) % 12;
-  if (match[2] === 'b') semitone = (semitone + 11) % 12;
-  
-  return semitone;
-}
-
 // Filter chords based on current settings
 function filterChords(
   categories: Set<ChordCategory>,
@@ -119,17 +103,8 @@ function filterChords(
   const allCats = categories.size === 0 || categories.size === 3;
   const allRoots = barreRoots.size === 0 || barreRoots.size === 3;
   
-  // Pre-compute key scale notes ONCE before the per-chord filter loop (not inside the callback).
-  // This prevents Object/Set construction on every chord and ensures the scale is computed
-  // from the correct keyFilter reference at call time.
-  let scaleNotes: Set<number> | null = null;
-  if (keyFilter) {
-    const rootIdx = NOTE_NAMES.indexOf(keyFilter.noteName as string);
-    if (rootIdx >= 0) {
-      const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
-      scaleNotes = new Set(majorIntervals.map((i) => (rootIdx + i) % 12));
-    }
-  }
+  // Pre-compute key scale notes ONCE using the shared canonical utility.
+  const scaleNotes = keyFilter ? buildMajorScaleNotes(keyFilter.noteName) : null;
 
   return getEffectiveChords().filter((chord) => {
     // Category filter
@@ -146,7 +121,7 @@ function filterChords(
     // Key filter (major scale matching) — scaleNotes computed once above
     let matchKey = true;
     if (scaleNotes) {
-      const chordRoot = getChordRootSemitone(chord.symbol);
+      const chordRoot = chordRootSemitone(chord.symbol);
       matchKey = chordRoot >= 0 && scaleNotes.has(chordRoot);
     }
     

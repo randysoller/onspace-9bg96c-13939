@@ -1584,6 +1584,89 @@ export const CHORD_DATABASE: ChordData[] = [
     rootString: 5, rootNoteString: 1 },
 
   // ============================================================================
+  // BARRE CHORDS - Suspended 4 (A-shape, Root 5)
+  // Barre at fret N: frets [-1, N, N+2, N+2, N+3, -1], fingers [0,1,3,3,4,0]
+  // Barre bar on strings 2-3 (both at N+2); index on string 1 at N; pinky on string 4 at N+3
+  // 5th string notes: Bb=1, B=2, C=3, Db/C#=4, D=5, Eb/D#=6,
+  //                   E=7, F=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+  // ============================================================================
+
+  // Bb / A#  (fret 1)
+  { id: 'barre-r5-bb-sus4', name: 'Bb Suspended 4 Root 5 Barre', symbol: 'Bbsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 1, 3, 3, 4, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 1, barres: [1, 3],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-sus4', name: 'A# Suspended 4 Root 5 Barre', symbol: 'A#sus4', category: 'barre', type: 'sus4',
+    frets: [-1, 1, 3, 3, 4, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 1, barres: [1, 3],
+    rootString: 5, rootNoteString: 1 },
+
+  // B  (fret 2)
+  { id: 'barre-r5-b-sus4', name: 'B Suspended 4 Root 5 Barre', symbol: 'Bsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 2, 4, 4, 5, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 2, barres: [2, 4],
+    rootString: 5, rootNoteString: 1 },
+
+  // C  (fret 3)
+  { id: 'barre-r5-c-sus4', name: 'C Suspended 4 Root 5 Barre', symbol: 'Csus4', category: 'barre', type: 'sus4',
+    frets: [-1, 3, 5, 5, 6, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 3, barres: [3, 5],
+    rootString: 5, rootNoteString: 1 },
+
+  // C# / Db  (fret 4)
+  { id: 'barre-r5-csharp-sus4', name: 'C# Suspended 4 Root 5 Barre', symbol: 'C#sus4', category: 'barre', type: 'sus4',
+    frets: [-1, 4, 6, 6, 7, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 4, barres: [4, 6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-sus4', name: 'Db Suspended 4 Root 5 Barre', symbol: 'Dbsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 4, 6, 6, 7, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 4, barres: [4, 6],
+    rootString: 5, rootNoteString: 1 },
+
+  // D  (fret 5)
+  { id: 'barre-r5-d-sus4', name: 'D Suspended 4 Root 5 Barre', symbol: 'Dsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 5, 7, 7, 8, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 5, barres: [5, 7],
+    rootString: 5, rootNoteString: 1 },
+
+  // Eb / D#  (fret 6)
+  { id: 'barre-r5-eb-sus4', name: 'Eb Suspended 4 Root 5 Barre', symbol: 'Ebsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 6, 8, 8, 9, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 6, barres: [6, 8],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-sus4', name: 'D# Suspended 4 Root 5 Barre', symbol: 'D#sus4', category: 'barre', type: 'sus4',
+    frets: [-1, 6, 8, 8, 9, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 6, barres: [6, 8],
+    rootString: 5, rootNoteString: 1 },
+
+  // E  (fret 7)
+  { id: 'barre-r5-e-sus4', name: 'E Suspended 4 Root 5 Barre', symbol: 'Esus4', category: 'barre', type: 'sus4',
+    frets: [-1, 7, 9, 9, 10, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 7, barres: [7, 9],
+    rootString: 5, rootNoteString: 1 },
+
+  // F  (fret 8)
+  { id: 'barre-r5-f-sus4', name: 'F Suspended 4 Root 5 Barre', symbol: 'Fsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 8, 10, 10, 11, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 8, barres: [8, 10],
+    rootString: 5, rootNoteString: 1 },
+
+  // F# / Gb  (fret 9)
+  { id: 'barre-r5-fsharp-sus4', name: 'F# Suspended 4 Root 5 Barre', symbol: 'F#sus4', category: 'barre', type: 'sus4',
+    frets: [-1, 9, 11, 11, 12, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 9, barres: [9, 11],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-sus4', name: 'Gb Suspended 4 Root 5 Barre', symbol: 'Gbsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 9, 11, 11, 12, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 9, barres: [9, 11],
+    rootString: 5, rootNoteString: 1 },
+
+  // G  (fret 10)
+  { id: 'barre-r5-g-sus4', name: 'G Suspended 4 Root 5 Barre', symbol: 'Gsus4', category: 'barre', type: 'sus4',
+    frets: [-1, 10, 12, 12, 13, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 10, barres: [10, 12],
+    rootString: 5, rootNoteString: 1 },
+
+  // Ab / G#  (fret 11)
+  { id: 'barre-r5-ab-sus4', name: 'Ab Suspended 4 Root 5 Barre', symbol: 'Absus4', category: 'barre', type: 'sus4',
+    frets: [-1, 11, 13, 13, 14, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 11, barres: [11, 13],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-sus4', name: 'G# Suspended 4 Root 5 Barre', symbol: 'G#sus4', category: 'barre', type: 'sus4',
+    frets: [-1, 11, 13, 13, 14, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 11, barres: [11, 13],
+    rootString: 5, rootNoteString: 1 },
+
+  // A  (fret 12 — octave)
+  { id: 'barre-r5-a-sus4', name: 'A Suspended 4 Root 5 Barre', symbol: 'Asus4', category: 'barre', type: 'sus4',
+    frets: [-1, 12, 14, 14, 15, -1], fingers: [0, 1, 3, 3, 4, 0], baseFret: 12, barres: [12, 14],
+    rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
   // BARRE CHORDS - Minor (legacy A-shape entries kept below)
   // ============================================================================
   { id: 'barre-fm', name: 'F Minor', symbol: 'Fm', category: 'barre', type: 'minor',

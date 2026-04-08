@@ -221,13 +221,13 @@ interface SizeConfig {
 }
 
 const SIZE_CONFIGS: Record<'sm' | 'md' | 'lg', SizeConfig> = {
-  sm: { width: 100, height: 130, dotRadius: 7,    fontSize: 14, topY: 26, fretLabelSize: 13 },
+  sm: { width: 100, height: 130, dotRadius: 7,    fontSize: 14, topY: 26, fretLabelSize: 16 },
   md: { width: 140, height: 175, dotRadius: 9.5,  fontSize: 18, topY: 32, fretLabelSize: 11 },
-  lg: { width: 214, height: 250, dotRadius: 13,   fontSize: 24, topY: 42, fretLabelSize: 20 },
+  lg: { width: 214, height: 250, dotRadius: 13,   fontSize: 24, topY: 42, fretLabelSize: 26 },
 };
 
 const STRING_WIDTHS   = [2.6, 2.2, 1.8, 1.4, 1.0, 0.7];
-const FRET_LABEL_EXTRA: Record<string, number> = { sm: 30, md: 28, lg: 60 };
+const FRET_LABEL_EXTRA: Record<string, number> = { sm: 34, md: 28, lg: 68 };
 // Per-size gap between label right-edge and the first-string left-edge.
 // lg uses a wider gap so the label clears the 6th-string dots comfortably.
 const FRET_LABEL_X_OFFSET: Record<string, number> = { sm: 3, md: 3, lg: 17 };

@@ -473,13 +473,14 @@ export default function ChordSetup() {
   const presets = presetStore.presets;
   
   // Local state
-  type SheetId = 'key' | 'category' | 'type' | null;
+  type SheetId = 'key' | 'category' | 'type' | 'root' | null;
   const [activeSheet, setActiveSheet] = useState<SheetId>(null);
   
   // Refs for desktop dropdowns
   const keyDropdownRef = useRef<HTMLDivElement>(null);
   const catDropdownRef = useRef<HTMLDivElement>(null);
   const typeDropdownRef = useRef<HTMLDivElement>(null);
+  const rootDropdownRef = useRef<HTMLDivElement>(null);
   
   // Computed values
   const availableCount = useMemo(() => getAvailableCount(), [
@@ -518,6 +519,18 @@ export default function ChordSetup() {
     if (chordTypes.size === 0) return 'Types';
     return `${chordTypes.size} types`;
   };
+
+  const getRootSummary = () => {
+    if (barreRoots.size === 0) return 'Root String';
+    if (barreRoots.size === 1) return `${[...barreRoots][0]}th String`;
+    return `${barreRoots.size} Roots`;
+  };
+
+  const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
+    { value: 6, label: '6th String (Low E)' },
+    { value: 5, label: '5th String (A)' },
+    { value: 4, label: '4th String (D)' },
+  ];
   
   // Handlers
   const toggleSheet = (id: SheetId) => {
@@ -587,6 +600,7 @@ export default function ChordSetup() {
         key: keyDropdownRef,
         category: catDropdownRef,
         type: typeDropdownRef,
+        root: rootDropdownRef,
       };
       
       const activeRef = refs[activeSheet];
@@ -809,6 +823,82 @@ export default function ChordSetup() {
                 </AnimatePresence>
               </div>
               
+              {/* Root String Chip */}
+              <div className="relative" ref={rootDropdownRef}>
+                <button
+                  onClick={() => toggleSheet('root')}
+                  className={`flex items-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-body font-medium transition-all whitespace-nowrap active:scale-95 ${
+                    barreRoots.size > 0
+                      ? 'border-indigo-500/50 bg-indigo-500/10 text-indigo-400'
+                      : activeSheet === 'root'
+                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-default))]'
+                      : 'border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] text-[hsl(var(--text-subtle))] hover:bg-[hsl(var(--bg-overlay))]'
+                  }`}
+                >
+                  <Guitar className="size-4" />
+                  <span>{getRootSummary()}</span>
+                  {barreRoots.size > 0 && (
+                    <span className="hidden sm:flex size-5 rounded-full bg-indigo-500 text-white items-center justify-center text-[10px] font-bold">
+                      {barreRoots.size}
+                    </span>
+                  )}
+                  <ChevronDown
+                    className={`size-3.5 transition-transform duration-200 ${
+                      activeSheet === 'root' ? 'rotate-180' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Desktop Dropdown */}
+                <AnimatePresence>
+                  {activeSheet === 'root' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.15 }}
+                      className="hidden sm:block absolute left-0 top-full mt-2 w-52 rounded-xl border border-[hsl(var(--border-default))] bg-[hsl(var(--bg-elevated))] shadow-2xl shadow-black/50 overflow-hidden z-50"
+                    >
+                      <div className="px-4 pt-2.5 pb-1">
+                        <p className="text-[10px] font-body font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Root Note String</p>
+                      </div>
+                      {ROOT_STRING_OPTIONS.map(({ value, label }) => {
+                        const isActive = barreRoots.has(value);
+                        return (
+                          <button
+                            key={value}
+                            onClick={() => toggleBarreRoot(value)}
+                            className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-body font-medium transition-colors ${
+                              isActive
+                                ? 'text-indigo-400 bg-indigo-500/15'
+                                : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                            }`}
+                          >
+                            <span>{label}</span>
+                            {isActive && (
+                              <svg className="size-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
+                      {barreRoots.size > 0 && (
+                        <>
+                          <div className="mx-4 border-t border-[hsl(var(--border-subtle))]" />
+                          <button
+                            onClick={() => { clearBarreRoots(); setActiveSheet(null); }}
+                            className="w-full text-left px-4 py-2 text-[10px] text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-subtle))] transition-colors"
+                          >
+                            Clear root filter
+                          </button>
+                        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {/* Type Chip */}
               <div className="relative" ref={typeDropdownRef}>
                 <button
@@ -859,37 +949,7 @@ export default function ChordSetup() {
               </div>
             </div>
             
-            {/* Contextual Root String Chips */}
-            <AnimatePresence>
-              {hasBorreOrMovable && !isPresetMode && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2, ease: 'easeOut' }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex items-center gap-2 pt-1">
-                    <span className="text-[11px] font-body font-semibold text-[hsl(var(--text-muted))] uppercase tracking-wider">
-                      Root:
-                    </span>
-                    {BARRE_ROOTS.map((root) => (
-                      <button
-                        key={root}
-                        onClick={() => toggleBarreRoot(root)}
-                        className={`rounded-full px-3 py-1 text-[12px] sm:text-[11px] font-body font-medium border transition-colors ${
-                          barreRoots.has(root)
-                            ? 'bg-emerald-500/20 text-emerald-500 border-emerald-500/40'
-                            : 'bg-[hsl(var(--bg-surface))] text-[hsl(var(--text-subtle))] border-transparent'
-                        }`}
-                      >
-                        {root}th String
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+
           </div>
           
           {/* Active Filter Pills and Chord Count */}
@@ -987,7 +1047,7 @@ export default function ChordSetup() {
                     {[...barreRoots].map((root) => (
                       <div
                         key={root}
-                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-emerald-500/12 border border-emerald-500/25 text-emerald-500"
+                        className="flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-body font-medium bg-indigo-500/12 border border-indigo-500/25 text-indigo-400"
                       >
                         <span>Root {root}th</span>
                         <button onClick={() => toggleBarreRoot(root)} className="hover:opacity-70">
@@ -1189,6 +1249,8 @@ export default function ChordSetup() {
                     ? 'Select Key'
                     : activeSheet === 'category'
                     ? 'Shape Category'
+                    : activeSheet === 'root'
+                    ? 'Root String'
                     : 'Chord Type'}
                 </h3>
                 <div className="flex items-center gap-2">
@@ -1203,6 +1265,14 @@ export default function ChordSetup() {
                   {activeSheet === 'type' && chordTypes.size > 0 && (
                     <button
                       onClick={clearChordTypes}
+                      className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {activeSheet === 'root' && barreRoots.size > 0 && (
+                    <button
+                      onClick={clearBarreRoots}
                       className="text-xs font-body text-[hsl(var(--text-subtle))] hover:text-[hsl(var(--text-default))] underline underline-offset-2"
                     >
                       Clear
@@ -1248,6 +1318,38 @@ export default function ChordSetup() {
                     onToggleGroup={handleToggleGroup}
                     isMobile={true}
                   />
+                )}
+                {activeSheet === 'root' && (
+                  <div>
+                    <div className="px-4 pt-3 pb-1">
+                      <p className="text-[10px] font-body font-bold text-[hsl(var(--text-muted))] uppercase tracking-widest">Root Note String</p>
+                    </div>
+                    {ROOT_STRING_OPTIONS.map(({ value, label }) => {
+                      const isActive = barreRoots.has(value);
+                      return (
+                        <button
+                          key={value}
+                          onClick={() => toggleBarreRoot(value)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 text-base font-body font-medium transition-colors ${
+                            isActive
+                              ? 'text-indigo-400 bg-indigo-500/15'
+                              : 'text-[hsl(var(--text-default))] hover:bg-[hsl(var(--bg-overlay))]'
+                          }`}
+                        >
+                          <div
+                            className={`size-5 rounded border flex items-center justify-center shrink-0 ${
+                              isActive
+                                ? 'bg-indigo-500 border-indigo-500'
+                                : 'border-[hsl(var(--border-default))]'
+                            }`}
+                          >
+                            {isActive && <Check className="size-3 text-white" />}
+                          </div>
+                          <span>{label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
               

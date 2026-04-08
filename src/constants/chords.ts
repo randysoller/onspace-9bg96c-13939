@@ -2398,4 +2398,85 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'mov-r5-a-dom7', name: 'A Dominant 7th Root 5 Movable', symbol: 'A7', category: 'movable', type: 'dominant7',
     frets: [-1, 14, 13, 14, 12, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 12, barres: [],
     rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
+  // MISSING ENHARMONICS — Major 9 Root 5 Movable (A-shape)
+  // Frets [-1, N+1, N, N+2, N+1, -1], fingers [0,2,1,4,3,0]
+  // A# = Bb = fret 1 | Cb = B = fret 2 | B# = C = fret 3
+  // Fb = Eb = fret 6 | E# = F = fret 8
+  // ============================================================================
+
+  { id: 'mov-r5-asharp-maj9', name: 'A# Major 9 Root 5 Movable', symbol: 'A#maj9', category: 'movable', type: 'major9',
+    frets: [-1, 2, 1, 3, 2, -1], fingers: [0, 2, 1, 4, 3, 0], baseFret: 1, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-cb-maj9', name: 'Cb Major 9 Root 5 Movable', symbol: 'Cbmaj9', category: 'movable', type: 'major9',
+    frets: [-1, 3, 2, 4, 3, -1], fingers: [0, 2, 1, 4, 3, 0], baseFret: 2, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-bsharp-maj9', name: 'B# Major 9 Root 5 Movable', symbol: 'B#maj9', category: 'movable', type: 'major9',
+    frets: [-1, 4, 3, 5, 4, -1], fingers: [0, 2, 1, 4, 3, 0], baseFret: 3, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-fb-maj9', name: 'Fb Major 9 Root 5 Movable', symbol: 'Fbmaj9', category: 'movable', type: 'major9',
+    frets: [-1, 7, 6, 8, 7, -1], fingers: [0, 2, 1, 4, 3, 0], baseFret: 6, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-esharp-maj9', name: 'E# Major 9 Root 5 Movable', symbol: 'E#maj9', category: 'movable', type: 'major9',
+    frets: [-1, 9, 8, 10, 9, -1], fingers: [0, 2, 1, 4, 3, 0], baseFret: 8, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
+  // MISSING ENHARMONICS — Minor 9 Root 5 Movable/Barre (A-shape)
+  // Frets [-1, N+2, N, N+2, N+2, -1], fingers [0,2,1,3,4,0], barres [N]
+  // A# = Bb = fret 1 | Cb = B = fret 2 | B# = C = fret 3
+  // Fb = Eb = fret 6 | E# = F = fret 8
+  // ============================================================================
+
+  { id: 'barre-r5-asharp-min9', name: 'A# Minor 9 Root 5 Movable', symbol: 'A#m9', category: 'barre', type: 'minor9',
+    frets: [-1, 3, 1, 3, 3, -1], fingers: [0, 2, 1, 3, 4, 0], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'barre-r5-cb-min9', name: 'Cb Minor 9 Root 5 Movable', symbol: 'Cbm9', category: 'barre', type: 'minor9',
+    frets: [-1, 4, 2, 4, 4, -1], fingers: [0, 2, 1, 3, 4, 0], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'barre-r5-bsharp-min9', name: 'B# Minor 9 Root 5 Movable', symbol: 'B#m9', category: 'barre', type: 'minor9',
+    frets: [-1, 5, 3, 5, 5, -1], fingers: [0, 2, 1, 3, 4, 0], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'barre-r5-fb-min9', name: 'Fb Minor 9 Root 5 Movable', symbol: 'Fbm9', category: 'barre', type: 'minor9',
+    frets: [-1, 8, 6, 8, 8, -1], fingers: [0, 2, 1, 3, 4, 0], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'barre-r5-esharp-min9', name: 'E# Minor 9 Root 5 Movable', symbol: 'E#m9', category: 'barre', type: 'minor9',
+    frets: [-1, 10, 8, 10, 10, -1], fingers: [0, 2, 1, 3, 4, 0], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
+  // MISSING ENHARMONICS — Dominant 7th Root 5 Movable (A-shape)
+  // Frets [-1, N+2, N+1, N+2, N, -1], fingers [0,3,2,4,1,0]
+  // A# = Bb = fret 1 | Cb = B = fret 2 | B# = C = fret 3
+  // Fb = Eb = fret 6 | E# = F = fret 8
+  // ============================================================================
+
+  { id: 'mov-r5-asharp-dom7', name: 'A# Dominant 7th Root 5 Movable', symbol: 'A#7', category: 'movable', type: 'dominant7',
+    frets: [-1, 3, 2, 3, 1, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 1, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-cb-dom7', name: 'Cb Dominant 7th Root 5 Movable', symbol: 'Cb7', category: 'movable', type: 'dominant7',
+    frets: [-1, 4, 3, 4, 2, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 2, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-bsharp-dom7', name: 'B# Dominant 7th Root 5 Movable', symbol: 'B#7', category: 'movable', type: 'dominant7',
+    frets: [-1, 5, 4, 5, 3, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 3, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-fb-dom7', name: 'Fb Dominant 7th Root 5 Movable', symbol: 'Fb7', category: 'movable', type: 'dominant7',
+    frets: [-1, 8, 7, 8, 6, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 6, barres: [],
+    rootString: 5, rootNoteString: 1 },
+
+  { id: 'mov-r5-esharp-dom7', name: 'E# Dominant 7th Root 5 Movable', symbol: 'E#7', category: 'movable', type: 'dominant7',
+    frets: [-1, 10, 9, 10, 8, -1], fingers: [0, 3, 2, 4, 1, 0], baseFret: 8, barres: [],
+    rootString: 5, rootNoteString: 1 },
 ];

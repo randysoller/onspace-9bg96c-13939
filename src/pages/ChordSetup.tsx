@@ -1,4 +1,3 @@
-
 /**
  * Chord Setup Page — Complete practice configuration UI
  *
@@ -41,7 +40,7 @@ import {
   MapPin,
 } from 'lucide-react';
 
-// Sharp/flat note-name arrays for scale pill display
+// Sharp/flat note-name arrays for scale pill display (key dropdown only)
 const _CS_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const _CS_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const _CS_CHROM = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
@@ -52,6 +51,7 @@ function getMajorScaleNotes(ks: KeySignature): string[] {
   if (idx < 0) return [];
   return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
 }
+
 import PresetDropdown from '@/components/features/PresetDropdown';
 import { useChordFavoritesStore } from '@/stores/chordFavoritesStore';
 import heroImg from '@/assets/hero-guitar.jpg';
@@ -439,21 +439,14 @@ export default function ChordSetup() {
   const rootDropdownRef = useRef<HTMLDivElement>(null);
   const positionDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Use a stable primitive sentinel for keyFilter to ensure value-based
-  // dependency comparison in useMemo — avoids React Object.is reference failures
-  // when Zustand persist/merge creates new KeySignature object references.
-  // Encode both noteName + display so enharmonic key switches (e.g. D♭ ↔ C♯) are detected
-  const keyFilterDep = keyFilter ? `${keyFilter.noteName}|${keyFilter.display}` : '';
-
+  // ── Available chord count ─────────────────────────────────────────────────
+  // keyFilter is used as a DIRECT dependency — Zustand's setKeyFilter() always
+  // creates a new object reference, so Object.is(prev, next) === false is
+  // guaranteed on every change. No sentinel string needed.
   const availableCount = useMemo(
     () => getAvailableCount(),
-    // Added getAvailableCount to the dependency array. Zustand actions/selectors are generally stable
-    // so `exhaustive-deps` might not strictly require this, but including it is robust.
-    // The original `eslint-disable` comment has been removed because the error message
-    // "Definition for rule 'react-hooks/exhaustive-deps' was not found" indicates that ESLint
-    // does not recognize the rule, making the disable comment ineffective and potentially problematic itself.
     [showFavoritesOnly, favoriteIds.size, categories.size, chordTypes.size,
-     barreRoots.size, keyFilterDep, filterPositions.size,
+     barreRoots.size, keyFilter, filterPositions.size,
      activePresetId, presets.length, getAvailableCount]
   );
 
@@ -1074,8 +1067,8 @@ export default function ChordSetup() {
                   barreRoots={barreRoots}
                   onToggleCategory={toggleCategory}
                   onClearCategories={clearCategories}
-                  onToggleBarreRoot={(root) => { toggleBarreRoot(root); setActiveSheet(null); }} // Close after selecting
-                  onClearBarreRoots={() => { clearBarreRoots(); setActiveSheet(null); }} // Close after clearing
+                  onToggleBarreRoot={(root) => { toggleBarreRoot(root); setActiveSheet(null); }}
+                  onClearBarreRoots={() => { clearBarreRoots(); setActiveSheet(null); }}
                   isMobile={true}
                 />
               )}

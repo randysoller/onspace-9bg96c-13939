@@ -11,6 +11,7 @@ import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
 import { KEY_SIGNATURES } from '@/constants/scales';
+import { chordRootSemitone, buildMajorScaleNotes } from '@/lib/chordFilters';
 import type { PositionFilter } from '@/stores/chordLibraryStore';
 import ChordDetailModal from '@/components/features/ChordDetailModal';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
@@ -25,10 +26,7 @@ import { useAuthStore } from '@/stores/authStore';
 
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
 
-// Note name → semitone index (constant, defined outside component)
-const NOTE_SEMITONE: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-
-// Sharp/flat note-name arrays for scale pill display
+// Sharp/flat note-name arrays for scale pill display (key dropdown only)
 const _SHARP_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const _FLAT_NAMES  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
 const _CHROMATIC   = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'] as const;
@@ -40,21 +38,7 @@ function getMajorScaleNotes(ks: import('@/constants/scales').KeySignature): stri
   if (idx < 0) return [];
   return [0, 2, 4, 5, 7, 9, 11].map(i => names[(idx + i) % 12]);
 }
-
-function chordRootSemitone(symbol: string): number {
-  const m = symbol.match(/^([A-G])([#b]?)/);
-  if (!m) return -1;
-  let s = NOTE_SEMITONE[m[1]] ?? -1;
-  if (m[2] === '#') s = (s + 1) % 12;
-  if (m[2] === 'b') s = (s + 11) % 12;
-  return s;
-}
-
-function buildMajorScaleNotes(noteName: string): Set<number> | null {
-  const idx = ['C','C#','D','Eb','E','F','F#','G','Ab','A','Bb','B'].indexOf(noteName);
-  if (idx < 0) return null;
-  return new Set([0,2,4,5,7,9,11].map(i => (idx + i) % 12));
-}
+// chordRootSemitone and buildMajorScaleNotes are imported from @/lib/chordFilters
 
 // ─── ChordCard ─────────────────────────────────────────────────────────────────
 
@@ -248,17 +232,10 @@ export default function ChordLibrary() {
     }
   });
 
-  // ── Stable key filter sentinel ────────────────────────────────────────────────
-  const filterKeyDep = filterKey ? `${filterKey.noteName}|${filterKey.display}` : '';
-
-  // ── Pre-computed scale notes ─────────────────────────────────────────────────
-  // Uses module-level pure functions — no closure over component state, no
-  // reference-equality issues with Zustand-persisted KeySignature objects.
-  const activeScaleNotes = useMemo(
-    () => filterKey ? buildMajorScaleNotes(filterKey.noteName) : null,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filterKeyDep]
-  );
+  // filterKey is used as a DIRECT useMemo dependency throughout this component.
+  // Zustand always creates a new object reference on setFilterKey() — so
+  // Object.is(prevKey, newKey) === false is guaranteed whenever the key changes.
+  // No sentinel string, no intermediate memo — one object, one source of truth.
 
   // ── Scroll restoration ───────────────────────────────────────────────────────
   const lastScrollY = useRef(0);
@@ -302,7 +279,7 @@ export default function ChordLibrary() {
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKeyDep, showFavoritesOnly]);
+  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey, showFavoritesOnly]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
 
@@ -355,7 +332,12 @@ export default function ChordLibrary() {
   const favoriteIdsDep = useMemo(() => [...favoriteIds].sort().join(','), [favoriteIds]);
 
   // ── Filtered chord list ──────────────────────────────────────────────────────
+  // filterKey is listed as a DIRECT dependency — Zustand guarantees a new object
+  // reference on every setFilterKey() call. scaleNotes is computed inline inside
+  // this memo so there is no intermediate memo that could capture a stale closure.
   const filteredChords = useMemo(() => {
+    // Build the diatonic set once per memo run (O(1) per chord check below).
+    const scaleNotes = filterKey ? buildMajorScaleNotes(filterKey.noteName) : null;
     return allChords.filter((chord) => {
       // Search
       if (searchQuery) {
@@ -372,8 +354,7 @@ export default function ChordLibrary() {
       if (filterBarreRoots.length > 0 && !filterBarreRoots.includes((6 - chord.rootNoteString) as BarreRoot)) return false;
       // Position
       if (filterPositions.length > 0) {
-        const pos = filterPositions;
-        const inPos = pos.some(p =>
+        const inPos = filterPositions.some(p =>
           (p === 'open' && chord.category === 'open') ||
           (p === 'low' && chord.category !== 'open' && chord.baseFret >= 1 && chord.baseFret <= 4) ||
           (p === 'mid' && chord.baseFret >= 5 && chord.baseFret <= 8) ||
@@ -381,15 +362,16 @@ export default function ChordLibrary() {
         );
         if (!inPos) return false;
       }
-      // Key filter — uses pure module-level function, no stale-closure risk
-      if (activeScaleNotes) {
+      // Key filter — scaleNotes computed at memo run time, no stale-closure risk.
+      if (scaleNotes) {
         const semitone = chordRootSemitone(chord.symbol);
-        if (semitone < 0 || !activeScaleNotes.has(semitone)) return false;
+        if (semitone < 0 || !scaleNotes.has(semitone)) return false;
       }
       return true;
     });
+  // filterKey is the direct Zustand object — new reference on every setFilterKey().
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
-      activeScaleNotes, showFavoritesOnly, favoriteIdsDep]);
+      filterKey, showFavoritesOnly, favoriteIdsDep]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

@@ -407,10 +407,18 @@ export default function ChordSetup() {
 
   // Use keyFilter?.noteName (primitive string) instead of the keyFilter object reference
   // to ensure value-based dependency comparison in useMemo.
-  const availableCount = useMemo(() => getAvailableCount(), [
-    showFavoritesOnly, favoriteIds, categories, chordTypes,
-    barreRoots, keyFilter?.noteName ?? '', filterPositions.size, filterPositions, activePresetId, presets, getAvailableCount,
-  ]);
+  // Use a stable primitive sentinel for keyFilter so the memo re-runs on ANY value change,
+  // including when the same key is re-selected after localStorage hydration produces
+  // a new object reference with an identical noteName string.
+  const keyFilterSentinel = keyFilter ? keyFilter.noteName : '__none__';
+  const availableCount = useMemo(
+    () => getAvailableCount(),
+    // The eslint-disable-next-line comment was removed.
+    // All dependencies should be explicitly listed for react-hooks/exhaustive-deps.
+    [showFavoritesOnly, favoriteIds, categories, chordTypes,
+     barreRoots, keyFilterSentinel, filterPositions.size, filterPositions,
+     activePresetId, presets, getAvailableCount]
+  );
 
   const activePreset = presets.find((p) => p.id === activePresetId);
   const hasBorreOrMovable = categories.has('barre') || categories.has('movable');
@@ -660,10 +668,6 @@ export default function ChordSetup() {
                     <ChevronDown className={`size-3 transition-transform duration-200 ${activeSheet === 'root' ? 'rotate-180' : ''}`} />
                   </button>
                   <AnimatePresence>
-                    {/* The `activeSheet === 'position'` block was incorrectly placed here.
-                        It should only render if activeSheet is 'position',
-                        and `rootDropdownRef` is only for the 'root' dropdown.
-                        Removed it from here. */}
                     {activeSheet === 'root' && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}

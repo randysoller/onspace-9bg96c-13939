@@ -372,7 +372,13 @@ export default function ChordLibrary() {
     return result;
   // filterKey?.noteName (primitive string) ensures value-based comparison — prevents stale
   // reference equality issues when the same KeySignature object is stored across re-renders.
-  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions, filterKey?.noteName ?? '', showFavoritesOnly, favoriteIds]);
+  // Use a stable string key derived from filterKey so React detects value changes even
+  // when the same KeySignature object reference is stored vs restored from localStorage.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
+    // Primitive sentinel: changes whenever the key selection changes (null → 'G', 'G' → 'D', etc.)
+    filterKey ? `${filterKey.noteName}` : '__none__',
+    showFavoritesOnly, favoriteIds]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

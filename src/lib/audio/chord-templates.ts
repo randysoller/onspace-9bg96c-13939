@@ -63,6 +63,20 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     category: 'major',
   },
   {
+    name: 'Major 6 Add 9', // Maps to ChordType 'maj6add9'; displayed as e.g. 'C6/9'
+    symbol: '6/9',
+    intervals: [0, 4, 7, 9, 14], // Root, Major 3rd, Perfect 5th, Major 6th, Major 9th
+    chroma: createTemplate([0, 2, 4, 7, 9]),
+    category: 'major',
+  },
+  {
+    name: 'Major 7♯11',   // Maps to ChordType 'maj7sharp11'; Lydian sound
+    symbol: 'maj7#11',
+    intervals: [0, 4, 7, 11, 18], // Root, Major 3rd, Perfect 5th, Major 7th, Augmented 11th
+    chroma: createTemplate([0, 4, 6, 7, 11]),
+    category: 'major',
+  },
+  {
     name: 'Add 9',        // Maps to ChordType 'add9'; displayed as e.g. 'Cadd9'
     symbol: 'add9',
     intervals: [0, 4, 7, 14], // Root, Major 3rd, Perfect 5th, Major 9th
@@ -106,6 +120,34 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     symbol: '7',
     intervals: [0, 4, 7, 10], // Major triad + Minor 7th
     chroma: createTemplate([0, 4, 7, 10]),
+    category: 'dominant',
+  },
+  {
+    name: 'Dominant 7th ♭5', // Maps to ChordType 'dom7b5'; tritone substitution color
+    symbol: '7b5',
+    intervals: [0, 4, 6, 10], // Root, Major 3rd, Diminished 5th, Minor 7th
+    chroma: createTemplate([0, 4, 6, 10]),
+    category: 'dominant',
+  },
+  {
+    name: 'Dominant 7th ♯9', // Maps to ChordType 'dom7sharp9'; the 'Hendrix chord'
+    symbol: '7#9',
+    intervals: [0, 4, 7, 10, 15], // Root, Major 3rd, Perfect 5th, Minor 7th, Augmented 9th
+    chroma: createTemplate([0, 3, 4, 7, 10]),
+    category: 'dominant',
+  },
+  {
+    name: 'Dominant 7th ♭9', // Maps to ChordType 'dom7b9'; strong resolution tension
+    symbol: '7b9',
+    intervals: [0, 4, 7, 10, 13], // Root, Major 3rd, Perfect 5th, Minor 7th, Minor 9th
+    chroma: createTemplate([0, 1, 4, 7, 10]),
+    category: 'dominant',
+  },
+  {
+    name: 'Dominant 7th ♯5♯9', // Maps to ChordType 'dom7sharp5sharp9'; altered dominant
+    symbol: '7#5#9',
+    intervals: [0, 4, 8, 10, 15], // Root, Major 3rd, Augmented 5th, Minor 7th, Augmented 9th
+    chroma: createTemplate([0, 3, 4, 8, 10]),
     category: 'dominant',
   },
   {

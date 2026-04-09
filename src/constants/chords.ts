@@ -327,11 +327,6 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 1, barres: [1, 3],
     rootString: 5, rootNoteString: 1 },
 
-  // B  (fret 2)
-  { id: 'barre-r5-b-minor', name: 'B Minor Root 5 Barre', symbol: 'Bm', category: 'barre', type: 'minor',
-    frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], baseFret: 2, barres: [2, 4],
-    rootString: 5, rootNoteString: 1 },
-
   // C  (fret 3)
   { id: 'barre-r5-c-minor', name: 'C Minor Root 5 Barre', symbol: 'Cm', category: 'barre', type: 'minor',
     frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], baseFret: 3, barres: [3, 5],
@@ -392,6 +387,26 @@ export const CHORD_DATABASE: ChordData[] = [
   // A  (fret 12 — octave)
   { id: 'barre-r5-a-minor', name: 'A Minor Root 5 Barre', symbol: 'Am', category: 'barre', type: 'minor',
     frets: [-1, 12, 14, 14, 13, 12], fingers: [0, 1, 3, 4, 2, 1], baseFret: 12, barres: [12, 14],
+    rootString: 5, rootNoteString: 1 },
+
+  // Cb (enharmonic B, fret 2)
+  { id: 'barre-r5-cb-minor', name: 'Cb Minor Root 5 Barre', symbol: 'Cbm', category: 'barre', type: 'minor',
+    frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], baseFret: 2, barres: [2, 4],
+    rootString: 5, rootNoteString: 1 },
+
+  // B# (enharmonic C, fret 3)
+  { id: 'barre-r5-bsharp-minor', name: 'B# Minor Root 5 Barre', symbol: 'B#m', category: 'barre', type: 'minor',
+    frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], baseFret: 3, barres: [3, 5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Fb (enharmonic E, fret 7)
+  { id: 'barre-r5-fb-minor', name: 'Fb Minor Root 5 Barre', symbol: 'Fbm', category: 'barre', type: 'minor',
+    frets: [-1, 7, 9, 9, 8, 7], fingers: [0, 1, 3, 4, 2, 1], baseFret: 7, barres: [7, 9],
+    rootString: 5, rootNoteString: 1 },
+
+  // E# (enharmonic F, fret 8)
+  { id: 'barre-r5-esharp-minor', name: 'E# Minor Root 5 Barre', symbol: 'E#m', category: 'barre', type: 'minor',
+    frets: [-1, 8, 10, 10, 9, 8], fingers: [0, 1, 3, 4, 2, 1], baseFret: 8, barres: [8, 10],
     rootString: 5, rootNoteString: 1 },
 
   // ============================================================================

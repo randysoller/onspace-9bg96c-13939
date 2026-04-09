@@ -49,8 +49,10 @@ const ALL_CATEGORIES: ChordCategory[] = ['open', 'barre', 'movable'];
 const BARRE_ROOTS: BarreRoot[] = [6, 5, 4];
 const ALL_CHORD_TYPES: ChordType[] = [
   'major', 'minor', 'augmented', 'slash', 'diminished',
-  'sus2', 'sus4', 'major6', 'minor6',
-  'major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7', 'add9',
+  'sus2', 'sus4', '7sus4', 'major6', 'minor6', 'maj6add9',
+  'major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
+  'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9',
+  'add9',
   'major9', '9th', 'minor9',
   'major11', '11th', 'minor11',
   'major13', '13th', 'minor13',
@@ -63,8 +65,8 @@ interface TypeGroup {
 }
 
 const TYPE_GROUPS: TypeGroup[] = [
-  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', 'major6', 'minor6', 'slash'] },
-  { label: '7th Chords', types: ['major7', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7'] },
+  { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', '7sus4', 'major6', 'minor6', 'maj6add9', 'slash'] },
+  { label: '7th Chords', types: ['major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7', 'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9'] },
   {
     label: 'Extended',
     types: ['add9', 'major9', '9th', 'minor9', 'major11', '11th', 'minor11', 'major13', '13th', 'minor13'],

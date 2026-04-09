@@ -42,7 +42,7 @@ export const CHORD_TYPE_LABELS: Record<ChordType | 'all', string> = {
   '7sus4': 'Suspended 7th',
   major6: 'Major 6',
   minor6: 'Minor 6',
-  maj6add9: 'Major 6add9',
+  maj6add9: 'Major 6 Add 9',
   major7: 'Major 7',
   dominant7: 'Dominant 7th',
   minor7: 'Minor 7',

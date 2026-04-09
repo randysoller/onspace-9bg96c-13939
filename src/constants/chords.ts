@@ -4017,4 +4017,194 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [2, -1, 1, 2, 2, 2], fingers: [2, 0, 1, 3, 3, 3], baseFret: 1, barres: [],
     partialBarres: [{ fret: 2, fromString: 3, toString: 5 }],
     rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // MOVABLE CHORDS - Dominant 7th b5 (E-shape, Root 6)
+  // Frets [N+1,-1,N+1,N+2,N,-1], fingers [2,0,3,4,1,0], barres []
+  // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+  //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'mov-e6-f-dom7b5', name: 'F Dominant 7th b5 Root 6 Movable', symbol: 'F7b5', category: 'movable', type: 'dom7b5',
+    frets: [2, -1, 2, 3, 1, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'mov-e6-fsharp-dom7b5', name: 'F# Dominant 7th b5 Root 6 Movable', symbol: 'F#7b5', category: 'movable', type: 'dom7b5',
+    frets: [3, -1, 3, 4, 2, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-gb-dom7b5', name: 'Gb Dominant 7th b5 Root 6 Movable', symbol: 'Gb7b5', category: 'movable', type: 'dom7b5',
+    frets: [3, -1, 3, 4, 2, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'mov-e6-g-dom7b5', name: 'G Dominant 7th b5 Root 6 Movable', symbol: 'G7b5', category: 'movable', type: 'dom7b5',
+    frets: [4, -1, 4, 5, 3, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 3, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'mov-e6-gsharp-dom7b5', name: 'G# Dominant 7th b5 Root 6 Movable', symbol: 'G#7b5', category: 'movable', type: 'dom7b5',
+    frets: [5, -1, 5, 6, 4, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-ab-dom7b5', name: 'Ab Dominant 7th b5 Root 6 Movable', symbol: 'Ab7b5', category: 'movable', type: 'dom7b5',
+    frets: [5, -1, 5, 6, 4, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'mov-e6-a-dom7b5', name: 'A Dominant 7th b5 Root 6 Movable', symbol: 'A7b5', category: 'movable', type: 'dom7b5',
+    frets: [6, -1, 6, 7, 5, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 5, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'mov-e6-asharp-dom7b5', name: 'A# Dominant 7th b5 Root 6 Movable', symbol: 'A#7b5', category: 'movable', type: 'dom7b5',
+    frets: [7, -1, 7, 8, 6, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bb-dom7b5', name: 'Bb Dominant 7th b5 Root 6 Movable', symbol: 'Bb7b5', category: 'movable', type: 'dom7b5',
+    frets: [7, -1, 7, 8, 6, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'mov-e6-b-dom7b5', name: 'B Dominant 7th b5 Root 6 Movable', symbol: 'B7b5', category: 'movable', type: 'dom7b5',
+    frets: [8, -1, 8, 9, 7, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-cb-dom7b5', name: 'Cb Dominant 7th b5 Root 6 Movable', symbol: 'Cb7b5', category: 'movable', type: 'dom7b5',
+    frets: [8, -1, 8, 9, 7, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'mov-e6-c-dom7b5', name: 'C Dominant 7th b5 Root 6 Movable', symbol: 'C7b5', category: 'movable', type: 'dom7b5',
+    frets: [9, -1, 9, 10, 8, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bsharp-dom7b5', name: 'B# Dominant 7th b5 Root 6 Movable', symbol: 'B#7b5', category: 'movable', type: 'dom7b5',
+    frets: [9, -1, 9, 10, 8, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'mov-e6-csharp-dom7b5', name: 'C# Dominant 7th b5 Root 6 Movable', symbol: 'C#7b5', category: 'movable', type: 'dom7b5',
+    frets: [10, -1, 10, 11, 9, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-db-dom7b5', name: 'Db Dominant 7th b5 Root 6 Movable', symbol: 'Db7b5', category: 'movable', type: 'dom7b5',
+    frets: [10, -1, 10, 11, 9, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'mov-e6-d-dom7b5', name: 'D Dominant 7th b5 Root 6 Movable', symbol: 'D7b5', category: 'movable', type: 'dom7b5',
+    frets: [11, -1, 11, 12, 10, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 10, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'mov-e6-dsharp-dom7b5', name: 'D# Dominant 7th b5 Root 6 Movable', symbol: 'D#7b5', category: 'movable', type: 'dom7b5',
+    frets: [12, -1, 12, 13, 11, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-eb-dom7b5', name: 'Eb Dominant 7th b5 Root 6 Movable', symbol: 'Eb7b5', category: 'movable', type: 'dom7b5',
+    frets: [12, -1, 12, 13, 11, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E / Fb  (fret 12 — octave)
+  { id: 'mov-e6-e-dom7b5-12', name: 'E Dominant 7th b5 Root 6 Movable', symbol: 'E7b5', category: 'movable', type: 'dom7b5',
+    frets: [13, -1, 13, 14, 12, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-fb-dom7b5', name: 'Fb Dominant 7th b5 Root 6 Movable', symbol: 'Fb7b5', category: 'movable', type: 'dom7b5',
+    frets: [13, -1, 13, 14, 12, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F, fret 1)
+  { id: 'mov-e6-esharp-dom7b5', name: 'E# Dominant 7th b5 Root 6 Movable', symbol: 'E#7b5', category: 'movable', type: 'dom7b5',
+    frets: [2, -1, 2, 3, 1, -1], fingers: [2, 0, 3, 4, 1, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // BARRE CHORDS - Dominant 7th b5 (A-shape, Root 5)
+  // Barre at fret N: frets [-1,N,N+1,N,N+2,N+1], fingers [0,1,2,1,4,3]
+  // 5th string notes: Bb=1, B=2, C=3, Db/C#=4, D=5, Eb/D#=6,
+  //                   E=7, F=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+  // ============================================================================
+
+  // Bb / A#  (fret 1)
+  { id: 'barre-r5-bb-dom7b5', name: 'Bb Dominant 7th b5 Root 5 Barre', symbol: 'Bb7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 1, 2, 1, 3, 2], fingers: [0, 1, 2, 1, 4, 3], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-dom7b5', name: 'A# Dominant 7th b5 Root 5 Barre', symbol: 'A#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 1, 2, 1, 3, 2], fingers: [0, 1, 2, 1, 4, 3], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+
+  // B / Cb  (fret 2)
+  { id: 'barre-r5-b-dom7b5', name: 'B Dominant 7th b5 Root 5 Barre', symbol: 'B7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 2, 3, 2, 4, 3], fingers: [0, 1, 2, 1, 4, 3], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-cb-dom7b5', name: 'Cb Dominant 7th b5 Root 5 Barre', symbol: 'Cb7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 2, 3, 2, 4, 3], fingers: [0, 1, 2, 1, 4, 3], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  // C / B#  (fret 3)
+  { id: 'barre-r5-c-dom7b5', name: 'C Dominant 7th b5 Root 5 Barre', symbol: 'C7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 3, 4, 3, 5, 4], fingers: [0, 1, 2, 1, 4, 3], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-bsharp-dom7b5', name: 'B# Dominant 7th b5 Root 5 Barre', symbol: 'B#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 3, 4, 3, 5, 4], fingers: [0, 1, 2, 1, 4, 3], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  // C# / Db  (fret 4)
+  { id: 'barre-r5-csharp-dom7b5', name: 'C# Dominant 7th b5 Root 5 Barre', symbol: 'C#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 4, 5, 4, 6, 5], fingers: [0, 1, 2, 1, 4, 3], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-dom7b5', name: 'Db Dominant 7th b5 Root 5 Barre', symbol: 'Db7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 4, 5, 4, 6, 5], fingers: [0, 1, 2, 1, 4, 3], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+
+  // D  (fret 5)
+  { id: 'barre-r5-d-dom7b5', name: 'D Dominant 7th b5 Root 5 Barre', symbol: 'D7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 5, 6, 5, 7, 6], fingers: [0, 1, 2, 1, 4, 3], baseFret: 5, barres: [5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Eb / D# / Fb  (fret 6)
+  { id: 'barre-r5-eb-dom7b5', name: 'Eb Dominant 7th b5 Root 5 Barre', symbol: 'Eb7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 6, 7, 6, 8, 7], fingers: [0, 1, 2, 1, 4, 3], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-dom7b5', name: 'D# Dominant 7th b5 Root 5 Barre', symbol: 'D#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 6, 7, 6, 8, 7], fingers: [0, 1, 2, 1, 4, 3], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-fb-dom7b5', name: 'Fb Dominant 7th b5 Root 5 Barre', symbol: 'Fb7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 6, 7, 6, 8, 7], fingers: [0, 1, 2, 1, 4, 3], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  // E  (fret 7)
+  { id: 'barre-r5-e-dom7b5', name: 'E Dominant 7th b5 Root 5 Barre', symbol: 'E7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 7, 8, 7, 9, 8], fingers: [0, 1, 2, 1, 4, 3], baseFret: 7, barres: [7],
+    rootString: 5, rootNoteString: 1 },
+
+  // F / E#  (fret 8)
+  { id: 'barre-r5-f-dom7b5', name: 'F Dominant 7th b5 Root 5 Barre', symbol: 'F7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 8, 9, 8, 10, 9], fingers: [0, 1, 2, 1, 4, 3], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-esharp-dom7b5', name: 'E# Dominant 7th b5 Root 5 Barre', symbol: 'E#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 8, 9, 8, 10, 9], fingers: [0, 1, 2, 1, 4, 3], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+
+  // F# / Gb  (fret 9)
+  { id: 'barre-r5-fsharp-dom7b5', name: 'F# Dominant 7th b5 Root 5 Barre', symbol: 'F#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 9, 10, 9, 11, 10], fingers: [0, 1, 2, 1, 4, 3], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-dom7b5', name: 'Gb Dominant 7th b5 Root 5 Barre', symbol: 'Gb7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 9, 10, 9, 11, 10], fingers: [0, 1, 2, 1, 4, 3], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+
+  // G  (fret 10)
+  { id: 'barre-r5-g-dom7b5', name: 'G Dominant 7th b5 Root 5 Barre', symbol: 'G7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 10, 11, 10, 12, 11], fingers: [0, 1, 2, 1, 4, 3], baseFret: 10, barres: [10],
+    rootString: 5, rootNoteString: 1 },
+
+  // Ab / G#  (fret 11)
+  { id: 'barre-r5-ab-dom7b5', name: 'Ab Dominant 7th b5 Root 5 Barre', symbol: 'Ab7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 11, 12, 11, 13, 12], fingers: [0, 1, 2, 1, 4, 3], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-dom7b5', name: 'G# Dominant 7th b5 Root 5 Barre', symbol: 'G#7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 11, 12, 11, 13, 12], fingers: [0, 1, 2, 1, 4, 3], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+
+  // A  (fret 12 — octave)
+  { id: 'barre-r5-a-dom7b5', name: 'A Dominant 7th b5 Root 5 Barre', symbol: 'A7b5', category: 'barre', type: 'dom7b5',
+    frets: [-1, 12, 13, 12, 14, 13], fingers: [0, 1, 2, 1, 4, 3], baseFret: 12, barres: [12],
+    rootString: 5, rootNoteString: 1 },
 ];

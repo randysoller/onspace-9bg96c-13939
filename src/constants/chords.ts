@@ -514,17 +514,17 @@ export const CHORD_DATABASE: ChordData[] = [
 
   // B# (enharmonic C, fret 3)
   { id: 'barre-r5-bsharp-maj7', name: 'B# Major 7th Root 5 Barre', symbol: 'B#maj7', category: 'barre', type: 'major7',
-    frets: [-1, 3, 5, 4, 5, -1], fingers: [0, 1, 3, 2, 4, 0], baseFret: 3, barres: [3],
+    frets: [-1, 3, 5, 4, 5, 3], fingers: [0, 1, 3, 2, 4, 1], baseFret: 3, barres: [3],
     rootString: 5, rootNoteString: 1 },
 
   // Fb (enharmonic E, fret 7)
   { id: 'barre-r5-fb-maj7', name: 'Fb Major 7th Root 5 Barre', symbol: 'Fbmaj7', category: 'barre', type: 'major7',
-    frets: [-1, 7, 9, 8, 9, -1], fingers: [0, 1, 3, 2, 4, 0], baseFret: 7, barres: [7],
+    frets: [-1, 7, 9, 8, 9, 7], fingers: [0, 1, 3, 2, 4, 1], baseFret: 7, barres: [7],
     rootString: 5, rootNoteString: 1 },
 
   // E# (enharmonic F, fret 8)
   { id: 'barre-r5-esharp-maj7', name: 'E# Major 7th Root 5 Barre', symbol: 'E#maj7', category: 'barre', type: 'major7',
-    frets: [-1, 8, 10, 9, 10, -1], fingers: [0, 1, 3, 2, 4, 0], baseFret: 8, barres: [8],
+    frets: [-1, 8, 10, 9, 10, 8], fingers: [0, 1, 3, 2, 4, 1], baseFret: 8, barres: [8],
     rootString: 5, rootNoteString: 1 },
 
   // ============================================================================

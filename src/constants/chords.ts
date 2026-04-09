@@ -3822,4 +3822,196 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 9, 8, 9, 9, 9], fingers: [0, 2, 1, 3, 3, 3], baseFret: 8, barres: [],
     partialBarres: [{ fret: 9, fromString: 3, toString: 5 }],
     rootString: 5, rootNoteString: 1 },
+
+  // ============================================================================
+  // MOVABLE CHORDS - Major 6th (E-shape, Root 6)
+  // Frets [N+1,-1,N,N+2,N+1,-1], fingers [2,0,1,3,4,0], barres []
+  // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+  //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'mov-e6-f-maj6', name: 'F Major 6 Root 6 Movable', symbol: 'F6', category: 'movable', type: 'major6',
+    frets: [2, -1, 1, 3, 2, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'mov-e6-fsharp-maj6', name: 'F# Major 6 Root 6 Movable', symbol: 'F#6', category: 'movable', type: 'major6',
+    frets: [3, -1, 2, 4, 3, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-gb-maj6', name: 'Gb Major 6 Root 6 Movable', symbol: 'Gb6', category: 'movable', type: 'major6',
+    frets: [3, -1, 2, 4, 3, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'mov-e6-g-maj6', name: 'G Major 6 Root 6 Movable', symbol: 'G6', category: 'movable', type: 'major6',
+    frets: [4, -1, 3, 5, 4, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 3, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'mov-e6-gsharp-maj6', name: 'G# Major 6 Root 6 Movable', symbol: 'G#6', category: 'movable', type: 'major6',
+    frets: [5, -1, 4, 6, 5, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-ab-maj6', name: 'Ab Major 6 Root 6 Movable', symbol: 'Ab6', category: 'movable', type: 'major6',
+    frets: [5, -1, 4, 6, 5, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'mov-e6-a-maj6', name: 'A Major 6 Root 6 Movable', symbol: 'A6', category: 'movable', type: 'major6',
+    frets: [6, -1, 5, 7, 6, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 5, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'mov-e6-asharp-maj6', name: 'A# Major 6 Root 6 Movable', symbol: 'A#6', category: 'movable', type: 'major6',
+    frets: [7, -1, 6, 8, 7, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bb-maj6', name: 'Bb Major 6 Root 6 Movable', symbol: 'Bb6', category: 'movable', type: 'major6',
+    frets: [7, -1, 6, 8, 7, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'mov-e6-b-maj6', name: 'B Major 6 Root 6 Movable', symbol: 'B6', category: 'movable', type: 'major6',
+    frets: [8, -1, 7, 9, 8, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-cb-maj6', name: 'Cb Major 6 Root 6 Movable', symbol: 'Cb6', category: 'movable', type: 'major6',
+    frets: [8, -1, 7, 9, 8, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'mov-e6-c-maj6', name: 'C Major 6 Root 6 Movable', symbol: 'C6', category: 'movable', type: 'major6',
+    frets: [9, -1, 8, 10, 9, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bsharp-maj6', name: 'B# Major 6 Root 6 Movable', symbol: 'B#6', category: 'movable', type: 'major6',
+    frets: [9, -1, 8, 10, 9, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'mov-e6-csharp-maj6', name: 'C# Major 6 Root 6 Movable', symbol: 'C#6', category: 'movable', type: 'major6',
+    frets: [10, -1, 9, 11, 10, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-db-maj6', name: 'Db Major 6 Root 6 Movable', symbol: 'Db6', category: 'movable', type: 'major6',
+    frets: [10, -1, 9, 11, 10, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'mov-e6-d-maj6', name: 'D Major 6 Root 6 Movable', symbol: 'D6', category: 'movable', type: 'major6',
+    frets: [11, -1, 10, 12, 11, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 10, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'mov-e6-dsharp-maj6', name: 'D# Major 6 Root 6 Movable', symbol: 'D#6', category: 'movable', type: 'major6',
+    frets: [12, -1, 11, 13, 12, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-eb-maj6', name: 'Eb Major 6 Root 6 Movable', symbol: 'Eb6', category: 'movable', type: 'major6',
+    frets: [12, -1, 11, 13, 12, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E / Fb  (fret 12 — octave)
+  { id: 'mov-e6-e-maj6-12', name: 'E Major 6 Root 6 Movable', symbol: 'E6', category: 'movable', type: 'major6',
+    frets: [13, -1, 12, 14, 13, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-fb-maj6', name: 'Fb Major 6 Root 6 Movable', symbol: 'Fb6', category: 'movable', type: 'major6',
+    frets: [13, -1, 12, 14, 13, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F, fret 1)
+  { id: 'mov-e6-esharp-maj6', name: 'E# Major 6 Root 6 Movable', symbol: 'E#6', category: 'movable', type: 'major6',
+    frets: [2, -1, 1, 3, 2, -1], fingers: [2, 0, 1, 3, 4, 0], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // MOVABLE CHORDS - Minor 6th (E-shape, Root 6)
+  // Frets [N+1,-1,N,N+1,N+1,N+1], fingers [2,0,1,3,3,3], barres []
+  // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+  //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'mov-e6-f-min6', name: 'F Minor 6 Root 6 Movable', symbol: 'Fm6', category: 'movable', type: 'minor6',
+    frets: [2, -1, 1, 2, 2, 2], fingers: [2, 0, 1, 3, 3, 3], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'mov-e6-fsharp-min6', name: 'F# Minor 6 Root 6 Movable', symbol: 'F#m6', category: 'movable', type: 'minor6',
+    frets: [3, -1, 2, 3, 3, 3], fingers: [2, 0, 1, 3, 3, 3], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-gb-min6', name: 'Gb Minor 6 Root 6 Movable', symbol: 'Gbm6', category: 'movable', type: 'minor6',
+    frets: [3, -1, 2, 3, 3, 3], fingers: [2, 0, 1, 3, 3, 3], baseFret: 2, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'mov-e6-g-min6', name: 'G Minor 6 Root 6 Movable', symbol: 'Gm6', category: 'movable', type: 'minor6',
+    frets: [4, -1, 3, 4, 4, 4], fingers: [2, 0, 1, 3, 3, 3], baseFret: 3, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'mov-e6-gsharp-min6', name: 'G# Minor 6 Root 6 Movable', symbol: 'G#m6', category: 'movable', type: 'minor6',
+    frets: [5, -1, 4, 5, 5, 5], fingers: [2, 0, 1, 3, 3, 3], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-ab-min6', name: 'Ab Minor 6 Root 6 Movable', symbol: 'Abm6', category: 'movable', type: 'minor6',
+    frets: [5, -1, 4, 5, 5, 5], fingers: [2, 0, 1, 3, 3, 3], baseFret: 4, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'mov-e6-a-min6', name: 'A Minor 6 Root 6 Movable', symbol: 'Am6', category: 'movable', type: 'minor6',
+    frets: [6, -1, 5, 6, 6, 6], fingers: [2, 0, 1, 3, 3, 3], baseFret: 5, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'mov-e6-asharp-min6', name: 'A# Minor 6 Root 6 Movable', symbol: 'A#m6', category: 'movable', type: 'minor6',
+    frets: [7, -1, 6, 7, 7, 7], fingers: [2, 0, 1, 3, 3, 3], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bb-min6', name: 'Bb Minor 6 Root 6 Movable', symbol: 'Bbm6', category: 'movable', type: 'minor6',
+    frets: [7, -1, 6, 7, 7, 7], fingers: [2, 0, 1, 3, 3, 3], baseFret: 6, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'mov-e6-b-min6', name: 'B Minor 6 Root 6 Movable', symbol: 'Bm6', category: 'movable', type: 'minor6',
+    frets: [8, -1, 7, 8, 8, 8], fingers: [2, 0, 1, 3, 3, 3], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-cb-min6', name: 'Cb Minor 6 Root 6 Movable', symbol: 'Cbm6', category: 'movable', type: 'minor6',
+    frets: [8, -1, 7, 8, 8, 8], fingers: [2, 0, 1, 3, 3, 3], baseFret: 7, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'mov-e6-c-min6', name: 'C Minor 6 Root 6 Movable', symbol: 'Cm6', category: 'movable', type: 'minor6',
+    frets: [9, -1, 8, 9, 9, 9], fingers: [2, 0, 1, 3, 3, 3], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-bsharp-min6', name: 'B# Minor 6 Root 6 Movable', symbol: 'B#m6', category: 'movable', type: 'minor6',
+    frets: [9, -1, 8, 9, 9, 9], fingers: [2, 0, 1, 3, 3, 3], baseFret: 8, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'mov-e6-csharp-min6', name: 'C# Minor 6 Root 6 Movable', symbol: 'C#m6', category: 'movable', type: 'minor6',
+    frets: [10, -1, 9, 10, 10, 10], fingers: [2, 0, 1, 3, 3, 3], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-db-min6', name: 'Db Minor 6 Root 6 Movable', symbol: 'Dbm6', category: 'movable', type: 'minor6',
+    frets: [10, -1, 9, 10, 10, 10], fingers: [2, 0, 1, 3, 3, 3], baseFret: 9, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'mov-e6-d-min6', name: 'D Minor 6 Root 6 Movable', symbol: 'Dm6', category: 'movable', type: 'minor6',
+    frets: [11, -1, 10, 11, 11, 11], fingers: [2, 0, 1, 3, 3, 3], baseFret: 10, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'mov-e6-dsharp-min6', name: 'D# Minor 6 Root 6 Movable', symbol: 'D#m6', category: 'movable', type: 'minor6',
+    frets: [12, -1, 11, 12, 12, 12], fingers: [2, 0, 1, 3, 3, 3], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-eb-min6', name: 'Eb Minor 6 Root 6 Movable', symbol: 'Ebm6', category: 'movable', type: 'minor6',
+    frets: [12, -1, 11, 12, 12, 12], fingers: [2, 0, 1, 3, 3, 3], baseFret: 11, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E / Fb  (fret 12 — octave)
+  { id: 'mov-e6-e-min6-12', name: 'E Minor 6 Root 6 Movable', symbol: 'Em6', category: 'movable', type: 'minor6',
+    frets: [13, -1, 12, 13, 13, 13], fingers: [2, 0, 1, 3, 3, 3], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'mov-e6-fb-min6', name: 'Fb Minor 6 Root 6 Movable', symbol: 'Fbm6', category: 'movable', type: 'minor6',
+    frets: [13, -1, 12, 13, 13, 13], fingers: [2, 0, 1, 3, 3, 3], baseFret: 12, barres: [],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F, fret 1)
+  { id: 'mov-e6-esharp-min6', name: 'E# Minor 6 Root 6 Movable', symbol: 'E#m6', category: 'movable', type: 'minor6',
+    frets: [2, -1, 1, 2, 2, 2], fingers: [2, 0, 1, 3, 3, 3], baseFret: 1, barres: [],
+    rootString: 6, rootNoteString: 0 },
 ];

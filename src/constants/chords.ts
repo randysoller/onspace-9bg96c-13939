@@ -321,77 +321,77 @@ export const CHORD_DATABASE: ChordData[] = [
 
   // Bb / A#  (fret 1)
   { id: 'barre-r5-bb-minor', name: 'Bb Minor Root 5 Barre', symbol: 'Bbm', category: 'barre', type: 'minor',
-    frets: [-1, 1, 3, 3, 2, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 1, barres: [1, 3],
+    frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 1, barres: [1, 3],
     rootString: 5, rootNoteString: 1 },
   { id: 'barre-r5-asharp-minor', name: 'A# Minor Root 5 Barre', symbol: 'A#m', category: 'barre', type: 'minor',
-    frets: [-1, 1, 3, 3, 2, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 1, barres: [1, 3],
+    frets: [-1, 1, 3, 3, 2, 1], fingers: [0, 1, 3, 4, 2, 1], baseFret: 1, barres: [1, 3],
     rootString: 5, rootNoteString: 1 },
 
   // B  (fret 2)
   { id: 'barre-r5-b-minor', name: 'B Minor Root 5 Barre', symbol: 'Bm', category: 'barre', type: 'minor',
-    frets: [-1, 2, 4, 4, 3, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 2, barres: [2, 4],
+    frets: [-1, 2, 4, 4, 3, 2], fingers: [0, 1, 3, 4, 2, 1], baseFret: 2, barres: [2, 4],
     rootString: 5, rootNoteString: 1 },
 
   // C  (fret 3)
   { id: 'barre-r5-c-minor', name: 'C Minor Root 5 Barre', symbol: 'Cm', category: 'barre', type: 'minor',
-    frets: [-1, 3, 5, 5, 4, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 3, barres: [3, 5],
+    frets: [-1, 3, 5, 5, 4, 3], fingers: [0, 1, 3, 4, 2, 1], baseFret: 3, barres: [3, 5],
     rootString: 5, rootNoteString: 1 },
 
   // C# / Db  (fret 4)
   { id: 'barre-r5-csharp-minor', name: 'C# Minor Root 5 Barre', symbol: 'C#m', category: 'barre', type: 'minor',
-    frets: [-1, 4, 6, 6, 5, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 4, barres: [4, 6],
+    frets: [-1, 4, 6, 6, 5, 4], fingers: [0, 1, 3, 4, 2, 1], baseFret: 4, barres: [4, 6],
     rootString: 5, rootNoteString: 1 },
   { id: 'barre-r5-db-minor', name: 'Db Minor Root 5 Barre', symbol: 'Dbm', category: 'barre', type: 'minor',
-    frets: [-1, 4, 6, 6, 5, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 4, barres: [4, 6],
+    frets: [-1, 4, 6, 6, 5, 4], fingers: [0, 1, 3, 4, 2, 1], baseFret: 4, barres: [4, 6],
     rootString: 5, rootNoteString: 1 },
 
   // D  (fret 5)
   { id: 'barre-r5-d-minor', name: 'D Minor Root 5 Barre', symbol: 'Dm', category: 'barre', type: 'minor',
-    frets: [-1, 5, 7, 7, 6, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 5, barres: [5, 7],
+    frets: [-1, 5, 7, 7, 6, 5], fingers: [0, 1, 3, 4, 2, 1], baseFret: 5, barres: [5, 7],
     rootString: 5, rootNoteString: 1 },
 
   // Eb / D#  (fret 6)
   { id: 'barre-r5-eb-minor', name: 'Eb Minor Root 5 Barre', symbol: 'Ebm', category: 'barre', type: 'minor',
-    frets: [-1, 6, 8, 8, 7, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 6, barres: [6, 8],
+    frets: [-1, 6, 8, 8, 7, 6], fingers: [0, 1, 3, 4, 2, 1], baseFret: 6, barres: [6, 8],
     rootString: 5, rootNoteString: 1 },
   { id: 'barre-r5-dsharp-minor', name: 'D# Minor Root 5 Barre', symbol: 'D#m', category: 'barre', type: 'minor',
-    frets: [-1, 6, 8, 8, 7, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 6, barres: [6, 8],
+    frets: [-1, 6, 8, 8, 7, 6], fingers: [0, 1, 3, 4, 2, 1], baseFret: 6, barres: [6, 8],
     rootString: 5, rootNoteString: 1 },
 
   // E  (fret 7)
   { id: 'barre-r5-e-minor', name: 'E Minor Root 5 Barre', symbol: 'Em', category: 'barre', type: 'minor',
-    frets: [-1, 7, 9, 9, 8, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 7, barres: [7, 9],
+    frets: [-1, 7, 9, 9, 8, 7], fingers: [0, 1, 3, 4, 2, 1], baseFret: 7, barres: [7, 9],
     rootString: 5, rootNoteString: 1 },
 
   // F  (fret 8)
   { id: 'barre-r5-f-minor', name: 'F Minor Root 5 Barre', symbol: 'Fm', category: 'barre', type: 'minor',
-    frets: [-1, 8, 10, 10, 9, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 8, barres: [8, 10],
+    frets: [-1, 8, 10, 10, 9, 8], fingers: [0, 1, 3, 4, 2, 1], baseFret: 8, barres: [8, 10],
     rootString: 5, rootNoteString: 1 },
 
   // F# / Gb  (fret 9)
   { id: 'barre-r5-fsharp-minor', name: 'F# Minor Root 5 Barre', symbol: 'F#m', category: 'barre', type: 'minor',
-    frets: [-1, 9, 11, 11, 10, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 9, barres: [9, 11],
+    frets: [-1, 9, 11, 11, 10, 9], fingers: [0, 1, 3, 4, 2, 1], baseFret: 9, barres: [9, 11],
     rootString: 5, rootNoteString: 1 },
   { id: 'barre-r5-gb-minor', name: 'Gb Minor Root 5 Barre', symbol: 'Gbm', category: 'barre', type: 'minor',
-    frets: [-1, 9, 11, 11, 10, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 9, barres: [9, 11],
+    frets: [-1, 9, 11, 11, 10, 9], fingers: [0, 1, 3, 4, 2, 1], baseFret: 9, barres: [9, 11],
     rootString: 5, rootNoteString: 1 },
 
   // G  (fret 10)
   { id: 'barre-r5-g-minor', name: 'G Minor Root 5 Barre', symbol: 'Gm', category: 'barre', type: 'minor',
-    frets: [-1, 10, 12, 12, 11, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 10, barres: [10, 12],
+    frets: [-1, 10, 12, 12, 11, 10], fingers: [0, 1, 3, 4, 2, 1], baseFret: 10, barres: [10, 12],
     rootString: 5, rootNoteString: 1 },
 
   // Ab / G#  (fret 11)
   { id: 'barre-r5-ab-minor', name: 'Ab Minor Root 5 Barre', symbol: 'Abm', category: 'barre', type: 'minor',
-    frets: [-1, 11, 13, 13, 12, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 11, barres: [11, 13],
+    frets: [-1, 11, 13, 13, 12, 11], fingers: [0, 1, 3, 4, 2, 1], baseFret: 11, barres: [11, 13],
     rootString: 5, rootNoteString: 1 },
   { id: 'barre-r5-gsharp-minor', name: 'G# Minor Root 5 Barre', symbol: 'G#m', category: 'barre', type: 'minor',
-    frets: [-1, 11, 13, 13, 12, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 11, barres: [11, 13],
+    frets: [-1, 11, 13, 13, 12, 11], fingers: [0, 1, 3, 4, 2, 1], baseFret: 11, barres: [11, 13],
     rootString: 5, rootNoteString: 1 },
 
   // A  (fret 12 — octave)
   { id: 'barre-r5-a-minor', name: 'A Minor Root 5 Barre', symbol: 'Am', category: 'barre', type: 'minor',
-    frets: [-1, 12, 14, 14, 13, -1], fingers: [0, 1, 3, 4, 2, 0], baseFret: 12, barres: [12, 14],
+    frets: [-1, 12, 14, 14, 13, 12], fingers: [0, 1, 3, 4, 2, 1], baseFret: 12, barres: [12, 14],
     rootString: 5, rootNoteString: 1 },
 
   // ============================================================================

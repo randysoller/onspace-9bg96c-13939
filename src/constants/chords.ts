@@ -3403,4 +3403,204 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'mov-e6-esharp-maj13', name: 'E# Major 13 Root 6 Movable', symbol: 'E#maj13', category: 'movable', type: 'major13',
     frets: [1, -1, 2, 2, 3, -1], fingers: [1, 0, 2, 3, 4, 0], baseFret: 1, barres: [],
     rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // BARRE CHORDS - Minor 11th (E-shape, Root 6)
+  // Full barre at fret N: frets [N,N,N,N,N,N], fingers [1,1,1,1,1,1], barres [N]
+  // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+  //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E=12
+  // ============================================================================
+
+  // F  (fret 1)
+  { id: 'barre-e6-f-min11', name: 'F Minor 11 Root 6 Barre', symbol: 'Fm11', category: 'barre', type: 'minor11',
+    frets: [1, 1, 1, 1, 1, 1], fingers: [1, 1, 1, 1, 1, 1], baseFret: 1, barres: [1],
+    rootString: 6, rootNoteString: 0 },
+
+  // F# / Gb  (fret 2)
+  { id: 'barre-e6-fsharp-min11', name: 'F# Minor 11 Root 6 Barre', symbol: 'F#m11', category: 'barre', type: 'minor11',
+    frets: [2, 2, 2, 2, 2, 2], fingers: [1, 1, 1, 1, 1, 1], baseFret: 2, barres: [2],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-gb-min11', name: 'Gb Minor 11 Root 6 Barre', symbol: 'Gbm11', category: 'barre', type: 'minor11',
+    frets: [2, 2, 2, 2, 2, 2], fingers: [1, 1, 1, 1, 1, 1], baseFret: 2, barres: [2],
+    rootString: 6, rootNoteString: 0 },
+
+  // G  (fret 3)
+  { id: 'barre-e6-g-min11', name: 'G Minor 11 Root 6 Barre', symbol: 'Gm11', category: 'barre', type: 'minor11',
+    frets: [3, 3, 3, 3, 3, 3], fingers: [1, 1, 1, 1, 1, 1], baseFret: 3, barres: [3],
+    rootString: 6, rootNoteString: 0 },
+
+  // G# / Ab  (fret 4)
+  { id: 'barre-e6-gsharp-min11', name: 'G# Minor 11 Root 6 Barre', symbol: 'G#m11', category: 'barre', type: 'minor11',
+    frets: [4, 4, 4, 4, 4, 4], fingers: [1, 1, 1, 1, 1, 1], baseFret: 4, barres: [4],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-ab-min11', name: 'Ab Minor 11 Root 6 Barre', symbol: 'Abm11', category: 'barre', type: 'minor11',
+    frets: [4, 4, 4, 4, 4, 4], fingers: [1, 1, 1, 1, 1, 1], baseFret: 4, barres: [4],
+    rootString: 6, rootNoteString: 0 },
+
+  // A  (fret 5)
+  { id: 'barre-e6-a-min11', name: 'A Minor 11 Root 6 Barre', symbol: 'Am11', category: 'barre', type: 'minor11',
+    frets: [5, 5, 5, 5, 5, 5], fingers: [1, 1, 1, 1, 1, 1], baseFret: 5, barres: [5],
+    rootString: 6, rootNoteString: 0 },
+
+  // A# / Bb  (fret 6)
+  { id: 'barre-e6-asharp-min11', name: 'A# Minor 11 Root 6 Barre', symbol: 'A#m11', category: 'barre', type: 'minor11',
+    frets: [6, 6, 6, 6, 6, 6], fingers: [1, 1, 1, 1, 1, 1], baseFret: 6, barres: [6],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bb-min11', name: 'Bb Minor 11 Root 6 Barre', symbol: 'Bbm11', category: 'barre', type: 'minor11',
+    frets: [6, 6, 6, 6, 6, 6], fingers: [1, 1, 1, 1, 1, 1], baseFret: 6, barres: [6],
+    rootString: 6, rootNoteString: 0 },
+
+  // B / Cb  (fret 7)
+  { id: 'barre-e6-b-min11', name: 'B Minor 11 Root 6 Barre', symbol: 'Bm11', category: 'barre', type: 'minor11',
+    frets: [7, 7, 7, 7, 7, 7], fingers: [1, 1, 1, 1, 1, 1], baseFret: 7, barres: [7],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-cb-min11', name: 'Cb Minor 11 Root 6 Barre', symbol: 'Cbm11', category: 'barre', type: 'minor11',
+    frets: [7, 7, 7, 7, 7, 7], fingers: [1, 1, 1, 1, 1, 1], baseFret: 7, barres: [7],
+    rootString: 6, rootNoteString: 0 },
+
+  // C / B#  (fret 8)
+  { id: 'barre-e6-c-min11', name: 'C Minor 11 Root 6 Barre', symbol: 'Cm11', category: 'barre', type: 'minor11',
+    frets: [8, 8, 8, 8, 8, 8], fingers: [1, 1, 1, 1, 1, 1], baseFret: 8, barres: [8],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bsharp-min11', name: 'B# Minor 11 Root 6 Barre', symbol: 'B#m11', category: 'barre', type: 'minor11',
+    frets: [8, 8, 8, 8, 8, 8], fingers: [1, 1, 1, 1, 1, 1], baseFret: 8, barres: [8],
+    rootString: 6, rootNoteString: 0 },
+
+  // C# / Db  (fret 9)
+  { id: 'barre-e6-csharp-min11', name: 'C# Minor 11 Root 6 Barre', symbol: 'C#m11', category: 'barre', type: 'minor11',
+    frets: [9, 9, 9, 9, 9, 9], fingers: [1, 1, 1, 1, 1, 1], baseFret: 9, barres: [9],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-db-min11', name: 'Db Minor 11 Root 6 Barre', symbol: 'Dbm11', category: 'barre', type: 'minor11',
+    frets: [9, 9, 9, 9, 9, 9], fingers: [1, 1, 1, 1, 1, 1], baseFret: 9, barres: [9],
+    rootString: 6, rootNoteString: 0 },
+
+  // D  (fret 10)
+  { id: 'barre-e6-d-min11', name: 'D Minor 11 Root 6 Barre', symbol: 'Dm11', category: 'barre', type: 'minor11',
+    frets: [10, 10, 10, 10, 10, 10], fingers: [1, 1, 1, 1, 1, 1], baseFret: 10, barres: [10],
+    rootString: 6, rootNoteString: 0 },
+
+  // D# / Eb  (fret 11)
+  { id: 'barre-e6-dsharp-min11', name: 'D# Minor 11 Root 6 Barre', symbol: 'D#m11', category: 'barre', type: 'minor11',
+    frets: [11, 11, 11, 11, 11, 11], fingers: [1, 1, 1, 1, 1, 1], baseFret: 11, barres: [11],
+    rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-eb-min11', name: 'Eb Minor 11 Root 6 Barre', symbol: 'Ebm11', category: 'barre', type: 'minor11',
+    frets: [11, 11, 11, 11, 11, 11], fingers: [1, 1, 1, 1, 1, 1], baseFret: 11, barres: [11],
+    rootString: 6, rootNoteString: 0 },
+
+  // E  (fret 12 — octave)
+  { id: 'barre-e6-e-min11-12', name: 'E Minor 11 Root 6 Barre', symbol: 'Em11', category: 'barre', type: 'minor11',
+    frets: [12, 12, 12, 12, 12, 12], fingers: [1, 1, 1, 1, 1, 1], baseFret: 12, barres: [12],
+    rootString: 6, rootNoteString: 0 },
+
+  // Fb (enharmonic E)  (fret 12)
+  { id: 'barre-e6-fb-min11', name: 'Fb Minor 11 Root 6 Barre', symbol: 'Fbm11', category: 'barre', type: 'minor11',
+    frets: [12, 12, 12, 12, 12, 12], fingers: [1, 1, 1, 1, 1, 1], baseFret: 12, barres: [12],
+    rootString: 6, rootNoteString: 0 },
+
+  // E# (enharmonic F)  (fret 1)
+  { id: 'barre-e6-esharp-min11', name: 'E# Minor 11 Root 6 Barre', symbol: 'E#m11', category: 'barre', type: 'minor11',
+    frets: [1, 1, 1, 1, 1, 1], fingers: [1, 1, 1, 1, 1, 1], baseFret: 1, barres: [1],
+    rootString: 6, rootNoteString: 0 },
+
+  // ============================================================================
+  // BARRE CHORDS - Dominant 11th (A-shape, Root 5)
+  // Barre at fret N: frets [-1,N,N,N,N,N], fingers [0,1,1,1,1,1], barres [N]
+  // 5th string notes: Bb=1, B=2, C=3, Db/C#=4, D=5, Eb/D#=6,
+  //                   E=7, F=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+  // ============================================================================
+
+  // Bb / A#  (fret 1)
+  { id: 'barre-r5-bb-dom11', name: 'Bb Dominant 11th Root 5 Barre', symbol: 'Bb11', category: 'barre', type: '11th',
+    frets: [-1, 1, 1, 1, 1, 1], fingers: [0, 1, 1, 1, 1, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-dom11', name: 'A# Dominant 11th Root 5 Barre', symbol: 'A#11', category: 'barre', type: '11th',
+    frets: [-1, 1, 1, 1, 1, 1], fingers: [0, 1, 1, 1, 1, 1], baseFret: 1, barres: [1],
+    rootString: 5, rootNoteString: 1 },
+
+  // B  (fret 2)
+  { id: 'barre-r5-b-dom11', name: 'B Dominant 11th Root 5 Barre', symbol: 'B11', category: 'barre', type: '11th',
+    frets: [-1, 2, 2, 2, 2, 2], fingers: [0, 1, 1, 1, 1, 1], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  // C  (fret 3)
+  { id: 'barre-r5-c-dom11', name: 'C Dominant 11th Root 5 Barre', symbol: 'C11', category: 'barre', type: '11th',
+    frets: [-1, 3, 3, 3, 3, 3], fingers: [0, 1, 1, 1, 1, 1], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  // C# / Db  (fret 4)
+  { id: 'barre-r5-csharp-dom11', name: 'C# Dominant 11th Root 5 Barre', symbol: 'C#11', category: 'barre', type: '11th',
+    frets: [-1, 4, 4, 4, 4, 4], fingers: [0, 1, 1, 1, 1, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-dom11', name: 'Db Dominant 11th Root 5 Barre', symbol: 'Db11', category: 'barre', type: '11th',
+    frets: [-1, 4, 4, 4, 4, 4], fingers: [0, 1, 1, 1, 1, 1], baseFret: 4, barres: [4],
+    rootString: 5, rootNoteString: 1 },
+
+  // D  (fret 5)
+  { id: 'barre-r5-d-dom11', name: 'D Dominant 11th Root 5 Barre', symbol: 'D11', category: 'barre', type: '11th',
+    frets: [-1, 5, 5, 5, 5, 5], fingers: [0, 1, 1, 1, 1, 1], baseFret: 5, barres: [5],
+    rootString: 5, rootNoteString: 1 },
+
+  // Eb / D#  (fret 6)
+  { id: 'barre-r5-eb-dom11', name: 'Eb Dominant 11th Root 5 Barre', symbol: 'Eb11', category: 'barre', type: '11th',
+    frets: [-1, 6, 6, 6, 6, 6], fingers: [0, 1, 1, 1, 1, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-dom11', name: 'D# Dominant 11th Root 5 Barre', symbol: 'D#11', category: 'barre', type: '11th',
+    frets: [-1, 6, 6, 6, 6, 6], fingers: [0, 1, 1, 1, 1, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  // E  (fret 7)
+  { id: 'barre-r5-e-dom11', name: 'E Dominant 11th Root 5 Barre', symbol: 'E11', category: 'barre', type: '11th',
+    frets: [-1, 7, 7, 7, 7, 7], fingers: [0, 1, 1, 1, 1, 1], baseFret: 7, barres: [7],
+    rootString: 5, rootNoteString: 1 },
+
+  // F  (fret 8)
+  { id: 'barre-r5-f-dom11', name: 'F Dominant 11th Root 5 Barre', symbol: 'F11', category: 'barre', type: '11th',
+    frets: [-1, 8, 8, 8, 8, 8], fingers: [0, 1, 1, 1, 1, 1], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
+
+  // F# / Gb  (fret 9)
+  { id: 'barre-r5-fsharp-dom11', name: 'F# Dominant 11th Root 5 Barre', symbol: 'F#11', category: 'barre', type: '11th',
+    frets: [-1, 9, 9, 9, 9, 9], fingers: [0, 1, 1, 1, 1, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-dom11', name: 'Gb Dominant 11th Root 5 Barre', symbol: 'Gb11', category: 'barre', type: '11th',
+    frets: [-1, 9, 9, 9, 9, 9], fingers: [0, 1, 1, 1, 1, 1], baseFret: 9, barres: [9],
+    rootString: 5, rootNoteString: 1 },
+
+  // G  (fret 10)
+  { id: 'barre-r5-g-dom11', name: 'G Dominant 11th Root 5 Barre', symbol: 'G11', category: 'barre', type: '11th',
+    frets: [-1, 10, 10, 10, 10, 10], fingers: [0, 1, 1, 1, 1, 1], baseFret: 10, barres: [10],
+    rootString: 5, rootNoteString: 1 },
+
+  // Ab / G#  (fret 11)
+  { id: 'barre-r5-ab-dom11', name: 'Ab Dominant 11th Root 5 Barre', symbol: 'Ab11', category: 'barre', type: '11th',
+    frets: [-1, 11, 11, 11, 11, 11], fingers: [0, 1, 1, 1, 1, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-dom11', name: 'G# Dominant 11th Root 5 Barre', symbol: 'G#11', category: 'barre', type: '11th',
+    frets: [-1, 11, 11, 11, 11, 11], fingers: [0, 1, 1, 1, 1, 1], baseFret: 11, barres: [11],
+    rootString: 5, rootNoteString: 1 },
+
+  // A  (fret 12 — octave)
+  { id: 'barre-r5-a-dom11', name: 'A Dominant 11th Root 5 Barre', symbol: 'A11', category: 'barre', type: '11th',
+    frets: [-1, 12, 12, 12, 12, 12], fingers: [0, 1, 1, 1, 1, 1], baseFret: 12, barres: [12],
+    rootString: 5, rootNoteString: 1 },
+
+  // Cb (enharmonic B, fret 2)
+  { id: 'barre-r5-cb-dom11', name: 'Cb Dominant 11th Root 5 Barre', symbol: 'Cb11', category: 'barre', type: '11th',
+    frets: [-1, 2, 2, 2, 2, 2], fingers: [0, 1, 1, 1, 1, 1], baseFret: 2, barres: [2],
+    rootString: 5, rootNoteString: 1 },
+
+  // B# (enharmonic C, fret 3)
+  { id: 'barre-r5-bsharp-dom11', name: 'B# Dominant 11th Root 5 Barre', symbol: 'B#11', category: 'barre', type: '11th',
+    frets: [-1, 3, 3, 3, 3, 3], fingers: [0, 1, 1, 1, 1, 1], baseFret: 3, barres: [3],
+    rootString: 5, rootNoteString: 1 },
+
+  // Fb (enharmonic Eb, fret 6)
+  { id: 'barre-r5-fb-dom11', name: 'Fb Dominant 11th Root 5 Barre', symbol: 'Fb11', category: 'barre', type: '11th',
+    frets: [-1, 6, 6, 6, 6, 6], fingers: [0, 1, 1, 1, 1, 1], baseFret: 6, barres: [6],
+    rootString: 5, rootNoteString: 1 },
+
+  // E# (enharmonic F, fret 8)
+  { id: 'barre-r5-esharp-dom11', name: 'E# Dominant 11th Root 5 Barre', symbol: 'E#11', category: 'barre', type: '11th',
+    frets: [-1, 8, 8, 8, 8, 8], fingers: [0, 1, 1, 1, 1, 1], baseFret: 8, barres: [8],
+    rootString: 5, rootNoteString: 1 },
 ];

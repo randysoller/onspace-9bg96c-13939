@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { isAdmin, ADMIN_USER_IDS } from '@/lib/admin';
-import { CHORD_DATABASE } from '@/constants/chords';
+import { CHORD_DATABASE } from '@/constants/chords-index';
 import { customToLibraryChord } from '@/types/customChord';
 import type { ChordData } from '@/types/chord';
 

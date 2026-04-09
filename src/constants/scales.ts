@@ -2,7 +2,7 @@
 // Complete circle of fifths, scales, progressions, and style categories
 
 import type { ChordData } from '@/types/chord';
-import { CHORD_DATABASE } from './chords';
+import { CHORD_DATABASE } from './chords-index';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { customToLibraryChord } from '@/types/customChord';
 

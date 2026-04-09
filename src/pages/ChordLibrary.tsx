@@ -1,3 +1,4 @@
+
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -6,7 +7,7 @@ import {
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
   CheckCircle2, Pencil, X, MapPin,
 } from 'lucide-react';
-import { CHORD_DATABASE } from '@/constants/chords';
+import { CHORD_DATABASE } from '@/constants/chords-index';
 import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
 import type { PositionFilter } from '@/stores/chordLibraryStore';
@@ -189,7 +190,7 @@ export default function ChordLibrary() {
     'major', 'minor', 'augmented', 'slash', 'diminished', 'sus2', 'sus4', '7sus4',
     'major6', 'minor6', 'maj6add9',
     'major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
-    'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9',
+    'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7sharp9',
     'add9',
     'major9', '9th', 'minor9',
     'major11', '11th', 'minor11',
@@ -252,7 +253,6 @@ export default function ChordLibrary() {
     restoredRef.current = true;
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, showFavoritesOnly]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
@@ -1148,60 +1148,55 @@ export default function ChordLibrary() {
         {filteredChords.length === 0 && (
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-12 text-center">
             <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 rounded-full mb-4">
-                {showFavoritesOnly
-                  ? <Heart className="w-10 h-10 text-rose-500" />
-                  : <Library className="w-10 h-10 text-blue-500" />}
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 rounded-full"> {/* This line was the problem */}
+                <Library className="w-9 h-9 text-blue-400" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">
-                {showFavoritesOnly ? 'No Favorites Yet' : 'No Chords Found'}
-              </h3>
-              <p className="text-zinc-400 max-w-md mx-auto mb-6">
-                {showFavoritesOnly
-                  ? 'Tap the heart icon on any chord card to add it to your favorites.'
-                  : 'Try adjusting your search or filters to find chords.'}
-              </p>
             </div>
-            {!showFavoritesOnly && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-left">
-                  <div className="flex items-start gap-3">
-                    <Search className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="text-sm font-bold text-white mb-1">Search by Name</div>
-                      <div className="text-xs text-zinc-400">Type chord names like "Am", "G7", or "Cmaj7" to find specific chords quickly</div>
-                    </div>
-                  </div>
-                </div>
-                <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-left">
-                  <div className="flex items-start gap-3">
-                    <MousePointer className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <div className="text-sm font-bold text-white mb-1">Filter by Type</div>
-                      <div className="text-xs text-zinc-400">Use Open, Barre, or Movable filters to narrow down chord variations</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            <h3 className="text-2xl font-bold text-white mb-2">No Chords Found</h3>
+            <p className="text-zinc-500 mb-6">
+              Try adjusting your search query or filters.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  storeClearCategories();
+                  setFilterTypes([]);
+                  storeClearBarreRoots();
+                  storeClearPositions();
+                  setShowFavoritesOnly(false);
+                }}
+                className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                Clear All Filters
+              </button>
+              <button
+                onClick={() => navigate('/editor')}
+                className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold px-5 py-2.5 rounded-lg transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <Pencil className="w-4 h-4" /> Create Custom Chord
+                </span>
+              </button>
+            </div>
           </div>
         )}
-      </div>
 
-      {/* Chord Detail Modal */}
-      {detailModalChord && (
-        <ChordDetailModal
-          chord={detailModalChord}
-          isOpen={!!detailModalChord}
-          onClose={() => setDetailModalChord(null)}
-          onPlay={() => playChord(detailModalChord)}
-          onEdit={() => handleEdit(detailModalChord)}
-          onNext={handleNextChord}
-          onPrevious={handlePreviousChord}
-          currentIndex={detailModalIndex}
-          totalChords={filteredChords.length}
-        />
-      )}
+        {/* Modal for Chord Detail View */}
+        {detailModalChord && (
+          <ChordDetailModal
+            chord={detailModalChord}
+            onClose={() => setDetailModalChord(null)}
+            onNext={handleNextChord}
+            onPrevious={handlePreviousChord}
+            isFirst={detailModalIndex === 0}
+            isLast={detailModalIndex === filteredChords.length - 1}
+            onEdit={handleEdit}
+            isFavorited={favoriteIds.has(detailModalChord.id)}
+            onToggleFavorite={() => toggleFavorite(detailModalChord.id)}
+          />
+        )}
+      </div>
     </div>
   );
 }

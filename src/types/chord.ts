@@ -6,7 +6,7 @@ export type ChordType =
   | 'sus2' | 'sus4' | '7sus4' | 'major6' | 'minor6' | 'maj6add9'
   | 'major7' | 'dominant7' | 'minor7' | 'aug7'
   | 'halfDim7' | 'dim7' | 'dom7b5' | 'dom7sharp9' | 'dom7b9' | 'dom7sharp5sharp9'
-  | 'maj7sharp11'
+  | 'maj7sharp11' | 'aug7sharp9'
   | 'add9'
   | 'major9' | '9th' | 'minor9'
   | 'major11' | '11th' | 'minor11'
@@ -54,6 +54,7 @@ export const CHORD_TYPE_LABELS: Record<ChordType | 'all', string> = {
   dom7b9: 'Dominant 7th b9',
   dom7sharp5sharp9: 'Dominant 7th(♯5)(♯9)',
   maj7sharp11: 'Major 7♯11',
+  aug7sharp9: 'Augmented 7th ♯9',
   add9: 'Add 9',
   major9: 'Major 9',
   '9th': 'Dominant 9th',

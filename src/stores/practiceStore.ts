@@ -5,7 +5,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CHORD_DATABASE } from '@/constants/chords';
+import { CHORD_DATABASE } from '@/constants/chords-index';
 import type { ChordData, ChordCategory, ChordType, BarreRoot } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
 import { chordRootSemitone, buildMajorScaleNotes } from '@/lib/chordFilters';

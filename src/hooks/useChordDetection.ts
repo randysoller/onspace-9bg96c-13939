@@ -30,7 +30,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { ChordData } from '@/types/chord';
-import { CHORD_DATABASE } from '@/constants/chords';
+import { CHORD_DATABASE } from '@/constants/chords-index';
 import { logger } from '@/lib/logger';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { customToLibraryChord } from '@/types/customChord';

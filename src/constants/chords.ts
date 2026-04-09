@@ -1721,10 +1721,6 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'barre-fmaj7', name: 'Fmaj7', symbol: 'Fmaj7', category: 'barre', type: 'major7',
     frets: [1, 3, 2, 2, 1, 1], fingers: [1, 4, 2, 3, 1, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-bbmaj7', name: 'Bbmaj7', symbol: 'Bbmaj7', category: 'barre', type: 'major7',
-    frets: [-1, 1, 3, 2, 3, 1], fingers: [0, 1, 3, 2, 4, 1], baseFret: 1, barres: [1],
-    rootString: 5, rootNoteString: 1 },
-
   // ============================================================================
   // BARRE CHORDS - Minor 7th
   // ============================================================================

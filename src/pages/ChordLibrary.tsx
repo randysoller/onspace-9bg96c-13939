@@ -826,7 +826,7 @@ export default function ChordLibrary() {
           {/* Row 1: All + Category */}
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
-              onClick={() => { storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setShowFavoritesOnly(false); }}
+              onClick={() => { setSearchQuery(''); storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setShowFavoritesOnly(false); }}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
@@ -1112,6 +1112,43 @@ export default function ChordLibrary() {
           )}
         </div>
 
+        {/* ── Active Filter Warning Banner ──────────────────────────────────── */}
+        {(filterCategories.length > 0 || filterTypes.length > 0 || filterBarreRoots.length > 0 || filterPositions.length > 0 || showFavoritesOnly || searchQuery.trim() !== '') && (
+          <div className="mb-3 flex items-center gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5">
+            <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-amber-400">
+                Filters are active — some chords are hidden
+              </p>
+              <p className="text-[10px] text-amber-300/70 leading-snug mt-0.5">
+                {[
+                  filterCategories.length > 0 && `Category: ${filterCategories.join(', ')}`,
+                  filterTypes.length > 0 && `${filterTypes.length} type${filterTypes.length > 1 ? 's' : ''} selected`,
+                  filterBarreRoots.length > 0 && `Root: ${filterBarreRoots.map(r => `${r}th`).join(', ')}`,
+                  filterPositions.length > 0 && `Position: ${filterPositions.join(', ')}`,
+                  showFavoritesOnly && 'Favorites only',
+                  searchQuery.trim() && `Search: "${searchQuery.trim()}"`,
+                ].filter(Boolean).join(' · ')}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                storeClearCategories();
+                setFilterTypes([]);
+                storeClearBarreRoots();
+                storeClearPositions();
+                setShowFavoritesOnly(false);
+              }}
+              className="flex-shrink-0 text-xs font-bold text-amber-400 hover:text-white bg-amber-500/20 hover:bg-amber-500/40 px-2.5 py-1 rounded-md transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
+
         {/* Results Count & Legend */}
         <div className="mb-4 flex items-center justify-between">
           <div className="text-sm flex items-center gap-2">
@@ -1186,14 +1223,14 @@ export default function ChordLibrary() {
         {detailModalChord && (
           <ChordDetailModal
             chord={detailModalChord}
+            isOpen={true}
             onClose={() => setDetailModalChord(null)}
             onNext={handleNextChord}
             onPrevious={handlePreviousChord}
-            isFirst={detailModalIndex === 0}
-            isLast={detailModalIndex === filteredChords.length - 1}
-            onEdit={handleEdit}
-            isFavorited={favoriteIds.has(detailModalChord.id)}
-            onToggleFavorite={() => toggleFavorite(detailModalChord.id)}
+            onPlay={() => playChord(detailModalChord)}
+            onEdit={() => handleEdit(detailModalChord)}
+            currentIndex={detailModalIndex}
+            totalChords={filteredChords.length}
           />
         )}
       </div>

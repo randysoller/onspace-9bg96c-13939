@@ -96,11 +96,11 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
   // OPEN CHORDS - Diminished
   // ============================================================================
-  { id: 'open-adim', name: 'Adim', symbol: 'Adim', category: 'open', type: 'diminished',
+  { id: 'open-adim', name: 'Adim', symbol: 'A°', category: 'open', type: 'diminished',
     frets: [-1, 0, 1, 2, 1, 2], fingers: [0, 0, 1, 3, 1, 4], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-bdim', name: 'Bdim', symbol: 'Bdim', category: 'open', type: 'diminished',
+  { id: 'open-bdim', name: 'Bdim', symbol: 'B°', category: 'open', type: 'diminished',
     frets: [-1, 2, 0, 1, 0, 1], fingers: [0, 3, 0, 1, 0, 2], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-edim', name: 'Edim', symbol: 'Edim', category: 'open', type: 'diminished',
+  { id: 'open-edim', name: 'Edim', symbol: 'E°', category: 'open', type: 'diminished',
     frets: [-1, -1, 2, 3, 2, 3], fingers: [0, 0, 1, 3, 2, 4], baseFret: 1, rootNoteString: 2 },
 
   // ============================================================================
@@ -124,7 +124,7 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 3, 2, 3, 1, 4], fingers: [0, 3, 2, 4, 1, 5], baseFret: 1, rootNoteString: 1 },
   { id: 'open-am7b5', name: 'Am7b5', symbol: 'Am7b5', category: 'open', type: 'halfDim7',
     frets: [-1, 0, 1, 0, 1, 3], fingers: [0, 0, 1, 0, 2, 4], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-adim7', name: 'Adim7', symbol: 'Adim7', category: 'open', type: 'dim7',
+  { id: 'open-adim7', name: 'Adim7', symbol: 'A°7', category: 'open', type: 'dim7',
     frets: [-1, 0, 1, 2, 1, 2], fingers: [0, 0, 1, 3, 2, 4], baseFret: 1, rootNoteString: 1 },
 
   // ============================================================================
@@ -1753,7 +1753,7 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'barre-fm7b5', name: 'Fm7b5', symbol: 'Fm7b5', category: 'barre', type: 'halfDim7',
     frets: [1, 3, 1, 2, 4, 1], fingers: [1, 2, 1, 3, 4, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-fdim7', name: 'Fdim7', symbol: 'Fdim7', category: 'barre', type: 'dim7',
+  { id: 'barre-fdim7', name: 'Fdim7', symbol: 'F°7', category: 'barre', type: 'dim7',
     frets: [-1, -1, 3, 4, 3, 4], fingers: [0, 0, 1, 3, 2, 4], baseFret: 1,
     rootString: 4, rootNoteString: 2 },
 
@@ -2137,7 +2137,7 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'mov-cm7b5-8', name: 'Cm7b5 (8th pos)', symbol: 'Cm7b5', category: 'movable', type: 'halfDim7',
     frets: [8, 10, 8, 9, 11, 8], fingers: [1, 2, 1, 3, 4, 1], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-cdim7-8', name: 'Cdim7 (8th pos)', symbol: 'Cdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-cdim7-8', name: 'Cdim7 (8th pos)', symbol: 'C°7', category: 'movable', type: 'dim7',
     frets: [-1, -1, 11, 12, 11, 12], fingers: [0, 0, 1, 3, 2, 4], baseFret: 8,
     rootString: 4, rootNoteString: 2 },
 
@@ -2668,91 +2668,91 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
 
   // F  (fret 1)
-  { id: 'mov-e6-f-dim7', name: 'F Diminished 7 Root 6 Movable', symbol: 'Fdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-f-dim7', name: 'F Diminished 7 Root 6 Movable', symbol: 'F°7', category: 'movable', type: 'dim7',
     frets: [2, -1, 1, 2, 1, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
 
   // F# / Gb  (fret 2)
-  { id: 'mov-e6-fsharp-dim7', name: 'F# Diminished 7 Root 6 Movable', symbol: 'F#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-fsharp-dim7', name: 'F# Diminished 7 Root 6 Movable', symbol: 'F#°7', category: 'movable', type: 'dim7',
     frets: [3, -1, 2, 3, 2, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 2, barres: [2],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-gb-dim7', name: 'Gb Diminished 7 Root 6 Movable', symbol: 'Gbdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-gb-dim7', name: 'Gb Diminished 7 Root 6 Movable', symbol: 'Gb°7', category: 'movable', type: 'dim7',
     frets: [3, -1, 2, 3, 2, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 2, barres: [2],
     rootString: 6, rootNoteString: 0 },
 
   // G  (fret 3)
-  { id: 'mov-e6-g-dim7', name: 'G Diminished 7 Root 6 Movable', symbol: 'Gdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-g-dim7', name: 'G Diminished 7 Root 6 Movable', symbol: 'G°7', category: 'movable', type: 'dim7',
     frets: [4, -1, 3, 4, 3, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 3, barres: [3],
     rootString: 6, rootNoteString: 0 },
 
   // G# / Ab  (fret 4)
-  { id: 'mov-e6-gsharp-dim7', name: 'G# Diminished 7 Root 6 Movable', symbol: 'G#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-gsharp-dim7', name: 'G# Diminished 7 Root 6 Movable', symbol: 'G#°7', category: 'movable', type: 'dim7',
     frets: [5, -1, 4, 5, 4, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 4, barres: [4],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-ab-dim7', name: 'Ab Diminished 7 Root 6 Movable', symbol: 'Abdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-ab-dim7', name: 'Ab Diminished 7 Root 6 Movable', symbol: 'Ab°7', category: 'movable', type: 'dim7',
     frets: [5, -1, 4, 5, 4, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 4, barres: [4],
     rootString: 6, rootNoteString: 0 },
 
   // A  (fret 5)
-  { id: 'mov-e6-a-dim7', name: 'A Diminished 7 Root 6 Movable', symbol: 'Adim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-a-dim7', name: 'A Diminished 7 Root 6 Movable', symbol: 'A°7', category: 'movable', type: 'dim7',
     frets: [6, -1, 5, 6, 5, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 5, barres: [5],
     rootString: 6, rootNoteString: 0 },
 
   // A# / Bb  (fret 6)
-  { id: 'mov-e6-asharp-dim7', name: 'A# Diminished 7 Root 6 Movable', symbol: 'A#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-asharp-dim7', name: 'A# Diminished 7 Root 6 Movable', symbol: 'A#°7', category: 'movable', type: 'dim7',
     frets: [7, -1, 6, 7, 6, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 6, barres: [6],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-bb-dim7', name: 'Bb Diminished 7 Root 6 Movable', symbol: 'Bbdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-bb-dim7', name: 'Bb Diminished 7 Root 6 Movable', symbol: 'Bb°7', category: 'movable', type: 'dim7',
     frets: [7, -1, 6, 7, 6, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 6, barres: [6],
     rootString: 6, rootNoteString: 0 },
 
   // B / Cb  (fret 7)
-  { id: 'mov-e6-b-dim7', name: 'B Diminished 7 Root 6 Movable', symbol: 'Bdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-b-dim7', name: 'B Diminished 7 Root 6 Movable', symbol: 'B°7', category: 'movable', type: 'dim7',
     frets: [8, -1, 7, 8, 7, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 7, barres: [7],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-cb-dim7', name: 'Cb Diminished 7 Root 6 Movable', symbol: 'Cbdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-cb-dim7', name: 'Cb Diminished 7 Root 6 Movable', symbol: 'Cb°7', category: 'movable', type: 'dim7',
     frets: [8, -1, 7, 8, 7, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 7, barres: [7],
     rootString: 6, rootNoteString: 0 },
 
   // C / B#  (fret 8)
-  { id: 'mov-e6-c-dim7', name: 'C Diminished 7 Root 6 Movable', symbol: 'Cdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-c-dim7', name: 'C Diminished 7 Root 6 Movable', symbol: 'C°7', category: 'movable', type: 'dim7',
     frets: [9, -1, 8, 9, 8, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-bsharp-dim7', name: 'B# Diminished 7 Root 6 Movable', symbol: 'B#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-bsharp-dim7', name: 'B# Diminished 7 Root 6 Movable', symbol: 'B#°7', category: 'movable', type: 'dim7',
     frets: [9, -1, 8, 9, 8, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
 
   // C# / Db  (fret 9)
-  { id: 'mov-e6-csharp-dim7', name: 'C# Diminished 7 Root 6 Movable', symbol: 'C#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-csharp-dim7', name: 'C# Diminished 7 Root 6 Movable', symbol: 'C#°7', category: 'movable', type: 'dim7',
     frets: [10, -1, 9, 10, 9, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 9, barres: [9],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-db-dim7', name: 'Db Diminished 7 Root 6 Movable', symbol: 'Dbdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-db-dim7', name: 'Db Diminished 7 Root 6 Movable', symbol: 'Db°7', category: 'movable', type: 'dim7',
     frets: [10, -1, 9, 10, 9, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 9, barres: [9],
     rootString: 6, rootNoteString: 0 },
 
   // D  (fret 10)
-  { id: 'mov-e6-d-dim7', name: 'D Diminished 7 Root 6 Movable', symbol: 'Ddim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-d-dim7', name: 'D Diminished 7 Root 6 Movable', symbol: 'D°7', category: 'movable', type: 'dim7',
     frets: [11, -1, 10, 11, 10, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 10, barres: [10],
     rootString: 6, rootNoteString: 0 },
 
   // D# / Eb  (fret 11)
-  { id: 'mov-e6-dsharp-dim7', name: 'D# Diminished 7 Root 6 Movable', symbol: 'D#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-dsharp-dim7', name: 'D# Diminished 7 Root 6 Movable', symbol: 'D#°7', category: 'movable', type: 'dim7',
     frets: [12, -1, 11, 12, 11, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 11, barres: [11],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-eb-dim7', name: 'Eb Diminished 7 Root 6 Movable', symbol: 'Ebdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-eb-dim7', name: 'Eb Diminished 7 Root 6 Movable', symbol: 'Eb°7', category: 'movable', type: 'dim7',
     frets: [12, -1, 11, 12, 11, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 11, barres: [11],
     rootString: 6, rootNoteString: 0 },
 
   // E / Fb  (fret 12 — octave)
-  { id: 'mov-e6-e-dim7-12', name: 'E Diminished 7 Root 6 Movable', symbol: 'Edim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-e-dim7-12', name: 'E Diminished 7 Root 6 Movable', symbol: 'E°7', category: 'movable', type: 'dim7',
     frets: [13, -1, 12, 13, 12, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 12, barres: [12],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-e6-fb-dim7', name: 'Fb Diminished 7 Root 6 Movable', symbol: 'Fbdim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-fb-dim7', name: 'Fb Diminished 7 Root 6 Movable', symbol: 'Fb°7', category: 'movable', type: 'dim7',
     frets: [13, -1, 12, 13, 12, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 12, barres: [12],
     rootString: 6, rootNoteString: 0 },
 
   // E# (enharmonic F, fret 1)
-  { id: 'mov-e6-esharp-dim7', name: 'E# Diminished 7 Root 6 Movable', symbol: 'E#dim7', category: 'movable', type: 'dim7',
+  { id: 'mov-e6-esharp-dim7', name: 'E# Diminished 7 Root 6 Movable', symbol: 'E#°7', category: 'movable', type: 'dim7',
     frets: [2, -1, 1, 2, 1, -1], fingers: [2, 0, 1, 3, 1, 0], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
 
@@ -2764,97 +2764,97 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
 
   // Bb / A#  (fret 1)
-  { id: 'barre-r5-bb-dim7', name: 'Bb Diminished 7 Root 5 Movable', symbol: 'Bbdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-bb-dim7', name: 'Bb Diminished 7 Root 5 Movable', symbol: 'Bb°7', category: 'movable', type: 'dim7',
     frets: [-1, 2, 3, 1, 3, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 1, barres: [1],
     rootString: 5, rootNoteString: 1 },
-  { id: 'barre-r5-asharp-dim7', name: 'A# Diminished 7 Root 5 Movable', symbol: 'A#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-asharp-dim7', name: 'A# Diminished 7 Root 5 Movable', symbol: 'A#°7', category: 'movable', type: 'dim7',
     frets: [-1, 2, 3, 1, 3, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 1, barres: [1],
     rootString: 5, rootNoteString: 1 },
 
   // B  (fret 2)
-  { id: 'barre-r5-b-dim7', name: 'B Diminished 7 Root 5 Movable', symbol: 'Bdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-b-dim7', name: 'B Diminished 7 Root 5 Movable', symbol: 'B°7', category: 'movable', type: 'dim7',
     frets: [-1, 3, 4, 2, 4, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 2, barres: [2],
     rootString: 5, rootNoteString: 1 },
 
   // C  (fret 3)
-  { id: 'barre-r5-c-dim7', name: 'C Diminished 7 Root 5 Movable', symbol: 'Cdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-c-dim7', name: 'C Diminished 7 Root 5 Movable', symbol: 'C°7', category: 'movable', type: 'dim7',
     frets: [-1, 4, 5, 3, 5, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 3, barres: [3],
     rootString: 5, rootNoteString: 1 },
 
   // C# / Db  (fret 4)
-  { id: 'barre-r5-csharp-dim7', name: 'C# Diminished 7 Root 5 Movable', symbol: 'C#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-csharp-dim7', name: 'C# Diminished 7 Root 5 Movable', symbol: 'C#°7', category: 'movable', type: 'dim7',
     frets: [-1, 5, 6, 4, 6, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 4, barres: [4],
     rootString: 5, rootNoteString: 1 },
-  { id: 'barre-r5-db-dim7', name: 'Db Diminished 7 Root 5 Movable', symbol: 'Dbdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-db-dim7', name: 'Db Diminished 7 Root 5 Movable', symbol: 'Db°7', category: 'movable', type: 'dim7',
     frets: [-1, 5, 6, 4, 6, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 4, barres: [4],
     rootString: 5, rootNoteString: 1 },
 
   // D  (fret 5)
-  { id: 'barre-r5-d-dim7', name: 'D Diminished 7 Root 5 Movable', symbol: 'Ddim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-d-dim7', name: 'D Diminished 7 Root 5 Movable', symbol: 'D°7', category: 'movable', type: 'dim7',
     frets: [-1, 6, 7, 5, 7, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 5, barres: [5],
     rootString: 5, rootNoteString: 1 },
 
   // Eb / D#  (fret 6)
-  { id: 'barre-r5-eb-dim7', name: 'Eb Diminished 7 Root 5 Movable', symbol: 'Ebdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-eb-dim7', name: 'Eb Diminished 7 Root 5 Movable', symbol: 'Eb°7', category: 'movable', type: 'dim7',
     frets: [-1, 7, 8, 6, 8, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 6, barres: [6],
     rootString: 5, rootNoteString: 1 },
-  { id: 'barre-r5-dsharp-dim7', name: 'D# Diminished 7 Root 5 Movable', symbol: 'D#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-dsharp-dim7', name: 'D# Diminished 7 Root 5 Movable', symbol: 'D#°7', category: 'movable', type: 'dim7',
     frets: [-1, 7, 8, 6, 8, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 6, barres: [6],
     rootString: 5, rootNoteString: 1 },
 
   // E  (fret 7)
-  { id: 'barre-r5-e-dim7', name: 'E Diminished 7 Root 5 Movable', symbol: 'Edim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-e-dim7', name: 'E Diminished 7 Root 5 Movable', symbol: 'E°7', category: 'movable', type: 'dim7',
     frets: [-1, 8, 9, 7, 9, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 7, barres: [7],
     rootString: 5, rootNoteString: 1 },
 
   // F  (fret 8)
-  { id: 'barre-r5-f-dim7', name: 'F Diminished 7 Root 5 Movable', symbol: 'Fdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-f-dim7', name: 'F Diminished 7 Root 5 Movable', symbol: 'F°7', category: 'movable', type: 'dim7',
     frets: [-1, 9, 10, 8, 10, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 8, barres: [8],
     rootString: 5, rootNoteString: 1 },
 
   // F# / Gb  (fret 9)
-  { id: 'barre-r5-fsharp-dim7', name: 'F# Diminished 7 Root 5 Movable', symbol: 'F#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-fsharp-dim7', name: 'F# Diminished 7 Root 5 Movable', symbol: 'F#°7', category: 'movable', type: 'dim7',
     frets: [-1, 10, 11, 9, 11, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 9, barres: [9],
     rootString: 5, rootNoteString: 1 },
-  { id: 'barre-r5-gb-dim7', name: 'Gb Diminished 7 Root 5 Movable', symbol: 'Gbdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-gb-dim7', name: 'Gb Diminished 7 Root 5 Movable', symbol: 'Gb°7', category: 'movable', type: 'dim7',
     frets: [-1, 10, 11, 9, 11, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 9, barres: [9],
     rootString: 5, rootNoteString: 1 },
 
   // G  (fret 10)
-  { id: 'barre-r5-g-dim7', name: 'G Diminished 7 Root 5 Movable', symbol: 'Gdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-g-dim7', name: 'G Diminished 7 Root 5 Movable', symbol: 'G°7', category: 'movable', type: 'dim7',
     frets: [-1, 11, 12, 10, 12, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 10, barres: [10],
     rootString: 5, rootNoteString: 1 },
 
   // Ab / G#  (fret 11)
-  { id: 'barre-r5-ab-dim7', name: 'Ab Diminished 7 Root 5 Movable', symbol: 'Abdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-ab-dim7', name: 'Ab Diminished 7 Root 5 Movable', symbol: 'Ab°7', category: 'movable', type: 'dim7',
     frets: [-1, 12, 13, 11, 13, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 11, barres: [11],
     rootString: 5, rootNoteString: 1 },
-  { id: 'barre-r5-gsharp-dim7', name: 'G# Diminished 7 Root 5 Movable', symbol: 'G#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-gsharp-dim7', name: 'G# Diminished 7 Root 5 Movable', symbol: 'G#°7', category: 'movable', type: 'dim7',
     frets: [-1, 12, 13, 11, 13, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 11, barres: [11],
     rootString: 5, rootNoteString: 1 },
 
   // A  (fret 12 — octave)
-  { id: 'barre-r5-a-dim7', name: 'A Diminished 7 Root 5 Movable', symbol: 'Adim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-a-dim7', name: 'A Diminished 7 Root 5 Movable', symbol: 'A°7', category: 'movable', type: 'dim7',
     frets: [-1, 13, 14, 12, 14, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 12, barres: [12],
     rootString: 5, rootNoteString: 1 },
 
   // Cb (enharmonic B, fret 2)
-  { id: 'barre-r5-cb-dim7', name: 'Cb Diminished 7 Root 5 Movable', symbol: 'Cbdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-cb-dim7', name: 'Cb Diminished 7 Root 5 Movable', symbol: 'Cb°7', category: 'movable', type: 'dim7',
     frets: [-1, 3, 4, 2, 4, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 2, barres: [2],
     rootString: 5, rootNoteString: 1 },
 
   // B# (enharmonic C, fret 3)
-  { id: 'barre-r5-bsharp-dim7', name: 'B# Diminished 7 Root 5 Movable', symbol: 'B#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-bsharp-dim7', name: 'B# Diminished 7 Root 5 Movable', symbol: 'B#°7', category: 'movable', type: 'dim7',
     frets: [-1, 4, 5, 3, 5, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 3, barres: [3],
     rootString: 5, rootNoteString: 1 },
 
   // Fb (enharmonic E, fret 7)
-  { id: 'barre-r5-fb-dim7', name: 'Fb Diminished 7 Root 5 Movable', symbol: 'Fbdim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-fb-dim7', name: 'Fb Diminished 7 Root 5 Movable', symbol: 'Fb°7', category: 'movable', type: 'dim7',
     frets: [-1, 8, 9, 7, 9, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 7, barres: [7],
     rootString: 5, rootNoteString: 1 },
 
   // E# (enharmonic F, fret 8)
-  { id: 'barre-r5-esharp-dim7', name: 'E# Diminished 7 Root 5 Movable', symbol: 'E#dim7', category: 'movable', type: 'dim7',
+  { id: 'barre-r5-esharp-dim7', name: 'E# Diminished 7 Root 5 Movable', symbol: 'E#°7', category: 'movable', type: 'dim7',
     frets: [-1, 9, 10, 8, 10, -1], fingers: [0, 2, 3, 1, 4, 0], baseFret: 8, barres: [8],
     rootString: 5, rootNoteString: 1 },
 

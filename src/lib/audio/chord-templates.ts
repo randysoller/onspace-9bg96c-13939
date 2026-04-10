@@ -256,6 +256,20 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     chroma: createTemplate([0, 2, 4, 7, 9, 10]),
     category: 'extended',
   },
+  {
+    name: 'Major 13th',   // Maps to ChordType 'major13'; Ionian/Lydian extended sound
+    symbol: 'maj13',
+    intervals: [0, 4, 7, 11, 14, 21], // Root, M3, P5, M7, M9, M13
+    chroma: createTemplate([0, 2, 4, 7, 9, 11]),
+    category: 'extended',
+  },
+  {
+    name: 'Minor 11th',   // Maps to ChordType 'minor11'; Dorian/Phrygian suspended feel
+    symbol: 'm11',
+    intervals: [0, 3, 7, 10, 14, 17], // Root, m3, P5, m7, M9, P11
+    chroma: createTemplate([0, 2, 3, 5, 7, 10]),
+    category: 'extended',
+  },
 ];
 
 /**

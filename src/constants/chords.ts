@@ -88,9 +88,9 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
   // OPEN CHORDS - Augmented
   // ============================================================================
-  { id: 'open-caug', name: 'Caug', symbol: 'Caug', category: 'open', type: 'augmented',
+  { id: 'open-caug', name: 'Caug', symbol: 'C+', category: 'open', type: 'augmented',
     frets: [-1, 3, 2, 1, 1, 0], fingers: [0, 4, 3, 1, 2, 0], baseFret: 1, rootNoteString: 1 },
-  { id: 'open-eaug', name: 'Eaug', symbol: 'Eaug', category: 'open', type: 'augmented',
+  { id: 'open-eaug', name: 'Eaug', symbol: 'E+', category: 'open', type: 'augmented',
     frets: [0, 3, 2, 1, 1, 0], fingers: [0, 4, 3, 1, 2, 0], baseFret: 1, rootNoteString: 0 },
 
   // ============================================================================
@@ -120,7 +120,7 @@ export const CHORD_DATABASE: ChordData[] = [
     frets: [-1, 0, 2, 4, 2, 3], fingers: [0, 0, 1, 3, 2, 4], baseFret: 1, rootNoteString: 1 },
   { id: 'open-e9', name: 'E9', symbol: 'E9', category: 'open', type: '9th',
     frets: [0, 2, 0, 1, 0, 2], fingers: [0, 2, 0, 1, 0, 3], baseFret: 1, rootNoteString: 0 },
-  { id: 'open-caug7', name: 'Caug7', symbol: 'Caug7', category: 'open', type: 'aug7',
+  { id: 'open-caug7', name: 'Caug7', symbol: 'C+7', category: 'open', type: 'aug7',
     frets: [-1, 3, 2, 3, 1, 4], fingers: [0, 3, 2, 4, 1, 5], baseFret: 1, rootNoteString: 1 },
   { id: 'open-am7b5', name: 'Am7b5', symbol: 'Am7b5', category: 'open', type: 'halfDim7',
     frets: [-1, 0, 1, 0, 1, 3], fingers: [0, 0, 1, 0, 2, 4], baseFret: 1, rootNoteString: 1 },
@@ -1747,7 +1747,7 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'barre-f9', name: 'F9', symbol: 'F9', category: 'barre', type: '9th',
     frets: [1, 3, 1, 2, 1, 3], fingers: [1, 3, 1, 2, 1, 4], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
-  { id: 'barre-faug7', name: 'Faug7', symbol: 'Faug7', category: 'barre', type: 'aug7',
+  { id: 'barre-faug7', name: 'Faug7', symbol: 'F+7', category: 'barre', type: 'aug7',
     frets: [1, 4, 1, 2, 2, 1], fingers: [1, 4, 1, 2, 3, 1], baseFret: 1, barres: [1],
     rootString: 6, rootNoteString: 0 },
   { id: 'barre-fm7b5', name: 'Fm7b5', symbol: 'Fm7b5', category: 'barre', type: 'halfDim7',
@@ -2131,7 +2131,7 @@ export const CHORD_DATABASE: ChordData[] = [
   { id: 'mov-c13-8', name: 'C13 (8th pos)', symbol: 'C13', category: 'movable', type: '13th',
     frets: [8, 10, 8, 9, 10, 10], fingers: [1, 3, 1, 2, 4, 4], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
-  { id: 'mov-caug7-8', name: 'Caug7 (8th pos)', symbol: 'Caug7', category: 'movable', type: 'aug7',
+  { id: 'mov-caug7-8', name: 'Caug7 (8th pos)', symbol: 'C+7', category: 'movable', type: 'aug7',
     frets: [8, 11, 8, 9, 9, 8], fingers: [1, 4, 1, 2, 3, 1], baseFret: 8, barres: [8],
     rootString: 6, rootNoteString: 0 },
   { id: 'mov-cm7b5-8', name: 'Cm7b5 (8th pos)', symbol: 'Cm7b5', category: 'movable', type: 'halfDim7',

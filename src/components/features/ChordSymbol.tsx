@@ -1,21 +1,24 @@
 /**
  * ChordSymbol — renders a chord symbol with accidentals and quality indicators
- * displayed 2px smaller than the surrounding text for proper musical typography.
+ * displayed at calc(1em - 6px) for proper musical typography.
  *
- * Reduced characters (all at calc(1em - 4px)):
+ * Reduced tokens (all at calc(1em - 6px)):
  *   b   — flat sign
  *   #   — sharp sign
- *   maj — major quality (matched before 'm' to avoid partial match)
+ *   maj — major quality  (matched before 'm' to avoid partial match)
+ *   sus — suspended quality (e.g. sus4, sus2)
+ *   add — added-tone quality (e.g. add9)
  *   M   — uppercase major indicator (e.g. mM7)
  *   +   — augmented indicator
  *   °   — diminished indicator
  *   m   — minor indicator
  */
 
-const REDUCED_CHARS = new Set(['b', '#', 'maj', 'M', '+', '°', 'm']);
+const REDUCED_CHARS = new Set(['b', '#', 'maj', 'sus', 'add', 'M', '+', '°', 'm']);
 
-// 'maj' must precede 'm' so the three-char token is consumed first.
-const SYMBOL_SPLIT_RE = /(maj|m|M|b|#|\+|°)/;
+// Multi-char tokens ('maj', 'sus', 'add') must precede 'm' so they are
+// consumed as complete tokens before the single-char 'm' can match inside them.
+const SYMBOL_SPLIT_RE = /(maj|sus|add|m|M|b|#|\+|°)/;
 
 interface ChordSymbolProps {
   symbol: string;
@@ -32,7 +35,7 @@ export function ChordSymbol({ symbol, className }: ChordSymbolProps) {
           return (
             <span
               key={i}
-              style={{ fontSize: 'calc(1em - 4px)', lineHeight: 1 }}
+              style={{ fontSize: 'calc(1em - 6px)', lineHeight: 1 }}
             >
               {part}
             </span>

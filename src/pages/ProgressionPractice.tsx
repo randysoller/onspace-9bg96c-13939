@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Pause, RotateCcw, Volume2, SkipForward, ChevronRight, Save } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { progressionPracticeApi } from '@/lib/api/progressionPractice';
 import { toast } from 'sonner';
 
@@ -205,8 +206,7 @@ export default function ProgressionPractice() {
                 >
                   <div className="text-xs opacity-70 mb-1">{mockProgression.romanNumerals[idx]}</div>
                   <div className="text-lg font-bold">
-                    {chord.root}
-                    {chord.type !== 'major' ? chord.type : ''}
+                    <ChordSymbol symbol={`${chord.root}${chord.type !== 'major' ? chord.type : ''}`} />
                   </div>
                   {idx === currentChordIndex && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-purple-500 rounded-full overflow-hidden">
@@ -235,8 +235,7 @@ export default function ProgressionPractice() {
               {currentRoman}
             </div>
             <div className="text-9xl font-black text-white mb-3">
-              {currentChord.root}
-              {currentChord.type !== 'major' ? currentChord.type : ''}
+              <ChordSymbol symbol={`${currentChord.root}${currentChord.type !== 'major' ? currentChord.type : ''}`} />
             </div>
             <div className="text-xl text-zinc-500">
               {currentChord.root} {currentChord.category}
@@ -422,10 +421,7 @@ export default function ProgressionPractice() {
                   {mockProgression.romanNumerals[currentChordIndex + 1]}
                 </div>
                 <div className="text-2xl font-bold">
-                  {mockProgression.chords[currentChordIndex + 1].root}
-                  {mockProgression.chords[currentChordIndex + 1].type !== 'major' 
-                    ? mockProgression.chords[currentChordIndex + 1].type 
-                    : ''}
+                  <ChordSymbol symbol={`${mockProgression.chords[currentChordIndex + 1].root}${mockProgression.chords[currentChordIndex + 1].type !== 'major' ? mockProgression.chords[currentChordIndex + 1].type : ''}`} />
                 </div>
               </div>
             </div>

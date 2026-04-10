@@ -96,9 +96,6 @@ export default function ChordDetailModal({
                     }`}>
                       {chord.category}
                     </span>
-                    <span className="px-2.5 py-0.5 bg-zinc-800/60 text-zinc-300 text-[10px] font-semibold uppercase tracking-wide rounded">
-                      {chord.type}
-                    </span>
                   </div>
                 </div>
               </div>

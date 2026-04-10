@@ -781,14 +781,14 @@ export default function TunerPanel() {
             )}
 
             {/* Main tuner display */}
-            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-6">
-              <div className="space-y-4">
+            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-3 sm:p-4">
+              <div className="space-y-2">
                 {/* Detected note */}
                 <div className="text-center">
                   <div className="relative inline-flex items-center justify-center">
                     <motion.div
                       className="absolute rounded-full border-[3px] border-[hsl(142_71%_45%)] pointer-events-none"
-                      style={{ width: 140, height: 140 }}
+                      style={{ width: 108, height: 108 }}
                       initial={{ opacity: 0, scale: 0.85 }}
                       animate={Math.abs(centsFromTarget) <= 2 && shownNote
                         ? { opacity: 1, scale: 1 }
@@ -796,7 +796,7 @@ export default function TunerPanel() {
                       }
                       transition={{ duration: 0.35, ease: 'easeOut' }}
                     />
-                    <p className={`font-display text-7xl sm:text-8xl font-extrabold leading-none transition-colors duration-300 ${
+                    <p className={`font-display text-5xl sm:text-6xl font-extrabold leading-none transition-colors duration-300 ${
                       !shownNote
                         ? 'text-[hsl(var(--text-muted)/0.25)]'
                         : isTargetInTune
@@ -806,7 +806,7 @@ export default function TunerPanel() {
                         : 'text-[rgb(220,38,38)]'
                     }`}>
                       {shownNote ? (
-                        <>{shownNote.note}<span className="text-3xl sm:text-4xl opacity-50">{shownNote.octave}</span></>
+                        <>{shownNote.note}<span className="text-2xl sm:text-3xl opacity-50">{shownNote.octave}</span></>
                       ) : (
                         <>—</>
                       )}
@@ -853,7 +853,7 @@ export default function TunerPanel() {
                           className="rounded-sm transition-all duration-150"
                           style={{
                             width: isCenter ? 6 : 4,
-                            height: isCenter ? 84 : absSegCents <= 5 ? 68 : absSegCents <= 15 ? 60 : 52,
+                            height: isCenter ? 63 : absSegCents <= 5 ? 51 : absSegCents <= 15 ? 45 : 39,
                             backgroundColor: lit
                               ? `hsl(${hue})`
                               : `hsl(${hue} / 0.12)`,
@@ -877,7 +877,7 @@ export default function TunerPanel() {
                 </div>
 
                 {/* Status text — fixed height to prevent layout shift */}
-                <div className="text-center h-7 flex items-center justify-center">
+                <div className="text-center h-5 flex items-center justify-center">
                   {shownNote && isTargetInTune ? (
                     <motion.p
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -895,7 +895,7 @@ export default function TunerPanel() {
                 </div>
 
                 {/* Mic sensitivity */}
-                <div className="space-y-2 !mt-4">
+                <div className="space-y-2 !mt-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-display font-semibold text-[hsl(var(--text-subtle))] uppercase tracking-wider flex items-center gap-1.5">
                       <Mic className="size-3.5" />
@@ -934,7 +934,7 @@ export default function TunerPanel() {
                 </div>
 
                 {/* Calibration shortcut */}
-                <div className="!mt-3 flex items-center justify-between rounded-lg border-2 border-zinc-700/50 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
+                <div className="!mt-2 flex items-center justify-between rounded-lg border-2 border-zinc-700/50 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
                   <div className="flex items-center gap-2">
                     <Crosshair className="size-3.5 text-[hsl(var(--color-emphasis))]" />
                     <span className="text-[10px] font-display font-bold text-zinc-400 uppercase tracking-wider">Calibration</span>

@@ -104,6 +104,12 @@ const TUNING_PRESETS: TuningPreset[] = [
       { string: 1, note: 'D4', freq: 293.66, display: 'D' },
     ],
   },
+  {
+    // Chromatic: no string targets — detects any note across all octaves
+    name: 'chromatic',
+    label: 'Chromatic',
+    strings: [],
+  },
 ];
 
 const FREQ_HISTORY_SIZE = 5;
@@ -315,6 +321,7 @@ export default function TunerPanel() {
   }, []);
 
   const activeStrings = useMemo(() => selectedTuning.strings, [selectedTuning]);
+  const isChromatic = selectedTuning.name === 'chromatic';
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -717,7 +724,9 @@ export default function TunerPanel() {
                     {selectedTuning.label}
                   </span>
                   <span className="text-sm font-body text-zinc-400">
-                    {selectedTuning.strings.map((s) => s.display).join(' ')}
+                    {selectedTuning.name === 'chromatic'
+                      ? 'All notes · All octaves'
+                      : selectedTuning.strings.map((s) => s.display).join(' ')}
                   </span>
                   <ChevronDown className={`size-7 text-[hsl(var(--color-primary))] transition-transform duration-200 ${tuningDropdownOpen ? 'rotate-180' : ''}`} strokeWidth={3} />
                 </button>
@@ -752,7 +761,9 @@ export default function TunerPanel() {
                               {preset.label}
                             </p>
                             <p className="text-sm font-body text-zinc-400">
-                              {preset.strings.map((s) => s.note).join(' – ')}
+                              {preset.name === 'chromatic'
+                                ? 'Any note · Any instrument'
+                                : preset.strings.map((s) => s.note).join(' – ')}
                             </p>
                           </div>
                           {isActive && (
@@ -954,6 +965,41 @@ export default function TunerPanel() {
             </div>
 
             {/* String selector + reference tones */}
+            {isChromatic ? (
+              /* Chromatic mode: no string targeting, show info panel */
+              <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-2 sm:p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Music className="size-3.5 text-[hsl(var(--color-primary))]" />
+                  <h3 className="font-display text-sm font-semibold text-zinc-400 uppercase tracking-wider">
+                    Chromatic Mode
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'].map((n) => {
+                    const isDetectedNote = shownNote?.note === n;
+                    return (
+                      <span
+                        key={n}
+                        className={`rounded-md px-2 py-0.5 text-xs font-display font-bold transition-all duration-150 ${
+                          isDetectedNote
+                            ? isTargetInTune
+                              ? 'bg-[hsl(142_71%_45%/0.2)] text-[hsl(142_71%_45%)] border border-[hsl(142_71%_45%/0.5)]'
+                              : isTargetClose
+                              ? 'bg-[hsl(45_93%_47%/0.15)] text-[hsl(45_93%_47%)] border border-[hsl(45_93%_47%/0.4)]'
+                              : 'bg-[hsl(0_72%_51%/0.15)] text-[rgb(220,38,38)] border border-[hsl(0_72%_51%/0.4)]'
+                            : 'bg-[hsl(var(--bg-surface))] text-zinc-500 border border-transparent'
+                        }`}
+                      >
+                        {n}
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-[10px] font-body text-zinc-500">
+                  Detects any note across all octaves. Suitable for any instrument.
+                </p>
+              </div>
+            ) : (
             <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-2 sm:p-3">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-display text-sm font-semibold text-zinc-400 uppercase tracking-wider">
@@ -1064,6 +1110,7 @@ export default function TunerPanel() {
                 })}
               </div>
             </div>
+            )}
           </div>
         </div>
       </motion.div>

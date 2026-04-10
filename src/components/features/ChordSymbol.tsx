@@ -2,7 +2,7 @@
  * ChordSymbol — renders a chord symbol with accidentals and quality indicators
  * displayed 2px smaller than the surrounding text for proper musical typography.
  *
- * Reduced characters (all at calc(1em - 2px)):
+ * Reduced characters (all at calc(1em - 4px)):
  *   b   — flat sign
  *   #   — sharp sign
  *   maj — major quality (matched before 'm' to avoid partial match)
@@ -32,7 +32,7 @@ export function ChordSymbol({ symbol, className }: ChordSymbolProps) {
           return (
             <span
               key={i}
-              style={{ fontSize: 'calc(1em - 2px)', lineHeight: 1 }}
+              style={{ fontSize: 'calc(1em - 4px)', lineHeight: 1 }}
             >
               {part}
             </span>

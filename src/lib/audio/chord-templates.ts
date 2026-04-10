@@ -210,6 +210,13 @@ export const CHORD_TEMPLATES: ChordTemplate[] = [
     chroma: createTemplate([0, 1, 4, 8, 10]), // 13 % 12 = 1 (minor 9th pitch class)
     category: 'augmented',
   },
+  {
+    name: 'Augmented 7th #9',   // Maps to ChordType 'aug7sharp9'; raised 5th + augmented 9th
+    symbol: 'aug7#9',
+    intervals: [0, 4, 8, 10, 15], // Root, Major 3rd, Augmented 5th, Minor 7th, Augmented 9th
+    chroma: createTemplate([0, 3, 4, 8, 10]), // 15 % 12 = 3 (augmented 9th pitch class)
+    category: 'augmented',
+  },
   
   // SUSPENDED CHORDS
   {

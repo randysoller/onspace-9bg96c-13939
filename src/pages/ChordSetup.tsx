@@ -51,7 +51,7 @@ const ALL_CHORD_TYPES: ChordType[] = [
   'major', 'minor', 'augmented', 'slash', 'diminished',
   'sus2', 'sus4', '7sus4', 'major6', 'minor6', 'maj6add9',
   'major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
-  'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7sharp9', 'aug7b9',
+  'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7sharp9', 'aug7b9', 'minmaj7',
   'add9',
   'major9', '9th', 'minor9',
   'major11', '11th', 'minor11',
@@ -66,7 +66,7 @@ interface TypeGroup {
 
 const TYPE_GROUPS: TypeGroup[] = [
   { label: 'Basic', types: ['major', 'minor', 'augmented', 'diminished', 'sus2', 'sus4', '7sus4', 'major6', 'minor6', 'maj6add9', 'slash'] },
-  { label: '7th Chords', types: ['major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7', 'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7sharp9', 'aug7b9'] },
+  { label: '7th Chords', types: ['major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7', 'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7sharp9', 'aug7b9', 'minmaj7'] },
   {
     label: 'Extended',
     types: ['add9', 'major9', '9th', 'minor9', 'major11', '11th', 'minor11', 'major13', '13th', 'minor13'],

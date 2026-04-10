@@ -323,6 +323,89 @@ export default function TunerPanel() {
   const rafRef = useRef<number>(0);
   const bufferRef = useRef<Float32Array | null>(null);
 
+  const { playString: playGuitarString } = useGuitarString();
+
+  const chimeCtxRef = useRef<AudioContext | null>(null);
+  const getChimeCtx = useCallback(() => {
+    if (!chimeCtxRef.current || chimeCtxRef.current.state === 'closed') {
+      chimeCtxRef.current = new AudioContext();
+    }
+    if (chimeCtxRef.current.state === 'suspended') {
+      chimeCtxRef.current.resume();
+    }
+    return chimeCtxRef.current;
+  }, []);
+
+  const playCowbellSound = useCallback(() => {
+    try {
+      const ctx = getChimeCtx();
+      const now = ctx.currentTime;
+      const duration = 1.4;
+
+      const masterGain = ctx.createGain();
+      masterGain.gain.setValueAtTime(0.5, now);
+      masterGain.gain.setTargetAtTime(0.0001, now + 0.06, duration * 0.28);
+      masterGain.connect(ctx.destination);
+
+      const highShelf = ctx.createBiquadFilter();
+      highShelf.type = 'highshelf';
+      highShelf.frequency.value = 3000;
+      highShelf.gain.value = 4;
+      highShelf.connect(masterGain);
+
+      const hp = ctx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 800;
+      hp.Q.value = 0.5;
+      hp.connect(highShelf);
+
+      const partials = [
+        { freq: 1568, amp: 0.40, decay: 0.45 },
+        { freq: 2350, amp: 0.25, decay: 0.32 },
+        { freq: 3136, amp: 0.15, decay: 0.22 },
+        { freq: 4700, amp: 0.06, decay: 0.14 },
+      ];
+      partials.forEach(({ freq, amp, decay }) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(amp, now);
+        g.gain.setTargetAtTime(0.0001, now + 0.02, duration * decay);
+        osc.connect(g);
+        g.connect(hp);
+        osc.start(now);
+        osc.stop(now + duration);
+      });
+
+      const tLen = Math.floor(ctx.sampleRate * 0.006);
+      const tBuf = ctx.createBuffer(1, tLen, ctx.sampleRate);
+      const tData = tBuf.getChannelData(0);
+      for (let i = 0; i < tLen; i++) tData[i] = (Math.random() * 2 - 1) * 0.15;
+      const tSrc = ctx.createBufferSource();
+      tSrc.buffer = tBuf;
+      const tBP = ctx.createBiquadFilter();
+      tBP.type = 'bandpass';
+      tBP.frequency.value = 4000;
+      tBP.Q.value = 2;
+      const tGain = ctx.createGain();
+      tGain.gain.setValueAtTime(0.12, now);
+      tGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+      tSrc.connect(tBP);
+      tBP.connect(tGain);
+      tGain.connect(hp);
+      tSrc.start(now);
+    } catch (e) {
+      console.log('Chime sound error:', e);
+    }
+  }, [getChimeCtx]);
+
+  const playReferenceTone = useCallback((gs: GuitarString) => {
+    playGuitarString({ frequency: gs.freq, duration: 3.0, volume: 0.891 }); // -1.0 dB
+    setPlayingString(gs.string);
+    setTimeout(() => setPlayingString((prev) => prev === gs.string ? null : prev), 2200);
+  }, [playGuitarString]);
+
   const stopListening = useCallback(() => {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
@@ -550,90 +633,7 @@ export default function TunerPanel() {
       setPermissionDenied(true);
       setIsListening(false);
     }
-  }, [getChimeCtx, playCowbellSound, stopListening]); // Added missing dependencies
-
-  const { playString: playGuitarString } = useGuitarString();
-
-  const chimeCtxRef = useRef<AudioContext | null>(null);
-  const getChimeCtx = useCallback(() => {
-    if (!chimeCtxRef.current || chimeCtxRef.current.state === 'closed') {
-      chimeCtxRef.current = new AudioContext();
-    }
-    if (chimeCtxRef.current.state === 'suspended') {
-      chimeCtxRef.current.resume();
-    }
-    return chimeCtxRef.current;
-  }, []);
-
-  const playCowbellSound = useCallback(() => {
-    try {
-      const ctx = getChimeCtx();
-      const now = ctx.currentTime;
-      const duration = 1.4;
-
-      const masterGain = ctx.createGain();
-      masterGain.gain.setValueAtTime(0.5, now);
-      masterGain.gain.setTargetAtTime(0.0001, now + 0.06, duration * 0.28);
-      masterGain.connect(ctx.destination);
-
-      const highShelf = ctx.createBiquadFilter();
-      highShelf.type = 'highshelf';
-      highShelf.frequency.value = 3000;
-      highShelf.gain.value = 4;
-      highShelf.connect(masterGain);
-
-      const hp = ctx.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 800;
-      hp.Q.value = 0.5;
-      hp.connect(highShelf);
-
-      const partials = [
-        { freq: 1568, amp: 0.40, decay: 0.45 },
-        { freq: 2350, amp: 0.25, decay: 0.32 },
-        { freq: 3136, amp: 0.15, decay: 0.22 },
-        { freq: 4700, amp: 0.06, decay: 0.14 },
-      ];
-      partials.forEach(({ freq, amp, decay }) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(amp, now);
-        g.gain.setTargetAtTime(0.0001, now + 0.02, duration * decay);
-        osc.connect(g);
-        g.connect(hp);
-        osc.start(now);
-        osc.stop(now + duration);
-      });
-
-      const tLen = Math.floor(ctx.sampleRate * 0.006);
-      const tBuf = ctx.createBuffer(1, tLen, ctx.sampleRate);
-      const tData = tBuf.getChannelData(0);
-      for (let i = 0; i < tLen; i++) tData[i] = (Math.random() * 2 - 1) * 0.15;
-      const tSrc = ctx.createBufferSource();
-      tSrc.buffer = tBuf;
-      const tBP = ctx.createBiquadFilter();
-      tBP.type = 'bandpass';
-      tBP.frequency.value = 4000;
-      tBP.Q.value = 2;
-      const tGain = ctx.createGain();
-      tGain.gain.setValueAtTime(0.12, now);
-      tGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-      tSrc.connect(tBP);
-      tBP.connect(tGain);
-      tGain.connect(hp);
-      tSrc.start(now);
-    } catch (e) {
-      console.log('Chime sound error:', e);
-    }
-  }, [getChimeCtx]);
-
-  const playReferenceTone = useCallback((gs: GuitarString) => {
-    playGuitarString({ frequency: gs.freq, duration: 3.0, volume: 0.891 }); // -1.0 dB
-    setPlayingString(gs.string);
-    setTimeout(() => setPlayingString((prev) => prev === gs.string ? null : prev), 2200);
-  }, [playGuitarString]);
+  }, [getChimeCtx, playCowbellSound, stopListening]);
 
   useEffect(() => {
     const warmUp = () => {

@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
@@ -89,7 +90,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
         {/* Chord Info */}
         <div className="flex-1 min-w-0 py-2">
           <div className="text-3xl font-black text-white mb-0.5">
-            {chord.symbol}
+            <ChordSymbol symbol={chord.symbol} />
           </div>
           <div className={`text-xs uppercase tracking-wide mb-1 ${
             chord.category === 'open' ? 'text-emerald-400'

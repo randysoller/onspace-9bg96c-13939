@@ -23,6 +23,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { usePracticeStore } from '@/stores/practiceStore';
+import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useChordDetection } from '@/hooks/useChordDetection';
@@ -388,7 +389,7 @@ export default function Practice() {
               <motion.div key={`${chord.id}-symbol`}
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3 }}>
-                <div className="text-[58px] font-black text-white mb-2 leading-none">{chord.symbol}</div>
+                <div className="text-[58px] font-black text-white mb-2 leading-none"><ChordSymbol symbol={chord.symbol} /></div>
                 <div className="relative flex items-center justify-center h-9">
                   {showChordName ? (
                     <span className="text-2xl font-medium text-[hsl(var(--text-subtle))]">

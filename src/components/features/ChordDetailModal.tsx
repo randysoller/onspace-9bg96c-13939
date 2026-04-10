@@ -1,4 +1,5 @@
 import { X, Hand, Edit, Volume2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { useEffect } from 'react';
 import { ChordData } from '@/types/chord';
 import { SVGChordDiagram } from '@/components/features/SVGChordDiagram';
@@ -84,7 +85,7 @@ export default function ChordDetailModal({
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-3">
                 <div className="text-5xl font-black text-white">
-                  {chord.symbol}
+                  <ChordSymbol symbol={chord.symbol} />
                 </div>
                 <div className="flex flex-col gap-1">
                   <div className="flex gap-2">

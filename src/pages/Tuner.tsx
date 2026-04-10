@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Mic, MicOff, Music, Volume2, X, ChevronDown, Crosshair, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -549,7 +550,7 @@ export default function TunerPanel() {
       setPermissionDenied(true);
       setIsListening(false);
     }
-  }, []);
+  }, [getChimeCtx, playCowbellSound, stopListening]); // Added missing dependencies
 
   const { playString: playGuitarString } = useGuitarString();
 
@@ -770,7 +771,7 @@ export default function TunerPanel() {
             </p>
           </div>
 
-          <div className="px-4 sm:px-6 pb-6 max-w-xl mx-auto space-y-4">
+          <div className="px-4 sm:px-6 pb-2 max-w-xl mx-auto space-y-2">
             {permissionDenied && (
               <div className="flex items-center gap-2 rounded-lg bg-[hsl(var(--semantic-error)/0.1)] border border-[hsl(var(--semantic-error)/0.25)] px-4 py-2.5 text-center justify-center">
                 <MicOff className="size-4 text-[hsl(var(--semantic-error))] shrink-0" />
@@ -844,6 +845,8 @@ export default function TunerPanel() {
                         } else if (cur < 0 && segCents < 0 && segCents >= cur - 1.25) {
                           lit = true;
                         }
+                        // This condition seems to overlap with the first 'if (isCenter...)' condition
+                        // but it ensures the center is lit if within 5 cents, not just 2.5
                         if (isCenter && Math.abs(cur) <= 5) lit = true;
                       }
 
@@ -951,14 +954,14 @@ export default function TunerPanel() {
             </div>
 
             {/* String selector + reference tones */}
-            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-4 sm:p-5">
-              <div className="flex items-center justify-between mb-3">
+            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-2 sm:p-3">
+              <div className="flex items-center justify-between mb-1">
                 <h3 className="font-display text-sm font-semibold text-zinc-400 uppercase tracking-wider">
                   Strings
                 </h3>
                 <button
                   onClick={() => setSelectedString(null)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-display font-bold transition-all active:scale-95 min-h-[44px] ${
+                  className={`rounded-lg px-2 py-1 text-xs font-display font-bold transition-all active:scale-95 min-h-[32px] ${
                     !selectedString
                       ? 'bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))] border border-[hsl(var(--color-primary)/0.3)]'
                       : 'bg-[hsl(var(--bg-surface))] text-zinc-400 hover:bg-[hsl(var(--bg-overlay))] border border-transparent'
@@ -970,7 +973,7 @@ export default function TunerPanel() {
                   </div>
                 </button>
               </div>
-              <div className="flex gap-1 sm:gap-2">
+              <div className="flex gap-0.5">
                 {activeStrings.map((gs) => {
                   const isActive = selectedString?.string === gs.string;
                   const isDetected = !selectedString && shownClosest?.string === gs.string && isListening && shownFreq !== null;
@@ -982,7 +985,7 @@ export default function TunerPanel() {
                     <button
                       key={gs.string}
                       className={`
-                        flex-1 flex flex-col items-center rounded-lg px-0.5 sm:px-2 py-2 sm:py-3 transition-all duration-200 cursor-pointer min-h-[44px] active:scale-95
+                        flex-1 flex flex-col items-center rounded-lg px-0.5 py-0.5 transition-all duration-200 cursor-pointer min-h-[32px] active:scale-95
                         ${(isActive || isDetected) && stringInTune
                           ? 'bg-[hsl(142_71%_45%/0.18)] border-2 border-[hsl(142_71%_45%/0.5)] shadow-[0_0_14px_hsl(142_71%_45%/0.3)]'
                           : isActive
@@ -998,11 +1001,11 @@ export default function TunerPanel() {
                       }}
                     >
                       {/* String gauge — realistic wound/plain representation */}
-                      <div className="flex items-center justify-center w-full h-[7px] mb-1.5">
+                      <div className="flex items-center justify-center w-full h-[4px] mb-0.5">
                         <div
                           className="w-4/5 rounded-full"
                           style={{
-                            height: [0, 2, 2.5, 3, 5, 6, 7][gs.string],
+                            height: [0, 1.5, 2, 2, 3.5, 4.5, 5][gs.string],
                             background: (isActive || isDetected) && stringInTune
                               ? 'linear-gradient(180deg, hsl(142 71% 58%), hsl(142 71% 38%), hsl(142 71% 58%))'
                               : isActive
@@ -1018,11 +1021,10 @@ export default function TunerPanel() {
                           }}
                         />
                       </div>
-                      <span className="text-[12px] sm:text-[18px] font-body text-zinc-400 text-center leading-tight">
-                        <span className="block">String</span>
-                        <span className="block">{gs.string}</span>
+                      <span className="text-[8px] font-body text-zinc-400 text-center leading-none">
+                        <span className="block">Str{gs.string}</span>
                       </span>
-                      <span className={`font-display text-[22px] sm:text-[28px] font-bold leading-tight ${
+                      <span className={`font-display text-[14px] sm:text-[18px] font-bold leading-tight ${
                         isActive
                           ? 'text-[hsl(var(--color-primary))]'
                           : isDetected
@@ -1037,7 +1039,7 @@ export default function TunerPanel() {
                         <span className="hidden sm:inline">{gs.note}</span>
                       </span>
 
-                      <span className={`text-[12px] sm:text-[18px] font-display font-bold tabular-nums mt-0.5 h-4 sm:h-5 transition-colors duration-200 ${
+                      <span className={`text-[8px] font-display font-bold tabular-nums mt-0 h-2.5 transition-colors duration-200 ${
                         stringCents === null
                           ? 'text-transparent'
                           : stringInTune
@@ -1052,7 +1054,7 @@ export default function TunerPanel() {
                             : `${stringCents > 0 ? '+' : ''}${stringCents}c`
                           : '—'}
                       </span>
-                      <Volume2 className={`size-3 mt-0.5 transition-colors ${
+                      <Volume2 className={`size-2.5 mt-0 transition-colors ${
                         isPlaying 
                           ? 'text-amber-500 animate-pulse' 
                           : 'text-amber-500/60'

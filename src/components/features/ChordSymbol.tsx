@@ -35,7 +35,7 @@ export function ChordSymbol({ symbol, className }: ChordSymbolProps) {
           return (
             <span
               key={i}
-              style={{ fontSize: 'calc(1em - 6px)', lineHeight: 1 }}
+              style={{ fontSize: 'calc(1em - 6px)', lineHeight: 1, display: 'inline-block', transform: 'translateY(-0.1em)' }}
             >
               {part}
             </span>

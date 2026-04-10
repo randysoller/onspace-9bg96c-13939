@@ -864,6 +864,108 @@ export const AUG7_A5_MOVABLE: ChordData[] = [
 ];
 
 // ============================================================================
+// BARRE CHORDS - Add 9 (E-shape, Root 6)
+// Frets [N,N+2,N+4,N+1,N,N], fingers [1,2,4,3,1,1], barres [N]
+// 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+//                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
+// ============================================================================
+export const ADD9_E6_BARRE: ChordData[] = [
+  { id: 'barre-e6-f-add9', name: 'F add9 Root 6 Barre', symbol: 'Fadd9', category: 'barre', type: 'add9',
+    frets: [1,3,5,2,1,1], fingers: [1,2,4,3,1,1], baseFret: 1, barres: [1], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-fsharp-add9', name: 'F# add9 Root 6 Barre', symbol: 'F#add9', category: 'barre', type: 'add9',
+    frets: [2,4,6,3,2,2], fingers: [1,2,4,3,1,1], baseFret: 2, barres: [2], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-gb-add9', name: 'Gb add9 Root 6 Barre', symbol: 'Gbadd9', category: 'barre', type: 'add9',
+    frets: [2,4,6,3,2,2], fingers: [1,2,4,3,1,1], baseFret: 2, barres: [2], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-g-add9', name: 'G add9 Root 6 Barre', symbol: 'Gadd9', category: 'barre', type: 'add9',
+    frets: [3,5,7,4,3,3], fingers: [1,2,4,3,1,1], baseFret: 3, barres: [3], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-gsharp-add9', name: 'G# add9 Root 6 Barre', symbol: 'G#add9', category: 'barre', type: 'add9',
+    frets: [4,6,8,5,4,4], fingers: [1,2,4,3,1,1], baseFret: 4, barres: [4], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-ab-add9', name: 'Ab add9 Root 6 Barre', symbol: 'Abadd9', category: 'barre', type: 'add9',
+    frets: [4,6,8,5,4,4], fingers: [1,2,4,3,1,1], baseFret: 4, barres: [4], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-a-add9', name: 'A add9 Root 6 Barre', symbol: 'Aadd9', category: 'barre', type: 'add9',
+    frets: [5,7,9,6,5,5], fingers: [1,2,4,3,1,1], baseFret: 5, barres: [5], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-asharp-add9', name: 'A# add9 Root 6 Barre', symbol: 'A#add9', category: 'barre', type: 'add9',
+    frets: [6,8,10,7,6,6], fingers: [1,2,4,3,1,1], baseFret: 6, barres: [6], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bb-add9', name: 'Bb add9 Root 6 Barre', symbol: 'Bbadd9', category: 'barre', type: 'add9',
+    frets: [6,8,10,7,6,6], fingers: [1,2,4,3,1,1], baseFret: 6, barres: [6], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-b-add9', name: 'B add9 Root 6 Barre', symbol: 'Badd9', category: 'barre', type: 'add9',
+    frets: [7,9,11,8,7,7], fingers: [1,2,4,3,1,1], baseFret: 7, barres: [7], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-cb-add9', name: 'Cb add9 Root 6 Barre', symbol: 'Cbadd9', category: 'barre', type: 'add9',
+    frets: [7,9,11,8,7,7], fingers: [1,2,4,3,1,1], baseFret: 7, barres: [7], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-c-add9', name: 'C add9 Root 6 Barre', symbol: 'Cadd9', category: 'barre', type: 'add9',
+    frets: [8,10,12,9,8,8], fingers: [1,2,4,3,1,1], baseFret: 8, barres: [8], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-bsharp-add9', name: 'B# add9 Root 6 Barre', symbol: 'B#add9', category: 'barre', type: 'add9',
+    frets: [8,10,12,9,8,8], fingers: [1,2,4,3,1,1], baseFret: 8, barres: [8], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-csharp-add9', name: 'C# add9 Root 6 Barre', symbol: 'C#add9', category: 'barre', type: 'add9',
+    frets: [9,11,13,10,9,9], fingers: [1,2,4,3,1,1], baseFret: 9, barres: [9], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-db-add9', name: 'Db add9 Root 6 Barre', symbol: 'Dbadd9', category: 'barre', type: 'add9',
+    frets: [9,11,13,10,9,9], fingers: [1,2,4,3,1,1], baseFret: 9, barres: [9], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-d-add9', name: 'D add9 Root 6 Barre', symbol: 'Dadd9', category: 'barre', type: 'add9',
+    frets: [10,12,14,11,10,10], fingers: [1,2,4,3,1,1], baseFret: 10, barres: [10], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-dsharp-add9', name: 'D# add9 Root 6 Barre', symbol: 'D#add9', category: 'barre', type: 'add9',
+    frets: [11,13,15,12,11,11], fingers: [1,2,4,3,1,1], baseFret: 11, barres: [11], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-eb-add9', name: 'Eb add9 Root 6 Barre', symbol: 'Ebadd9', category: 'barre', type: 'add9',
+    frets: [11,13,15,12,11,11], fingers: [1,2,4,3,1,1], baseFret: 11, barres: [11], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-e-add9-12', name: 'E add9 Root 6 Barre', symbol: 'Eadd9', category: 'barre', type: 'add9',
+    frets: [12,14,16,13,12,12], fingers: [1,2,4,3,1,1], baseFret: 12, barres: [12], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-fb-add9', name: 'Fb add9 Root 6 Barre', symbol: 'Fbadd9', category: 'barre', type: 'add9',
+    frets: [12,14,16,13,12,12], fingers: [1,2,4,3,1,1], baseFret: 12, barres: [12], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-esharp-add9', name: 'E# add9 Root 6 Barre', symbol: 'E#add9', category: 'barre', type: 'add9',
+    frets: [1,3,5,2,1,1], fingers: [1,2,4,3,1,1], baseFret: 1, barres: [1], rootString: 6, rootNoteString: 0 },
+];
+
+// ============================================================================
+// BARRE CHORDS - Add 9 (A-shape, Root 5)
+// Frets [-1,N,N+2,N+4,N+2,N], fingers [0,1,2,4,3,1], barres [N]
+// 5th string notes: Bb=1, B/Cb=2, C/B#=3, C#/Db=4, D=5, Eb/D#/Fb=6,
+//                   E=7, F/E#=8, F#/Gb=9, G=10, Ab/G#=11, A=12
+// ============================================================================
+export const ADD9_A5_BARRE: ChordData[] = [
+  { id: 'barre-r5-bb-add9', name: 'Bb add9 Root 5 Barre', symbol: 'Bbadd9', category: 'barre', type: 'add9',
+    frets: [-1,1,3,5,3,1], fingers: [0,1,2,4,3,1], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-asharp-add9', name: 'A# add9 Root 5 Barre', symbol: 'A#add9', category: 'barre', type: 'add9',
+    frets: [-1,1,3,5,3,1], fingers: [0,1,2,4,3,1], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-b-add9', name: 'B add9 Root 5 Barre', symbol: 'Badd9', category: 'barre', type: 'add9',
+    frets: [-1,2,4,6,4,2], fingers: [0,1,2,4,3,1], baseFret: 2, barres: [2], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-cb-add9', name: 'Cb add9 Root 5 Barre', symbol: 'Cbadd9', category: 'barre', type: 'add9',
+    frets: [-1,2,4,6,4,2], fingers: [0,1,2,4,3,1], baseFret: 2, barres: [2], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-c-add9', name: 'C add9 Root 5 Barre', symbol: 'Cadd9', category: 'barre', type: 'add9',
+    frets: [-1,3,5,7,5,3], fingers: [0,1,2,4,3,1], baseFret: 3, barres: [3], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-bsharp-add9', name: 'B# add9 Root 5 Barre', symbol: 'B#add9', category: 'barre', type: 'add9',
+    frets: [-1,3,5,7,5,3], fingers: [0,1,2,4,3,1], baseFret: 3, barres: [3], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-csharp-add9', name: 'C# add9 Root 5 Barre', symbol: 'C#add9', category: 'barre', type: 'add9',
+    frets: [-1,4,6,8,6,4], fingers: [0,1,2,4,3,1], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-db-add9', name: 'Db add9 Root 5 Barre', symbol: 'Dbadd9', category: 'barre', type: 'add9',
+    frets: [-1,4,6,8,6,4], fingers: [0,1,2,4,3,1], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-d-add9', name: 'D add9 Root 5 Barre', symbol: 'Dadd9', category: 'barre', type: 'add9',
+    frets: [-1,5,7,9,7,5], fingers: [0,1,2,4,3,1], baseFret: 5, barres: [5], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-eb-add9', name: 'Eb add9 Root 5 Barre', symbol: 'Ebadd9', category: 'barre', type: 'add9',
+    frets: [-1,6,8,10,8,6], fingers: [0,1,2,4,3,1], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-dsharp-add9', name: 'D# add9 Root 5 Barre', symbol: 'D#add9', category: 'barre', type: 'add9',
+    frets: [-1,6,8,10,8,6], fingers: [0,1,2,4,3,1], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-fb-add9', name: 'Fb add9 Root 5 Barre', symbol: 'Fbadd9', category: 'barre', type: 'add9',
+    frets: [-1,6,8,10,8,6], fingers: [0,1,2,4,3,1], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-e-add9', name: 'E add9 Root 5 Barre', symbol: 'Eadd9', category: 'barre', type: 'add9',
+    frets: [-1,7,9,11,9,7], fingers: [0,1,2,4,3,1], baseFret: 7, barres: [7], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-f-add9', name: 'F add9 Root 5 Barre', symbol: 'Fadd9', category: 'barre', type: 'add9',
+    frets: [-1,8,10,12,10,8], fingers: [0,1,2,4,3,1], baseFret: 8, barres: [8], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-esharp-add9', name: 'E# add9 Root 5 Barre', symbol: 'E#add9', category: 'barre', type: 'add9',
+    frets: [-1,8,10,12,10,8], fingers: [0,1,2,4,3,1], baseFret: 8, barres: [8], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-fsharp-add9', name: 'F# add9 Root 5 Barre', symbol: 'F#add9', category: 'barre', type: 'add9',
+    frets: [-1,9,11,13,11,9], fingers: [0,1,2,4,3,1], baseFret: 9, barres: [9], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gb-add9', name: 'Gb add9 Root 5 Barre', symbol: 'Gbadd9', category: 'barre', type: 'add9',
+    frets: [-1,9,11,13,11,9], fingers: [0,1,2,4,3,1], baseFret: 9, barres: [9], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-g-add9', name: 'G add9 Root 5 Barre', symbol: 'Gadd9', category: 'barre', type: 'add9',
+    frets: [-1,10,12,14,12,10], fingers: [0,1,2,4,3,1], baseFret: 10, barres: [10], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-ab-add9', name: 'Ab add9 Root 5 Barre', symbol: 'Abadd9', category: 'barre', type: 'add9',
+    frets: [-1,11,13,15,13,11], fingers: [0,1,2,4,3,1], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-gsharp-add9', name: 'G# add9 Root 5 Barre', symbol: 'G#add9', category: 'barre', type: 'add9',
+    frets: [-1,11,13,15,13,11], fingers: [0,1,2,4,3,1], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-r5-a-add9', name: 'A add9 Root 5 Barre', symbol: 'Aadd9', category: 'barre', type: 'add9',
+    frets: [-1,12,14,16,14,12], fingers: [0,1,2,4,3,1], baseFret: 12, barres: [12], rootString: 5, rootNoteString: 1 },
+];
+
+// ============================================================================
 // BARRE CHORDS - Major 6 (A-shape, Root 5)
 // Frets [-1,N,N+2,N+2,N+2,N+2], fingers [0,1,3,3,3,3], barres [N+2]
 // Index finger on A at fret N; ring finger barre across D/G/B/high-e at N+2

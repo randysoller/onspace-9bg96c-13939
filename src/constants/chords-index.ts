@@ -20,6 +20,8 @@ import {
   MAJOR6_A5_BARRE,
   AUG7_E6_MOVABLE,
   AUG7_A5_MOVABLE,
+  ADD9_E6_BARRE,
+  ADD9_A5_BARRE,
 } from './chords-extended';
 
 export const CHORD_DATABASE = [
@@ -40,4 +42,6 @@ export const CHORD_DATABASE = [
   ...MAJOR6_A5_BARRE,
   ...AUG7_E6_MOVABLE,
   ...AUG7_A5_MOVABLE,
+  ...ADD9_E6_BARRE,
+  ...ADD9_A5_BARRE,
 ];

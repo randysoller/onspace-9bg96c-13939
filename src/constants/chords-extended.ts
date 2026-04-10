@@ -917,8 +917,8 @@ export const ADD9_E6_BARRE: ChordData[] = [
 // ============================================================================
 // BARRE CHORDS - Major 6 add9 (E-shape, Root 6)
 // Frets [N+1,N,N,N,N+1,N+1], fingers [2,1,1,1,3,4], barres [N]
-// 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
-//                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E=12
+// 6th string notes: F/E#=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
+//                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12
 // ============================================================================
 export const MAJ6ADD9_E6_BARRE: ChordData[] = [
   { id: 'barre-e6-f-maj6add9', name: 'F Major 6 add9 Root 6 Barre', symbol: 'F 6/9', category: 'barre', type: 'maj6add9',
@@ -959,6 +959,10 @@ export const MAJ6ADD9_E6_BARRE: ChordData[] = [
     frets: [12,11,11,11,12,12], fingers: [2,1,1,1,3,4], baseFret: 11, barres: [11], rootString: 6, rootNoteString: 0 },
   { id: 'barre-e6-e-maj6add9-12', name: 'E Major 6 add9 Root 6 Barre', symbol: 'E 6/9', category: 'barre', type: 'maj6add9',
     frets: [13,12,12,12,13,13], fingers: [2,1,1,1,3,4], baseFret: 12, barres: [12], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-fb-maj6add9', name: 'Fb Major 6 add9 Root 6 Barre', symbol: 'Fb 6/9', category: 'barre', type: 'maj6add9',
+    frets: [13,12,12,12,13,13], fingers: [2,1,1,1,3,4], baseFret: 12, barres: [12], rootString: 6, rootNoteString: 0 },
+  { id: 'barre-e6-esharp-maj6add9', name: 'E# Major 6 add9 Root 6 Barre', symbol: 'E# 6/9', category: 'barre', type: 'maj6add9',
+    frets: [2,1,1,1,2,2], fingers: [2,1,1,1,3,4], baseFret: 1, barres: [1], rootString: 6, rootNoteString: 0 },
 ];
 
 // ============================================================================

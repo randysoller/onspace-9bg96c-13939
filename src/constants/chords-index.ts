@@ -26,6 +26,8 @@ import {
   MAJ6ADD9_A5_MOVABLE,
   MAJOR_C5_BARRE,
   MAJOR7_C5_BARRE,
+  MINMAJ7_C5_BARRE,
+  AUG_C5_MOVABLE,
 } from './chords-extended';
 
 export const CHORD_DATABASE = [
@@ -52,4 +54,6 @@ export const CHORD_DATABASE = [
   ...MAJ6ADD9_A5_MOVABLE,
   ...MAJOR_C5_BARRE,
   ...MAJOR7_C5_BARRE,
+  ...MINMAJ7_C5_BARRE,
+  ...AUG_C5_MOVABLE,
 ];

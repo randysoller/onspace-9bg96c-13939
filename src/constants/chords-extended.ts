@@ -1222,3 +1222,111 @@ export const MAJOR6_A5_BARRE: ChordData[] = [
   { id: 'barre-r5-a-major6', name: 'A Major 6 Root 5 Barre', symbol: 'A6', category: 'barre', type: 'major6',
     frets: [-1,12,14,14,14,14], fingers: [0,1,3,3,3,3], baseFret: 12, barres: [14], rootString: 5, rootNoteString: 1 },
 ];
+
+// ============================================================================
+// BARRE CHORDS - Minor Major 7 (C-shape, Root 5)
+// Frets [-1,N+3,N+1,N,N,N], fingers [0,4,2,1,1,1], barres [N]
+// Root on A-string at fret N+3. N=baseFret.
+// Intervals: root, min3rd, P5th, maj7th, min3rd(8va) → Minor Major 7
+// A-string fret mapping: 4=Db/C#, 5=D, 6=Eb/D#, 7=E/Fb, 8=F/E#,
+//   9=F#/Gb, 10=G, 11=Ab/G#, 12=A, 13=Bb/A#, 14=B/Cb, 15=C/B#
+// 21 entries: N=1–12 + all enharmonic pairs
+// ============================================================================
+export const MINMAJ7_C5_BARRE: ChordData[] = [
+  { id: 'barre-c5-csharp-minmaj7', name: 'C# Minor Major 7 Root 5 Barre', symbol: 'C#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,4,2,1,1,1], fingers: [0,4,2,1,1,1], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-db-minmaj7', name: 'Db Minor Major 7 Root 5 Barre', symbol: 'DbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,4,2,1,1,1], fingers: [0,4,2,1,1,1], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-d-minmaj7', name: 'D Minor Major 7 Root 5 Barre', symbol: 'DmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,5,3,2,2,2], fingers: [0,4,2,1,1,1], baseFret: 2, barres: [2], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-dsharp-minmaj7', name: 'D# Minor Major 7 Root 5 Barre', symbol: 'D#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,6,4,3,3,3], fingers: [0,4,2,1,1,1], baseFret: 3, barres: [3], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-eb-minmaj7', name: 'Eb Minor Major 7 Root 5 Barre', symbol: 'EbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,6,4,3,3,3], fingers: [0,4,2,1,1,1], baseFret: 3, barres: [3], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-e-minmaj7', name: 'E Minor Major 7 Root 5 Barre', symbol: 'EmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,7,5,4,4,4], fingers: [0,4,2,1,1,1], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-fb-minmaj7', name: 'Fb Minor Major 7 Root 5 Barre', symbol: 'FbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,7,5,4,4,4], fingers: [0,4,2,1,1,1], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-f-minmaj7', name: 'F Minor Major 7 Root 5 Barre', symbol: 'FmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,8,6,5,5,5], fingers: [0,4,2,1,1,1], baseFret: 5, barres: [5], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-esharp-minmaj7', name: 'E# Minor Major 7 Root 5 Barre', symbol: 'E#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,8,6,5,5,5], fingers: [0,4,2,1,1,1], baseFret: 5, barres: [5], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-fsharp-minmaj7', name: 'F# Minor Major 7 Root 5 Barre', symbol: 'F#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,9,7,6,6,6], fingers: [0,4,2,1,1,1], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-gb-minmaj7', name: 'Gb Minor Major 7 Root 5 Barre', symbol: 'GbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,9,7,6,6,6], fingers: [0,4,2,1,1,1], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-g-minmaj7', name: 'G Minor Major 7 Root 5 Barre', symbol: 'GmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,10,8,7,7,7], fingers: [0,4,2,1,1,1], baseFret: 7, barres: [7], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-gsharp-minmaj7', name: 'G# Minor Major 7 Root 5 Barre', symbol: 'G#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,11,9,8,8,8], fingers: [0,4,2,1,1,1], baseFret: 8, barres: [8], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-ab-minmaj7', name: 'Ab Minor Major 7 Root 5 Barre', symbol: 'AbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,11,9,8,8,8], fingers: [0,4,2,1,1,1], baseFret: 8, barres: [8], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-a-minmaj7', name: 'A Minor Major 7 Root 5 Barre', symbol: 'AmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,12,10,9,9,9], fingers: [0,4,2,1,1,1], baseFret: 9, barres: [9], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-asharp-minmaj7', name: 'A# Minor Major 7 Root 5 Barre', symbol: 'A#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,13,11,10,10,10], fingers: [0,4,2,1,1,1], baseFret: 10, barres: [10], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-bb-minmaj7', name: 'Bb Minor Major 7 Root 5 Barre', symbol: 'BbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,13,11,10,10,10], fingers: [0,4,2,1,1,1], baseFret: 10, barres: [10], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-b-minmaj7', name: 'B Minor Major 7 Root 5 Barre', symbol: 'BmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,14,12,11,11,11], fingers: [0,4,2,1,1,1], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-cb-minmaj7', name: 'Cb Minor Major 7 Root 5 Barre', symbol: 'CbmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,14,12,11,11,11], fingers: [0,4,2,1,1,1], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-c-minmaj7', name: 'C Minor Major 7 Root 5 Barre', symbol: 'CmM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,15,13,12,12,12], fingers: [0,4,2,1,1,1], baseFret: 12, barres: [12], rootString: 5, rootNoteString: 1 },
+  { id: 'barre-c5-bsharp-minmaj7', name: 'B# Minor Major 7 Root 5 Barre', symbol: 'B#mM7', category: 'barre', type: 'minmaj7',
+    frets: [-1,15,13,12,12,12], fingers: [0,4,2,1,1,1], baseFret: 12, barres: [12], rootString: 5, rootNoteString: 1 },
+];
+
+// ============================================================================
+// MOVABLE CHORDS - Augmented (C-shape, Root 5)
+// Frets [-1,N+2,N+1,N,N,-1], fingers [0,3,2,1,1,0], barres [N]
+// Root on A-string at fret N+2. N=baseFret.
+// Intervals: root, maj3rd, aug5th, root(8va) → Augmented
+// A-string fret mapping: 3=C/B#, 4=Db/C#, 5=D, 6=Eb/D#, 7=E/Fb, 8=F/E#,
+//   9=F#/Gb, 10=G, 11=Ab/G#, 12=A, 13=Bb/A#, 14=B/Cb
+// 21 entries: N=1–12 + all enharmonic pairs
+// ============================================================================
+export const AUG_C5_MOVABLE: ChordData[] = [
+  { id: 'mov-c5-c-augmented', name: 'C Augmented Root 5 Movable', symbol: 'C+', category: 'movable', type: 'augmented',
+    frets: [-1,3,2,1,1,-1], fingers: [0,3,2,1,1,0], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-bsharp-augmented', name: 'B# Augmented Root 5 Movable', symbol: 'B#+', category: 'movable', type: 'augmented',
+    frets: [-1,3,2,1,1,-1], fingers: [0,3,2,1,1,0], baseFret: 1, barres: [1], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-csharp-augmented', name: 'C# Augmented Root 5 Movable', symbol: 'C#+', category: 'movable', type: 'augmented',
+    frets: [-1,4,3,2,2,-1], fingers: [0,3,2,1,1,0], baseFret: 2, barres: [2], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-db-augmented', name: 'Db Augmented Root 5 Movable', symbol: 'Db+', category: 'movable', type: 'augmented',
+    frets: [-1,4,3,2,2,-1], fingers: [0,3,2,1,1,0], baseFret: 2, barres: [2], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-d-augmented', name: 'D Augmented Root 5 Movable', symbol: 'D+', category: 'movable', type: 'augmented',
+    frets: [-1,5,4,3,3,-1], fingers: [0,3,2,1,1,0], baseFret: 3, barres: [3], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-dsharp-augmented', name: 'D# Augmented Root 5 Movable', symbol: 'D#+', category: 'movable', type: 'augmented',
+    frets: [-1,6,5,4,4,-1], fingers: [0,3,2,1,1,0], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-eb-augmented', name: 'Eb Augmented Root 5 Movable', symbol: 'Eb+', category: 'movable', type: 'augmented',
+    frets: [-1,6,5,4,4,-1], fingers: [0,3,2,1,1,0], baseFret: 4, barres: [4], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-e-augmented', name: 'E Augmented Root 5 Movable', symbol: 'E+', category: 'movable', type: 'augmented',
+    frets: [-1,7,6,5,5,-1], fingers: [0,3,2,1,1,0], baseFret: 5, barres: [5], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-fb-augmented', name: 'Fb Augmented Root 5 Movable', symbol: 'Fb+', category: 'movable', type: 'augmented',
+    frets: [-1,7,6,5,5,-1], fingers: [0,3,2,1,1,0], baseFret: 5, barres: [5], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-f-augmented', name: 'F Augmented Root 5 Movable', symbol: 'F+', category: 'movable', type: 'augmented',
+    frets: [-1,8,7,6,6,-1], fingers: [0,3,2,1,1,0], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-esharp-augmented', name: 'E# Augmented Root 5 Movable', symbol: 'E#+', category: 'movable', type: 'augmented',
+    frets: [-1,8,7,6,6,-1], fingers: [0,3,2,1,1,0], baseFret: 6, barres: [6], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-fsharp-augmented', name: 'F# Augmented Root 5 Movable', symbol: 'F#+', category: 'movable', type: 'augmented',
+    frets: [-1,9,8,7,7,-1], fingers: [0,3,2,1,1,0], baseFret: 7, barres: [7], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-gb-augmented', name: 'Gb Augmented Root 5 Movable', symbol: 'Gb+', category: 'movable', type: 'augmented',
+    frets: [-1,9,8,7,7,-1], fingers: [0,3,2,1,1,0], baseFret: 7, barres: [7], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-g-augmented', name: 'G Augmented Root 5 Movable', symbol: 'G+', category: 'movable', type: 'augmented',
+    frets: [-1,10,9,8,8,-1], fingers: [0,3,2,1,1,0], baseFret: 8, barres: [8], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-gsharp-augmented', name: 'G# Augmented Root 5 Movable', symbol: 'G#+', category: 'movable', type: 'augmented',
+    frets: [-1,11,10,9,9,-1], fingers: [0,3,2,1,1,0], baseFret: 9, barres: [9], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-ab-augmented', name: 'Ab Augmented Root 5 Movable', symbol: 'Ab+', category: 'movable', type: 'augmented',
+    frets: [-1,11,10,9,9,-1], fingers: [0,3,2,1,1,0], baseFret: 9, barres: [9], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-a-augmented', name: 'A Augmented Root 5 Movable', symbol: 'A+', category: 'movable', type: 'augmented',
+    frets: [-1,12,11,10,10,-1], fingers: [0,3,2,1,1,0], baseFret: 10, barres: [10], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-asharp-augmented', name: 'A# Augmented Root 5 Movable', symbol: 'A#+', category: 'movable', type: 'augmented',
+    frets: [-1,13,12,11,11,-1], fingers: [0,3,2,1,1,0], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-bb-augmented', name: 'Bb Augmented Root 5 Movable', symbol: 'Bb+', category: 'movable', type: 'augmented',
+    frets: [-1,13,12,11,11,-1], fingers: [0,3,2,1,1,0], baseFret: 11, barres: [11], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-b-augmented', name: 'B Augmented Root 5 Movable', symbol: 'B+', category: 'movable', type: 'augmented',
+    frets: [-1,14,13,12,12,-1], fingers: [0,3,2,1,1,0], baseFret: 12, barres: [12], rootString: 5, rootNoteString: 1 },
+  { id: 'mov-c5-cb-augmented', name: 'Cb Augmented Root 5 Movable', symbol: 'Cb+', category: 'movable', type: 'augmented',
+    frets: [-1,14,13,12,12,-1], fingers: [0,3,2,1,1,0], baseFret: 12, barres: [12], rootString: 5, rootNoteString: 1 },
+];

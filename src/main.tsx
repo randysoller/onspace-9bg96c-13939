@@ -8,54 +8,18 @@ import { logger } from './lib/logger';
 import { initAuth } from '@/stores/authStore';
 import { CHORD_DATABASE } from '@/constants/chords-index';
 
-// ── Self-healing bundle detector ────────────────────────────────────────────
-// The diagnostic badge confirmed: mobile shows db:1580 because the service
-// worker is serving an old cached JS bundle with 20 fewer chords.
-// Fix: if the loaded bundle's CHORD_DATABASE doesn't match the expected count,
-// unregister ALL service workers, clear ALL caches, and reload once.
-// A localStorage guard prevents infinite reload loops.
-const EXPECTED_CHORD_COUNT = 1600;
-const RELOAD_GUARD_KEY = 'fretmaster-bundle-reload-at';
-
-await (async () => {
-  if (CHORD_DATABASE.length !== EXPECTED_CHORD_COUNT) {
-    // Guard: if we already force-reloaded within the last 30 seconds, stop
-    // looping — the bundle is simply different from what we expect.
-    const lastReload = parseInt(localStorage.getItem(RELOAD_GUARD_KEY) ?? '0', 10);
-    if (Date.now() - lastReload < 30_000) {
-      console.warn(
-        `[FretMaster] Bundle has ${CHORD_DATABASE.length} chords after forced reload (expected ${EXPECTED_CHORD_COUNT}). Proceeding.`
-      );
-      localStorage.removeItem(RELOAD_GUARD_KEY);
-      return; // proceed — let React mount normally
-    }
-
-    console.warn(
-      `[FretMaster] Stale bundle detected: ${CHORD_DATABASE.length} chords (expected ${EXPECTED_CHORD_COUNT}). Clearing SW cache and reloading…`
-    );
-    // Mark reload time before navigating away
-    localStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
-    try {
-      // 1. Unregister every registered service worker
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(r => r.unregister()));
-      }
-      // 2. Delete every cache (fretmaster-v1/v2/v3/v4 etc.)
-      if ('caches' in window) {
-        const keys = await caches.keys();
-        await Promise.all(keys.map(k => caches.delete(k)));
-      }
-    } catch (e) {
-      console.error('[FretMaster] Failed to clear SW/caches:', e);
-    }
-    // 3. Hard reload — bypasses SW, fetches fresh bundle
-    window.location.reload();
-    return; // stop further execution — page is reloading
+// ── Startup: unregister any previously installed service workers ─────────────
+// Service workers caused persistent mobile caching problems (db:1580 vs 1600).
+// We now run without a SW entirely — every page load fetches fresh from server.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(r => r.unregister());
+  }).catch(() => {});
+  // Also wipe all SW caches so old cached bundles are gone
+  if ('caches' in window) {
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
   }
-  // Successful load with correct count — clear any leftover guard
-  localStorage.removeItem(RELOAD_GUARD_KEY);
-})();
+}
 
 // CRITICAL: Start React app FIRST, then initialize auth and monitoring.
 // Top-level Supabase auth calls in authStore previously ran at module-load
@@ -98,15 +62,11 @@ if (import.meta.env.MODE === 'production') {
 }
 
 // ── Startup: clear hidden-chord state if suspiciously large ─────────────────
-// If hiddenStandardChords has accumulated IDs (e.g. from a bug), silently
-// clear it. A user never hides more than a handful of chords intentionally.
-// This runs before React renders to avoid a flash of wrong chord count.
 try {
   const raw = localStorage.getItem('fretmaster-hidden-chords');
   if (raw) {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 10) {
-      // More than 10 hidden chords is almost certainly stale/corrupt state.
       localStorage.removeItem('fretmaster-hidden-chords');
       logger.info('Cleared oversized fretmaster-hidden-chords from localStorage');
     }
@@ -114,29 +74,6 @@ try {
 } catch {
   localStorage.removeItem('fretmaster-hidden-chords');
 }
-
-// Register service worker (production only, non-blocking)
-// Note: at this point we know the bundle is fresh (EXPECTED_CHORD_COUNT check
-// above would have reloaded otherwise), so the SW can safely cache this bundle.
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js')
-      .then(registration => {
-        logger.info('Service Worker registered', { scope: registration.scope });
-
-        // Force an immediate update check on every page load so mobile
-        // gets new SW/JS bundles as soon as they are deployed, rather
-        // than waiting up to 1 hour for the stale cache to expire.
-        registration.update().catch(() => {});
-
-        // Check every 5 minutes to keep mobile fresh.
-        setInterval(() => {
-          registration.update().catch(() => {});
-        }, 5 * 60 * 1000);
-      })
-      .catch(error => {
-        logger.error('Service Worker registration failed', error);
-      });
-  });
-}
+// Note: Service worker registration removed — SW caching caused stale bundle
+// issues on mobile (db:1580 instead of 1600). Push notifications use the
+// Supabase-side server push; no local SW needed.

@@ -1155,10 +1155,7 @@ export default function ChordLibrary() {
           <div className="text-sm flex items-center gap-2">
             <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
             <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
-            {/* Diagnostic: shows raw DB size and hidden count so mobile issues are visible */}
-            <span className="text-zinc-700 text-[10px] font-mono">
-              (db:{allChords.length} h:{hiddenStandardChords.size})
-            </span>
+
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">

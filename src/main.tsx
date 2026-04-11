@@ -12,17 +12,29 @@ import { CHORD_DATABASE } from '@/constants/chords-index';
 // The diagnostic badge confirmed: mobile shows db:1580 because the service
 // worker is serving an old cached JS bundle with 20 fewer chords.
 // Fix: if the loaded bundle's CHORD_DATABASE doesn't match the expected count,
-// unregister ALL service workers, clear ALL caches, and reload. On the next
-// load, no SW is present → browser fetches fresh bundle from the network.
+// unregister ALL service workers, clear ALL caches, and reload once.
+// A localStorage guard prevents infinite reload loops.
 const EXPECTED_CHORD_COUNT = 1600;
+const RELOAD_GUARD_KEY = 'fretmaster-bundle-reload-at';
 
-(async () => {
+await (async () => {
   if (CHORD_DATABASE.length !== EXPECTED_CHORD_COUNT) {
+    // Guard: if we already force-reloaded within the last 30 seconds, stop
+    // looping — the bundle is simply different from what we expect.
+    const lastReload = parseInt(localStorage.getItem(RELOAD_GUARD_KEY) ?? '0', 10);
+    if (Date.now() - lastReload < 30_000) {
+      console.warn(
+        `[FretMaster] Bundle has ${CHORD_DATABASE.length} chords after forced reload (expected ${EXPECTED_CHORD_COUNT}). Proceeding.`
+      );
+      localStorage.removeItem(RELOAD_GUARD_KEY);
+      return; // proceed — let React mount normally
+    }
+
     console.warn(
-      `[FretMaster] Stale bundle detected: CHORD_DATABASE has ${
-        CHORD_DATABASE.length
-      } chords (expected ${EXPECTED_CHORD_COUNT}). Clearing SW cache and reloading…`
+      `[FretMaster] Stale bundle detected: ${CHORD_DATABASE.length} chords (expected ${EXPECTED_CHORD_COUNT}). Clearing SW cache and reloading…`
     );
+    // Mark reload time before navigating away
+    localStorage.setItem(RELOAD_GUARD_KEY, String(Date.now()));
     try {
       // 1. Unregister every registered service worker
       if ('serviceWorker' in navigator) {
@@ -39,9 +51,10 @@ const EXPECTED_CHORD_COUNT = 1600;
     }
     // 3. Hard reload — bypasses SW, fetches fresh bundle
     window.location.reload();
-    // Stop executing the rest of this module so React doesn't mount twice
-    throw new Error('FretMaster: reloading to apply fresh bundle');
+    return; // stop further execution — page is reloading
   }
+  // Successful load with correct count — clear any leftover guard
+  localStorage.removeItem(RELOAD_GUARD_KEY);
 })();
 
 // CRITICAL: Start React app FIRST, then initialize auth and monitoring.

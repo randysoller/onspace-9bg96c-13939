@@ -1,4 +1,5 @@
-import { Music, X, Play, Square, Volume2, VolumeX } from 'lucide-react';
+import { useRef } from 'react';
+import { X, Play, Square, Volume2 } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
@@ -23,6 +24,28 @@ export default function MetronomeModal() {
     setSubdivision,
   } = useMetronomeStore();
   const { metronomeVolume, setMetronomeVolume } = useAudioStore();
+
+  // Tap Tempo: track timestamps of recent taps
+  const tapTimestampsRef = useRef<number[]>([]);
+
+  const handleTapTempo = () => {
+    const now = Date.now();
+    // Drop taps older than 3 seconds (stale sequence)
+    tapTimestampsRef.current = tapTimestampsRef.current.filter(t => now - t < 3000);
+    tapTimestampsRef.current.push(now);
+
+    const taps = tapTimestampsRef.current;
+    if (taps.length >= 2) {
+      // Compute average interval between consecutive taps
+      let totalInterval = 0;
+      for (let i = 1; i < taps.length; i++) {
+        totalInterval += taps[i] - taps[i - 1];
+      }
+      const avgInterval = totalInterval / (taps.length - 1);
+      const computedBpm = Math.round(60000 / avgInterval);
+      setBpm(Math.max(20, Math.min(250, computedBpm)));
+    }
+  };
 
   const handleTempoChange = (newTempo: number) => {
     setBpm(Math.max(20, Math.min(250, newTempo)));
@@ -63,9 +86,9 @@ export default function MetronomeModal() {
         onClick={closeMetronome}
       />
 
-      {/* Modal */}
-      <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none pt-16 pb-20 md:pt-20 md:pb-8">
-        <div className="w-full max-w-md h-full max-h-full bg-zinc-950 border border-zinc-800 rounded-lg pointer-events-auto shadow-2xl mx-4 flex flex-col overflow-hidden">
+      {/* Modal — full-screen on mobile, centered card on desktop */}
+      <div className="fixed inset-0 z-[70] pointer-events-none md:flex md:items-center md:justify-center md:p-4">
+        <div className="w-full h-full md:max-w-md md:h-auto md:max-h-[90vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
           <div className="border-b border-zinc-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
             <button
@@ -255,6 +278,16 @@ export default function MetronomeModal() {
                   {accentFirstBeat ? 'On' : 'Off'}
                 </button>
               </div>
+            </div>
+
+            {/* Tap Tempo */}
+            <div>
+              <button
+                onClick={handleTapTempo}
+                className="w-full py-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-600 text-zinc-200 font-bold text-base tracking-wide transition-all select-none"
+              >
+                Tap Tempo
+              </button>
             </div>
 
             {/* Beat Indicators - Always visible, responsive sizing for 12/8 */}

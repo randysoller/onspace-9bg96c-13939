@@ -918,7 +918,7 @@ export default function ChordLibrary() {
               {showTypeMenu && (
                 <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[200px] overflow-hidden">
                   <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
+                    <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     {TYPE_FILTER_ORDER.map((type) => {
@@ -927,7 +927,7 @@ export default function ChordLibrary() {
                         <button
                           key={type}
                           onClick={() => storeToggleType(type)}
-                          className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold transition-colors ${
+                          className={`w-full flex items-center justify-between px-3 py-1.5 text-lg font-semibold transition-colors ${
                             isActive ? 'text-amber-300 bg-amber-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                           }`}
                         >
@@ -946,7 +946,7 @@ export default function ChordLibrary() {
                       <div className="mx-3 border-t border-zinc-800" />
                       <button
                         onClick={() => { setFilterTypes([]); setShowTypeMenu(false); }}
-                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                        className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
                       >
                         Clear type filter
                       </button>
@@ -976,7 +976,7 @@ export default function ChordLibrary() {
               {showRootMenu && (
                 <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[160px] overflow-hidden">
                   <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
+                    <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
                   </div>
                   {ROOT_STRING_OPTIONS.map(({ value, label }) => {
                     const isActive = filterBarreRoots.includes(value);
@@ -984,7 +984,7 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeToggleBarreRoot(value)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-indigo-300 bg-indigo-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
@@ -1002,7 +1002,7 @@ export default function ChordLibrary() {
                       <div className="mx-3 border-t border-zinc-800" />
                       <button
                         onClick={() => { storeClearBarreRoots(); setShowRootMenu(false); }}
-                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                        className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
                       >
                         Clear root filter
                       </button>
@@ -1034,7 +1034,7 @@ export default function ChordLibrary() {
               {showPositionMenu && (
                 <div className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-max overflow-hidden">
                   <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
+                    <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
                   </div>
                   {([
                     { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
@@ -1047,13 +1047,13 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeTogglePosition(value)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold transition-colors ${
+                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
                         <div>
                           <div>{label}</div>
-                          <div className="text-[10px] font-normal text-zinc-500">{sub}</div>
+                          <div className="text-base font-normal text-zinc-500">{sub}</div>
                         </div>
                         {isActive && (
                           <svg className="w-3.5 h-3.5 text-sky-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1068,7 +1068,7 @@ export default function ChordLibrary() {
                       <div className="mx-3 border-t border-zinc-800" />
                       <button
                         onClick={() => { storeClearPositions(); setShowPositionMenu(false); }}
-                        className="w-full text-left px-3 py-2 text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                        className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
                       >
                         Clear position filter
                       </button>

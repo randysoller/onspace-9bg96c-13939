@@ -853,7 +853,7 @@ export default function ChordLibrary() {
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
               onClick={handleClearAllFilters}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center flex-shrink-0 transition-all ${`
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -1169,11 +1169,15 @@ export default function ChordLibrary() {
         )}
 
         {/* Results Count & Legend */}
-        <div className="mb-4 flex items-center justify-between">
-          <div className="text-sm flex items-center gap-2">
-            <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
-            <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
+        <div className="mb-4">
+          {/* Row 1: chord count right-aligned */}
+          <div className="flex justify-end mb-1">
+            <div className="text-sm flex items-center gap-2">
+              <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
+              <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
+            </div>
           </div>
+          {/* Row 2: legend left-aligned */}
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-amber-500" />

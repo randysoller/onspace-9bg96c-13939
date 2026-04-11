@@ -33,6 +33,8 @@ import {
   MAJOR7_D4_MOVABLE,
   DOM7_D4_MOVABLE,
   MINOR7_D4_MOVABLE,
+  HALFDIM7_D4_MOVABLE,
+  DIM7_D4_MOVABLE,
 } from './chords-extended';
 
 export const CHORD_DATABASE = [
@@ -66,4 +68,6 @@ export const CHORD_DATABASE = [
   ...MAJOR7_D4_MOVABLE,
   ...DOM7_D4_MOVABLE,
   ...MINOR7_D4_MOVABLE,
+  ...HALFDIM7_D4_MOVABLE,
+  ...DIM7_D4_MOVABLE,
 ];

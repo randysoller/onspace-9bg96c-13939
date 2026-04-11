@@ -856,7 +856,7 @@ export default function ChordLibrary() {
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <Library className="w-3 h-3" />
+              <Library className="w-4 h-4 md:w-3 md:h-3" />
               All
             </button>
             <button
@@ -867,7 +867,7 @@ export default function ChordLibrary() {
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <Music className="w-3 h-3" />
+              <Music className="w-4 h-4 md:w-3 md:h-3" />
               Open
             </button>
             <button
@@ -878,7 +878,7 @@ export default function ChordLibrary() {
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <BarChart3 className="w-3 h-3" />
+              <BarChart3 className="w-4 h-4 md:w-3 md:h-3" />
               Barre
             </button>
             <button
@@ -889,7 +889,7 @@ export default function ChordLibrary() {
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <Move className="w-3 h-3" />
+              <Move className="w-4 h-4 md:w-3 md:h-3" />
               Movable
             </button>
           </div>
@@ -906,13 +906,13 @@ export default function ChordLibrary() {
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
                 }`}
               >
-                <Music className="w-3 h-3" />
+                <Music className="w-4 h-4 md:w-3 md:h-3" />
                 {filterTypes.length > 0
                   ? filterTypes.length === 1
                     ? CHORD_TYPE_LABELS[filterTypes[0]]
                     : `${filterTypes.length} Types`
                   : 'Type'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showTypeMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showTypeMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showTypeMenu && (
@@ -966,11 +966,11 @@ export default function ChordLibrary() {
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
                 }`}
               >
-                <Guitar className="w-3 h-3" />
+                <Guitar className="w-4 h-4 md:w-3 md:h-3" />
                 {filterBarreRoots.length > 0
                   ? filterBarreRoots.map(r => `${r}th String`).join(', ')
                   : 'Root'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showRootMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showRootMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showRootMenu && (
@@ -1022,13 +1022,13 @@ export default function ChordLibrary() {
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
                 }`}
               >
-                <MapPin className="w-3 h-3" />
+                <MapPin className="w-4 h-4 md:w-3 md:h-3" />
                 {filterPositions.length > 0
                   ? filterPositions.length === 1
                     ? { open: 'Open', low: 'Low', mid: 'Mid', high: 'High' }[filterPositions[0]]
                     : `${filterPositions.length} Positions`
                   : 'Position'}
-                <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showPositionMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showPositionMenu ? 'rotate-180' : ''}`} />
               </button>
 
               {showPositionMenu && (
@@ -1087,7 +1087,7 @@ export default function ChordLibrary() {
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'
               }`}
             >
-              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              <Heart className={`w-4 h-4 md:w-3 md:h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
               Favs
               {favoriteCount > 0 && (
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${

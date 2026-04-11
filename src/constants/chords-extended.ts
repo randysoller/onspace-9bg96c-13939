@@ -12,7 +12,7 @@ import type { ChordData } from '@/types/chord';
 // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
 //                   B/Cb=7, C/B#=8, C#/Db=9, D=10, D#/Eb=11, E/Fb=12, E#=1
 // ============================================================================
-export const AUG7SHARP9_E6_MOVABLE: ChordData[] = [
+export const DOM7SHARP5SHARP9_E6_MOVABLE: ChordData[] = [
   { id: 'mov-e6-f-aug7sharp9', name: 'F Augmented 7th Sharp 9 Root 6 Movable', symbol: 'F+7#9', category: 'movable', type: 'dom7sharp5sharp9',
     frets: [1,-1,1,2,2,4], fingers: [1,0,2,3,3,4], baseFret: 1, barres: [],
     partialBarres: [{ fret: 2, fromString: 3, toString: 4 }], rootString: 6, rootNoteString: 0 },
@@ -85,7 +85,7 @@ export const AUG7SHARP9_E6_MOVABLE: ChordData[] = [
 // 5th string notes: Bb=1, B/Cb=2, C/B#=3, C#/Db=4, D=5, Eb/D#/Fb=6,
 //                   E=7, F/E#=8, F#/Gb=9, G=10, Ab/G#=11, A=12
 // ============================================================================
-export const AUG7SHARP9_A5_MOVABLE: ChordData[] = [
+export const DOM7SHARP5SHARP9_A5_MOVABLE: ChordData[] = [
   { id: 'mov-r5-bb-aug7sharp9', name: 'Bb Augmented 7th Sharp 9 Root 5 Movable', symbol: 'Bb+7#9', category: 'movable', type: 'dom7sharp5sharp9',
     frets: [-1,2,1,2,3,3], fingers: [0,2,1,3,4,4], baseFret: 1, barres: [], partialBarres: [{ fret: 3, fromString: 4, toString: 5 }], rootString: 5, rootNoteString: 1 },
   { id: 'mov-r5-asharp-aug7sharp9', name: 'A# Augmented 7th Sharp 9 Root 5 Movable', symbol: 'A#+7#9', category: 'movable', type: 'dom7sharp5sharp9',

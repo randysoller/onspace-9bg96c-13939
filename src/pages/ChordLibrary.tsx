@@ -545,9 +545,6 @@ export default function ChordLibrary() {
 
         {/* Header */}
         <div className="mb-6">
-          <div className="flex items-center gap-3 mb-2">
-            <Guitar className="w-7 h-7 text-amber-500" />
-          </div>
           <div className="flex items-end justify-between gap-4">
             <div>
               <h1 className="text-4xl font-bold mb-1">Chord Library</h1>
@@ -1014,26 +1011,6 @@ export default function ChordLibrary() {
               )}
             </div>
 
-            {/* Favorites filter */}
-            <button
-              onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
-                showFavoritesOnly
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'
-              }`}
-            >
-              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
-              Favs
-              {favoriteCount > 0 && (
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  showFavoritesOnly ? 'bg-white/20' : 'bg-zinc-800 text-zinc-400'
-                }`}>
-                  {favoriteCount}
-                </span>
-              )}
-            </button>
-
             {/* Position filter */}
             <div className="relative" ref={positionMenuRef}>
               <button
@@ -1099,6 +1076,26 @@ export default function ChordLibrary() {
                 </div>
               )}
             </div>
+
+            {/* Favorites filter */}
+            <button
+              onClick={() => setShowFavoritesOnly((prev) => !prev)}
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 transition-all ${
+                showFavoritesOnly
+                  ? 'bg-rose-500 text-white'
+                  : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'
+              }`}
+            >
+              <Heart className={`w-3 h-3 ${showFavoritesOnly ? 'fill-white' : ''}`} />
+              Favs
+              {favoriteCount > 0 && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  showFavoritesOnly ? 'bg-white/20' : 'bg-zinc-800 text-zinc-400'
+                }`}>
+                  {favoriteCount}
+                </span>
+              )}
+            </button>
           </div>
 
           {/* Active filter summary badges */}

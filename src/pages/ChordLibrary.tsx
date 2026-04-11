@@ -847,9 +847,9 @@ export default function ChordLibrary() {
           </button>
         </div>
 
-        {/* Filter Pills — two static rows, no scroll */}
+        {/* Filter Pills — two static rows */}
         <div className="mb-4">
-          {/* Row 1: All + Category */}
+          {/* Row 1: All + Category pills */}
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
               onClick={handleClearAllFilters}

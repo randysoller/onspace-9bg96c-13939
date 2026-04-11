@@ -6,6 +6,43 @@ import App from './App.tsx'
 import './index.css'
 import { logger } from './lib/logger';
 import { initAuth } from '@/stores/authStore';
+import { CHORD_DATABASE } from '@/constants/chords-index';
+
+// ── Self-healing bundle detector ────────────────────────────────────────────
+// The diagnostic badge confirmed: mobile shows db:1580 because the service
+// worker is serving an old cached JS bundle with 20 fewer chords.
+// Fix: if the loaded bundle's CHORD_DATABASE doesn't match the expected count,
+// unregister ALL service workers, clear ALL caches, and reload. On the next
+// load, no SW is present → browser fetches fresh bundle from the network.
+const EXPECTED_CHORD_COUNT = 1600;
+
+(async () => {
+  if (CHORD_DATABASE.length !== EXPECTED_CHORD_COUNT) {
+    console.warn(
+      `[FretMaster] Stale bundle detected: CHORD_DATABASE has ${
+        CHORD_DATABASE.length
+      } chords (expected ${EXPECTED_CHORD_COUNT}). Clearing SW cache and reloading…`
+    );
+    try {
+      // 1. Unregister every registered service worker
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(r => r.unregister()));
+      }
+      // 2. Delete every cache (fretmaster-v1/v2/v3/v4 etc.)
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+    } catch (e) {
+      console.error('[FretMaster] Failed to clear SW/caches:', e);
+    }
+    // 3. Hard reload — bypasses SW, fetches fresh bundle
+    window.location.reload();
+    // Stop executing the rest of this module so React doesn't mount twice
+    throw new Error('FretMaster: reloading to apply fresh bundle');
+  }
+})();
 
 // CRITICAL: Start React app FIRST, then initialize auth and monitoring.
 // Top-level Supabase auth calls in authStore previously ran at module-load
@@ -66,6 +103,8 @@ try {
 }
 
 // Register service worker (production only, non-blocking)
+// Note: at this point we know the bundle is fresh (EXPECTED_CHORD_COUNT check
+// above would have reloaded otherwise), so the SW can safely cache this bundle.
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
@@ -78,7 +117,7 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         // than waiting up to 1 hour for the stale cache to expire.
         registration.update().catch(() => {});
 
-        // Also check every 5 minutes (down from 1 hour) to keep mobile fresh.
+        // Check every 5 minutes to keep mobile fresh.
         setInterval(() => {
           registration.update().catch(() => {});
         }, 5 * 60 * 1000);

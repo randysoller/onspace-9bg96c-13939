@@ -105,8 +105,8 @@ export default function MetronomeModal() {
             <div className="w-5" />
           </div>
 
-          {/* Content */}
-          <div className="px-4 py-2.5 space-y-2.5 overflow-y-auto">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-4 py-2.5 space-y-2.5">
             {/* Tempo */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -339,29 +339,30 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Play/Stop Button */}
-            <div className="flex-shrink-0">
-              <button
-                onClick={() => setIsPlaying(!isPlaying)}
-                className={`w-full font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
-                  isPlaying
-                    ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
-                    : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
-                }`}
-              >
-                {isPlaying ? (
-                  <>
-                    <Square className="w-5 h-5" fill="currentColor" />
-                    Stop
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5" fill="currentColor" />
-                    Play
-                  </>
-                )}
-              </button>
-            </div>
+          </div>
+
+          {/* Sticky Play/Stop Footer — always visible above mobile tab bar */}
+          <div className="flex-shrink-0 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:pb-3 border-t border-zinc-800 bg-zinc-950">
+            <button
+              onClick={() => setIsPlaying(!isPlaying)}
+              className={`w-full font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+                isPlaying
+                  ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
+                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
+              }`}
+            >
+              {isPlaying ? (
+                <>
+                  <Square className="w-5 h-5" fill="currentColor" />
+                  Stop
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" fill="currentColor" />
+                  Play
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

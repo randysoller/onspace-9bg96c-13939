@@ -145,6 +145,7 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
     }),
     {
       name: 'fretmaster-chord-library-filters',
+      version: 2, // Bumped to clear stale mobile localStorage causing 20-chord count discrepancy
       partialize: (state) => ({
         filterCategories: state.filterCategories,
         filterTypes: state.filterTypes,

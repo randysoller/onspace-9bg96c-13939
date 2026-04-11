@@ -105,8 +105,8 @@ export default function MetronomeModal() {
             <div className="w-5" />
           </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-2.5 space-y-2.5">
+          {/* Scrollable Content — pb-20 clears the mobile tab bar at bottom */}
+          <div className="flex-1 overflow-y-auto px-4 py-2.5 space-y-2.5 pb-20 md:pb-4">
             {/* Tempo */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -261,40 +261,36 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Accent First Beat */}
-            <div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">
-                  Accent {beatsPerMeasure === 12 ? '(1, 4, 7, 10)' : 'First Beat'}
+            {/* Accent + Tap Tempo — compact 2-column row */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex items-center justify-between bg-zinc-900 rounded px-3 py-2">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider leading-tight">
+                  {beatsPerMeasure === 12 ? 'Accent\n1,4,7,10' : 'Accent\nBeat 1'}
                 </span>
                 <button
                   onClick={() => setAccentFirstBeat(!accentFirstBeat)}
-                  className={`px-4 py-2 rounded font-semibold text-sm transition-all ${
+                  className={`px-3 py-1 rounded font-semibold text-sm transition-all ${
                     accentFirstBeat
                       ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
+                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
                   }`}
                 >
                   {accentFirstBeat ? 'On' : 'Off'}
                 </button>
               </div>
-            </div>
 
-            {/* Tap Tempo */}
-            <div>
               <button
                 onClick={handleTapTempo}
-                className="w-full py-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-600 text-zinc-200 font-bold text-base tracking-wide transition-all select-none"
+                className="py-2 rounded bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-600 text-zinc-200 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
             </div>
 
-            {/* Beat Indicators - Always visible, responsive sizing for 12/8 */}
-            <div className="flex items-center justify-center gap-1 py-1.5" style={{ minHeight: '48px' }}>
+            {/* Beat Indicators — slightly smaller for space efficiency */}
+            <div className="flex items-center justify-center gap-1 py-1">
               {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
                 const isCurrentBeat = isPlaying && (beat === currentBeat + 1);
-                
                 return (
                   <div
                     key={beat}
@@ -303,9 +299,9 @@ export default function MetronomeModal() {
                         ? 'bg-emerald-500 text-zinc-950 scale-110'
                         : 'bg-zinc-800 text-zinc-500'
                     } ${
-                      beatsPerMeasure === 12 
-                        ? 'min-w-[22px] h-7 text-xs px-1'
-                        : 'min-w-[32px] h-8 text-sm'
+                      beatsPerMeasure === 12
+                        ? 'min-w-[20px] h-6 text-xs px-0.5'
+                        : 'min-w-[28px] h-7 text-xs'
                     }`}
                   >
                     {beat}
@@ -316,7 +312,7 @@ export default function MetronomeModal() {
 
             {/* Volume */}
             <div>
-              <div className="flex-1 relative mb-2">
+              <div className="mb-1.5">
                 <input
                   type="range"
                   min="0"
@@ -326,7 +322,6 @@ export default function MetronomeModal() {
                   className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
                 />
               </div>
-              
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
@@ -339,10 +334,7 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-          </div>
-
-          {/* Sticky Play/Stop Footer — always visible above mobile tab bar */}
-          <div className="flex-shrink-0 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))] md:pb-3 border-t border-zinc-800 bg-zinc-950">
+            {/* Play / Stop — inside scroll, pb-20 above ensures it clears the tab bar */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               className={`w-full font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${

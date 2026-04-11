@@ -1,3 +1,4 @@
+
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -18,6 +19,31 @@ if ('serviceWorker' in navigator) {
   // Also wipe all SW caches so old cached bundles are gone
   if ('caches' in window) {
     caches.keys().then(keys => keys.forEach(k => caches.delete(k))).catch(() => {});
+  }
+}
+
+// ── Stale bundle guard ───────────────────────────────────────────────────────
+// If the phone's HTTP cache is still serving an old index.html that points to
+// an old JS bundle (db:1580), force a hard navigation with a cache-bust param.
+// The no-cache meta tags in index.html prevent this from recurring after this
+// one forced reload.
+{
+  const EXPECTED = 1600;
+  const GUARD_KEY = 'fm-bust-done';
+  if (CHORD_DATABASE.length !== EXPECTED) {
+    const alreadyBusted = sessionStorage.getItem(GUARD_KEY);
+    if (!alreadyBusted) {
+      sessionStorage.setItem(GUARD_KEY, '1');
+      // Navigate to same page with cache-bust param; forces browser to re-fetch index.html
+      const url = new URL(window.location.href);
+      url.searchParams.set('_cb', Date.now().toString());
+      window.location.replace(url.toString());
+    }
+    // If we already busted and still wrong — log and proceed (don't loop)
+    console.warn('[FretMaster] Chord count still', CHORD_DATABASE.length, 'after cache bust — proceeding');
+  } else {
+    // Count is correct; clear any leftover bust guard
+    sessionStorage.removeItem(GUARD_KEY);
   }
 }
 

@@ -28,7 +28,7 @@ if ('serviceWorker' in navigator) {
 // The no-cache meta tags in index.html prevent this from recurring after this
 // one forced reload.
 {
-  const EXPECTED = 1600;
+  const EXPECTED = 1558; // 1600 − 42 dom7sharp5sharp9 entries removed
   const GUARD_KEY = 'fm-bust-done';
   if (CHORD_DATABASE.length !== EXPECTED) {
     const alreadyBusted = sessionStorage.getItem(GUARD_KEY);

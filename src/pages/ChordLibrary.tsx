@@ -1,10 +1,10 @@
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { useNavigate } from 'react-router-dom';
 import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
-  Volume2, Library, MousePointer, Save, Heart, Edit,
+  Volume2, Library, Save, Heart,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
   CheckCircle2, Pencil, X, MapPin,
 } from 'lucide-react';
@@ -23,7 +23,78 @@ import { customToLibraryChord } from '@/types/customChord';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
+// ─── Module-level constants (allocated once, never reallocated) ────────────────
+
 const REVERSED_STRINGS = ['e', 'B', 'G', 'D', 'A', 'E'];
+
+// Moved out of component — was recreated on every render
+const TYPE_FILTER_ORDER: ChordType[] = [
+  'major', 'minor', 'augmented', 'slash', 'diminished', 'sus2', 'sus4', '7sus4',
+  'major6', 'minor6', 'maj6add9',
+  'major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
+  'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7b9', 'minmaj7',
+  'add9',
+  'major9', '9th', 'minor9',
+  'major11', '11th', 'minor11',
+  'major13', '13th', 'minor13',
+];
+
+// Moved out of component — was recreated on every render
+const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
+  { value: 6, label: '6th String' },
+  { value: 5, label: '5th String' },
+  { value: 4, label: '4th String' },
+];
+
+// CHORD_PACKS: static data moved out. Icons are now component references
+// rendered at call site, so no JSX elements are recreated each render.
+interface ChordPackDef {
+  id: string;
+  title: string;
+  description: string;
+  IconComponent: React.ElementType;
+  accentColor: string;
+  badgeColor: string;
+  iconBg: string;
+  saveBtnColor: string;
+  loadBtnColor: string;
+}
+
+const CHORD_PACKS: ChordPackDef[] = [
+  {
+    id: 'first-song-starter',
+    title: 'First Song Starter Pack',
+    description: 'The essential open chords every beginner needs to play their first real song.',
+    IconComponent: Star,
+    accentColor: 'from-amber-500 to-orange-500',
+    badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
+    iconBg: 'bg-amber-500/15 text-amber-400',
+    saveBtnColor: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/30',
+    loadBtnColor: 'bg-amber-500 hover:bg-amber-600 text-zinc-950',
+  },
+  {
+    id: 'open-chord-essentials',
+    title: 'Open Chord Essentials',
+    description: 'Master the foundational open chord shapes that power hundreds of popular songs.',
+    IconComponent: Sparkles,
+    accentColor: 'from-emerald-500 to-teal-500',
+    badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+    iconBg: 'bg-emerald-500/15 text-emerald-400',
+    saveBtnColor: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border-emerald-500/30',
+    loadBtnColor: 'bg-emerald-500 hover:bg-emerald-600 text-white',
+  },
+  {
+    id: 'power-chord-builder',
+    title: 'Power Chord Builder',
+    description: 'Rock-ready movable shapes that unlock the entire fretboard once mastered.',
+    IconComponent: Zap,
+    accentColor: 'from-purple-500 to-indigo-500',
+    badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
+    iconBg: 'bg-purple-500/15 text-purple-400',
+    saveBtnColor: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border-purple-500/30',
+    loadBtnColor: 'bg-purple-500 hover:bg-purple-600 text-white',
+  },
+];
 
 // ─── ChordCard ─────────────────────────────────────────────────────────────────
 
@@ -36,7 +107,9 @@ interface ChordCardProps {
   onClick: () => void;
 }
 
-function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFavorite, onClick }: ChordCardProps) {
+// memo() prevents re-renders when parent re-renders but this card's props are unchanged.
+// Combined with useCallback handlers in the parent, most cards skip re-renders on filter changes.
+const ChordCard = memo(function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFavorite, onClick }: ChordCardProps) {
   const { playChord } = useChordAudio();
 
   return (
@@ -108,7 +181,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
           </div>
         </div>
 
-        {/* Chord Diagram — SVGChordDiagram handles both standard and custom */}
+        {/* Chord Diagram */}
         <div className="flex-shrink-0">
           {(chord as any).isCustom ? (
             <SVGChordDiagram
@@ -154,7 +227,7 @@ function ChordCard({ chord, isSelected, isFavorited, onToggleSelect, onToggleFav
       </div>
     </div>
   );
-}
+});
 
 // ─── ChordLibrary Page ─────────────────────────────────────────────────────────
 
@@ -186,18 +259,6 @@ export default function ChordLibrary() {
     setSavedScrollY,
   } = useChordLibraryStore();
 
-  // Type filter order — matches ChordEditor's EDITABLE_TYPES list
-  const TYPE_FILTER_ORDER: ChordType[] = [
-    'major', 'minor', 'augmented', 'slash', 'diminished', 'sus2', 'sus4', '7sus4',
-    'major6', 'minor6', 'maj6add9',
-    'major7', 'maj7sharp11', 'dominant7', 'minor7', 'aug7', 'halfDim7', 'dim7',
-    'dom7b5', 'dom7sharp9', 'dom7b9', 'dom7sharp5sharp9', 'aug7b9', 'minmaj7',
-    'add9',
-    'major9', '9th', 'minor9',
-    'major11', '11th', 'minor11',
-    'major13', '13th', 'minor13',
-  ];
-
   // Derived mutable set from persisted array
   const selectedChords = useMemo(() => new Set(selectedChordIds), [selectedChordIds]);
 
@@ -223,20 +284,18 @@ export default function ChordLibrary() {
   const restoredRef = useRef(false);
   const filterChangedRef = useRef(false);
 
-  const getScrollEl = () => document.getElementById('main-content');
+  const getScrollEl = useCallback(() => document.getElementById('main-content'), []);
 
   useEffect(() => {
     const el = getScrollEl();
     if (!el) return;
-    const handleScroll = () => {
-      lastScrollY.current = el.scrollTop;
-    };
+    const handleScroll = () => { lastScrollY.current = el.scrollTop; };
     el.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', handleScroll);
       setSavedScrollY(lastScrollY.current);
     };
-  }, [setSavedScrollY]);
+  }, [getScrollEl, setSavedScrollY]);
 
   useEffect(() => {
     if (!savedScrollY || restoredRef.current || filterChangedRef.current) return;
@@ -244,7 +303,7 @@ export default function ChordLibrary() {
     const el = getScrollEl();
     if (!el) return;
     el.scrollTop = savedScrollY;
-  }, [savedScrollY]);
+  }, [savedScrollY, getScrollEl]);
 
   // ── Scroll to top when any filter changes ───────────────────────────────────
   const isFirstRender = useRef(true);
@@ -254,7 +313,7 @@ export default function ChordLibrary() {
     restoredRef.current = true;
     const el = getScrollEl();
     if (el) el.scrollTop = 0;
-  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, showFavoritesOnly]);
+  }, [filterCategories, filterTypes, filterBarreRoots, filterPositions, showFavoritesOnly, getScrollEl]);
 
   const { presets: userPresets, addPreset } = usePresetStore();
 
@@ -262,7 +321,7 @@ export default function ChordLibrary() {
   const { editStandardChord, editChord, customChords, hiddenStandardChords, syncFromSupabase, syncStatus, lastSyncedAt } = useCustomChordStore();
   const user = useAuthStore(s => s.user);
 
-  const handleManualSync = async () => {
+  const handleManualSync = useCallback(async () => {
     if (!user?.id) { toast.error('Sign in to sync your chords'); return; }
     await syncFromSupabase(user.id);
     if (useCustomChordStore.getState().syncStatus === 'synced') {
@@ -270,19 +329,19 @@ export default function ChordLibrary() {
     } else {
       toast.error('Sync failed — check your connection');
     }
-  };
+  }, [user?.id, syncFromSupabase]);
 
-  const syncTimeLabel = lastSyncedAt
-    ? (() => {
-        const diffMs = Date.now() - lastSyncedAt;
-        const diffMin = Math.floor(diffMs / 60_000);
-        if (diffMin < 1) return 'just now';
-        if (diffMin === 1) return '1 min ago';
-        if (diffMin < 60) return `${diffMin} min ago`;
-        const diffHr = Math.floor(diffMin / 60);
-        return diffHr === 1 ? '1 hr ago' : `${diffHr} hr ago`;
-      })()
-    : null;
+  // Memoized so it doesn't recompute on every render — only when lastSyncedAt changes
+  const syncTimeLabel = useMemo(() => {
+    if (!lastSyncedAt) return null;
+    const diffMs = Date.now() - lastSyncedAt;
+    const diffMin = Math.floor(diffMs / 60_000);
+    if (diffMin < 1) return 'just now';
+    if (diffMin === 1) return '1 min ago';
+    if (diffMin < 60) return `${diffMin} min ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    return diffHr === 1 ? '1 hr ago' : `${diffHr} hr ago`;
+  }, [lastSyncedAt]);
 
   const { favoriteIds, toggleFavorite } = useChordFavoritesStore();
   const { playChord } = useChordAudio();
@@ -305,20 +364,14 @@ export default function ChordLibrary() {
   // ── Filtered chord list ──────────────────────────────────────────────────────
   const filteredChords = useMemo(() => {
     return allChords.filter((chord) => {
-      // Search
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         if (!chord.symbol.toLowerCase().includes(q) && !chord.name.toLowerCase().includes(q)) return false;
       }
-      // Category
       if (filterCategories.length > 0 && !filterCategories.includes(chord.category as any)) return false;
-      // Type
       if (filterTypes.length > 0 && !filterTypes.includes(chord.type as ChordType)) return false;
-      // Favorites
       if (showFavoritesOnly && !favoriteIds.has(chord.id)) return false;
-      // Root string
       if (filterBarreRoots.length > 0 && !filterBarreRoots.includes((6 - chord.rootNoteString) as BarreRoot)) return false;
-      // Position
       if (filterPositions.length > 0) {
         const inPos = filterPositions.some(p =>
           (p === 'open' && chord.category === 'open') ||
@@ -333,58 +386,68 @@ export default function ChordLibrary() {
   }, [allChords, searchQuery, filterCategories, filterTypes, filterBarreRoots, filterPositions,
       showFavoritesOnly, favoriteIdsDep]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
-
-  const toggleCategoryFilter = (category: string) => {
-    storeToggleCategory(category as any);
-  };
-
-  const toggleChordSelection = (id: string) => {
+  // ── Stable card callbacks (useCallback prevents new references on every render) ──
+  // These are passed to memo'd ChordCard — stable refs mean cards skip re-renders
+  // when only unrelated state (modal open, search query, etc.) changes.
+  const handleToggleSelect = useCallback((id: string) => {
     storeToggleChordSelection(id);
-  };
+  }, [storeToggleChordSelection]);
 
-  const handleChordClick = (chord: ChordData & { isCustom?: boolean }, index: number) => {
+  const handleToggleFavorite = useCallback((id: string) => {
+    toggleFavorite(id);
+  }, [toggleFavorite]);
+
+  const handleChordClick = useCallback((chord: ChordData & { isCustom?: boolean }, index: number) => {
     setDetailModalChord(chord);
     setDetailModalIndex(index);
-  };
+  }, []);
 
-  const handleNextChord = () => {
-    if (detailModalIndex < filteredChords.length - 1) {
-      const next = detailModalIndex + 1;
-      setDetailModalIndex(next);
+  // ── Other handlers ───────────────────────────────────────────────────────────
+
+  const toggleCategoryFilter = useCallback((category: string) => {
+    storeToggleCategory(category as any);
+  }, [storeToggleCategory]);
+
+  const handleNextChord = useCallback(() => {
+    setDetailModalIndex(prev => {
+      if (prev >= filteredChords.length - 1) return prev;
+      const next = prev + 1;
       setDetailModalChord(filteredChords[next] as ChordData & { isCustom?: boolean });
-    }
-  };
+      return next;
+    });
+  }, [filteredChords]);
 
-  const handlePreviousChord = () => {
-    if (detailModalIndex > 0) {
-      const prev = detailModalIndex - 1;
-      setDetailModalIndex(prev);
-      setDetailModalChord(filteredChords[prev] as ChordData & { isCustom?: boolean });
-    }
-  };
+  const handlePreviousChord = useCallback(() => {
+    setDetailModalIndex(prev => {
+      if (prev <= 0) return prev;
+      const p = prev - 1;
+      setDetailModalChord(filteredChords[p] as ChordData & { isCustom?: boolean });
+      return p;
+    });
+  }, [filteredChords]);
 
-  const handleEdit = (chord: ChordData & { isCustom?: boolean }) => {
+  const handleEdit = useCallback((chord: ChordData & { isCustom?: boolean }) => {
     if (chord.isCustom) {
       editChord(chord.id);
     } else {
       editStandardChord(chord);
     }
     navigate('/editor');
-  };
+  }, [editChord, editStandardChord, navigate]);
 
-  const handleEditPackSlot = (packId: string) => {
-    const assigned = packAssignments[packId];
-    if (assigned && assigned.length > 0) {
-      setSelectedChordIds(assigned);
-    }
+  const handleEditPackSlot = useCallback((packId: string) => {
+    setPackAssignments(prev => {
+      const assigned = prev[packId];
+      if (assigned && assigned.length > 0) setSelectedChordIds(assigned);
+      return prev;
+    });
     setEditingPackId(packId);
     setShowPresetMenu(false);
     const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
     toast.success(`Editing "${packTitle}" — adjust chords then open the dropdown to re-save`);
-  };
+  }, [setSelectedChordIds]);
 
-  const handleSaveToPackSlot = (packId: string) => {
+  const handleSaveToPackSlot = useCallback((packId: string) => {
     if (selectedChords.size === 0) {
       toast.error('Select at least one chord first');
       return;
@@ -393,12 +456,12 @@ export default function ChordLibrary() {
     setPackAssignments(updated);
     localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
     const packTitle = CHORD_PACKS.find((p) => p.id === packId)?.title ?? packId;
-    if (editingPackId === packId) setEditingPackId(null);
+    setEditingPackId(prev => prev === packId ? null : prev);
     setSelectedChordIds([]);
     toast.success(`${selectedChords.size} chords saved to "${packTitle}"`);
-  };
+  }, [selectedChords, packAssignments, setSelectedChordIds]);
 
-  const handleLoadPackSlot = (packId: string) => {
+  const handleLoadPackSlot = useCallback((packId: string) => {
     const chords = packAssignments[packId];
     if (!chords || chords.length === 0) return;
     setSelectedChordIds(chords);
@@ -406,35 +469,31 @@ export default function ChordLibrary() {
     setActiveLibraryPreset(packId);
     setShowPresetMenu(false);
     toast.success(`Loaded ${chords.length} chords from pack`);
-  };
+  }, [packAssignments, setSelectedChordIds, setActiveLibraryPreset]);
 
-  const handleClearPackSlot = (packId: string) => {
-    const updated = { ...packAssignments };
-    delete updated[packId];
-    setPackAssignments(updated);
-    localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
-    if (selectedPreset === packId) { setSelectedPreset(null); setActiveLibraryPreset(null); }
-    if (editingPackId === packId) setEditingPackId(null);
+  const handleClearPackSlot = useCallback((packId: string) => {
+    setPackAssignments(prev => {
+      const updated = { ...prev };
+      delete updated[packId];
+      localStorage.setItem('fretmaster_pack_assignments', JSON.stringify(updated));
+      return updated;
+    });
+    setSelectedPreset(prev => { if (prev === packId) { setActiveLibraryPreset(null); return null; } return prev; });
+    setEditingPackId(prev => prev === packId ? null : prev);
     toast.success('Pack cleared');
-  };
+  }, [setActiveLibraryPreset]);
 
-  const handleCreatePreset = () => {
-    if (!newPresetName.trim()) {
-      toast.error('Please enter a preset name');
-      return;
-    }
-    if (selectedChords.size === 0) {
-      toast.error('Please select at least one chord');
-      return;
-    }
+  const handleCreatePreset = useCallback(() => {
+    if (!newPresetName.trim()) { toast.error('Please enter a preset name'); return; }
+    if (selectedChords.size === 0) { toast.error('Please select at least one chord'); return; }
     addPreset(newPresetName, Array.from(selectedChords));
     toast.success(`Preset "${newPresetName}" created with ${selectedChords.size} chords`);
     setNewPresetName('');
     setShowPresetMenu(false);
     setSelectedChordIds([]);
-  };
+  }, [newPresetName, selectedChords, addPreset, setSelectedChordIds]);
 
-  const handleLoadPreset = (presetName: string) => {
+  const handleLoadPreset = useCallback((presetName: string) => {
     const preset = userPresets.find((p) => p.name === presetName);
     if (preset) {
       setSelectedChordIds(preset.chordIds);
@@ -443,16 +502,18 @@ export default function ChordLibrary() {
       setShowPresetMenu(false);
       toast.success(`Loaded preset "${presetName}" with ${preset.chordIds.length} chords`);
     }
-  };
+  }, [userPresets, setSelectedChordIds, setActiveLibraryPreset]);
+
+  const handleClearAllFilters = useCallback(() => {
+    setSearchQuery('');
+    storeClearCategories();
+    setFilterTypes([]);
+    storeClearBarreRoots();
+    storeClearPositions();
+    setShowFavoritesOnly(false);
+  }, [setSearchQuery, storeClearCategories, setFilterTypes, storeClearBarreRoots, storeClearPositions]);
 
   const favoriteCount = favoriteIds.size;
-
-  // Root string options
-  const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
-    { value: 6, label: '6th String' },
-    { value: 5, label: '5th String' },
-    { value: 4, label: '4th String' },
-  ];
 
   const [showRootMenu, setShowRootMenu] = useState(false);
   const rootMenuRef = useRef<HTMLDivElement>(null);
@@ -478,43 +539,6 @@ export default function ChordLibrary() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ── Chord Pack definitions ──────────────────────────────────────────────────
-  const CHORD_PACKS = [
-    {
-      id: 'first-song-starter',
-      title: 'First Song Starter Pack',
-      description: 'The essential open chords every beginner needs to play their first real song.',
-      icon: <Star className="w-4 h-4" />,
-      accentColor: 'from-amber-500 to-orange-500',
-      badgeColor: 'bg-amber-500/15 text-amber-400 border-amber-500/25',
-      iconBg: 'bg-amber-500/15 text-amber-400',
-      saveBtnColor: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/30',
-      loadBtnColor: 'bg-amber-500 hover:bg-amber-600 text-zinc-950',
-    },
-    {
-      id: 'open-chord-essentials',
-      title: 'Open Chord Essentials',
-      description: 'Master the foundational open chord shapes that power hundreds of popular songs.',
-      icon: <Sparkles className="w-4 h-4" />,
-      accentColor: 'from-emerald-500 to-teal-500',
-      badgeColor: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-      iconBg: 'bg-emerald-500/15 text-emerald-400',
-      saveBtnColor: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border-emerald-500/30',
-      loadBtnColor: 'bg-emerald-500 hover:bg-emerald-600 text-white',
-    },
-    {
-      id: 'power-chord-builder',
-      title: 'Power Chord Builder',
-      description: 'Rock-ready movable shapes that unlock the entire fretboard once mastered.',
-      icon: <Zap className="w-4 h-4" />,
-      accentColor: 'from-purple-500 to-indigo-500',
-      badgeColor: 'bg-purple-500/15 text-purple-400 border-purple-500/25',
-      iconBg: 'bg-purple-500/15 text-purple-400',
-      saveBtnColor: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border-purple-500/30',
-      loadBtnColor: 'bg-purple-500 hover:bg-purple-600 text-white',
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -531,7 +555,6 @@ export default function ChordLibrary() {
                 Browse all chord diagrams — tap the checkbox to select chords for a practice preset
               </p>
             </div>
-            {/* Sync status badge + manual sync — visible when logged in */}
             {user && (
               <button
                 onClick={handleManualSync}
@@ -613,7 +636,7 @@ export default function ChordLibrary() {
         {/* Preset Dropdown */}
         <div className="mb-4 relative">
           <button
-            onClick={() => setShowPresetMenu(!showPresetMenu)}
+            onClick={() => setShowPresetMenu(prev => !prev)}
             className={`w-full border rounded-lg px-4 py-3 flex items-center justify-between transition-colors ${
               showPresetMenu
                 ? 'bg-zinc-900 border-zinc-700'
@@ -650,6 +673,7 @@ export default function ChordLibrary() {
                     const assigned = packAssignments[pack.id];
                     const isPopulated = assigned && assigned.length > 0;
                     const isActive = selectedPreset === pack.id;
+                    const { IconComponent } = pack;
                     return (
                       <div
                         key={pack.id}
@@ -664,7 +688,7 @@ export default function ChordLibrary() {
                       >
                         <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
                         <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ml-1 ${pack.iconBg}`}>
-                          {pack.icon}
+                          <IconComponent className="w-4 h-4" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -728,6 +752,7 @@ export default function ChordLibrary() {
                   {CHORD_PACKS.map((pack) => {
                     const assigned = packAssignments[pack.id];
                     const isPopulated = assigned && assigned.length > 0;
+                    const { IconComponent } = pack;
                     return (
                       <button
                         key={pack.id}
@@ -743,7 +768,7 @@ export default function ChordLibrary() {
                       >
                         <div className={`absolute left-0 top-0 bottom-0 w-[3px] rounded-l-lg bg-gradient-to-b ${pack.accentColor}`} />
                         <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ml-1 ${pack.iconBg}`}>
-                          <span className="scale-75">{pack.icon}</span>
+                          <IconComponent className="w-3 h-3" />
                         </div>
                         <span className="flex-1 text-left text-xs font-semibold">{pack.title}</span>
                         {isPopulated && (
@@ -827,7 +852,7 @@ export default function ChordLibrary() {
           {/* Row 1: All + Category */}
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
-              onClick={() => { setSearchQuery(''); storeClearCategories(); setFilterTypes([]); storeClearBarreRoots(); storeClearPositions(); setShowFavoritesOnly(false); }}
+              onClick={handleClearAllFilters}
               className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap transition-all ${
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
@@ -945,7 +970,7 @@ export default function ChordLibrary() {
               >
                 <Guitar className="w-3 h-3" />
                 {filterBarreRoots.length > 0
-                  ? filterBarreRoots.map(r => `${r}th`).join(', ')
+                  ? filterBarreRoots.map(r => `${r}th String`).join(', ')
                   : 'Root'}
                 <ChevronDown className={`w-3 h-3 transition-transform duration-150 ${showRootMenu ? 'rotate-180' : ''}`} />
               </button>
@@ -1093,7 +1118,7 @@ export default function ChordLibrary() {
               ))}
               {filterBarreRoots.map(r => (
                 <span key={r} className="inline-flex items-center gap-1 px-2 py-0.5 bg-indigo-500/20 border border-indigo-500/30 rounded-full text-[10px] font-semibold text-indigo-300">
-                  Root {r}th
+                  Root {r}th String
                   <button onClick={() => storeToggleBarreRoot(r)} className="hover:text-white transition-colors"><X className="w-2.5 h-2.5" /></button>
                 </span>
               ))}
@@ -1127,7 +1152,7 @@ export default function ChordLibrary() {
                 {[
                   filterCategories.length > 0 && `Category: ${filterCategories.join(', ')}`,
                   filterTypes.length > 0 && `${filterTypes.length} type${filterTypes.length > 1 ? 's' : ''} selected`,
-                  filterBarreRoots.length > 0 && `Root: ${filterBarreRoots.map(r => `${r}th`).join(', ')}`,
+                  filterBarreRoots.length > 0 && `Root: ${filterBarreRoots.map(r => `${r}th String`).join(', ')}`,
                   filterPositions.length > 0 && `Position: ${filterPositions.join(', ')}`,
                   showFavoritesOnly && 'Favorites only',
                   searchQuery.trim() && `Search: "${searchQuery.trim()}"`,
@@ -1135,14 +1160,7 @@ export default function ChordLibrary() {
               </p>
             </div>
             <button
-              onClick={() => {
-                setSearchQuery('');
-                storeClearCategories();
-                setFilterTypes([]);
-                storeClearBarreRoots();
-                storeClearPositions();
-                setShowFavoritesOnly(false);
-              }}
+              onClick={handleClearAllFilters}
               className="flex-shrink-0 text-xs font-bold text-amber-400 hover:text-white bg-amber-500/20 hover:bg-amber-500/40 px-2.5 py-1 rounded-md transition-colors"
             >
               Clear All
@@ -1155,7 +1173,6 @@ export default function ChordLibrary() {
           <div className="text-sm flex items-center gap-2">
             <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
             <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
-
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
@@ -1177,8 +1194,8 @@ export default function ChordLibrary() {
               chord={chord as ChordData & { isCustom?: boolean }}
               isSelected={selectedChords.has(chord.id)}
               isFavorited={favoriteIds.has(chord.id)}
-              onToggleSelect={() => toggleChordSelection(chord.id)}
-              onToggleFavorite={() => toggleFavorite(chord.id)}
+              onToggleSelect={() => handleToggleSelect(chord.id)}
+              onToggleFavorite={() => handleToggleFavorite(chord.id)}
               onClick={() => handleChordClick(chord as ChordData & { isCustom?: boolean }, index)}
             />
           ))}
@@ -1187,7 +1204,7 @@ export default function ChordLibrary() {
         {filteredChords.length === 0 && (
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-12 text-center">
             <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 rounded-full"> {/* This line was the problem */}
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500/10 rounded-full">
                 <Library className="w-9 h-9 text-blue-400" />
               </div>
             </div>
@@ -1197,14 +1214,7 @@ export default function ChordLibrary() {
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
-                onClick={() => {
-                  setSearchQuery('');
-                  storeClearCategories();
-                  setFilterTypes([]);
-                  storeClearBarreRoots();
-                  storeClearPositions();
-                  setShowFavoritesOnly(false);
-                }}
+                onClick={handleClearAllFilters}
                 className="bg-zinc-800 hover:bg-zinc-700 text-white font-semibold px-5 py-2.5 rounded-lg transition-colors"
               >
                 Clear All Filters

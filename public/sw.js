@@ -2,7 +2,7 @@
  * Service Worker for handling push notifications, background tasks, and offline caching
  */
 
-const CACHE_NAME = 'fretmaster-v2';
+const CACHE_NAME = 'fretmaster-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -92,13 +92,12 @@ self.addEventListener('fetch', (event) => {
         })
     );
   } else {
-    // Cache-first for production
+    // Network-first for production — always serve latest JS/CSS bundles.
+    // Falls back to cache only when the user is genuinely offline.
+    // This prevents mobile devices from serving stale cached bundles.
     event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
           if (response.ok) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
@@ -106,8 +105,12 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return response;
-        });
-      })
+        })
+        .catch(() => {
+          return caches.match(request).then((cachedResponse) => {
+            return cachedResponse || new Response('Offline', { status: 503 });
+          });
+        })
     );
   }
 });

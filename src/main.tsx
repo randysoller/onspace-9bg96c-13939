@@ -47,6 +47,24 @@ if (import.meta.env.MODE === 'production') {
   });
 }
 
+// ── Startup: clear hidden-chord state if suspiciously large ─────────────────
+// If hiddenStandardChords has accumulated IDs (e.g. from a bug), silently
+// clear it. A user never hides more than a handful of chords intentionally.
+// This runs before React renders to avoid a flash of wrong chord count.
+try {
+  const raw = localStorage.getItem('fretmaster-hidden-chords');
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 10) {
+      // More than 10 hidden chords is almost certainly stale/corrupt state.
+      localStorage.removeItem('fretmaster-hidden-chords');
+      logger.info('Cleared oversized fretmaster-hidden-chords from localStorage');
+    }
+  }
+} catch {
+  localStorage.removeItem('fretmaster-hidden-chords');
+}
+
 // Register service worker (production only, non-blocking)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -54,11 +72,16 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       .register('/sw.js')
       .then(registration => {
         logger.info('Service Worker registered', { scope: registration.scope });
-        
-        // Check for updates periodically
+
+        // Force an immediate update check on every page load so mobile
+        // gets new SW/JS bundles as soon as they are deployed, rather
+        // than waiting up to 1 hour for the stale cache to expire.
+        registration.update().catch(() => {});
+
+        // Also check every 5 minutes (down from 1 hour) to keep mobile fresh.
         setInterval(() => {
           registration.update().catch(() => {});
-        }, 60 * 60 * 1000); // Check every hour
+        }, 5 * 60 * 1000);
       })
       .catch(error => {
         logger.error('Service Worker registration failed', error);

@@ -145,7 +145,20 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
     }),
     {
       name: 'fretmaster-chord-library-filters',
-      version: 2, // Bumped to clear stale mobile localStorage causing 20-chord count discrepancy
+      version: 3, // v3: force-clear v2 state on phone; adds explicit migrate to guarantee reset
+      migrate: () => ({
+        // When stored version < current version, drop ALL persisted state.
+        // Return empty object — the store initializer provides defaults.
+        filterCategories: [],
+        filterTypes: [],
+        filterBarreRoots: [],
+        filterPositions: [],
+        filterKey: null,
+        searchQuery: '',
+        activeLibraryPresetId: null,
+        selectedChordIds: [],
+        savedScrollY: 0,
+      }),
       partialize: (state) => ({
         filterCategories: state.filterCategories,
         filterTypes: state.filterTypes,

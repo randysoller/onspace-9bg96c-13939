@@ -6,7 +6,6 @@ import type { ChordData } from '@/types/chord';
 
 // ============================================================================
 // MOVABLE CHORDS - Dominant 7th ♯5♯9 (E-shape, Root 6)
-// Reclassified from aug7sharp9 → dom7sharp5sharp9 (harmonically equivalent)
 // Frets [N,-1,N,N+1,N+1,N+3], fingers [1,0,2,3,3,4]
 // partialBarres [{fret:N+1, fromString:3, toString:4}] (finger 3 on G & B strings)
 // 6th string notes: F=1, F#/Gb=2, G=3, G#/Ab=4, A=5, A#/Bb=6,
@@ -80,7 +79,6 @@ export const DOM7SHARP5SHARP9_E6_MOVABLE: ChordData[] = [
 
 // ============================================================================
 // MOVABLE CHORDS - Dominant 7th ♯5♯9 (A-shape, Root 5)
-// Reclassified from aug7sharp9 → dom7sharp5sharp9 (harmonically equivalent)
 // Frets [-1,N+1,N,N+1,N+2,N+2], fingers [0,2,1,3,4,4], barres []
 // 5th string notes: Bb=1, B/Cb=2, C/B#=3, C#/Db=4, D=5, Eb/D#/Fb=6,
 //                   E=7, F/E#=8, F#/Gb=9, G=10, Ab/G#=11, A=12

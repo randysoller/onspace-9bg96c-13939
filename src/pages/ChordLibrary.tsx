@@ -969,15 +969,15 @@ export default function ChordLibrary() {
                             isActive ? 'text-amber-300 bg-amber-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                           }`}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex items-center gap-2">
                             <span>{CHORD_TYPE_LABELS[type]}</span>
-                            <span className="font-mono text-sm text-zinc-500 shrink-0">{CHORD_TYPE_FORMULAS[type]}</span>
+                            {isActive && (
+                              <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
                           </div>
-                          {isActive && (
-                            <svg className="w-5 h-5 text-amber-400 flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
+                          <span className="font-mono text-[16px] text-zinc-400 shrink-0 ml-4">{CHORD_TYPE_FORMULAS[type]}</span>
                         </button>
                       );
                     })}

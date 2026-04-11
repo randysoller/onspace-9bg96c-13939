@@ -850,7 +850,7 @@ export default function ChordLibrary() {
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
               onClick={handleClearAllFilters}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 transition-all ${
+              className={`px-6 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 flex-shrink-0 transition-all ${
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'

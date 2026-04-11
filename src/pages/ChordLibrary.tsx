@@ -60,6 +60,44 @@ interface ChordPackDef {
   loadBtnColor: string;
 }
 
+// Chord interval formulas — allocated once at module level, never reallocated per render
+const CHORD_TYPE_FORMULAS: Record<ChordType, string> = {
+  major:              '1 3 5',
+  minor:              '1 ♭3 5',
+  augmented:          '1 3 ♯5',
+  slash:              'x / y',
+  diminished:         '1 ♭3 ♭5',
+  sus2:               '1 2 5',
+  sus4:               '1 4 5',
+  '7sus4':            '1 4 5 ♭7',
+  major6:             '1 3 5 6',
+  minor6:             '1 ♭3 5 6',
+  maj6add9:           '1 3 5 6 9',
+  major7:             '1 3 5 7',
+  maj7sharp11:        '1 3 5 7 ♯11',
+  dominant7:          '1 3 5 ♭7',
+  minor7:             '1 ♭3 5 ♭7',
+  aug7:               '1 3 ♯5 ♭7',
+  halfDim7:           '1 ♭3 ♭5 ♭7',
+  dim7:               '1 ♭3 ♭5 ♭♭7',
+  dom7b5:             '1 3 ♭5 ♭7',
+  dom7sharp9:         '1 3 5 ♭7 ♯9',
+  dom7b9:             '1 3 5 ♭7 ♭9',
+  dom7sharp5sharp9:   '1 3 ♯5 ♭7 ♯9',
+  aug7b9:             '1 3 ♯5 ♭7 ♭9',
+  minmaj7:            '1 ♭3 5 7',
+  add9:               '1 3 5 9',
+  major9:             '1 3 5 7 9',
+  '9th':              '1 3 5 ♭7 9',
+  minor9:             '1 ♭3 5 ♭7 9',
+  major11:            '1 3 5 7 9 11',
+  '11th':             '1 3 5 ♭7 9 11',
+  minor11:            '1 ♭3 5 ♭7 9 11',
+  major13:            '1 3 5 7 9 11 13',
+  '13th':             '1 3 5 ♭7 9 11 13',
+  minor13:            '1 ♭3 5 ♭7 9 11 13',
+};
+
 const CHORD_PACKS: ChordPackDef[] = [
   {
     id: 'first-song-starter',
@@ -916,7 +954,7 @@ export default function ChordLibrary() {
               </button>
 
               {showTypeMenu && (
-                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[200px] overflow-hidden">
+                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[300px] overflow-hidden">
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
                   </div>
@@ -931,9 +969,12 @@ export default function ChordLibrary() {
                             isActive ? 'text-amber-300 bg-amber-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                           }`}
                         >
-                          <span>{CHORD_TYPE_LABELS[type]}</span>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span>{CHORD_TYPE_LABELS[type]}</span>
+                            <span className="font-mono text-sm text-zinc-500 shrink-0">{CHORD_TYPE_FORMULAS[type]}</span>
+                          </div>
                           {isActive && (
-                            <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-5 h-5 text-amber-400 flex-shrink-0 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                             </svg>
                           )}

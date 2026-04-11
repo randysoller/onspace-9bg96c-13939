@@ -850,7 +850,7 @@ export default function ChordLibrary() {
           <div className="grid grid-cols-4 gap-1.5 mb-1.5">
             <button
               onClick={handleClearAllFilters}
-              className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -861,7 +861,7 @@ export default function ChordLibrary() {
             </button>
             <button
               onClick={() => toggleCategoryFilter('open')}
-              className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                 filterCategories.includes('open')
                   ? 'bg-emerald-500 text-white'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -872,7 +872,7 @@ export default function ChordLibrary() {
             </button>
             <button
               onClick={() => toggleCategoryFilter('barre')}
-              className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                 filterCategories.includes('barre')
                   ? 'bg-purple-500 text-white'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -883,7 +883,7 @@ export default function ChordLibrary() {
             </button>
             <button
               onClick={() => toggleCategoryFilter('movable')}
-              className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                 filterCategories.includes('movable')
                   ? 'bg-yellow-400 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -900,7 +900,7 @@ export default function ChordLibrary() {
             <div className="relative" ref={typeMenuRef}>
               <button
                 onClick={() => setShowTypeMenu((prev) => !prev)}
-                className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+                className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                   filterTypes.length > 0
                     ? 'bg-amber-500 text-zinc-950 border border-amber-500'
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -960,7 +960,7 @@ export default function ChordLibrary() {
             <div className="relative" ref={rootMenuRef}>
               <button
                 onClick={() => setShowRootMenu((prev) => !prev)}
-                className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+                className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                   filterBarreRoots.length > 0
                     ? 'bg-indigo-500 text-white border border-indigo-500'
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -1016,7 +1016,7 @@ export default function ChordLibrary() {
             <div className="relative" ref={positionMenuRef}>
               <button
                 onClick={() => setShowPositionMenu((prev) => !prev)}
-                className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+                className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                   filterPositions.length > 0
                     ? 'bg-sky-500 text-white border border-sky-500'
                     : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
@@ -1081,7 +1081,7 @@ export default function ChordLibrary() {
             {/* Favorites filter */}
             <button
               onClick={() => setShowFavoritesOnly((prev) => !prev)}
-              className={`w-full py-3.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
+              className={`w-full py-3.5 rounded-full font-semibold text-sm md:text-xs whitespace-nowrap flex items-center justify-center gap-1.5 transition-all ${
                 showFavoritesOnly
                   ? 'bg-rose-500 text-white'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-rose-500/40 hover:text-rose-400'

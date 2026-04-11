@@ -850,12 +850,13 @@ export default function ChordLibrary() {
           <div className="flex gap-1.5 flex-wrap mb-1.5">
             <button
               onClick={handleClearAllFilters}
-              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center flex-shrink-0 transition-all ${
+              className={`px-3 py-1.5 rounded-full font-semibold text-xs whitespace-nowrap flex items-center gap-1.5 flex-shrink-0 transition-all ${
                 filterCategories.length === 0 && filterTypes.length === 0 && filterBarreRoots.length === 0 && filterPositions.length === 0 && !showFavoritesOnly
                   ? 'bg-amber-500 text-zinc-950'
                   : 'bg-zinc-900/50 text-zinc-400 border border-zinc-800 hover:border-zinc-700'
               }`}
             >
+              <Library className="w-3 h-3" />
               All
             </button>
             <button
@@ -1031,7 +1032,7 @@ export default function ChordLibrary() {
               </button>
 
               {showPositionMenu && (
-                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[180px] overflow-hidden">
+                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-max overflow-hidden">
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
                   </div>

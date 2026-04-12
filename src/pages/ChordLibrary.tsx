@@ -1025,11 +1025,11 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeToggleBarreRoot(value)}
-                        className={`w-full flex items-center px-3 py-2 text-lg font-semibold transition-colors ${
+                        className={`w-full flex items-center justify-start text-left px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-indigo-300 bg-indigo-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full">
                           <span>{label}</span>
                           {isActive && (
                             <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1090,11 +1090,11 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeTogglePosition(value)}
-                        className={`w-full flex items-start px-3 py-2 text-lg font-semibold transition-colors ${
+                        className={`w-full flex items-start justify-start text-left px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <div>
+                        <div className="w-full">
                           <div className="flex items-center gap-2">
                             <span>{label}</span>
                             {isActive && (

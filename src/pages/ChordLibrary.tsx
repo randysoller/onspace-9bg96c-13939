@@ -1025,16 +1025,18 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeToggleBarreRoot(value)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
+                        className={`w-full flex items-center px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-indigo-300 bg-indigo-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <span>{label}</span>
-                        {isActive && (
-                          <svg className="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span>{label}</span>
+                          {isActive && (
+                            <svg className="w-5 h-5 text-indigo-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -1088,19 +1090,21 @@ export default function ChordLibrary() {
                       <button
                         key={value}
                         onClick={() => storeTogglePosition(value)}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
+                        className={`w-full flex items-start px-3 py-2 text-lg font-semibold transition-colors ${
                           isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <div className="flex-1">
-                          <div>{label}</div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span>{label}</span>
+                            {isActive && (
+                              <svg className="w-5 h-5 text-sky-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
                           <div className="text-base font-normal text-zinc-500">{sub}</div>
                         </div>
-                        {isActive && (
-                          <svg className="w-5 h-5 text-sky-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
                       </button>
                     );
                   })}

@@ -10,7 +10,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
+      <div className="container mx-auto px-4 pt-4 pb-10 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-2">
@@ -22,7 +22,7 @@ export default function Index() {
         </div>
 
         {/* Practice Mode Cards */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Chords Card */}
           <button
             onClick={() => navigate('/chord-setup')}

@@ -1,5 +1,6 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChordSymbol } from '@/components/features/ChordSymbol';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -1014,8 +1015,12 @@ export default function ChordLibrary() {
                 <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showRootMenu ? 'rotate-180' : ''}`} />
               </button>
 
+              <AnimatePresence>
               {showRootMenu && (
-                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[160px] overflow-hidden">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[160px] overflow-hidden"
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
                   </div>
@@ -1051,8 +1056,9 @@ export default function ChordLibrary() {
                       </button>
                     </>
                   )}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
 
             {/* Position filter */}
@@ -1074,8 +1080,12 @@ export default function ChordLibrary() {
                 <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showPositionMenu ? 'rotate-180' : ''}`} />
               </button>
 
+              <AnimatePresence>
               {showPositionMenu && (
-                <div className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-max overflow-hidden">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-max overflow-hidden"
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
                   </div>
@@ -1119,8 +1129,9 @@ export default function ChordLibrary() {
                       </button>
                     </>
                   )}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
 
             {/* Favorites filter */}

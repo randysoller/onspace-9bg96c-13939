@@ -99,6 +99,48 @@ const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
 ];
 
 // ============================================================================
+// CHORD TYPE FORMULAS (allocated once at module level)
+// ============================================================================
+
+const CHORD_TYPE_FORMULAS: Record<ChordType, string> = {
+  major:              '1 3 5',
+  minor:              '1 ♭3 5',
+  augmented:          '1 3 ♯5',
+  slash:              'x / y',
+  diminished:         '1 ♭3 ♭5',
+  sus2:               '1 2 5',
+  sus4:               '1 4 5',
+  '7sus4':            '1 4 5 ♭7',
+  major6:             '1 3 5 6',
+  minor6:             '1 ♭3 5 6',
+  maj6add9:           '1 3 5 6 9',
+  major7:             '1 3 5 7',
+  maj7sharp11:        '1 3 5 7 ♯11',
+  dominant7:          '1 3 5 ♭7',
+  minor7:             '1 ♭3 5 ♭7',
+  aug7:               '1 3 ♯5 ♭7',
+  halfDim7:           '1 ♭3 ♭5 ♭7',
+  dim7:               '1 ♭3 ♭5 ♭♭7',
+  dom7b5:             '1 3 ♭5 ♭7',
+  dom7sharp9:         '1 3 5 ♭7 ♯9',
+  dom7b9:             '1 3 5 ♭7 ♭9',
+  dom7sharp5sharp9:   '1 3 ♯5 ♭7 ♯9',
+  aug7sharp9:         '1 3 ♯5 ♭7 ♯9',
+  aug7b9:             '1 3 ♯5 ♭7 ♭9',
+  minmaj7:            '1 ♭3 5 7',
+  add9:               '1 3 5 9',
+  major9:             '1 3 5 7 9',
+  '9th':              '1 3 5 ♭7 9',
+  minor9:             '1 ♭3 5 ♭7 9',
+  major11:            '1 3 5 7 9 11',
+  '11th':             '1 3 5 ♭7 9 11',
+  minor11:            '1 ♭3 5 ♭7 9 11',
+  major13:            '1 3 5 7 9 11 13',
+  '13th':             '1 3 5 ♭7 9 11 13',
+  minor13:            '1 ♭3 5 ♭7 9 11 13',
+};
+
+// ============================================================================
 // CHECKBOX ICON COMPONENT
 // ============================================================================
 
@@ -548,9 +590,46 @@ export default function ChordSetup() {
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute left-0 top-full mt-2 min-w-[300px] rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50 max-h-[60vh] overflow-y-auto"
+                        className="absolute left-0 top-full mt-2 min-w-[300px] max-w-[calc(100vw-1.5rem)] rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50"
                       >
-                        <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={false} />
+                        <div className="px-3 pt-2.5 pb-1">
+                          <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {ALL_CHORD_TYPES.map((type) => {
+                            const isActive = chordTypes.has(type);
+                            return (
+                              <button
+                                key={type}
+                                onClick={() => toggleChordType(type)}
+                                className={`w-full flex items-center justify-between px-3 py-1.5 text-lg font-semibold transition-colors ${
+                                  isActive ? 'text-amber-300 bg-amber-500/15' : 'text-zinc-300 hover:bg-zinc-800'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span>{CHORD_TYPE_LABELS[type]}</span>
+                                  {isActive && (
+                                    <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className="font-mono text-[16px] text-zinc-400 shrink-0 ml-4">{CHORD_TYPE_FORMULAS[type]}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {chordTypes.size > 0 && (
+                          <>
+                            <div className="mx-3 border-t border-zinc-800" />
+                            <button
+                              onClick={() => { clearChordTypes(); setActiveSheet(null); }}
+                              className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
+                            >
+                              Clear type filter
+                            </button>
+                          </>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -575,7 +654,7 @@ export default function ChordSetup() {
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute left-0 top-full mt-2 min-w-[160px] rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50"
+                        className="absolute left-0 top-full mt-2 min-w-[160px] rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50"
                       >
                         <div className="px-3 pt-2.5 pb-1">
                           <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
@@ -895,7 +974,7 @@ export default function ChordSetup() {
 
       {/* ── Mobile Filter Sheets ── */}
       <AnimatePresence>
-        {activeSheet && typeof window !== 'undefined' && window.innerWidth < 640 && (
+        {activeSheet === 'position' && typeof window !== 'undefined' && window.innerWidth < 640 && (
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
@@ -913,46 +992,6 @@ export default function ChordSetup() {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto pb-safe-bottom">
-              {activeSheet === 'type' && (
-                <TypeSheetContent chordTypes={chordTypes} onToggleType={toggleChordType} onToggleAll={handleToggleAllTypes} onToggleGroup={handleToggleGroup} isMobile={true} />
-              )}
-              {activeSheet === 'root' && (
-                <div>
-                  <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
-                  </div>
-                  {ROOT_STRING_OPTIONS.map(({ value, label }) => {
-                    const isActive = barreRoots.has(value);
-                    return (
-                      <button
-                        key={value}
-                        onClick={() => { toggleBarreRoot(value); setActiveSheet(null); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
-                          isActive ? 'text-indigo-300 bg-indigo-500/15' : 'text-zinc-300 hover:bg-zinc-800'
-                        }`}
-                      >
-                        <span>{label}</span>
-                        {isActive && (
-                          <svg className="w-5 h-5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {barreRoots.size > 0 && (
-                    <>
-                      <div className="mx-3 border-t border-zinc-800" />
-                      <button
-                        onClick={() => { clearBarreRoots(); setActiveSheet(null); }}
-                        className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
-                      >
-                        Clear root filter
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
               {activeSheet === 'position' && (
                 <div>
                   <div className="px-3 pt-2.5 pb-1">

@@ -39,7 +39,7 @@ export default function Index() {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-white mb-2">Chords</h3>
                 <p className="text-sm leading-relaxed">
-                  <span className="font-bold text-emerald-400">Play your first real sounds.</span>{' '}
+                  <span className="font-bold text-emerald-400 text-[17px]">Play your first real sounds.</span>{' '}
                   <span className="text-zinc-400">Learn chords with guidance, feedback, and real progress you can feel.</span>
                 </p>
               </div>
@@ -65,7 +65,7 @@ export default function Index() {
               <div className="flex-1">
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Chord Progressions</h3>
                 <p className="text-sm leading-relaxed">
-                  <span className="font-bold text-purple-400">Where chords become music.</span>{' '}
+                  <span className="font-bold text-purple-400 text-[17px]">Where chords become music.</span>{' '}
                   <span className="text-zinc-400">Practice smooth transitions and play progressions that actually sound like songs.</span>
                 </p>
               </div>
@@ -91,7 +91,7 @@ export default function Index() {
               <div className="flex-1">
                 <h3 className="text-2xl font-bold text-white mb-2">Scales</h3>
                 <p className="text-sm leading-relaxed">
-                  <span className="font-bold text-cyan-400">Unlock the fretboard.</span>{' '}
+                  <span className="font-bold text-cyan-400 text-[17px]">Unlock the fretboard.</span>{' '}
                   <span className="text-zinc-400">Learn scales visually and turn them into riffs, solos, and real expression.</span>
                 </p>
               </div>

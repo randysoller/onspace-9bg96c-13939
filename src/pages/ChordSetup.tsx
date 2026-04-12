@@ -93,9 +93,9 @@ const CATEGORY_DESCRIPTIONS: Record<ChordCategory, string> = {
 };
 
 const ROOT_STRING_OPTIONS: { value: BarreRoot; label: string }[] = [
-  { value: 6, label: '6th String (Low E)' },
-  { value: 5, label: '5th String (A)' },
-  { value: 4, label: '4th String (D)' },
+  { value: 6, label: '6th String' },
+  { value: 5, label: '5th String' },
+  { value: 4, label: '4th String' },
 ];
 
 // ============================================================================
@@ -441,10 +441,9 @@ export default function ChordSetup() {
     setActivePreset(null); setShowFavoritesOnly(false);
   };
 
-  // Outside-click closes desktop dropdowns
+  // Outside-click closes dropdowns
   useEffect(() => {
     if (!activeSheet || typeof window === 'undefined') return;
-    if (window.innerWidth < 640) return;
     const refs: Record<string, React.RefObject<HTMLDivElement>> = {
       type: typeDropdownRef, root: rootDropdownRef, position: positionDropdownRef,
     };
@@ -456,13 +455,7 @@ export default function ChordSetup() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [activeSheet]);
 
-  // Body scroll lock on mobile sheets
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return;
-    if (!activeSheet || window.innerWidth >= 640) return;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
-  }, [activeSheet]);
+
 
   // ── Pill shared classes ──────────────────────────────────────────────────────
   const basePill = 'w-full py-3.5 rounded-full font-semibold text-[17px] md:text-[15px] whitespace-nowrap flex items-center justify-center gap-1.5 transition-all';
@@ -717,7 +710,7 @@ export default function ChordSetup() {
                       <motion.div
                         initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                         transition={{ duration: 0.15 }}
-                        className="hidden sm:block absolute right-0 top-full mt-2 w-max rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-2 w-max rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl shadow-black/60 overflow-hidden z-50"
                       >
                         <div className="px-3 pt-2.5 pb-1">
                           <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
@@ -972,75 +965,7 @@ export default function ChordSetup() {
         </div>
       </div>
 
-      {/* ── Mobile Filter Sheets ── */}
-      <AnimatePresence>
-        {activeSheet === 'position' && typeof window !== 'undefined' && window.innerWidth < 640 && (
-          <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-50 bg-[hsl(var(--bg-base))] flex flex-col pt-safe-top"
-          >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[hsl(var(--border-default))]">
-              <h2 className="font-display font-bold text-xl text-[hsl(var(--text-default))]">
-                {activeSheet === 'type' ? 'Select Chord Type'
-                  : activeSheet === 'root' ? 'Select Root String'
-                  : activeSheet === 'position' ? 'Select Neck Position'
-                  : ''}
-              </h2>
-              <button onClick={() => setActiveSheet(null)} className="p-2 -mr-2 rounded-full hover:bg-[hsl(var(--bg-overlay))]">
-                <X className="size-6 text-[hsl(var(--text-subtle))]" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto pb-safe-bottom">
-              {activeSheet === 'position' && (
-                <div>
-                  <div className="px-3 pt-2.5 pb-1">
-                    <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
-                  </div>
-                  {([
-                    { value: 'open' as PositionFilter, label: 'Open', sub: 'Open string chords' },
-                    { value: 'low' as PositionFilter, label: 'Low', sub: 'Frets 1–4' },
-                    { value: 'mid' as PositionFilter, label: 'Mid', sub: 'Frets 5–8' },
-                    { value: 'high' as PositionFilter, label: 'High', sub: 'Frets 9–12' },
-                  ]).map(({ value, label, sub }) => {
-                    const isActive = filterPositions.has(value);
-                    return (
-                      <button
-                        key={value}
-                        onClick={() => { togglePosition(value); setActiveSheet(null); }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-lg font-semibold transition-colors ${
-                          isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
-                        }`}
-                      >
-                        <div>
-                          <div>{label}</div>
-                          <div className="text-base font-normal text-zinc-500">{sub}</div>
-                        </div>
-                        {isActive && (
-                          <svg className="w-5 h-5 text-sky-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </button>
-                    );
-                  })}
-                  {filterPositions.size > 0 && (
-                    <>
-                      <div className="mx-3 border-t border-zinc-800" />
-                      <button
-                        onClick={() => { clearPositions(); setActiveSheet(null); }}
-                        className="w-full text-left px-3 py-2 text-base text-zinc-600 hover:text-zinc-400 transition-colors"
-                      >
-                        Clear position filter
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 }

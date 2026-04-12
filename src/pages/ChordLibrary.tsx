@@ -954,8 +954,13 @@ export default function ChordLibrary() {
                 <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-150 ${showTypeMenu ? 'rotate-180' : ''}`} />
               </button>
 
+              <AnimatePresence>
               {showTypeMenu && (
-                <div className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[300px] overflow-hidden">
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[300px] overflow-hidden"
+                >
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Chord Type</p>
                   </div>
@@ -994,8 +999,9 @@ export default function ChordLibrary() {
                       </button>
                     </>
                   )}
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </div>
 
             {/* Root String filter */}

@@ -1,4 +1,6 @@
+
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Grid3x3, Music2, ChevronRight, Scale } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 
@@ -24,12 +26,14 @@ export default function Index() {
         {/* Practice Mode Cards */}
         <div className="space-y-3">
           {/* Chords Card */}
-          <button
+          <motion.button
             onClick={() => navigate('/chord-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-emerald-500 rounded-xl p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-emerald-500 rounded-xl p-5 hover:border-emerald-500/40 hover:shadow-lg hover:shadow-emerald-500/10 transition-colors group cursor-pointer"
           >
             <div className="flex items-start gap-4 mb-2">
-              <div className="flex-shrink-0 w-14 h-14 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30">
+              <div className="flex-shrink-0 w-14 h-14 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-xl group-hover:shadow-emerald-500/60 transition-shadow duration-200">
                 <Grid3x3 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
@@ -45,15 +49,17 @@ export default function Index() {
               Start
               <ChevronRight className="w-4 h-4" />
             </div>
-          </button>
+          </motion.button>
 
           {/* Chord Progressions Card */}
-          <button
+          <motion.button
             onClick={() => navigate('/progression-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-purple-500 rounded-xl p-5 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-purple-500 rounded-xl p-5 hover:border-purple-500/40 hover:shadow-lg hover:shadow-purple-500/10 transition-colors group cursor-pointer"
           >
             <div className="flex items-start gap-4 mb-2">
-              <div className="flex-shrink-0 w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+              <div className="flex-shrink-0 w-14 h-14 bg-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30 group-hover:shadow-xl group-hover:shadow-purple-500/60 transition-shadow duration-200">
                 <Music2 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
@@ -69,15 +75,17 @@ export default function Index() {
               Start
               <ChevronRight className="w-4 h-4" />
             </div>
-          </button>
+          </motion.button>
 
           {/* Scales Card */}
-          <button
+          <motion.button
             onClick={() => navigate('/scale-setup')}
-            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-cyan-500 rounded-xl p-5 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-all group cursor-pointer active:scale-[0.99]"
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-cyan-500 rounded-xl p-5 hover:border-cyan-500/40 hover:shadow-lg hover:shadow-cyan-500/10 transition-colors group cursor-pointer"
           >
             <div className="flex items-start gap-4 mb-2">
-              <div className="flex-shrink-0 w-14 h-14 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30">
+              <div className="flex-shrink-0 w-14 h-14 bg-cyan-500 rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:shadow-xl group-hover:shadow-cyan-500/60 transition-shadow duration-200">
                 <Scale className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
@@ -93,7 +101,7 @@ export default function Index() {
               Start
               <ChevronRight className="w-4 h-4" />
             </div>
-          </button>
+          </motion.button>
         </div>
       </div>
     </div>

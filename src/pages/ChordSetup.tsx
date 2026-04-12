@@ -469,11 +469,7 @@ export default function ChordSetup() {
           <img src={heroImg} alt="Guitar fretboard" className="size-full object-cover opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-b from-[hsl(var(--bg-base)/0.3)] via-[hsl(var(--bg-base)/0.7)] to-[hsl(var(--bg-base))]" />
         </div>
-        <div className="relative px-4 sm:px-6 py-10 sm:py-16 md:py-24 text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/8 px-4 py-1.5 mb-6">
-            <Music className="size-3.5 text-emerald-500" />
-            <span className="text-xs font-body font-medium text-emerald-500">Guitar Chord Trainer</span>
-          </div>
+        <div className="relative px-4 sm:px-6 pt-6 pb-10 sm:pb-16 text-center max-w-3xl mx-auto">
           <h1 className="font-display text-3xl sm:text-4xl md:text-6xl font-extrabold leading-tight text-balance">
             <span className="text-[hsl(var(--text-default))]">Master Every Chord.</span>
             <br />

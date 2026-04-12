@@ -1092,7 +1092,7 @@ export default function ChordLibrary() {
                           isActive ? 'text-sky-300 bg-sky-500/15' : 'text-zinc-300 hover:bg-zinc-800'
                         }`}
                       >
-                        <div>
+                        <div className="flex-1">
                           <div>{label}</div>
                           <div className="text-base font-normal text-zinc-500">{sub}</div>
                         </div>

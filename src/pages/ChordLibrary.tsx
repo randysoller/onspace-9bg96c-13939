@@ -1021,6 +1021,7 @@ export default function ChordLibrary() {
                   initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
                   className="absolute top-full left-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 min-w-[160px] overflow-hidden"
+                >
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Root Note String</p>
                   </div>
@@ -1086,6 +1087,7 @@ export default function ChordLibrary() {
                   initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
                   className="absolute top-full right-0 mt-1.5 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl shadow-black/60 z-20 w-max overflow-hidden"
+                >
                   <div className="px-3 pt-2.5 pb-1">
                     <p className="text-base font-bold text-zinc-500 uppercase tracking-widest">Neck Position</p>
                   </div>

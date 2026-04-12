@@ -57,7 +57,7 @@ export default function Index() {
                 <Music2 className="w-7 h-7 text-white" strokeWidth={2.5} />
               </div>
               <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-2">Chord Progressions</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">Chord Progressions</h3>
                 <p className="text-sm leading-relaxed">
                   <span className="font-bold text-purple-400">Where chords become music.</span>{' '}
                   <span className="text-zinc-400">Practice smooth transitions and play progressions that actually sound like songs.</span>

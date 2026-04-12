@@ -639,7 +639,7 @@ export default function ChordSetup() {
                     }`}
                   >
                     <Guitar className="w-4 h-4 md:w-3 md:h-3" />
-                    {barreRoots.size > 0 ? [...barreRoots].map(r => `${r}th`).join(', ') : 'Root'}
+                    {barreRoots.size > 0 ? [...barreRoots].map(r => `${r}th String`).join(', ') : 'Root'}
                     <ChevronDown className={`w-4 h-4 md:w-3 md:h-3 transition-transform duration-200 ${activeSheet === 'root' ? 'rotate-180' : ''}`} />
                   </button>
                   <AnimatePresence>

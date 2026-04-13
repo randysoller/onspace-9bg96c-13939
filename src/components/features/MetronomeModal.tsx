@@ -106,7 +106,7 @@ export default function MetronomeModal() {
   const beatDotClass = (beat: number, sizeClass: string) => {
     const isCurrentBeat = isPlaying && beat === currentBeat + 1;
     return `flex items-center justify-center font-bold rounded transition-all ${sizeClass} ${
-      isCurrentBeat ? 'bg-emerald-500 text-zinc-950 scale-110' : 'bg-zinc-800 text-zinc-500'
+      isCurrentBeat ? 'bg-emerald-500 text-zinc-950 scale-110' : 'bg-zinc-800 text-zinc-400'
     }`;
   };
 
@@ -147,14 +147,14 @@ export default function MetronomeModal() {
             <div className="mb-2">
               {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
               <div className="relative flex items-center gap-2 mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
-                <span className="text-sm text-zinc-400 flex-shrink-0">{getTempoLabel(bpm)}</span>
+                <span className="text-xs text-zinc-400 uppercase tracking-wider flex-shrink-0">Tempo</span>
+                <span className="text-sm text-zinc-300 flex-shrink-0">{getTempoLabel(bpm)}</span>
                 {/* BPM number absolutely centered in the row */}
                 <span className="absolute left-1/2 -translate-x-1/2 text-[68px] font-bold text-amber-500 leading-none pointer-events-none">
                   {bpm}
                 </span>
                 <span className="flex-1" />
-                <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
+                <span className="text-xs text-zinc-400 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
             </div>
 
@@ -331,6 +331,8 @@ export default function MetronomeModal() {
                     setSubdivision('eighth');
                   } else {
                     setSwingEnabled(false);
+                    // Revert to quarter notes when swing is disabled
+                    setSubdivision('quarter');
                   }
                 }}
                 title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
@@ -342,7 +344,7 @@ export default function MetronomeModal() {
               >
                 <span className="text-base">♪♩</span>
                 <span>Swing</span>
-                <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-500'}`}>
+                <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-300'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>
               </button>
@@ -433,8 +435,8 @@ export default function MetronomeModal() {
               />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
+                  <Volume2 className="w-3.5 h-3.5 text-zinc-400" />
+                  <span className="text-xs text-zinc-400 uppercase tracking-wider">Volume</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Volume2 className="w-4 h-4 text-amber-500" />

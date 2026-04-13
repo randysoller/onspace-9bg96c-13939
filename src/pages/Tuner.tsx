@@ -572,32 +572,21 @@ export default function TunerPanel() {
           if (history.length > FREQ_HISTORY_SIZE) history.shift();
           if (confHistory.length > FREQ_HISTORY_SIZE) confHistory.shift();
 
-          // ─── Confidence-Weighted Smoothing ───
+          // ─── Fixed EMA Smoothing (α = 0.2) ───
+          // 80% old value + 20% new value on every frame that passes both
+          // the confidence gate and outlier rejection — no snapping for any case.
+          // On very large pitch jumps (>50% ratio) reset history to prevent
+          // stale median-filter data from re-entering the pipeline.
+          const EMA_ALPHA = 0.2;
           let freq = rawFreq;
           if (smoothedFreqRef.current !== null) {
             const ratio = rawFreq / smoothedFreqRef.current;
-            // Adaptive smoothing factor based on confidence and proximity
-            // High confidence + close to current = heavy smoothing (stable)
-            // Low confidence or far from current = less smoothing (responsive)
-            if (ratio > 0.96 && ratio < 1.04) {
-              // Very close: heavy smoothing weighted by confidence
-              const alpha = 0.15 + 0.15 * confidence; // 0.15-0.30
-              freq = smoothedFreqRef.current * (1 - alpha) + rawFreq * alpha;
-            } else if (ratio > 0.92 && ratio < 1.08) {
-              // Moderate change: medium smoothing
-              const alpha = 0.3 + 0.2 * confidence; // 0.30-0.50
-              freq = smoothedFreqRef.current * (1 - alpha) + rawFreq * alpha;
-            } else {
-              // Large change (new note): snap quickly if confident
-              if (confidence > 0.55) {
-                freq = rawFreq;
-                // Reset history for new note
-                freqHistoryRef.current = [rawFreq];
-                confidenceHistoryRef.current = [confidence];
-              } else {
-                freq = smoothedFreqRef.current * 0.4 + rawFreq * 0.6;
-              }
+            if (ratio > 1.5 || ratio < 0.67) {
+              // Very large note change: purge stale history, EMA still applies (no snap)
+              freqHistoryRef.current = [rawFreq];
+              confidenceHistoryRef.current = [confidence];
             }
+            freq = smoothedFreqRef.current * (1 - EMA_ALPHA) + rawFreq * EMA_ALPHA;
           }
 
           smoothedFreqRef.current = freq;

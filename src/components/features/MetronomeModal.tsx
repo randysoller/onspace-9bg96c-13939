@@ -40,6 +40,10 @@ export default function MetronomeModal() {
   // Tap Tempo: track timestamps of recent taps
   const tapTimestampsRef = useRef<number[]>([]);
 
+  // Long-press refs for − / + BPM buttons
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const handleTapTempo = () => {
     const now = Date.now();
     tapTimestampsRef.current = tapTimestampsRef.current.filter(t => now - t < 3000);
@@ -59,6 +63,26 @@ export default function MetronomeModal() {
 
   const handleTempoChange = (newTempo: number) => {
     setBpm(Math.max(20, Math.min(300, newTempo)));
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    if (longPressIntervalRef.current) clearInterval(longPressIntervalRef.current);
+    longPressTimerRef.current = null;
+    longPressIntervalRef.current = null;
+  };
+
+  const handleBpmPointerDown = (delta: number) => {
+    // Immediate single step on press
+    handleTempoChange(bpm + delta);
+    // After 600ms hold, begin auto-repeating at 150ms intervals
+    longPressTimerRef.current = setTimeout(() => {
+      longPressIntervalRef.current = setInterval(() => {
+        // Use getState() to avoid stale closure over bpm
+        const current = useMetronomeStore.getState().bpm;
+        setBpm(Math.max(20, Math.min(300, current + delta)));
+      }, 150);
+    }, 600);
   };
 
   const getTempoLabel = (tempo: number): string => {
@@ -166,8 +190,10 @@ export default function MetronomeModal() {
             {/* Slider row — extracted from Tempo section so desktop spacer can center it */}
             <div className="flex items-center gap-3 mb-3">
               <button
-                onClick={() => handleTempoChange(bpm - 1)}
-                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                onPointerDown={() => handleBpmPointerDown(-1)}
+                onPointerUp={clearLongPress}
+                onPointerLeave={clearLongPress}
+                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0 select-none"
               >
                 <span className="text-amber-400 text-3xl leading-none select-none">−</span>
               </button>
@@ -182,8 +208,10 @@ export default function MetronomeModal() {
               />
 
               <button
-                onClick={() => handleTempoChange(bpm + 1)}
-                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                onPointerDown={() => handleBpmPointerDown(1)}
+                onPointerUp={clearLongPress}
+                onPointerLeave={clearLongPress}
+                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0 select-none"
               >
                 <span className="text-amber-400 text-3xl leading-none select-none">+</span>
               </button>
@@ -343,7 +371,7 @@ export default function MetronomeModal() {
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
                 <span className="text-base">♪♩</span>
-                <span>Swing</span>
+                <span className="text-white">Swing</span>
                 <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-amber-500'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>

@@ -68,12 +68,16 @@ export default function MetronomeModal() {
     return 'Prestissimo';
   };
 
-  // 12/4 added — 12 quarter-note beats per measure (compound quadruple)
+  // All supported time signatures ordered by numerator ascending
   const timeSignatures = [
     { beats: 2, noteValue: 4, display: '2/4' },
     { beats: 3, noteValue: 4, display: '3/4' },
     { beats: 4, noteValue: 4, display: '4/4' },
+    { beats: 5, noteValue: 4, display: '5/4' },
+    { beats: 5, noteValue: 8, display: '5/8' },
     { beats: 6, noteValue: 8, display: '6/8' },
+    { beats: 7, noteValue: 4, display: '7/4' },
+    { beats: 7, noteValue: 8, display: '7/8' },
     { beats: 12, noteValue: 8, display: '12/8' },
     { beats: 12, noteValue: 4, display: '12/4' },
   ];
@@ -130,7 +134,7 @@ export default function MetronomeModal() {
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-3 space-y-3">
 
             {/* Tempo — BPM number centered, labels on sides */}
             <div>
@@ -269,7 +273,7 @@ export default function MetronomeModal() {
               {/* Accent — col 2, below Sound */}
               <div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
-                  {beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
+                  {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                 </span>
                 <button
                   onClick={() => setAccentFirstBeat(!accentFirstBeat)}
@@ -296,7 +300,22 @@ export default function MetronomeModal() {
 
             {/* Beat Indicators — more space from Tap Tempo */}
             <div className="flex items-center justify-center pt-3 pb-2">
-              {beatsPerMeasure === 6 ? (
+              {beatsPerMeasure === 5 ? (
+                // 5/4 and 5/8: 2+3 grouping — accents on beats 1 and 3
+                <div className="flex items-center">
+                  {[1, 2].map((beat) => (
+                    <div key={beat} className={`mr-1.5 ${beatDotClass(beat, 'min-w-[32px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                  <div className="w-4" />
+                  {[3, 4, 5].map((beat) => (
+                    <div key={beat} className={`mr-1.5 last:mr-0 ${beatDotClass(beat, 'min-w-[32px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                </div>
+              ) : beatsPerMeasure === 6 ? (
                 // 6/8: two groups of 3 — accents on beats 1 and 4
                 <div className="flex items-center">
                   {[1, 2, 3].map((beat) => (
@@ -304,10 +323,24 @@ export default function MetronomeModal() {
                       {beat}
                     </div>
                   ))}
-                  {/* wider gap between groups */}
                   <div className="w-4" />
                   {[4, 5, 6].map((beat) => (
                     <div key={beat} className={`mr-1.5 last:mr-0 ${beatDotClass(beat, 'min-w-[28px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                </div>
+              ) : beatsPerMeasure === 7 ? (
+                // 7/4 and 7/8: 4+3 grouping — accents on beats 1 and 5
+                <div className="flex items-center">
+                  {[1, 2, 3, 4].map((beat) => (
+                    <div key={beat} className={`mr-1 ${beatDotClass(beat, 'min-w-[26px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                  <div className="w-4" />
+                  {[5, 6, 7].map((beat) => (
+                    <div key={beat} className={`mr-1 last:mr-0 ${beatDotClass(beat, 'min-w-[26px] h-8 text-xs')}`}>
                       {beat}
                     </div>
                   ))}
@@ -339,8 +372,8 @@ export default function MetronomeModal() {
             </div>
           </div>
 
-          {/* Bottom section — pinned near mobile toolbar for thumb reach */}
-          <div className="flex-shrink-0 px-4 pb-6 pt-2 space-y-4 border-t border-zinc-800/50">
+          {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
+          <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-2 space-y-4 border-t border-zinc-800/50">
             {/* Volume — extra space above play */}
             <div>
               <div className="flex items-center justify-between mb-1.5">

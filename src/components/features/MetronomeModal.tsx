@@ -135,8 +135,9 @@ export default function MetronomeModal() {
             <div className="w-9" />
           </div>
 
-          {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-4 pt-[30px] pb-3 flex flex-col">
+          {/* Scrollable content — min-h-0 is required so flex-1 shrinks correctly inside overflow-y-auto */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="px-4 pt-[30px] pb-3 flex flex-col min-h-full">
 
             {/* Tempo — BPM number centered, labels on sides */}
             <div className="mb-3">
@@ -292,8 +293,8 @@ export default function MetronomeModal() {
 
             {/* Tap Tempo + Swing Toggle + Beat Indicators — vertically centered in remaining flex space */}
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              {/* Tap Tempo and Swing toggle side by side */}
-              <div className="flex items-center gap-4 justify-center">
+              {/* Tap Tempo centered; Swing toggle absolutely positioned to the right */}
+              <div className="relative flex items-center justify-center w-full">
                 <button
                   onClick={handleTapTempo}
                   className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
@@ -301,21 +302,20 @@ export default function MetronomeModal() {
                   Tap Tempo
                 </button>
 
-                {/* Swing toggle — disabled (dimmed) when subdivision is not 'eighth' */}
+                {/* Swing toggle — dimmed when subdivision ≠ 'eighth' but always clickable */}
                 <button
                   onClick={() => setSwingEnabled(!swingEnabled)}
-                  disabled={subdivision !== 'eighth'}
-                  title={subdivision !== 'eighth' ? 'Set Subdivision to Eighth to enable Swing' : 'Toggle swing feel'}
-                  className={`flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none ${
-                    swingEnabled && subdivision === 'eighth'
+                  title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
+                  className={`absolute right-0 flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
+                    swingEnabled
                       ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
                       : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
-                  } ${subdivision !== 'eighth' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                  } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
                 >
                   <span className="text-base">♪♩</span>
                   <span>Swing</span>
-                  <span className={`text-[10px] ${swingEnabled && subdivision === 'eighth' ? 'text-amber-400' : 'text-zinc-500'}`}>
-                    {swingEnabled && subdivision === 'eighth' ? 'ON' : 'OFF'}
+                  <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-500'}`}>
+                    {swingEnabled ? 'ON' : 'OFF'}
                   </span>
                 </button>
               </div>
@@ -393,6 +393,7 @@ export default function MetronomeModal() {
               )}
             </div>
             </div>
+          </div>
           </div>
 
           {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}

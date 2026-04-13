@@ -121,7 +121,7 @@ export default function MetronomeModal() {
 
       {/* Modal — full-screen on mobile, centered card on desktop */}
       <div className="fixed inset-0 z-[80] pointer-events-none md:flex md:items-center md:justify-center md:p-4">
-        <div className="w-full h-full md:max-w-md md:h-auto md:min-h-[700px] md:max-h-[95vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-full h-full md:max-w-md md:h-auto md:min-h-[820px] md:max-h-[95vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
 
           {/* Header */}
           <div className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -180,154 +180,155 @@ export default function MetronomeModal() {
                 </button>
               </div>
 
+            </div>
+
+            {/* Centered middle block — Quick Presets + Time Sig/Sound + Subdivision/Accent */}
+            {/* flex-1 fills the space between Tempo slider (above) and Tap Tempo/Swing (below) */}
+            <div className="flex-1 flex flex-col justify-center gap-3">
               {/* Quick Presets dropdown */}
               <MetronomeDropdown />
-            </div>
 
-            {/* Time Signature + Sound — side by side */}
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              {/* Time Signature */}
-              <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
-                <Select
-                  value={currentTimeSigValue}
-                  onValueChange={(val) => {
-                    const sig = timeSignatures.find(s => `${s.beats}/${s.noteValue}` === val);
-                    if (sig) setTimeSignature(sig.beats, sig.noteValue);
-                  }}
-                >
-                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className="bg-zinc-900 border-zinc-700 z-[200]"
-                    position="popper"
+              {/* Time Signature + Sound — side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Time Signature */}
+                <div>
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
+                  <Select
+                    value={currentTimeSigValue}
+                    onValueChange={(val) => {
+                      const sig = timeSignatures.find(s => `${s.beats}/${s.noteValue}` === val);
+                      if (sig) setTimeSignature(sig.beats, sig.noteValue);
+                    }}
                   >
-                    {timeSignatures.map((sig) => (
-                      <SelectItem
-                        key={`${sig.beats}/${sig.noteValue}`}
-                        value={`${sig.beats}/${sig.noteValue}`}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
-                      >
-                        {sig.display}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="bg-zinc-900 border-zinc-700 z-[200]"
+                      position="popper"
+                    >
+                      {timeSignatures.map((sig) => (
+                        <SelectItem
+                          key={`${sig.beats}/${sig.noteValue}`}
+                          value={`${sig.beats}/${sig.noteValue}`}
+                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                        >
+                          {sig.display}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Sound */}
-              <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Sound</span>
-                <Select
-                  value={soundType}
-                  onValueChange={(val) => setSoundType(val as typeof soundType)}
-                >
-                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className="bg-zinc-900 border-zinc-700 z-[200]"
-                    position="popper"
+                {/* Sound */}
+                <div>
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Sound</span>
+                  <Select
+                    value={soundType}
+                    onValueChange={(val) => setSoundType(val as typeof soundType)}
                   >
-                    {sounds.map((s) => (
-                      <SelectItem
-                        key={s.value}
-                        value={s.value}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
-                      >
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="bg-zinc-900 border-zinc-700 z-[200]"
+                      position="popper"
+                    >
+                      {sounds.map((s) => (
+                        <SelectItem
+                          key={s.value}
+                          value={s.value}
+                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                        >
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
 
-            {/* Subdivision (col 1, half width) + Accent (col 2, below Sound) */}
-            <div className="grid grid-cols-2 gap-4 mb-0">
-              {/* Subdivision — matches Time Signature width */}
-              <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
-                <Select
-                  value={subdivision}
-                  onValueChange={(val) => setSubdivision(val as typeof subdivision)}
-                >
-                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className="bg-zinc-900 border-zinc-700 z-[200]"
-                    position="popper"
+              {/* Subdivision + Accent — side by side */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Subdivision */}
+                <div>
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
+                  <Select
+                    value={subdivision}
+                    onValueChange={(val) => setSubdivision(val as typeof subdivision)}
                   >
-                    {subdivisions.map((s) => (
-                      <SelectItem
-                        key={s.value}
-                        value={s.value}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
-                      >
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="bg-zinc-900 border-zinc-700 z-[200]"
+                      position="popper"
+                    >
+                      {subdivisions.map((s) => (
+                        <SelectItem
+                          key={s.value}
+                          value={s.value}
+                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                        >
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              {/* Accent — col 2, below Sound */}
-              <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
-                  {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
-                </span>
-                <button
-                  onClick={() => setAccentFirstBeat(!accentFirstBeat)}
-                  className={`w-full h-10 rounded font-semibold text-sm transition-all ${
-                    accentFirstBeat
-                      ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700'
-                  }`}
-                >
-                  {accentFirstBeat ? 'On' : 'Off'}
-                </button>
-              </div>
-            </div>
-
-            {/* Tap Tempo + Swing Toggle — flex-1 centers them vertically between Subdivision/Accent and the bottom beat indicators */}
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
-              {/* Tap Tempo centered; Swing toggle absolutely positioned to the right */}
-              <div className="relative flex items-center justify-center w-full">
-                <button
-                  onClick={handleTapTempo}
-                  className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
-                >
-                  Tap Tempo
-                </button>
-
-                {/* Swing toggle — dimmed when subdivision ≠ 'eighth' but always clickable */}
-                <button
-                  onClick={() => {
-                    if (!swingEnabled) {
-                      // Enabling swing — auto-switch subdivision to eighth
-                      setSwingEnabled(true);
-                      setSubdivision('eighth');
-                    } else {
-                      setSwingEnabled(false);
-                    }
-                  }}
-                  title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
-                  className={`absolute right-0 flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
-                    swingEnabled
-                      ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
-                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
-                  } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
-                >
-                  <span className="text-base">♪♩</span>
-                  <span>Swing</span>
-                  <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-500'}`}>
-                    {swingEnabled ? 'ON' : 'OFF'}
+                {/* Accent */}
+                <div>
+                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
+                    {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                   </span>
-                </button>
+                  <button
+                    onClick={() => setAccentFirstBeat(!accentFirstBeat)}
+                    className={`w-full h-10 rounded font-semibold text-sm transition-all ${
+                      accentFirstBeat
+                        ? 'bg-amber-500 text-zinc-950'
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700'
+                    }`}
+                  >
+                    {accentFirstBeat ? 'On' : 'Off'}
+                  </button>
+                </div>
               </div>
+            </div>
 
+            {/* Tap Tempo + Swing — pinned to bottom of scrollable, just above the beat indicators */}
+            {/* mb-4 creates a comfortable gap between this row and the fixed bottom section */}
+            <div className="mb-4 relative flex items-center justify-center w-full">
+              <button
+                onClick={handleTapTempo}
+                className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+              >
+                Tap Tempo
+              </button>
+
+              {/* Swing toggle — absolutely positioned to the right of Tap Tempo */}
+              <button
+                onClick={() => {
+                  if (!swingEnabled) {
+                    setSwingEnabled(true);
+                    setSubdivision('eighth');
+                  } else {
+                    setSwingEnabled(false);
+                  }
+                }}
+                title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
+                className={`absolute right-0 flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
+                  swingEnabled
+                    ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
+                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
+              >
+                <span className="text-base">♪♩</span>
+                <span>Swing</span>
+                <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-500'}`}>
+                  {swingEnabled ? 'ON' : 'OFF'}
+                </span>
+              </button>
             </div>
           </div>
           </div>

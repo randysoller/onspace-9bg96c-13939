@@ -291,8 +291,8 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo + Swing Toggle + Beat Indicators — below Subdivision/Accent in normal document flow */}
-            <div className="mt-4 flex flex-col items-center gap-4">
+            {/* Tap Tempo + Swing Toggle — flex-1 centers them vertically between Subdivision/Accent and the bottom beat indicators */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
               {/* Tap Tempo centered; Swing toggle absolutely positioned to the right */}
               <div className="relative flex items-center justify-center w-full">
                 <button
@@ -304,7 +304,15 @@ export default function MetronomeModal() {
 
                 {/* Swing toggle — dimmed when subdivision ≠ 'eighth' but always clickable */}
                 <button
-                  onClick={() => setSwingEnabled(!swingEnabled)}
+                  onClick={() => {
+                    if (!swingEnabled) {
+                      // Enabling swing — auto-switch subdivision to eighth
+                      setSwingEnabled(true);
+                      setSubdivision('eighth');
+                    } else {
+                      setSwingEnabled(false);
+                    }
+                  }}
                   title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
                   className={`absolute right-0 flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
                     swingEnabled
@@ -320,8 +328,14 @@ export default function MetronomeModal() {
                 </button>
               </div>
 
-            {/* Beat Indicators */}
-            <div className="flex items-center justify-center">
+            </div>
+          </div>
+          </div>
+
+          {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
+          <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-3 border-t border-zinc-800/50">
+            {/* Beat Indicators — anchored just above the volume slider (~24px gap via mb-6) */}
+            <div className="flex items-center justify-center mb-6">
               {beatsPerMeasure === 5 ? (
                 // 5/4 and 5/8: 2+3 grouping — accents on beats 1 and 3
                 <div className="flex items-center">
@@ -392,12 +406,7 @@ export default function MetronomeModal() {
                 </div>
               )}
             </div>
-            </div>
-          </div>
-          </div>
 
-          {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
-          <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-2 space-y-4 border-t border-zinc-800/50">
             {/* Volume — slider on top, label row below */}
             <div>
               <input
@@ -420,10 +429,10 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Play / Stop — 70% width (10% less inset each side), 20% taller (py-5) */}
+            {/* Play / Stop — 70% width, 20% taller (py-5) */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-[70%] mx-auto font-bold py-5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+              className={`mt-4 w-[70%] mx-auto font-bold py-5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
                 isPlaying
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'

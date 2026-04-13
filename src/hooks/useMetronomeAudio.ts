@@ -155,9 +155,12 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
       const isInitialAccent = initialState.accentFirstBeat && (
         initialState.subdivision === 'eighth' || initialState.subdivision === 'sixteenth'
           ? initialState.subdivisionCounter === 0
-          : initialState.beatsPerMeasure === 12 
+          // 6/8: compound duple — accent beats 1 and 4 (indices 0 and 3)
+          : initialState.beatsPerMeasure === 6
             ? initialState.currentBeat % 3 === 0
-            : initialState.currentBeat === 0
+            : initialState.beatsPerMeasure === 12
+              ? initialState.currentBeat % 3 === 0
+              : initialState.currentBeat === 0
       );
       const initialBeatNumber = initialState.currentBeat + 1;
       playClick(isInitialAccent, initialBeatNumber);
@@ -170,9 +173,12 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
         const isAccent = state.accentFirstBeat && (
           state.subdivision === 'eighth' || state.subdivision === 'sixteenth'
             ? state.subdivisionCounter === 0
-            : state.beatsPerMeasure === 12 
+            // 6/8: compound duple — accent beats 1 and 4 (indices 0 and 3)
+            : state.beatsPerMeasure === 6
               ? state.currentBeat % 3 === 0
-              : state.currentBeat === 0
+              : state.beatsPerMeasure === 12
+                ? state.currentBeat % 3 === 0
+                : state.currentBeat === 0
         );
         const beatNumber = state.currentBeat + 1;
         

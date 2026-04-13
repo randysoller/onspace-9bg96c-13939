@@ -1,6 +1,6 @@
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Music2, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 interface MetronomePreset {
   id: string;
@@ -10,6 +10,7 @@ interface MetronomePreset {
   description: string;
 }
 
+// Sorted ascending by BPM — slower tempos first, faster last
 const METRONOME_PRESETS: MetronomePreset[] = [
   {
     id: 'slow-practice',
@@ -19,11 +20,25 @@ const METRONOME_PRESETS: MetronomePreset[] = [
     description: 'Perfect for learning new material'
   },
   {
+    id: 'waltz',
+    name: 'Waltz',
+    tempo: 90,
+    timeSignature: { beats: 3, noteValue: 4 },
+    description: 'Classic 3/4 waltz time'
+  },
+  {
     id: 'moderate',
     name: 'Moderate',
     tempo: 100,
     timeSignature: { beats: 4, noteValue: 4 },
     description: 'Standard practice tempo'
+  },
+  {
+    id: 'country',
+    name: 'Country/Folk',
+    tempo: 110,
+    timeSignature: { beats: 2, noteValue: 4 },
+    description: 'Two-step feel'
   },
   {
     id: 'rock',
@@ -33,11 +48,11 @@ const METRONOME_PRESETS: MetronomePreset[] = [
     description: 'Typical rock song tempo'
   },
   {
-    id: 'waltz',
-    name: 'Waltz',
-    tempo: 90,
-    timeSignature: { beats: 3, noteValue: 4 },
-    description: 'Classic 3/4 waltz time'
+    id: 'shuffle',
+    name: 'Shuffle',
+    tempo: 120,
+    timeSignature: { beats: 12, noteValue: 8 },
+    description: 'Blues shuffle in 12/8'
   },
   {
     id: 'fast-rock',
@@ -52,20 +67,6 @@ const METRONOME_PRESETS: MetronomePreset[] = [
     tempo: 160,
     timeSignature: { beats: 4, noteValue: 4 },
     description: 'Medium swing feel'
-  },
-  {
-    id: 'shuffle',
-    name: 'Shuffle',
-    tempo: 120,
-    timeSignature: { beats: 12, noteValue: 8 },
-    description: 'Blues shuffle in 12/8'
-  },
-  {
-    id: 'country',
-    name: 'Country/Folk',
-    tempo: 110,
-    timeSignature: { beats: 2, noteValue: 4 },
-    description: 'Two-step feel'
   },
   {
     id: 'speed',
@@ -96,20 +97,27 @@ export const MetronomeDropdown = () => {
             <SelectValue placeholder="Quick Presets" />
           </div>
         </SelectTrigger>
-        <SelectContent className="bg-zinc-900 border-zinc-700 z-[200]" position="popper">
+        {/* No max-height constraint — all presets visible without internal scroll */}
+        <SelectContent className="bg-zinc-900 border-zinc-700 z-[200] max-h-none" position="popper">
           {METRONOME_PRESETS.map((preset) => (
-            <SelectItem key={preset.id} value={preset.id}>
-              <div className="flex items-center justify-between gap-4">
+            <SelectItem
+              key={preset.id}
+              value={preset.id}
+              className="py-2.5"
+            >
+              <div className="flex items-center justify-between gap-6">
                 <div>
-                  <div className="font-medium flex items-center gap-2">
+                  {/* Larger, brighter name */}
+                  <div className="font-semibold text-base text-zinc-100 flex items-center gap-2">
                     {preset.name}
-                    <span className="text-amber-500 text-xs font-bold">
+                    <span className="text-amber-400 text-sm font-bold">
                       {preset.tempo} BPM
                     </span>
                   </div>
-                  <div className="text-xs text-zinc-500">{preset.description}</div>
+                  {/* Brighter description */}
+                  <div className="text-sm text-zinc-400 mt-0.5">{preset.description}</div>
                 </div>
-                <div className="text-xs text-zinc-600 font-mono">
+                <div className="text-sm text-zinc-500 font-mono flex-shrink-0">
                   {preset.timeSignature.beats}/{preset.timeSignature.noteValue}
                 </div>
               </div>

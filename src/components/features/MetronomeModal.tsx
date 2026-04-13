@@ -129,17 +129,20 @@ export default function MetronomeModal() {
             <div className="w-9" />
           </div>
 
-          {/* Content — reduced spacing to eliminate scrolling */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-4 flex flex-col">
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
-            {/* Tempo */}
+            {/* Tempo — BPM number centered, labels on sides */}
             <div>
-              {/* BPM row: [Tempo label] [Allegro] [spacer] [120 large] [BPM unit] */}
-              <div className="flex items-center gap-2 mb-2">
+              {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
+              <div className="relative flex items-center gap-2 mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
                 <span className="text-sm text-zinc-400 flex-shrink-0">{getTempoLabel(bpm)}</span>
+                {/* BPM number absolutely centered in the row */}
+                <span className="absolute left-1/2 -translate-x-1/2 text-[54px] font-bold text-amber-500 leading-none pointer-events-none">
+                  {bpm}
+                </span>
                 <span className="flex-1" />
-                <span className="text-[54px] font-bold text-amber-500 leading-none">{bpm}</span>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
 
@@ -266,7 +269,7 @@ export default function MetronomeModal() {
               {/* Accent — col 2, below Sound */}
               <div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
-                  {beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
+                  {beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                 </span>
                 <button
                   onClick={() => setAccentFirstBeat(!accentFirstBeat)}
@@ -281,20 +284,20 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo — centered on its own row */}
-            <div className="flex justify-center">
+            {/* Tap Tempo — centered, 25% taller (py-3 → py-[15px]) */}
+            <div className="flex justify-center pt-1">
               <button
                 onClick={handleTapTempo}
-                className="px-12 py-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="px-12 py-[15px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
             </div>
 
-            {/* Beat Indicators — grouped for compound time signatures */}
-            <div className="flex items-center justify-center py-2">
+            {/* Beat Indicators — more space from Tap Tempo */}
+            <div className="flex items-center justify-center pt-3 pb-2">
               {beatsPerMeasure === 6 ? (
-                // 6/8: two groups of 3 with wider gap between groups
+                // 6/8: two groups of 3 — accents on beats 1 and 4
                 <div className="flex items-center">
                   {[1, 2, 3].map((beat) => (
                     <div key={beat} className={`mr-1.5 ${beatDotClass(beat, 'min-w-[28px] h-8 text-xs')}`}>
@@ -334,8 +337,11 @@ export default function MetronomeModal() {
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Volume */}
+          {/* Bottom section — pinned near mobile toolbar for thumb reach */}
+          <div className="flex-shrink-0 px-4 pb-6 pt-2 space-y-4 border-t border-zinc-800/50">
+            {/* Volume — extra space above play */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
@@ -357,10 +363,10 @@ export default function MetronomeModal() {
               />
             </div>
 
-            {/* Play / Stop — 50% width, centered (25% inset each side) */}
+            {/* Play / Stop — 70% width (10% less inset each side), 20% taller (py-5) */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-1/2 mx-auto font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+              className={`w-[70%] mx-auto font-bold py-5 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
                 isPlaying
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'

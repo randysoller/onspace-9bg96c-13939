@@ -138,7 +138,7 @@ export default function MetronomeModal() {
 
           {/* Scrollable content — min-h-0 is required so flex-1 shrinks correctly inside overflow-y-auto */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="px-4 pt-[30px] pb-3 flex flex-col min-h-full">
+          <div className="px-4 pt-[30px] pb-3 flex flex-col h-full">
 
             {/* Tempo — BPM number row only (slider moved below spacer for desktop centering) */}
             <div className="mb-2">
@@ -156,6 +156,9 @@ export default function MetronomeModal() {
             </div>
 
 
+
+            {/* Spacer 1 — equal flex-1 spacers above and below middle block center it vertically */}
+            <div className="flex-1" />
 
             {/* Slider row — extracted from Tempo section so desktop spacer can center it */}
             <div className="flex items-center gap-3 mb-3">
@@ -297,23 +300,27 @@ export default function MetronomeModal() {
               </div>
             </div>
 
+            {/* Spacer 2 — equal flex-1 spacers above and below middle block center it vertically */}
+            <div className="flex-1" />
+
           </div>
           </div>
 
           {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
           <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-3 border-t border-zinc-800/50">
 
-            {/* Tap Tempo + Swing — anchored in fixed section directly above beat counter (mb-6 = 24px gap) */}
-            {/* Swing is inline flex sibling of Tap Tempo, not absolutely positioned */}
-            <div className="mb-6 flex items-center justify-center gap-3">
+            {/* Tap Tempo + Swing — relative container with explicit height so both buttons can be absolutely placed */}
+            {/* Swing: absolute right-4 (right edge with 16px padding) */}
+            {/* Tap Tempo: absolute left-1/2 -translate-x-1/2 (horizontally centered) */}
+            <div className="mb-6 relative h-[80px]">
               <button
                 onClick={handleTapTempo}
-                className="px-12 py-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-10 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-[28px] tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
 
-              {/* Swing toggle — inline flex sibling with Tap Tempo */}
+              {/* Swing toggle — right-aligned with 16px edge padding, height matches Tap Tempo */}
               <button
                 onClick={() => {
                   if (!swingEnabled) {
@@ -324,7 +331,7 @@ export default function MetronomeModal() {
                   }
                 }}
                 title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
-                className={`flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
+                className={`absolute right-4 h-[80px] flex flex-col items-center justify-center gap-1 px-4 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
                   swingEnabled
                     ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'

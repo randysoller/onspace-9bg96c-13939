@@ -26,6 +26,10 @@ interface MetronomeStore {
   beatsUntilAdvance: number;
   beatsSinceChordChange: number;
   
+  // Swing
+  swingEnabled: boolean;
+  setSwingEnabled: (enabled: boolean) => void;
+
   // Count-in functionality
   isCountingIn: boolean;
   countInBeat: number;                // 1-based current count-in beat
@@ -78,6 +82,9 @@ export const useMetronomeStore = create<MetronomeStore>()(
       beatsUntilAdvance: 4,
       beatsSinceChordChange: 0,
       
+      // Swing default
+      swingEnabled: false,
+
       // Count-in defaults
       isCountingIn: false,
       countInBeat: 0,
@@ -93,6 +100,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setSoundType: (sound) => set({ soundType: sound }),
       setAccentFirstBeat: (accent) => set({ accentFirstBeat: accent }),
       setSubdivision: (subdivision) => set({ subdivision, subdivisionCounter: 0 }),
+      setSwingEnabled: (enabled) => set({ swingEnabled: enabled }),
       
       incrementBeat: () => set((state) => {
         // triplet = 3 eighth-note triplets per beat (e.g. for 12/8 feel)
@@ -218,6 +226,7 @@ export const useMetronomeStore = create<MetronomeStore>()(
         soundType: state.soundType,
         accentFirstBeat: state.accentFirstBeat,
         subdivision: state.subdivision,
+        swingEnabled: state.swingEnabled,
         syncEnabled: state.syncEnabled,
         syncUnit: state.syncUnit,
         beatsPerChord: state.beatsPerChord,

@@ -72,6 +72,7 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
     bpm, 
     soundType, 
     subdivision,
+    swingEnabled,
     incrementBeat,
     setCurrentBeat,
     setSubdivisionCounter,
@@ -81,6 +82,8 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
   
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
+  // Recursive timeout ref for swing scheduling
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Voice synthesis latency compensation
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -134,6 +137,19 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
     }
   }, [soundType, volumeMultiplier, speakNumber]);
 
+  // Helper: determine if the current store state calls for an accent on this beat
+  const computeIsAccent = (state: ReturnType<typeof useMetronomeStore.getState>): boolean => {
+    if (!state.accentFirstBeat) return false;
+    if (state.subdivision === 'eighth' || state.subdivision === 'sixteenth') {
+      return state.subdivisionCounter === 0;
+    }
+    if (state.beatsPerMeasure === 5) return state.currentBeat === 0 || state.currentBeat === 2;
+    if (state.beatsPerMeasure === 6) return state.currentBeat % 3 === 0;
+    if (state.beatsPerMeasure === 7) return state.currentBeat === 0 || state.currentBeat === 4;
+    if (state.beatsPerMeasure === 12) return state.currentBeat % 3 === 0;
+    return state.currentBeat === 0;
+  };
+
   useEffect(() => {
     if (isPlaying) {
       const context = audioContextRef.current;
@@ -143,63 +159,57 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
       setCurrentBeat(0);
       setSubdivisionCounter(0);
 
-      // Calculate interval based on subdivision
-      let subdivisionMultiplier = 1;
-      if (subdivision === 'eighth') subdivisionMultiplier = 2;
-      if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
-      
-      const intervalMs = (60 / (bpm * subdivisionMultiplier)) * 1000;
-
       // Play initial beat immediately (beat 1, currentBeat = 0)
       const initialState = useMetronomeStore.getState();
-      const isInitialAccent = initialState.accentFirstBeat && (
-        initialState.subdivision === 'eighth' || initialState.subdivision === 'sixteenth'
-          ? initialState.subdivisionCounter === 0
-          // 5/4 and 5/8: compound 2+3 — accent beats 1 and 3 (indices 0 and 2)
-          : initialState.beatsPerMeasure === 5
-            ? initialState.currentBeat === 0 || initialState.currentBeat === 2
-            // 6/8: compound duple — accent beats 1 and 4 (indices 0 and 3)
-            : initialState.beatsPerMeasure === 6
-              ? initialState.currentBeat % 3 === 0
-              // 7/4 and 7/8: compound 4+3 — accent beats 1 and 5 (indices 0 and 4)
-              : initialState.beatsPerMeasure === 7
-                ? initialState.currentBeat === 0 || initialState.currentBeat === 4
-                : initialState.beatsPerMeasure === 12
-                  ? initialState.currentBeat % 3 === 0
-                  : initialState.currentBeat === 0
-      );
-      const initialBeatNumber = initialState.currentBeat + 1;
-      playClick(isInitialAccent, initialBeatNumber);
+      const isInitialAccent = computeIsAccent(initialState);
+      playClick(isInitialAccent, initialState.currentBeat + 1);
 
-      // Schedule subsequent beats
-      intervalRef.current = window.setInterval(() => {
-        incrementBeat();
-        
-        const state = useMetronomeStore.getState();
-        const isAccent = state.accentFirstBeat && (
-          state.subdivision === 'eighth' || state.subdivision === 'sixteenth'
-            ? state.subdivisionCounter === 0
-            // 5/4 and 5/8: compound 2+3 — accent beats 1 and 3 (indices 0 and 2)
-            : state.beatsPerMeasure === 5
-              ? state.currentBeat === 0 || state.currentBeat === 2
-              // 6/8: compound duple — accent beats 1 and 4 (indices 0 and 3)
-              : state.beatsPerMeasure === 6
-                ? state.currentBeat % 3 === 0
-                // 7/4 and 7/8: compound 4+3 — accent beats 1 and 5 (indices 0 and 4)
-                : state.beatsPerMeasure === 7
-                  ? state.currentBeat === 0 || state.currentBeat === 4
-                  : state.beatsPerMeasure === 12
-                    ? state.currentBeat % 3 === 0
-                    : state.currentBeat === 0
-        );
-        const beatNumber = state.currentBeat + 1;
-        
-        playClick(isAccent, beatNumber);
-      }, intervalMs);
+      // ── Swing mode: recursive setTimeout with alternating long/short delays ──
+      // Only applies when subdivision is 'eighth' and swingEnabled is true.
+      // Dotted-eighth = 2/3 of beat; sixteenth = 1/3 of beat (2:1 swing ratio).
+      if (swingEnabled && subdivision === 'eighth') {
+        const beatMs = (60 / bpm) * 1000;
+        const longMs = beatMs * (2 / 3);   // dotted-eighth (first of pair)
+        const shortMs = beatMs * (1 / 3);  // sixteenth (second of pair — delayed)
+
+        // isLongNext alternates: after beat 1 (just played), next delay is long
+        let isLongNext = true;
+
+        const scheduleNext = () => {
+          const delay = isLongNext ? longMs : shortMs;
+          isLongNext = !isLongNext;
+
+          timeoutRef.current = setTimeout(() => {
+            incrementBeat();
+            const state = useMetronomeStore.getState();
+            playClick(computeIsAccent(state), state.currentBeat + 1);
+            scheduleNext();
+          }, delay);
+        };
+
+        scheduleNext();
+      } else {
+        // ── Normal mode: fixed setInterval ───────────────────────────────────
+        let subdivisionMultiplier = 1;
+        if (subdivision === 'eighth') subdivisionMultiplier = 2;
+        if (subdivision === 'sixteenth') subdivisionMultiplier = 4;
+        const intervalMs = (60 / (bpm * subdivisionMultiplier)) * 1000;
+
+        intervalRef.current = window.setInterval(() => {
+          incrementBeat();
+          const state = useMetronomeStore.getState();
+          playClick(computeIsAccent(state), state.currentBeat + 1);
+        }, intervalMs);
+      }
     } else {
+      // Stop: clear both interval and timeout
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
       setCurrentBeat(0);
     }
@@ -209,8 +219,12 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
-  }, [isPlaying, bpm, subdivision, playClick]);
+  }, [isPlaying, bpm, subdivision, swingEnabled, playClick]);
 
   return {
     playClick,

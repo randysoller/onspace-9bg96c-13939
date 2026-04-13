@@ -31,6 +31,8 @@ export default function MetronomeModal() {
     setSoundType,
     setAccentFirstBeat,
     setSubdivision,
+    swingEnabled,
+    setSwingEnabled,
   } = useMetronomeStore();
   const { metronomeVolume, setMetronomeVolume } = useAudioStore();
 
@@ -150,8 +152,8 @@ export default function MetronomeModal() {
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
 
-              {/* Slider row with amber ± buttons */}
-              <div className="flex items-center gap-3 mb-2">
+              {/* Slider row with amber ± buttons — mb-3 adds 12px space below BPM number */}
+              <div className="flex items-center gap-3 mb-3">
                 <button
                   onClick={() => handleTempoChange(bpm - 1)}
                   className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
@@ -288,14 +290,35 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo + Beat Indicators — vertically centered in remaining flex space */}
+            {/* Tap Tempo + Swing Toggle + Beat Indicators — vertically centered in remaining flex space */}
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
-            <button
-                onClick={handleTapTempo}
-                className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
-              >
-                Tap Tempo
-              </button>
+              {/* Tap Tempo and Swing toggle side by side */}
+              <div className="flex items-center gap-4 justify-center">
+                <button
+                  onClick={handleTapTempo}
+                  className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                >
+                  Tap Tempo
+                </button>
+
+                {/* Swing toggle — disabled (dimmed) when subdivision is not 'eighth' */}
+                <button
+                  onClick={() => setSwingEnabled(!swingEnabled)}
+                  disabled={subdivision !== 'eighth'}
+                  title={subdivision !== 'eighth' ? 'Set Subdivision to Eighth to enable Swing' : 'Toggle swing feel'}
+                  className={`flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none ${
+                    swingEnabled && subdivision === 'eighth'
+                      ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                  } ${subdivision !== 'eighth' ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                >
+                  <span className="text-base">♪♩</span>
+                  <span>Swing</span>
+                  <span className={`text-[10px] ${swingEnabled && subdivision === 'eighth' ? 'text-amber-400' : 'text-zinc-500'}`}>
+                    {swingEnabled && subdivision === 'eighth' ? 'ON' : 'OFF'}
+                  </span>
+                </button>
+              </div>
 
             {/* Beat Indicators */}
             <div className="flex items-center justify-center">

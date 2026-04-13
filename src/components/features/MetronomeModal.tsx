@@ -68,12 +68,14 @@ export default function MetronomeModal() {
     return 'Prestissimo';
   };
 
+  // 12/4 added — 12 quarter-note beats per measure (compound quadruple)
   const timeSignatures = [
     { beats: 2, noteValue: 4, display: '2/4' },
     { beats: 3, noteValue: 4, display: '3/4' },
     { beats: 4, noteValue: 4, display: '4/4' },
     { beats: 6, noteValue: 8, display: '6/8' },
     { beats: 12, noteValue: 8, display: '12/8' },
+    { beats: 12, noteValue: 4, display: '12/4' },
   ];
 
   const currentTimeSigValue = `${beatsPerMeasure}/${noteValue}`;
@@ -92,6 +94,14 @@ export default function MetronomeModal() {
     { value: 'triplet' as const, label: '♪ Triplet' },
     { value: 'sixteenth' as const, label: '♬ Sixteenth' },
   ];
+
+  // Beat indicator dot shared class helper
+  const beatDotClass = (beat: number, sizeClass: string) => {
+    const isCurrentBeat = isPlaying && beat === currentBeat + 1;
+    return `flex items-center justify-center font-bold rounded transition-all ${sizeClass} ${
+      isCurrentBeat ? 'bg-emerald-500 text-zinc-950 scale-110' : 'bg-zinc-800 text-zinc-500'
+    }`;
+  };
 
   if (!isOpen) return null;
 
@@ -119,29 +129,27 @@ export default function MetronomeModal() {
             <div className="w-9" />
           </div>
 
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-20 md:pb-6 flex flex-col">
+          {/* Content — reduced spacing to eliminate scrolling */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-4 flex flex-col">
 
             {/* Tempo */}
             <div>
-              <div className="flex items-center justify-center mb-1">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Tempo</span>
-              </div>
-
-              {/* BPM display — centered, number 3× larger */}
-              <div className="flex flex-col items-center mb-4">
-                <span className="text-sm text-zinc-400">{getTempoLabel(bpm)}</span>
+              {/* BPM row: [Tempo label] [Allegro] [spacer] [120 large] [BPM unit] */}
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
+                <span className="text-sm text-zinc-400 flex-shrink-0">{getTempoLabel(bpm)}</span>
+                <span className="flex-1" />
                 <span className="text-[54px] font-bold text-amber-500 leading-none">{bpm}</span>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">BPM</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
 
               {/* Slider row with amber ± buttons */}
-              <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center gap-3 mb-2">
                 <button
                   onClick={() => handleTempoChange(bpm - 1)}
                   className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
                 >
-                  {/* 2× symbol size — text-3xl */}
+                  {/* 2× symbol size */}
                   <span className="text-amber-400 text-3xl leading-none select-none">−</span>
                 </button>
 
@@ -170,7 +178,7 @@ export default function MetronomeModal() {
             <div className="grid grid-cols-2 gap-4">
               {/* Time Signature */}
               <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">Time Signature</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
                 <Select
                   value={currentTimeSigValue}
                   onValueChange={(val) => {
@@ -200,7 +208,7 @@ export default function MetronomeModal() {
 
               {/* Sound */}
               <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">Sound</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Sound</span>
                 <Select
                   value={soundType}
                   onValueChange={(val) => setSoundType(val as typeof soundType)}
@@ -226,11 +234,11 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Subdivision (half width, col 1) + Accent (col 2, below Sound) */}
+            {/* Subdivision (col 1, half width) + Accent (col 2, below Sound) */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Subdivision — same width as Time Signature above */}
+              {/* Subdivision — matches Time Signature width */}
               <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">Subdivision</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
                 <Select
                   value={subdivision}
                   onValueChange={(val) => setSubdivision(val as typeof subdivision)}
@@ -255,9 +263,9 @@ export default function MetronomeModal() {
                 </Select>
               </div>
 
-              {/* Accent — below Sound dropdown, col 2 */}
+              {/* Accent — col 2, below Sound */}
               <div>
-                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
                   {beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                 </span>
                 <button
@@ -283,37 +291,53 @@ export default function MetronomeModal() {
               </button>
             </div>
 
-            {/* Beat Indicators — centered with generous spacing */}
-            <div className="flex items-center justify-center gap-1.5 py-4">
-              {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
-                const isCurrentBeat = isPlaying && beat === currentBeat + 1;
-                return (
-                  <div
-                    key={beat}
-                    className={`flex items-center justify-center font-bold rounded transition-all ${
-                      isCurrentBeat
-                        ? 'bg-emerald-500 text-zinc-950 scale-110'
-                        : 'bg-zinc-800 text-zinc-500'
-                    } ${
-                      beatsPerMeasure === 12
-                        ? 'min-w-[20px] h-7 text-xs px-0.5'
-                        : beatsPerMeasure >= 6
-                        ? 'min-w-[28px] h-8 text-xs'
-                        : 'min-w-[36px] h-9 text-sm'
-                    }`}
-                  >
-                    {beat}
-                  </div>
-                );
-              })}
+            {/* Beat Indicators — grouped for compound time signatures */}
+            <div className="flex items-center justify-center py-2">
+              {beatsPerMeasure === 6 ? (
+                // 6/8: two groups of 3 with wider gap between groups
+                <div className="flex items-center">
+                  {[1, 2, 3].map((beat) => (
+                    <div key={beat} className={`mr-1.5 ${beatDotClass(beat, 'min-w-[28px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                  {/* wider gap between groups */}
+                  <div className="w-4" />
+                  {[4, 5, 6].map((beat) => (
+                    <div key={beat} className={`mr-1.5 last:mr-0 ${beatDotClass(beat, 'min-w-[28px] h-8 text-xs')}`}>
+                      {beat}
+                    </div>
+                  ))}
+                </div>
+              ) : beatsPerMeasure === 12 ? (
+                // 12/8 and 12/4: four groups of 3 with wider gaps between groups
+                <div className="flex items-center">
+                  {[[1,2,3],[4,5,6],[7,8,9],[10,11,12]].map((group, gi) => (
+                    <div key={gi} className="flex items-center">
+                      {gi > 0 && <div className="w-3" />}
+                      {group.map((beat) => (
+                        <div key={beat} className={`mr-1 last:mr-0 ${beatDotClass(beat, 'min-w-[20px] h-7 text-xs px-0.5')}`}>
+                          {beat}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // All other time signatures: flat list
+                <div className="flex items-center gap-1.5">
+                  {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => (
+                    <div key={beat} className={beatDotClass(beat, 'min-w-[36px] h-9 text-sm')}>
+                      {beat}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-
-            {/* Spacer — pushes Volume + Play toward screen bottom */}
-            <div className="mt-12" />
 
             {/* Volume */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5">
                   <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
                   <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
@@ -333,10 +357,10 @@ export default function MetronomeModal() {
               />
             </div>
 
-            {/* Play / Stop */}
+            {/* Play / Stop — 50% width, centered (25% inset each side) */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
-              className={`w-full font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
+              className={`w-1/2 mx-auto font-bold py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${
                 isPlaying
                   ? 'bg-red-600 hover:bg-red-500 text-white shadow-red-600/20'
                   : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'

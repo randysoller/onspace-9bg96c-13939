@@ -4,7 +4,7 @@ import { shallow } from 'zustand/shallow';
 import { createShallowSelector } from '@/hooks/useZustandSelector';
 
 export type MetronomeSound = 'click' | 'woodBlock' | 'hiHat' | 'sideStick' | 'voiceCount';
-export type SubdivisionType = 'quarter' | 'eighth' | 'sixteenth';
+export type SubdivisionType = 'quarter' | 'eighth' | 'sixteenth' | 'triplet';
 export type SyncUnit = 'beats' | 'measures';
 
 interface MetronomeStore {
@@ -95,7 +95,8 @@ export const useMetronomeStore = create<MetronomeStore>()(
       setSubdivision: (subdivision) => set({ subdivision, subdivisionCounter: 0 }),
       
       incrementBeat: () => set((state) => {
-        const subdivisionMultiplier = state.subdivision === 'quarter' ? 1 : state.subdivision === 'eighth' ? 2 : 4;
+        // triplet = 3 eighth-note triplets per beat (e.g. for 12/8 feel)
+        const subdivisionMultiplier = state.subdivision === 'quarter' ? 1 : state.subdivision === 'eighth' ? 2 : state.subdivision === 'triplet' ? 3 : 4;
         const nextSubdivisionCounter = (state.subdivisionCounter + 1) % subdivisionMultiplier;
         
         // Only act on full beats (when subdivision counter wraps back to 0)

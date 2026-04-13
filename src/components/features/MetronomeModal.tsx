@@ -39,7 +39,6 @@ export default function MetronomeModal() {
 
   const handleTapTempo = () => {
     const now = Date.now();
-    // Drop taps older than 3 seconds (stale sequence)
     tapTimestampsRef.current = tapTimestampsRef.current.filter(t => now - t < 3000);
     tapTimestampsRef.current.push(now);
 
@@ -69,7 +68,6 @@ export default function MetronomeModal() {
     return 'Prestissimo';
   };
 
-  // Time signature: value is "beats/noteValue" string to uniquely identify each option
   const timeSignatures = [
     { beats: 2, noteValue: 4, display: '2/4' },
     { beats: 3, noteValue: 4, display: '3/4' },
@@ -78,7 +76,6 @@ export default function MetronomeModal() {
     { beats: 12, noteValue: 8, display: '12/8' },
   ];
 
-  // Current time sig value as a composite key
   const currentTimeSigValue = `${beatsPerMeasure}/${noteValue}`;
 
   const sounds: Array<{ value: typeof soundType; label: string }> = [
@@ -92,6 +89,7 @@ export default function MetronomeModal() {
   const subdivisions = [
     { value: 'quarter' as const, label: '♩ Quarter' },
     { value: 'eighth' as const, label: '♪ Eighth' },
+    { value: 'triplet' as const, label: '♪ Triplet' },
     { value: 'sixteenth' as const, label: '♬ Sixteenth' },
   ];
 
@@ -122,25 +120,29 @@ export default function MetronomeModal() {
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-20 md:pb-6">
+          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-5 pb-20 md:pb-6 flex flex-col">
 
             {/* Tempo */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-center mb-1">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider">Tempo</span>
-                <div className="text-right">
-                  <span className="text-xs text-zinc-500 mr-2">{getTempoLabel(bpm)}</span>
-                  <span className="text-lg font-bold text-amber-500">{bpm}</span>
-                  <span className="text-xs text-zinc-500 ml-1">BPM</span>
-                </div>
               </div>
 
+              {/* BPM display — centered, number 3× larger */}
+              <div className="flex flex-col items-center mb-4">
+                <span className="text-sm text-zinc-400">{getTempoLabel(bpm)}</span>
+                <span className="text-[54px] font-bold text-amber-500 leading-none">{bpm}</span>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider">BPM</span>
+              </div>
+
+              {/* Slider row with amber ± buttons */}
               <div className="flex items-center gap-3 mb-4">
                 <button
                   onClick={() => handleTempoChange(bpm - 1)}
-                  className="w-9 h-9 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
                 >
-                  <span className="text-zinc-400 text-lg leading-none">−</span>
+                  {/* 2× symbol size — text-3xl */}
+                  <span className="text-amber-400 text-3xl leading-none select-none">−</span>
                 </button>
 
                 <input
@@ -154,13 +156,13 @@ export default function MetronomeModal() {
 
                 <button
                   onClick={() => handleTempoChange(bpm + 1)}
-                  className="w-9 h-9 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors flex-shrink-0"
+                  className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
                 >
-                  <span className="text-zinc-400 text-lg leading-none">+</span>
+                  <span className="text-amber-400 text-3xl leading-none select-none">+</span>
                 </button>
               </div>
 
-              {/* Quick Presets dropdown — replaces 7 pill buttons */}
+              {/* Quick Presets dropdown */}
               <MetronomeDropdown />
             </div>
 
@@ -224,61 +226,65 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Subdivision */}
-            <div>
-              <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">Subdivision</span>
-              <Select
-                value={subdivision}
-                onValueChange={(val) => setSubdivision(val as typeof subdivision)}
-              >
-                <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  className="bg-zinc-900 border-zinc-700 z-[200]"
-                  position="popper"
+            {/* Subdivision (half width, col 1) + Accent (col 2, below Sound) */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Subdivision — same width as Time Signature above */}
+              <div>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">Subdivision</span>
+                <Select
+                  value={subdivision}
+                  onValueChange={(val) => setSubdivision(val as typeof subdivision)}
                 >
-                  {subdivisions.map((s) => (
-                    <SelectItem
-                      key={s.value}
-                      value={s.value}
-                      className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
-                    >
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    className="bg-zinc-900 border-zinc-700 z-[200]"
+                    position="popper"
+                  >
+                    {subdivisions.map((s) => (
+                      <SelectItem
+                        key={s.value}
+                        value={s.value}
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                      >
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Accent + Tap Tempo */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center justify-between bg-zinc-900 rounded-lg px-3 py-3">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider leading-tight">
+              {/* Accent — below Sound dropdown, col 2 */}
+              <div>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-2">
                   {beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                 </span>
                 <button
                   onClick={() => setAccentFirstBeat(!accentFirstBeat)}
-                  className={`px-3 py-1.5 rounded font-semibold text-sm transition-all ${
+                  className={`w-full h-10 rounded font-semibold text-sm transition-all ${
                     accentFirstBeat
                       ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                      : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700'
                   }`}
                 >
                   {accentFirstBeat ? 'On' : 'Off'}
                 </button>
               </div>
+            </div>
 
+            {/* Tap Tempo — centered on its own row */}
+            <div className="flex justify-center">
               <button
                 onClick={handleTapTempo}
-                className="py-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="px-12 py-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
             </div>
 
-            {/* Beat Indicators */}
-            <div className="flex items-center justify-center gap-1.5 py-2">
+            {/* Beat Indicators — centered with generous spacing */}
+            <div className="flex items-center justify-center gap-1.5 py-4">
               {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
                 const isCurrentBeat = isPlaying && beat === currentBeat + 1;
                 return (
@@ -301,6 +307,9 @@ export default function MetronomeModal() {
                 );
               })}
             </div>
+
+            {/* Spacer — pushes Volume + Play toward screen bottom */}
+            <div className="mt-12" />
 
             {/* Volume */}
             <div>

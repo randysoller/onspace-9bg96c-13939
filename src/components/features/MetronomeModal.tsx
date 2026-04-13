@@ -155,8 +155,7 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Spacer 1 — desktop only: pushes slider down to center it between BPM and Quick Presets */}
-            <div className="hidden md:block md:flex-1" />
+
 
             {/* Slider row — extracted from Tempo section so desktop spacer can center it */}
             <div className="flex items-center gap-3 mb-3">
@@ -298,14 +297,12 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Spacer 2 — desktop only: pushes Tap Tempo + Swing down to center it between Subdivision/Accent and Beat Counter */}
-            <div className="hidden md:block md:flex-1" />
-
-            {/* Tap Tempo + Swing — floats centered between Subdivision/Accent (above) and Beat Counter (below) on desktop */}
-            <div className="mb-2 relative flex items-center justify-center w-full">
+            {/* Tap Tempo + Swing — mt-auto pushes it to the bottom of the flex column on ALL breakpoints (mobile + desktop) */}
+            {/* This is the only reliable way to create space between Subdivision/Accent and Tap Tempo */}
+            <div className="mt-auto pt-6 mb-2 relative flex items-center justify-center w-full">
               <button
                 onClick={handleTapTempo}
-                className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="px-12 py-5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>

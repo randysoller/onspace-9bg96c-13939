@@ -175,7 +175,7 @@ export default function MetronomeModal() {
                 max="300"
                 value={bpm}
                 onChange={(e) => handleTempoChange(Number(e.target.value))}
-                className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 md:[&::-webkit-slider-thumb]:w-10 md:[&::-webkit-slider-thumb]:h-10 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
               />
 
               <button
@@ -315,7 +315,7 @@ export default function MetronomeModal() {
             <div className="mb-6 relative h-[80px]">
               <button
                 onClick={handleTapTempo}
-                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[28px] tracking-wide whitespace-nowrap transition-all select-none"
+                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[17px] tracking-wide whitespace-nowrap transition-all select-none"
               >
                 Tap Tempo
               </button>
@@ -426,7 +426,7 @@ export default function MetronomeModal() {
                 max="100"
                 value={metronomeVolume * 100}
                 onChange={(e) => setMetronomeVolume(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer mb-1.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer mb-1.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 md:[&::-webkit-slider-thumb]:w-10 md:[&::-webkit-slider-thumb]:h-10 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
               />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">

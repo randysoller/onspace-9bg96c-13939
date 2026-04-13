@@ -96,7 +96,7 @@ export const MetronomeDropdown = () => {
             <SelectValue placeholder="Quick Presets" />
           </div>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-zinc-900 border-zinc-700 z-[200]" position="popper">
           {METRONOME_PRESETS.map((preset) => (
             <SelectItem key={preset.id} value={preset.id}>
               <div className="flex items-center justify-between gap-4">

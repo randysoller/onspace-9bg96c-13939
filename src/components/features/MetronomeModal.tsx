@@ -3,6 +3,14 @@ import { X, Play, Square, Volume2 } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
+import { MetronomeDropdown } from '@/components/features/MetronomeDropdown';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 // useMetronomeAudio is intentionally NOT imported here — it is mounted once
 // at the AppLayout level to keep the audio engine alive across all routes.
 
@@ -36,7 +44,6 @@ export default function MetronomeModal() {
 
     const taps = tapTimestampsRef.current;
     if (taps.length >= 2) {
-      // Compute average interval between consecutive taps
       let totalInterval = 0;
       for (let i = 1; i < taps.length; i++) {
         totalInterval += taps[i] - taps[i - 1];
@@ -61,13 +68,13 @@ export default function MetronomeModal() {
     return 'Prestissimo';
   };
 
-  const quickTempos = [40, 60, 80, 100, 120, 140, 180];
   const timeSignatures = [
     { beats: 2, display: '2/4' },
     { beats: 3, display: '3/4' },
     { beats: 4, display: '4/4' },
     { beats: 12, display: '12/8' },
   ];
+
   const sounds: Array<{ value: typeof soundType; label: string }> = [
     { value: 'click', label: 'Click' },
     { value: 'woodBlock', label: 'Wood Block' },
@@ -76,12 +83,18 @@ export default function MetronomeModal() {
     { value: 'voiceCount', label: 'Voice Count' },
   ];
 
+  const subdivisions = [
+    { value: 'quarter', label: '♩ Quarter' },
+    { value: 'eighth', label: '♪ Eighth' },
+    { value: 'sixteenth', label: '♬ Sixteenth' },
+  ];
+
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[70]"
         onClick={closeMetronome}
       />
@@ -89,6 +102,7 @@ export default function MetronomeModal() {
       {/* Modal — full-screen on mobile, centered card on desktop */}
       <div className="fixed inset-0 z-[70] pointer-events-none md:flex md:items-center md:justify-center md:p-4">
         <div className="w-full h-full md:max-w-md md:h-auto md:max-h-[90vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
+
           {/* Header */}
           <div className="border-b border-zinc-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
             <button
@@ -97,16 +111,13 @@ export default function MetronomeModal() {
             >
               <X className="w-9 h-9 text-zinc-400" />
             </button>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold uppercase tracking-wider text-zinc-200">Metronome</span>
-            </div>
-            
-            <div className="w-5" />
+            <span className="text-sm font-bold uppercase tracking-wider text-zinc-200">Metronome</span>
+            <div className="w-9" />
           </div>
 
-          {/* Scrollable Content — pb-20 clears the mobile tab bar at bottom */}
-          <div className="flex-1 overflow-y-auto px-4 py-2.5 space-y-2.5 pb-20 md:pb-4">
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 pb-20 md:pb-4">
+
             {/* Tempo */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -118,150 +129,111 @@ export default function MetronomeModal() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-3">
                 <button
                   onClick={() => handleTempoChange(bpm - 1)}
-                  className="w-8 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors"
+                  className="w-8 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <span className="text-zinc-400 text-lg leading-none">−</span>
                 </button>
-                
-                <div className="flex-1 relative">
-                  <input
-                    type="range"
-                    min="20"
-                    max="250"
-                    value={bpm}
-                    onChange={(e) => handleTempoChange(Number(e.target.value))}
-                    className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-                  />
-                </div>
-                
+
+                <input
+                  type="range"
+                  min="20"
+                  max="250"
+                  value={bpm}
+                  onChange={(e) => handleTempoChange(Number(e.target.value))}
+                  className="flex-1 h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                />
+
                 <button
                   onClick={() => handleTempoChange(bpm + 1)}
-                  className="w-8 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors"
+                  className="w-8 h-8 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded flex items-center justify-center transition-colors flex-shrink-0"
                 >
                   <span className="text-zinc-400 text-lg leading-none">+</span>
                 </button>
               </div>
 
-              {/* Quick Tempo Buttons */}
-              <div className="grid grid-cols-7 gap-2">
-                {quickTempos.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setBpm(t)}
-                    className={`py-2 px-2 rounded font-bold text-sm transition-all ${
-                      bpm === t
-                        ? 'bg-amber-500 text-zinc-950'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+              {/* Presets dropdown replaces 7 quick-tempo pill buttons */}
+              <MetronomeDropdown />
             </div>
 
-            {/* Time Signature */}
-            <div>
-              <div className="mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Time Signature</span>
+            {/* Time Signature + Sound — side by side */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Time Signature */}
+              <div>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Sig</span>
+                <Select
+                  value={String(beatsPerMeasure)}
+                  onValueChange={(val) => setBeatsPerMeasure(Number(val))}
+                >
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                    {timeSignatures.map((sig) => (
+                      <SelectItem
+                        key={sig.beats}
+                        value={String(sig.beats)}
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                      >
+                        {sig.display}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                {timeSignatures.map((sig) => (
-                  <button
-                    key={sig.beats}
-                    onClick={() => setBeatsPerMeasure(sig.beats)}
-                    className={`py-2 rounded font-bold transition-all ${
-                      beatsPerMeasure === sig.beats
-                        ? 'bg-amber-500 text-zinc-950'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                    }`}
-                  >
-                    {sig.display}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Sound */}
-            <div>
-              <div className="mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Sound</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                {sounds.slice(0, 3).map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setSoundType(s.value)}
-                    className={`py-2 rounded font-semibold text-sm transition-all ${
-                      soundType === s.value
-                        ? 'bg-amber-500 text-zinc-950'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {sounds.slice(3).map((s) => (
-                  <button
-                    key={s.value}
-                    onClick={() => setSoundType(s.value)}
-                    className={`py-2 rounded font-semibold text-sm transition-all ${
-                      soundType === s.value
-                        ? 'bg-amber-500 text-zinc-950'
-                        : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
+              {/* Sound */}
+              <div>
+                <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Sound</span>
+                <Select
+                  value={soundType}
+                  onValueChange={(val) => setSoundType(val as typeof soundType)}
+                >
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700">
+                    {sounds.map((s) => (
+                      <SelectItem
+                        key={s.value}
+                        value={s.value}
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                      >
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Subdivision */}
             <div>
-              <div className="mb-2">
-                <span className="text-xs text-zinc-500 uppercase tracking-wider">Subdivision</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => setSubdivision('quarter')}
-                  className={`py-2 rounded font-semibold text-sm transition-all ${
-                    subdivision === 'quarter'
-                      ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                  }`}
-                >
-                  ♩ Quarter
-                </button>
-                <button
-                  onClick={() => setSubdivision('eighth')}
-                  className={`py-2 rounded font-semibold text-sm transition-all ${
-                    subdivision === 'eighth'
-                      ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                  }`}
-                >
-                  ♪ Eighth
-                </button>
-                <button
-                  onClick={() => setSubdivision('sixteenth')}
-                  className={`py-2 rounded font-semibold text-sm transition-all ${
-                    subdivision === 'sixteenth'
-                      ? 'bg-amber-500 text-zinc-950'
-                      : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800'
-                  }`}
-                >
-                  ♬ Sixteenth
-                </button>
-              </div>
+              <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
+              <Select
+                value={subdivision}
+                onValueChange={(val) => setSubdivision(val as typeof subdivision)}
+              >
+                <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {subdivisions.map((s) => (
+                    <SelectItem
+                      key={s.value}
+                      value={s.value}
+                      className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                    >
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Accent + Tap Tempo — compact 2-column row */}
+            {/* Accent + Tap Tempo — unchanged */}
             <div className="grid grid-cols-2 gap-2">
               <div className="flex items-center justify-between bg-zinc-900 rounded px-3 py-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider leading-tight">
@@ -287,10 +259,10 @@ export default function MetronomeModal() {
               </button>
             </div>
 
-            {/* Beat Indicators — slightly smaller for space efficiency */}
+            {/* Beat Indicators — unchanged */}
             <div className="flex items-center justify-center gap-1 py-1">
               {Array.from({ length: beatsPerMeasure }, (_, i) => i + 1).map((beat) => {
-                const isCurrentBeat = isPlaying && (beat === currentBeat + 1);
+                const isCurrentBeat = isPlaying && beat === currentBeat + 1;
                 return (
                   <div
                     key={beat}
@@ -310,7 +282,7 @@ export default function MetronomeModal() {
               })}
             </div>
 
-            {/* Volume */}
+            {/* Volume — unchanged */}
             <div>
               <div className="mb-1.5">
                 <input
@@ -334,7 +306,7 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Play / Stop — inside scroll, pb-20 above ensures it clears the tab bar */}
+            {/* Play / Stop — unchanged */}
             <button
               onClick={() => setIsPlaying(!isPlaying)}
               className={`w-full font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg ${

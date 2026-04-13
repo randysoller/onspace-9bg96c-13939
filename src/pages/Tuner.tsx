@@ -295,6 +295,8 @@ export default function TunerPanel() {
   // Frequency history buffer for median filtering / outlier rejection
   const freqHistoryRef = useRef<number[]>([]);
   const confidenceHistoryRef = useRef<number[]>([]);
+  // Option 4: track last displayed cents for dead-zone hysteresis
+  const lastDisplayedCentsRef = useRef<number | null>(null);
 
   useEffect(() => { selectedStringRef.current = selectedString; }, [selectedString]);
   useEffect(() => { selectedTuningRef.current = selectedTuning; }, [selectedTuning]);
@@ -439,6 +441,7 @@ export default function TunerPanel() {
     smoothedFreqRef.current = null;
     freqHistoryRef.current = [];
     confidenceHistoryRef.current = [];
+    lastDisplayedCentsRef.current = null;
     setIsListening(false);
     setFrequency(null);
     setNoteInfo(null);
@@ -555,6 +558,14 @@ export default function TunerPanel() {
             return;
           }
 
+          // Option 2: Confidence gating — hold last displayed value for weak/unreliable frames
+          // 0.5 excludes genuinely uncertain readings without being too aggressive
+          const CONFIDENCE_GATE = 0.5;
+          if (confidence < CONFIDENCE_GATE) {
+            rafRef.current = requestAnimationFrame(detect);
+            return;
+          }
+
           // Add to history buffer
           history.push(rawFreq);
           confHistory.push(confidence);
@@ -590,10 +601,27 @@ export default function TunerPanel() {
           }
 
           smoothedFreqRef.current = freq;
-          setFrequency(freq);
           const info = frequencyToNoteInfo(freq);
-          setNoteInfo(info);
           const closest = findClosestString(freq, selectedTuningRef.current.strings);
+
+          // Option 4: Dead-zone hysteresis — suppress micro-jitter within ±4 cents of last display
+          const DEAD_ZONE_CENTS = 4;
+          const targetForDeadZone = selectedStringRef.current ?? closest;
+          const newCentsDisplay = targetForDeadZone
+            ? Math.round(1200 * Math.log2(freq / targetForDeadZone.freq))
+            : info.cents;
+          if (
+            lastDisplayedCentsRef.current !== null &&
+            Math.abs(newCentsDisplay - lastDisplayedCentsRef.current) <= DEAD_ZONE_CENTS
+          ) {
+            // Within dead zone: skip state update but keep RAF running
+            rafRef.current = requestAnimationFrame(detect);
+            return;
+          }
+          lastDisplayedCentsRef.current = newCentsDisplay;
+
+          setFrequency(freq);
+          setNoteInfo(info);
           setClosestString(closest);
           setDisplayNote(info);
           setDisplayFreq(freq);
@@ -627,6 +655,7 @@ export default function TunerPanel() {
               smoothedFreqRef.current = null;
               freqHistoryRef.current = [];
               confidenceHistoryRef.current = [];
+              lastDisplayedCentsRef.current = null;
               holdTimerRef.current = 0;
             }, 400);
           }

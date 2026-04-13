@@ -371,7 +371,7 @@ export default function MetronomeModal() {
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
                 <span className="text-base">♪♩</span>
-                <span className="!text-white">Swing</span>
+                <span style={{ color: 'white' }}>Swing</span>
                 <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-amber-500'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>

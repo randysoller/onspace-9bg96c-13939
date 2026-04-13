@@ -1,3 +1,4 @@
+
 import { useRef } from 'react';
 import { X, Play, Square, Volume2 } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
@@ -139,8 +140,8 @@ export default function MetronomeModal() {
           <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="px-4 pt-[30px] pb-3 flex flex-col min-h-full">
 
-            {/* Tempo — BPM number centered, labels on sides */}
-            <div className="mb-3">
+            {/* Tempo — BPM number row only (slider moved below spacer for desktop centering) */}
+            <div className="mb-2">
               {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
               <div className="relative flex items-center gap-2 mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
@@ -152,39 +153,40 @@ export default function MetronomeModal() {
                 <span className="flex-1" />
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
-
-              {/* Slider row with amber ± buttons — mb-3 adds 12px space below BPM number */}
-              <div className="flex items-center gap-3 mb-3">
-                <button
-                  onClick={() => handleTempoChange(bpm - 1)}
-                  className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
-                >
-                  {/* 2× symbol size */}
-                  <span className="text-amber-400 text-3xl leading-none select-none">−</span>
-                </button>
-
-                <input
-                  type="range"
-                  min="20"
-                  max="250"
-                  value={bpm}
-                  onChange={(e) => handleTempoChange(Number(e.target.value))}
-                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-                />
-
-                <button
-                  onClick={() => handleTempoChange(bpm + 1)}
-                  className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
-                >
-                  <span className="text-amber-400 text-3xl leading-none select-none">+</span>
-                </button>
-              </div>
-
             </div>
 
-            {/* Centered middle block — Quick Presets + Time Sig/Sound + Subdivision/Accent */}
-            {/* flex-1 fills the space between Tempo slider (above) and Tap Tempo/Swing (below) */}
-            <div className="flex-1 flex flex-col justify-center gap-3">
+            {/* Spacer 1 — desktop only: pushes slider down to center it between BPM and Quick Presets */}
+            <div className="hidden md:block md:flex-1" />
+
+            {/* Slider row — extracted from Tempo section so desktop spacer can center it */}
+            <div className="flex items-center gap-3 mb-3">
+              <button
+                onClick={() => handleTempoChange(bpm - 1)}
+                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
+              >
+                <span className="text-amber-400 text-3xl leading-none select-none">−</span>
+              </button>
+
+              <input
+                type="range"
+                min="20"
+                max="250"
+                value={bpm}
+                onChange={(e) => handleTempoChange(Number(e.target.value))}
+                className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              />
+
+              <button
+                onClick={() => handleTempoChange(bpm + 1)}
+                className="w-12 h-12 bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 rounded flex items-center justify-center transition-colors flex-shrink-0"
+              >
+                <span className="text-amber-400 text-3xl leading-none select-none">+</span>
+              </button>
+            </div>
+
+            {/* Middle block — Quick Presets + Time Sig/Sound + Subdivision/Accent */}
+            {/* flex-1 removed: desktop spacers handle vertical distribution instead */}
+            <div className="flex flex-col gap-3">
               {/* Quick Presets dropdown */}
               <MetronomeDropdown />
 
@@ -296,9 +298,11 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo + Swing — pinned to bottom of scrollable, just above the beat indicators */}
-            {/* mb-4 creates a comfortable gap between this row and the fixed bottom section */}
-            <div className="mb-4 relative flex items-center justify-center w-full">
+            {/* Spacer 2 — desktop only: pushes Tap Tempo + Swing down to center it between Subdivision/Accent and Beat Counter */}
+            <div className="hidden md:block md:flex-1" />
+
+            {/* Tap Tempo + Swing — floats centered between Subdivision/Accent (above) and Beat Counter (below) on desktop */}
+            <div className="mb-2 relative flex items-center justify-center w-full">
               <button
                 onClick={handleTapTempo}
                 className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"

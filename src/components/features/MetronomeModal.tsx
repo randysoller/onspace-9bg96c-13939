@@ -315,7 +315,7 @@ export default function MetronomeModal() {
             <div className="mb-6 relative h-[80px]">
               <button
                 onClick={handleTapTempo}
-                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-6 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[28px] tracking-wide whitespace-nowrap transition-all select-none"
+                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[28px] tracking-wide whitespace-nowrap transition-all select-none"
               >
                 Tap Tempo
               </button>

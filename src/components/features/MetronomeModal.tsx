@@ -134,10 +134,10 @@ export default function MetronomeModal() {
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto px-4 pt-6 pb-3 space-y-3">
+          <div className="flex-1 overflow-y-auto px-4 pt-[30px] pb-3 flex flex-col">
 
             {/* Tempo — BPM number centered, labels on sides */}
-            <div>
+            <div className="mb-3">
               {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
               <div className="relative flex items-center gap-2 mb-2">
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
@@ -182,7 +182,7 @@ export default function MetronomeModal() {
             </div>
 
             {/* Time Signature + Sound — side by side */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-3">
               {/* Time Signature */}
               <div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
@@ -204,7 +204,7 @@ export default function MetronomeModal() {
                       <SelectItem
                         key={`${sig.beats}/${sig.noteValue}`}
                         value={`${sig.beats}/${sig.noteValue}`}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                       >
                         {sig.display}
                       </SelectItem>
@@ -231,7 +231,7 @@ export default function MetronomeModal() {
                       <SelectItem
                         key={s.value}
                         value={s.value}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                       >
                         {s.label}
                       </SelectItem>
@@ -242,7 +242,7 @@ export default function MetronomeModal() {
             </div>
 
             {/* Subdivision (col 1, half width) + Accent (col 2, below Sound) */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-0">
               {/* Subdivision — matches Time Signature width */}
               <div>
                 <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
@@ -288,18 +288,17 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo — centered, 25% taller (py-3 → py-[15px]) */}
-            <div className="flex justify-center pt-1">
-              <button
+            {/* Tap Tempo + Beat Indicators — vertically centered in remaining flex space */}
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            <button
                 onClick={handleTapTempo}
-                className="px-12 py-[15px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="px-12 py-[30px] rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
-            </div>
 
-            {/* Beat Indicators — more space from Tap Tempo */}
-            <div className="flex items-center justify-center pt-3 pb-2">
+            {/* Beat Indicators */}
+            <div className="flex items-center justify-center">
               {beatsPerMeasure === 5 ? (
                 // 5/4 and 5/8: 2+3 grouping — accents on beats 1 and 3
                 <div className="flex items-center">
@@ -369,6 +368,7 @@ export default function MetronomeModal() {
                   ))}
                 </div>
               )}
+            </div>
             </div>
           </div>
 

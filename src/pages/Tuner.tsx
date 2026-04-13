@@ -241,6 +241,14 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
   return { frequency, confidence: bestVal };
 }
 
+// Note-lock helper: computes the equal-temperament reference frequency for a note+octave.
+// Used to calculate cents-from-lock for release threshold comparison.
+function lockedNoteFreq(note: string, octave: number): number {
+  const idx = NOTE_STRINGS.indexOf(note as typeof NOTE_STRINGS[number]);
+  // Semitones from A4: each octave is 12 semitones, A is index 9
+  return 440 * Math.pow(2, ((octave - 4) * 12 + (idx - 9)) / 12);
+}
+
 function findClosestString(freq: number, strings: GuitarString[]): GuitarString | null {
   let closest = strings[0];
   let minDist = Infinity;
@@ -297,6 +305,13 @@ export default function TunerPanel() {
   const confidenceHistoryRef = useRef<number[]>([]);
   // Option 4: track last displayed cents for dead-zone hysteresis
   const lastDisplayedCentsRef = useRef<number | null>(null);
+
+  // Note-lock stabilization: mimics professional hardware tuner behavior.
+  // Lock activates after 3+ consecutive frames agree on the same note (name+octave).
+  // Lock releases only when smoothed frequency drifts >50 cents from the locked note.
+  const noteLockRef = useRef<{ note: string; octave: number; refFreq: number } | null>(null);
+  const consecutiveCountRef = useRef(0);
+  const lastNoteKeyRef = useRef('');
 
   useEffect(() => { selectedStringRef.current = selectedString; }, [selectedString]);
   useEffect(() => { selectedTuningRef.current = selectedTuning; }, [selectedTuning]);
@@ -442,6 +457,9 @@ export default function TunerPanel() {
     freqHistoryRef.current = [];
     confidenceHistoryRef.current = [];
     lastDisplayedCentsRef.current = null;
+    noteLockRef.current = null;
+    consecutiveCountRef.current = 0;
+    lastNoteKeyRef.current = '';
     setIsListening(false);
     setFrequency(null);
     setNoteInfo(null);
@@ -593,6 +611,41 @@ export default function TunerPanel() {
           const info = frequencyToNoteInfo(freq);
           const closest = findClosestString(freq, selectedTuningRef.current.strings);
 
+          // ─── Note-Lock Stabilization ───
+          // Professional hardware tuners lock to a note after consistent detection
+          // and only release when pitch genuinely moves to a new note (>50 cents drift).
+          const detectedKey = `${info.note}${info.octave}`;
+          if (noteLockRef.current !== null) {
+            const centsFromLock = 1200 * Math.log2(freq / noteLockRef.current.refFreq);
+            if (Math.abs(centsFromLock) > 50) {
+              // Pitch has genuinely moved: release lock and start counting new note
+              noteLockRef.current = null;
+              consecutiveCountRef.current = 1;
+              lastNoteKeyRef.current = detectedKey;
+            } else if (detectedKey !== `${noteLockRef.current.note}${noteLockRef.current.octave}`) {
+              // Stray frame near semitone boundary: suppress update, hold last display
+              rafRef.current = requestAnimationFrame(detect);
+              return;
+            }
+            // else: matches locked note — fall through to dead-zone + state update
+          } else {
+            // Not locked: count consecutive frames with the same note
+            if (detectedKey === lastNoteKeyRef.current) {
+              consecutiveCountRef.current++;
+            } else {
+              consecutiveCountRef.current = 1;
+              lastNoteKeyRef.current = detectedKey;
+            }
+            // Activate lock after 3 consistent frames
+            if (consecutiveCountRef.current >= 3) {
+              noteLockRef.current = {
+                note: info.note,
+                octave: info.octave,
+                refFreq: lockedNoteFreq(info.note, info.octave),
+              };
+            }
+          }
+
           // Option 4: Dead-zone hysteresis — suppress micro-jitter within ±4 cents of last display
           const DEAD_ZONE_CENTS = 4;
           const targetForDeadZone = selectedStringRef.current ?? closest;
@@ -645,6 +698,9 @@ export default function TunerPanel() {
               freqHistoryRef.current = [];
               confidenceHistoryRef.current = [];
               lastDisplayedCentsRef.current = null;
+              noteLockRef.current = null;
+              consecutiveCountRef.current = 0;
+              lastNoteKeyRef.current = '';
               holdTimerRef.current = 0;
             }, 400);
           }

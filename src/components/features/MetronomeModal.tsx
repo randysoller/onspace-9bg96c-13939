@@ -121,7 +121,7 @@ export default function MetronomeModal() {
 
       {/* Modal — full-screen on mobile, centered card on desktop */}
       <div className="fixed inset-0 z-[80] pointer-events-none md:flex md:items-center md:justify-center md:p-4">
-        <div className="w-full h-full md:max-w-md md:h-auto md:max-h-[90vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
+        <div className="w-full h-full md:max-w-md md:h-auto md:min-h-[700px] md:max-h-[95vh] bg-zinc-950 border-0 md:border md:border-zinc-800 rounded-none md:rounded-lg pointer-events-auto shadow-2xl flex flex-col overflow-hidden">
 
           {/* Header */}
           <div className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between flex-shrink-0">
@@ -169,7 +169,7 @@ export default function MetronomeModal() {
                   max="250"
                   value={bpm}
                   onChange={(e) => handleTempoChange(Number(e.target.value))}
-                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+                  className="flex-1 h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
                 />
 
                 <button
@@ -264,7 +264,7 @@ export default function MetronomeModal() {
                       <SelectItem
                         key={s.value}
                         value={s.value}
-                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white"
+                        className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                       >
                         {s.label}
                       </SelectItem>
@@ -291,8 +291,8 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo + Swing Toggle + Beat Indicators — vertically centered in remaining flex space */}
-            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+            {/* Tap Tempo + Swing Toggle + Beat Indicators — below Subdivision/Accent in normal document flow */}
+            <div className="mt-4 flex flex-col items-center gap-4">
               {/* Tap Tempo centered; Swing toggle absolutely positioned to the right */}
               <div className="relative flex items-center justify-center w-full">
                 <button
@@ -398,9 +398,17 @@ export default function MetronomeModal() {
 
           {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
           <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-2 space-y-4 border-t border-zinc-800/50">
-            {/* Volume — extra space above play */}
+            {/* Volume — slider on top, label row below */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={metronomeVolume * 100}
+                onChange={(e) => setMetronomeVolume(Number(e.target.value) / 100)}
+                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer mb-1.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
+              />
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Volume2 className="w-3.5 h-3.5 text-zinc-500" />
                   <span className="text-xs text-zinc-500 uppercase tracking-wider">Volume</span>
@@ -410,14 +418,6 @@ export default function MetronomeModal() {
                   <span className="text-sm font-bold text-amber-500">{Math.round(metronomeVolume * 100)}%</span>
                 </div>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={metronomeVolume * 100}
-                onChange={(e) => setMetronomeVolume(Number(e.target.value) / 100)}
-                className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-500"
-              />
             </div>
 
             {/* Play / Stop — 70% width (10% less inset each side), 20% taller (py-5) */}

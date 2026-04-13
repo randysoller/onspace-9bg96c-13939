@@ -138,7 +138,7 @@ export default function MetronomeModal() {
 
           {/* Scrollable content — min-h-0 is required so flex-1 shrinks correctly inside overflow-y-auto */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="px-4 pt-0 pb-3 flex flex-col h-full">
+          <div className="px-4 pt-12 pb-3 flex flex-col h-full">
 
             {/* Spacer above BPM — equal to flex-1 below, vertically centers BPM between header and slider */}
             <div className="flex-1" />
@@ -147,14 +147,14 @@ export default function MetronomeModal() {
             <div className="mb-2">
               {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
               <div className="relative flex items-center gap-2 mb-2">
-                <span className="text-xs text-zinc-400 uppercase tracking-wider flex-shrink-0">Tempo</span>
+                <span className="text-xs text-amber-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
                 <span className="text-sm text-zinc-300 flex-shrink-0">{getTempoLabel(bpm)}</span>
                 {/* BPM number absolutely centered in the row */}
                 <span className="absolute left-1/2 -translate-x-1/2 text-[68px] font-bold text-amber-500 leading-none pointer-events-none">
                   {bpm}
                 </span>
                 <span className="flex-1" />
-                <span className="text-xs text-zinc-400 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
+                <span className="text-xs text-amber-500 uppercase tracking-wider flex-shrink-0 self-end mb-1">BPM</span>
               </div>
             </div>
 
@@ -199,7 +199,7 @@ export default function MetronomeModal() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Time Signature */}
                 <div>
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
+                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
                   <Select
                     value={currentTimeSigValue}
                     onValueChange={(val) => {
@@ -229,7 +229,7 @@ export default function MetronomeModal() {
 
                 {/* Sound */}
                 <div>
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Sound</span>
+                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">Sound</span>
                   <Select
                     value={soundType}
                     onValueChange={(val) => setSoundType(val as typeof soundType)}
@@ -259,7 +259,7 @@ export default function MetronomeModal() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Subdivision */}
                 <div>
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
+                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
                   <Select
                     value={subdivision}
                     onValueChange={(val) => setSubdivision(val as typeof subdivision)}
@@ -286,7 +286,7 @@ export default function MetronomeModal() {
 
                 {/* Accent */}
                 <div>
-                  <span className="text-xs text-zinc-500 uppercase tracking-wider block mb-1.5">
+                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">
                     {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                   </span>
                   <button
@@ -344,7 +344,7 @@ export default function MetronomeModal() {
               >
                 <span className="text-base">♪♩</span>
                 <span>Swing</span>
-                <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-zinc-300'}`}>
+                <span className={`text-[10px] ${swingEnabled ? 'text-amber-400' : 'text-amber-500'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>
               </button>

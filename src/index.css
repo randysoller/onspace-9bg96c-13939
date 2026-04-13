@@ -212,20 +212,23 @@ body {
 }
 
 /* Metronome Quick Presets — scroll-down indicator arrow styling.
-   Targets the Radix scroll-down button via its data attribute.
-   Makes the arrow brighter (amber), larger (24px), and thicker (stroke-width 2.5)
-   so users clearly see there are more presets to scroll to. */
+   !important is required: Lucide sets stroke-width as an SVG attribute which
+   outranks CSS presentation rules without !important. Width/height !important
+   defeats Tailwind's h-4 w-4 class on the ChevronDown icon.
+   Target: 32px (2x default 16px), stroke-width 4 (2x default 2), amber-orange. */
 [data-radix-select-scroll-down-button] {
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding-top: 12px;
+  padding-bottom: 12px;
   background: linear-gradient(to top, rgb(9 9 11) 60%, transparent 100%);
-  color: rgb(245 158 11); /* amber-500 */
+  color: rgb(251 146 60) !important; /* amber-400 — vivid orange-amber */
 }
 
 [data-radix-select-scroll-down-button] svg {
-  width: 24px;
-  height: 24px;
-  stroke-width: 2.5;
+  width: 32px !important;
+  height: 32px !important;
+  stroke-width: 4 !important;
+  color: rgb(251 146 60) !important;
+  flex-shrink: 0;
 }
 
 /* Custom scrollbar */

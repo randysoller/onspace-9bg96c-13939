@@ -138,7 +138,10 @@ export default function MetronomeModal() {
 
           {/* Scrollable content — min-h-0 is required so flex-1 shrinks correctly inside overflow-y-auto */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="px-4 pt-[30px] pb-3 flex flex-col h-full">
+          <div className="px-4 pt-0 pb-3 flex flex-col h-full">
+
+            {/* Spacer above BPM — equal to flex-1 below, vertically centers BPM between header and slider */}
+            <div className="flex-1" />
 
             {/* Tempo — BPM number row only (slider moved below spacer for desktop centering) */}
             <div className="mb-2">
@@ -147,7 +150,7 @@ export default function MetronomeModal() {
                 <span className="text-xs text-zinc-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
                 <span className="text-sm text-zinc-400 flex-shrink-0">{getTempoLabel(bpm)}</span>
                 {/* BPM number absolutely centered in the row */}
-                <span className="absolute left-1/2 -translate-x-1/2 text-[54px] font-bold text-amber-500 leading-none pointer-events-none">
+                <span className="absolute left-1/2 -translate-x-1/2 text-[68px] font-bold text-amber-500 leading-none pointer-events-none">
                   {bpm}
                 </span>
                 <span className="flex-1" />

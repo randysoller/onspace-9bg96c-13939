@@ -297,17 +297,17 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Desktop-only flex spacer: a proper flex item (md:flex) that grows (md:flex-1) to fill
-                 remaining vertical space, pushing Tap Tempo down to the bottom of the scrollable area.
-                 'hidden' removes it entirely on mobile so mobile layout is unaffected.
-                 This bypasses the broken min-h-full → mt-auto chain by using flex-grow directly. */}
-            <div className="hidden md:flex md:flex-1" />
+          </div>
+          </div>
 
-            {/* Tap Tempo + Swing — pt-4 gives small breathing room above; desktop spacer handles the push-down */}
-            <div className="pt-4 mb-2 relative flex items-center justify-center w-full">
+          {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
+          <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-3 border-t border-zinc-800/50">
+
+            {/* Tap Tempo + Swing — anchored in fixed section directly above beat counter (mb-2 = ~8px gap) */}
+            <div className="mb-2 relative flex items-center justify-center w-full">
               <button
                 onClick={handleTapTempo}
-                className="px-12 py-5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
+                className="px-12 py-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
               >
                 Tap Tempo
               </button>
@@ -336,11 +336,7 @@ export default function MetronomeModal() {
                 </span>
               </button>
             </div>
-          </div>
-          </div>
 
-          {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
-          <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-3 border-t border-zinc-800/50">
             {/* Beat Indicators — anchored just above the volume slider (~24px gap via mb-6) */}
             <div className="flex items-center justify-center mb-6">
               {beatsPerMeasure === 5 ? (

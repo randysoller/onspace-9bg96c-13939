@@ -303,8 +303,9 @@ export default function MetronomeModal() {
           {/* Bottom section — pb-20 on mobile clears the MobileTabBar (~64px) */}
           <div className="flex-shrink-0 px-4 pb-20 md:pb-6 pt-3 border-t border-zinc-800/50">
 
-            {/* Tap Tempo + Swing — anchored in fixed section directly above beat counter (mb-2 = ~8px gap) */}
-            <div className="mb-2 relative flex items-center justify-center w-full">
+            {/* Tap Tempo + Swing — anchored in fixed section directly above beat counter (mb-6 = 24px gap) */}
+            {/* Swing is inline flex sibling of Tap Tempo, not absolutely positioned */}
+            <div className="mb-6 flex items-center justify-center gap-3">
               <button
                 onClick={handleTapTempo}
                 className="px-12 py-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"
@@ -312,7 +313,7 @@ export default function MetronomeModal() {
                 Tap Tempo
               </button>
 
-              {/* Swing toggle — absolutely positioned to the right of Tap Tempo */}
+              {/* Swing toggle — inline flex sibling with Tap Tempo */}
               <button
                 onClick={() => {
                   if (!swingEnabled) {
@@ -323,7 +324,7 @@ export default function MetronomeModal() {
                   }
                 }}
                 title={subdivision !== 'eighth' ? 'Swing applies to Eighth subdivision' : 'Toggle swing feel'}
-                className={`absolute right-0 flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
+                className={`flex flex-col items-center justify-center gap-1 px-4 py-3 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
                   swingEnabled
                     ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'

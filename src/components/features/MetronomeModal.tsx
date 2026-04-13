@@ -297,9 +297,14 @@ export default function MetronomeModal() {
               </div>
             </div>
 
-            {/* Tap Tempo + Swing — mt-auto pushes it to the bottom of the flex column on ALL breakpoints (mobile + desktop) */}
-            {/* This is the only reliable way to create space between Subdivision/Accent and Tap Tempo */}
-            <div className="mt-auto pt-6 mb-2 relative flex items-center justify-center w-full">
+            {/* Desktop-only flex spacer: a proper flex item (md:flex) that grows (md:flex-1) to fill
+                 remaining vertical space, pushing Tap Tempo down to the bottom of the scrollable area.
+                 'hidden' removes it entirely on mobile so mobile layout is unaffected.
+                 This bypasses the broken min-h-full → mt-auto chain by using flex-grow directly. */}
+            <div className="hidden md:flex md:flex-1" />
+
+            {/* Tap Tempo + Swing — pt-4 gives small breathing room above; desktop spacer handles the push-down */}
+            <div className="pt-4 mb-2 relative flex items-center justify-center w-full">
               <button
                 onClick={handleTapTempo}
                 className="px-12 py-5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-bold text-sm tracking-wide transition-all select-none"

@@ -211,6 +211,23 @@ body {
   }
 }
 
+/* Metronome Quick Presets — scroll-down indicator arrow styling.
+   Targets the Radix scroll-down button via its data attribute.
+   Makes the arrow brighter (amber), larger (24px), and thicker (stroke-width 2.5)
+   so users clearly see there are more presets to scroll to. */
+[data-radix-select-scroll-down-button] {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  background: linear-gradient(to top, rgb(9 9 11) 60%, transparent 100%);
+  color: rgb(245 158 11); /* amber-500 */
+}
+
+[data-radix-select-scroll-down-button] svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.5;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

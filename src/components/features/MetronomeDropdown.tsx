@@ -97,8 +97,8 @@ export const MetronomeDropdown = () => {
             <SelectValue placeholder="Quick Presets" />
           </div>
         </SelectTrigger>
-        {/* No max-height constraint — all presets visible without internal scroll */}
-        <SelectContent className="bg-zinc-900 border-zinc-700 z-[200] max-h-none" position="popper">
+        {/* Constrained height prevents overflow behind the mobile tab bar; internal scroll reveals all 9 presets */}
+        <SelectContent className="bg-zinc-900 border-zinc-700 z-[200] max-h-[55vh] overflow-y-auto" position="popper">
           {METRONOME_PRESETS.map((preset) => (
             <SelectItem
               key={preset.id}

@@ -190,7 +190,7 @@ export default function MetronomeModal() {
             </div>{/* end BPM zone */}
 
             {/* Slider row — extracted from Tempo section so desktop spacer can center it */}
-            <div className="flex items-center gap-3 mt-6 mb-3">
+            <div className="flex items-center gap-3 mt-5 mb-3">
               <button
                 onPointerDown={() => handleBpmPointerDown(-1)}
                 onPointerUp={clearLongPress}

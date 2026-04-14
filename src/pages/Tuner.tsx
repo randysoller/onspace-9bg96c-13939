@@ -132,7 +132,7 @@ interface PitchResult {
   confidence: number;
 }
 
-function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | null {
+function autoCorrelate(buffer: Float32Array, sampleRate: number, expectedFreq?: number): PitchResult | null {
   // Use a sub-window for consistent, efficient analysis (4096 samples is plenty for guitar)
   const windowSize = Math.min(buffer.length, 4096);
   const offset = Math.floor((buffer.length - windowSize) / 2);
@@ -200,11 +200,26 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number): PitchResult | 
 
   if (peaks.length === 0) return null;
 
-  // Pick first peak above threshold (lowest frequency fundamental)
+  // Pick first peak above its applicable threshold (lowest frequency = fundamental).
+  // Problem 1 fix: when an expected string frequency is known, lower the acceptance
+  // threshold for peaks whose lag maps to within ±200 cents of the expected fundamental.
+  // This prevents a strong harmonic (e.g. D4 at 294 Hz) from outcompeting a slightly
+  // weaker fundamental (D3 at 147 Hz) during the first-peak selection pass.
+  const ON_TARGET_THRESHOLD = 0.32;  // easier bar for confirmed-fundamental peaks
+  const OFF_TARGET_THRESHOLD = 0.42; // original threshold for unknown/off-target peaks
   let bestTau = -1;
   let bestVal = -Infinity;
   for (const p of peaks) {
-    if (p.val >= threshold) {
+    let peakThreshold = OFF_TARGET_THRESHOLD;
+    if (expectedFreq) {
+      const peakFreq = sampleRate / p.tau;
+      const centsDiff = Math.abs(1200 * Math.log2(peakFreq / expectedFreq));
+      // Within ±200 cents (~2 semitones): treat as candidate fundamental
+      if (centsDiff <= 200) {
+        peakThreshold = ON_TARGET_THRESHOLD;
+      }
+    }
+    if (p.val >= peakThreshold) {
       bestTau = p.tau;
       bestVal = p.val;
       break;
@@ -561,7 +576,14 @@ export default function TunerPanel() {
         (globalThis as any).__tunerRmsThreshold = rmsThreshold;
 
         analyserRef.current.getFloatTimeDomainData(bufferRef.current);
-        const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate);
+        // Problem 1: pass the previous frame's known expected frequency so autoCorrelate
+        // can bias peak selection toward the fundamental lag, reducing octave-jump frequency.
+        // Uses selectedString first, then the debounced closest string from the prior frame.
+        const expectedFreq =
+          selectedStringRef.current?.freq ??
+          lastDisplayedClosestRef.current?.freq ??
+          undefined;
+        const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate, expectedFreq);
 
         if (pitchResult) {
           const { frequency: rawFreq, confidence } = pitchResult;
@@ -655,6 +677,20 @@ export default function TunerPanel() {
           // Professional hardware tuners lock to a note after consistent detection
           // and only release when pitch genuinely moves to a new note (>50 cents drift).
           const detectedKey = `${info.note}${info.octave}`;
+
+          // Problem 4: require 5 consecutive frames (instead of 3) to lock when the
+          // detected note is the same letter name as the expected string but a different
+          // octave. This prevents the note-lock from latching onto D4 during the
+          // transient attack of a plucked D3, where harmonics temporarily peak first.
+          const expectedForLock = selectedStringRef.current ?? lastDisplayedClosestRef.current;
+          let lockThreshold = 3;
+          if (expectedForLock) {
+            const expLockInfo = frequencyToNoteInfo(expectedForLock.freq);
+            if (info.note === expLockInfo.note && info.octave !== expLockInfo.octave) {
+              lockThreshold = 5; // same note name, different octave = octave confusion
+            }
+          }
+
           if (noteLockRef.current !== null) {
             const centsFromLock = 1200 * Math.log2(freq / noteLockRef.current.refFreq);
             if (Math.abs(centsFromLock) > 50) {
@@ -676,8 +712,8 @@ export default function TunerPanel() {
               consecutiveCountRef.current = 1;
               lastNoteKeyRef.current = detectedKey;
             }
-            // Activate lock after 3 consistent frames
-            if (consecutiveCountRef.current >= 3) {
+            // Activate lock after lockThreshold consistent frames (3 normal, 5 for octave-confused notes)
+            if (consecutiveCountRef.current >= lockThreshold) {
               noteLockRef.current = {
                 note: info.note,
                 octave: info.octave,

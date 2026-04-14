@@ -1052,9 +1052,7 @@ export default function TunerPanel() {
                       )}
                     </p>
                   </div>
-                  <p className="mt-2 text-sm font-body text-zinc-400 tabular-nums transition-opacity duration-300" style={{ opacity: shownFreq ? 1 : 0.3 }}>
-                    {shownFreq ? `${shownFreq.toFixed(1)} Hz` : '— Hz'}
-                  </p>
+
                   <p className={`mt-1 text-sm font-body text-zinc-500 h-5 transition-opacity duration-200 ${targetString && shownNote ? 'opacity-100' : 'opacity-0'}`}>
                     {targetString ? `Target: ${targetString.note} (${targetString.freq.toFixed(1)} Hz)` : '\u00A0'}
                   </p>
@@ -1109,11 +1107,6 @@ export default function TunerPanel() {
                   </div>
                   <div className="flex justify-between items-center text-[12px] font-body text-zinc-500">
                     <span>♭ Flat</span>
-                    <span className={`font-display text-sm font-bold tabular-nums transition-colors duration-300 ${
-                      !shownNote ? 'text-[hsl(var(--text-muted)/0.4)]' : isTargetInTune ? 'text-[hsl(142_71%_45%)]' : isTargetClose ? 'text-[hsl(var(--color-emphasis))]' : 'text-zinc-300'
-                    }`}>
-                      {shownNote ? `${centsFromTarget > 0 ? '+' : ''}${centsFromTarget} cents` : '0 cents'}
-                    </span>
                     <span>Sharp ♯</span>
                   </div>
                 </div>
@@ -1281,7 +1274,7 @@ export default function TunerPanel() {
                       <span className="text-[8px] font-body text-zinc-400 text-center leading-none">
                         <span className="block">Str{gs.string}</span>
                       </span>
-                      <span className={`font-display text-[14px] sm:text-[18px] font-bold leading-tight ${
+                      <span className={`font-display text-[18px] sm:text-[23px] font-bold leading-tight ${
                         isActive
                           ? 'text-[hsl(var(--color-primary))]'
                           : isDetected
@@ -1296,21 +1289,7 @@ export default function TunerPanel() {
                         <span className="hidden sm:inline">{gs.note}</span>
                       </span>
 
-                      <span className={`text-[8px] font-display font-bold tabular-nums mt-0 h-2.5 transition-colors duration-200 ${
-                        stringCents === null
-                          ? 'text-transparent'
-                          : stringInTune
-                          ? 'text-[hsl(142_71%_45%)]'
-                          : stringClose
-                          ? 'text-[hsl(var(--color-emphasis))]'
-                          : 'text-[hsl(var(--text-muted)/0.7)]'
-                      }`}>
-                        {stringCents !== null
-                          ? stringInTune
-                            ? '✓'
-                            : `${stringCents > 0 ? '+' : ''}${stringCents}c`
-                          : '—'}
-                      </span>
+
                       <Volume2 className={`size-2.5 mt-0 transition-colors ${
                         isPlaying 
                           ? 'text-amber-500 animate-pulse' 

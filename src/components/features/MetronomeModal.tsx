@@ -126,6 +126,14 @@ export default function MetronomeModal() {
     { value: 'sixteenth' as const, label: '♬ Sixteenth' },
   ];
 
+  // Short description shown below the Beat Division dropdown — updates with selection
+  const SUBDIVISION_DESCRIPTIONS: Record<typeof subdivision, string> = {
+    quarter:   '1 click per beat',
+    eighth:    '2 clicks per beat',
+    triplet:   '3 clicks per beat',
+    sixteenth: '4 clicks per beat',
+  };
+
   // Beat indicator dot shared class helper
   const beatDotClass = (beat: number, sizeClass: string) => {
     const isCurrentBeat = isPlaying && beat === currentBeat + 1;
@@ -310,6 +318,9 @@ export default function MetronomeModal() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="mt-1.5 text-[10px] text-zinc-400 leading-tight">
+                    {SUBDIVISION_DESCRIPTIONS[subdivision]}
+                  </p>
                 </div>
 
                 {/* Accent */}

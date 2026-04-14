@@ -182,7 +182,7 @@ export default function MetronomeModal() {
                 <span className="text-[15px] text-amber-500 uppercase tracking-wider flex-shrink-0">Tempo</span>
                 <span className="text-sm text-zinc-300 flex-shrink-0">{getTempoLabel(bpm)}</span>
                 {/* BPM number absolutely centered in the row */}
-                <span className="absolute left-1/2 -translate-x-1/2 text-[68px] font-bold text-amber-500 leading-none pointer-events-none">
+                <span className="absolute left-1/2 -translate-x-1/2 text-[85px] font-bold text-amber-500 leading-none pointer-events-none">
                   {bpm}
                 </span>
                 <span className="flex-1" />

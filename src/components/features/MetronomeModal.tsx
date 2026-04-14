@@ -287,7 +287,7 @@ export default function MetronomeModal() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Subdivision */}
                 <div>
-                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">Subdivision</span>
+                  <span className="text-xs text-amber-500 uppercase tracking-wider block mb-1.5">Beat Division</span>
                   <Select
                     value={subdivision}
                     onValueChange={(val) => setSubdivision(val as typeof subdivision)}

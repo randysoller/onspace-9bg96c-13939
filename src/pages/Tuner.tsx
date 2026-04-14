@@ -311,6 +311,11 @@ export default function TunerPanel() {
   // Option 4: track last displayed cents for dead-zone hysteresis
   const lastDisplayedCentsRef = useRef<number | null>(null);
 
+  // Problem 5: debounce closest-string switching to prevent cents graph zigzag
+  // when detection alternates between D3/D4 or other adjacent octaves.
+  const lastDisplayedClosestRef = useRef<GuitarString | null>(null);
+  const displayClosestSwitchedAtRef = useRef<number>(0);
+
   // Note-lock stabilization: mimics professional hardware tuner behavior.
   // Lock activates after 3+ consecutive frames agree on the same note (name+octave).
   // Lock releases only when smoothed frequency drifts >50 cents from the locked note.
@@ -462,6 +467,8 @@ export default function TunerPanel() {
     freqHistoryRef.current = [];
     confidenceHistoryRef.current = [];
     lastDisplayedCentsRef.current = null;
+    lastDisplayedClosestRef.current = null;
+    displayClosestSwitchedAtRef.current = 0;
     noteLockRef.current = null;
     consecutiveCountRef.current = 0;
     lastNoteKeyRef.current = '';
@@ -514,8 +521,12 @@ export default function TunerPanel() {
       // Mild boost in guitar fundamental range (80-500 Hz)
       const midBoost = ctx.createBiquadFilter();
       midBoost.type = 'peaking';
-      midBoost.frequency.value = 200;
-      midBoost.Q.value = 0.5;
+      // Lowered from 200 Hz to 150 Hz: D3 (147 Hz) is now at the boost center
+      // instead of its first harmonic D4 (294 Hz), reducing octave-jump frequency.
+      // Q widened from 0.5 to 0.35 so the boost is flatter across the wound-string
+      // range (80–300 Hz) rather than selectively amplifying specific harmonics.
+      midBoost.frequency.value = 150;
+      midBoost.Q.value = 0.35;
       midBoost.gain.value = 3;
       notch2.connect(midBoost);
 
@@ -618,6 +629,28 @@ export default function TunerPanel() {
           const info = frequencyToNoteInfo(freq);
           const closest = findClosestString(freq, selectedTuningRef.current.strings);
 
+          // Problem 5: debounce closest-string switching — hold current string for ≥500ms
+          // before accepting a switch, so the cents graph reference doesn't zigzag when
+          // detection alternates between D3 and D4 frame-by-frame.
+          const CLOSEST_DEBOUNCE_MS = 500;
+          let effectiveClosest = closest;
+          if (closest) {
+            if (!lastDisplayedClosestRef.current) {
+              // First reading after silence — initialize immediately, no debounce needed
+              lastDisplayedClosestRef.current = closest;
+            } else if (closest.string !== lastDisplayedClosestRef.current.string) {
+              const nowMs = performance.now();
+              if (nowMs - displayClosestSwitchedAtRef.current < CLOSEST_DEBOUNCE_MS) {
+                // Too soon — hold the existing closest string to stabilize the graph
+                effectiveClosest = lastDisplayedClosestRef.current;
+              } else {
+                // Enough time has passed — accept the new string and record the switch time
+                displayClosestSwitchedAtRef.current = nowMs;
+                lastDisplayedClosestRef.current = closest;
+              }
+            }
+          }
+
           // ─── Note-Lock Stabilization ───
           // Professional hardware tuners lock to a note after consistent detection
           // and only release when pitch genuinely moves to a new note (>50 cents drift).
@@ -655,7 +688,8 @@ export default function TunerPanel() {
 
           // Option 4: Dead-zone hysteresis — suppress micro-jitter within ±4 cents of last display
           const DEAD_ZONE_CENTS = 4;
-          const targetForDeadZone = selectedStringRef.current ?? closest;
+          // Use effectiveClosest (debounced) so the dead-zone reference matches the display reference
+          const targetForDeadZone = selectedStringRef.current ?? effectiveClosest;
           const newCentsDisplay = targetForDeadZone
             ? Math.round(1200 * Math.log2(freq / targetForDeadZone.freq))
             : info.cents;
@@ -674,7 +708,7 @@ export default function TunerPanel() {
           setClosestString(closest);
           setDisplayNote(info);
           setDisplayFreq(freq);
-          setDisplayClosest(closest);
+          setDisplayClosest(effectiveClosest);
           if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = 0; }
 
           const target = selectedStringRef.current ?? closest;
@@ -707,6 +741,8 @@ export default function TunerPanel() {
               freqHistoryRef.current = [];
               confidenceHistoryRef.current = [];
               lastDisplayedCentsRef.current = null;
+              lastDisplayedClosestRef.current = null;
+              displayClosestSwitchedAtRef.current = 0;
               noteLockRef.current = null;
               consecutiveCountRef.current = 0;
               lastNoteKeyRef.current = '';

@@ -580,16 +580,32 @@ export default function TunerPanel() {
       setIsListening(true);
       setPermissionDenied(false);
 
+      // MediaStream track 'ended' listener: OS can silently revoke mic access during idle.
+      // When the track ends, the analyser returns zeros forever with ctx.state = 'running',
+      // so the suspension check never fires. Full restart is the only recovery path.
+      stream.getTracks().forEach((track) => {
+        track.addEventListener('ended', () => {
+          if (analyserRef.current) {
+            stopListening();
+            startListening();
+          }
+        }, { once: true });
+      });
+
       const detect = () => {
         if (!analyserRef.current || !bufferRef.current || !audioCtxRef.current) return;
 
         // Browser auto-suspension fix: the AudioContext (mic-only, no output to ctx.destination)
         // is silently suspended by the browser after ~10s of inactivity. When suspended,
         // getFloatTimeDomainData returns a zero-filled buffer, causing RMS < threshold → null
-        // every frame. Resume and skip this frame — live data arrives on the next RAF tick.
+        // every frame. Await resume() so we only continue once the context is actually running.
         if (audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume();
-          rafRef.current = requestAnimationFrame(detect);
+          audioCtxRef.current.resume().then(() => {
+            rafRef.current = requestAnimationFrame(detect);
+          }).catch(() => {
+            // resume() rejected (browser policy) — retry on next animation frame
+            rafRef.current = requestAnimationFrame(detect);
+          });
           return;
         }
 
@@ -892,6 +908,40 @@ export default function TunerPanel() {
     return () => {
       stopListening();
     };
+  }, [startListening, stopListening]);
+
+  // Page Lifecycle Recovery: when the browser makes the page visible again (user switches
+  // back to tab, returns from another app, or the screen wakes up), the AudioContext may
+  // be suspended and the RAF loop may be frozen. This listener is the definitive recovery
+  // path — it resumes the AudioContext and re-kicks the RAF loop unconditionally.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && audioCtxRef.current) {
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume().then(() => {
+            // Re-kick the RAF loop — it may have been frozen by the browser's
+            // idle throttling while the page was not visible.
+            if (analyserRef.current && bufferRef.current) {
+              if (rafRef.current) cancelAnimationFrame(rafRef.current);
+              // startListening defines detect() locally, so we trigger a full restart
+              // to get a fresh detect closure with live refs.
+              stopListening();
+              startListening();
+            }
+          }).catch(() => {
+            // resume() rejected — do a full restart to get a fresh AudioContext
+            stopListening();
+            startListening();
+          });
+        } else if (audioCtxRef.current.state === 'running' && !rafRef.current) {
+          // Context is running but RAF died — full restart
+          stopListening();
+          startListening();
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [startListening, stopListening]);
 
   const shownNote = displayNote;

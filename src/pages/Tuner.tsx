@@ -1218,7 +1218,7 @@ export default function TunerPanel() {
                 </h3>
                 <button
                   onClick={() => setSelectedString(null)}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-display font-bold transition-all active:scale-95 min-h-[56px] ${`
+                  className={`rounded-lg px-4 py-2.5 text-sm font-display font-bold transition-all active:scale-95 min-h-[56px] ${
                     !selectedString
                       ? 'bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))] border border-[hsl(var(--color-primary)/0.3)]'
                       : 'bg-[hsl(var(--bg-surface))] text-zinc-400 hover:bg-[hsl(var(--bg-overlay))] border border-transparent'

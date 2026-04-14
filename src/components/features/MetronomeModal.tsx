@@ -174,7 +174,7 @@ export default function MetronomeModal() {
 
             {/* BPM zone — flex-1 claims all space between header and slider; justify-center vertically centers the BPM row within that zone */}
             <div className="flex-1 flex flex-col justify-center">
-            <div>
+            <div className="mt-6">
               {/* BPM row: [Tempo label] [Allegro] [centered BPM number] [BPM unit] */}
               <div className="relative flex items-center gap-2 mb-2">
                 <span className="text-[15px] text-amber-500 uppercase tracking-wider flex-shrink-0">Tempo</span>

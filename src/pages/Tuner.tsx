@@ -1,10 +1,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Mic, MicOff, Music, Volume2, X, ChevronDown, Crosshair, Zap } from 'lucide-react';
+import { Mic, MicOff, Music, Volume2, X, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useDetectionSettingsStore } from '@/stores/detectionSettingsStore';
-import CalibrationWizard from '@/components/features/CalibrationWizard';
 import { useGuitarString } from '@/hooks/useGuitarString';
 
 // ─── Constants ───────────────────────────────────────────
@@ -111,6 +109,21 @@ const TUNING_PRESETS: TuningPreset[] = [
     strings: [],
   },
 ];
+
+// ─── Environment Sensitivity Presets ────────────────────
+
+const SENSITIVITY_PRESETS = {
+  quiet:  { rmsBase: 0.003, confidenceGate: 0.40, deadZone: 3 },
+  normal: { rmsBase: 0.005, confidenceGate: 0.50, deadZone: 4 },
+  noisy:  { rmsBase: 0.012, confidenceGate: 0.60, deadZone: 6 },
+} as const;
+type EnvPreset = keyof typeof SENSITIVITY_PRESETS;
+
+const PRESET_META: Record<EnvPreset, { label: string; icon: string; desc: string }> = {
+  quiet:  { label: 'Quiet Room',  icon: '🤫', desc: 'Silent practice · no background noise' },
+  normal: { label: 'Normal Room', icon: '🏠', desc: 'Typical home or studio environment' },
+  noisy:  { label: 'Noisy Room',  icon: '🎸', desc: 'Band practice · ambient noise present' },
+};
 
 const FREQ_HISTORY_SIZE = 5;
 const minConfidence = 0.2;
@@ -302,18 +315,13 @@ export default function TunerPanel() {
   const [heldSeconds, setHeldSeconds] = useState(0);
   // pulseKey: incremented false→true on inTuneConfirmed to re-mount pulse ring
   const [pulseKey, setPulseKey] = useState(0);
-  const [showCalibration, setShowCalibration] = useState(false);
-  // Use global detection settings for sensitivity
-  const globalSettings = useDetectionSettingsStore();
-  const [sensitivity, setSensitivity] = useState(() => {
-    // If advanced detection is enabled, derive tuner sensitivity from noise gate
-    if (globalSettings.advancedEnabled && globalSettings.advancedValues) {
-      return globalSettings.advancedValues.noiseGate ?? 60;
-    }
-    const saved = localStorage.getItem('tuner-mic-sensitivity');
-    return saved !== null ? Number(saved) : 60;
-  });
-  const sensitivityRef = useRef(60);
+  // Environment preset — drives rmsThreshold, confidence gate, and dead-zone simultaneously
+  const [envPreset, setEnvPreset] = useState<EnvPreset>(() =>
+    (localStorage.getItem('tuner-env-preset') as EnvPreset | null) ?? 'normal'
+  );
+  const confidenceGateRef = useRef(SENSITIVITY_PRESETS.normal.confidenceGate);
+  const deadZoneCentsRef  = useRef(SENSITIVITY_PRESETS.normal.deadZone);
+  const rmsBaseRef        = useRef(SENSITIVITY_PRESETS.normal.rmsBase);
   const startedRef = useRef(false);
   const inTuneStartRef = useRef<number>(0);
   const inTuneSoundPlayedRef = useRef(false);
@@ -345,17 +353,16 @@ export default function TunerPanel() {
 
   useEffect(() => { selectedStringRef.current = selectedString; }, [selectedString]);
   useEffect(() => { selectedTuningRef.current = selectedTuning; }, [selectedTuning]);
-  useEffect(() => {
-    sensitivityRef.current = sensitivity;
-    localStorage.setItem('tuner-mic-sensitivity', String(sensitivity));
-  }, [sensitivity]);
 
-  // Sync with global calibration settings when they change
+  // Sync all three detect-loop parameters when environment preset changes.
+  // Refs are read inside the RAF loop, so no restart is needed — takes effect next tick.
   useEffect(() => {
-    if (globalSettings.advancedEnabled && globalSettings.advancedValues?.noiseGate != null) {
-      setSensitivity(globalSettings.advancedValues.noiseGate);
-    }
-  }, [globalSettings.advancedEnabled, globalSettings.advancedValues?.noiseGate]);
+    const cfg = SENSITIVITY_PRESETS[envPreset];
+    confidenceGateRef.current = cfg.confidenceGate;
+    deadZoneCentsRef.current  = cfg.deadZone;
+    rmsBaseRef.current        = cfg.rmsBase;
+    localStorage.setItem('tuner-env-preset', envPreset);
+  }, [envPreset]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -585,12 +592,12 @@ export default function TunerPanel() {
           lastDisplayedClosestRef.current?.freq ??
           undefined;
 
-        const s = sensitivityRef.current;
         // Wound-string RMS scaling: E2/A2/D3/G3 (< 200 Hz) produce less RMS energy at the
         // pickup than plain treble strings. A 30% lower gate prevents valid wound-string signals
         // from being silenced by a threshold calibrated for higher-output plain strings.
         // Guard: only applies when expectedFreq is known (not chromatic mode or first frame).
-        let rmsThreshold = 0.05 * Math.pow(0.02, s / 100);
+        // Base threshold driven by active environment preset (quiet/normal/noisy).
+        let rmsThreshold = rmsBaseRef.current;
         if (expectedFreq !== undefined && expectedFreq < 200) {
           rmsThreshold *= 0.70;
         }
@@ -629,9 +636,9 @@ export default function TunerPanel() {
             return;
           }
 
-          // Option 2: Confidence gating — hold last displayed value for weak/unreliable frames
-          // 0.5 excludes genuinely uncertain readings without being too aggressive
-          const CONFIDENCE_GATE = 0.5;
+          // Option 2: Confidence gating — hold last displayed value for weak/unreliable frames.
+          // Value driven by active environment preset: quiet=0.4, normal=0.5, noisy=0.6
+          const CONFIDENCE_GATE = confidenceGateRef.current;
           if (confidence < CONFIDENCE_GATE) {
             rafRef.current = requestAnimationFrame(detect);
             return;
@@ -757,8 +764,9 @@ export default function TunerPanel() {
             }
           }
 
-          // Option 4: Dead-zone hysteresis — suppress micro-jitter within ±4 cents of last display
-          const DEAD_ZONE_CENTS = 4;
+          // Option 4: Dead-zone hysteresis — suppress micro-jitter within ±N cents of last display.
+          // Value driven by active environment preset: quiet=3, normal=4, noisy=6
+          const DEAD_ZONE_CENTS = deadZoneCentsRef.current;
           // Use effectiveClosest (debounced) so the dead-zone reference matches the display reference
           const targetForDeadZone = selectedStringRef.current ?? effectiveClosest;
           const newCentsDisplay = targetForDeadZone
@@ -893,7 +901,6 @@ export default function TunerPanel() {
 
   return (
     <>
-      <CalibrationWizard open={showCalibration} onClose={() => setShowCalibration(false)} />
       <motion.div
         initial={{ opacity: 0, y: 80 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1129,58 +1136,41 @@ export default function TunerPanel() {
                   ) : null}
                 </div>
 
-                {/* Mic sensitivity */}
+                {/* Environment Sensitivity Presets */}
                 <div className="space-y-2 !mt-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-display font-semibold text-[hsl(var(--text-subtle))] uppercase tracking-wider flex items-center gap-1.5">
                       <Mic className="size-3.5" />
-                      Mic Sensitivity
+                      Environment
                     </label>
-                    <div className="flex items-center gap-2">
-                      {globalSettings.advancedEnabled && (
-                        <span className="text-[9px] font-body font-medium bg-[hsl(var(--color-emphasis)/0.15)] text-[hsl(var(--color-emphasis))] rounded-full px-1.5 py-0.5 flex items-center gap-1">
-                          <Zap className="size-2.5" /> Calibrated
-                        </span>
-                      )}
-                      <span className="text-sm font-body tabular-nums text-zinc-400">{sensitivity}%</span>
-                    </div>
+                    <span className="text-[10px] font-body text-zinc-500">
+                      {PRESET_META[envPreset].desc}
+                    </span>
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={sensitivity}
-                    onChange={(e) => setSensitivity(Number(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer
-                      bg-[hsl(var(--bg-surface))]
-                      [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5
-                      [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[hsl(var(--color-primary))]
-                      [&::-webkit-slider-thumb]:shadow-[0_0_6px_hsl(var(--color-primary)/0.4)]
-                      [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:duration-150
-                      [&::-webkit-slider-thumb]:hover:scale-110 [&::-webkit-slider-thumb]:active:scale-95
-                      [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full
-                      [&::-moz-range-thumb]:bg-[hsl(var(--color-primary))] [&::-moz-range-thumb]:border-none"
-                  />
-                  <div className="flex justify-between text-[12px] font-body text-zinc-500">
-                    <span>Low</span>
-                    <span>High</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(Object.keys(SENSITIVITY_PRESETS) as EnvPreset[]).map((key) => {
+                      const meta = PRESET_META[key];
+                      const isActive = envPreset === key;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => setEnvPreset(key)}
+                          className={`flex flex-col items-center gap-1 rounded-lg px-2 py-2.5 min-h-[56px] border-2 transition-all duration-200 active:scale-95 ${
+                            isActive
+                              ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))]'
+                              : 'border-zinc-700/50 bg-[hsl(var(--bg-surface)/0.4)] text-zinc-400 hover:bg-[hsl(var(--bg-overlay))] hover:border-zinc-600'
+                          }`}
+                        >
+                          <span className="text-base leading-none">{meta.icon}</span>
+                          <span className={`text-[10px] font-display font-bold leading-tight text-center ${
+                            isActive ? 'text-[hsl(var(--color-primary))]' : 'text-zinc-300'
+                          }`}>
+                            {meta.label}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
-
-                {/* Calibration shortcut */}
-                <div className="!mt-2 flex items-center justify-between rounded-lg border-2 border-zinc-700/50 bg-[hsl(var(--bg-surface)/0.4)] px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Crosshair className="size-3.5 text-[hsl(var(--color-emphasis))]" />
-                    <span className="text-[10px] font-display font-bold text-zinc-400 uppercase tracking-wider">Calibration</span>
-                  </div>
-                  <button
-                    onClick={() => setShowCalibration(true)}
-                    className="flex items-center gap-1 rounded-lg border border-[hsl(var(--color-emphasis)/0.3)] bg-[hsl(var(--color-emphasis)/0.06)] px-2.5 py-1.5 text-[10px] font-display font-bold text-[hsl(var(--color-emphasis))] hover:bg-[hsl(var(--color-emphasis)/0.14)] transition-colors"
-                  >
-                    <Crosshair className="size-3" />
-                    Calibrate
-                  </button>
                 </div>
               </div>
             </div>

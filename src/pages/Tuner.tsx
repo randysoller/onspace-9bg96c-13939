@@ -201,20 +201,25 @@ function autoCorrelate(buffer: Float32Array, sampleRate: number, expectedFreq?: 
   if (peaks.length === 0) return null;
 
   // Pick first peak above its applicable threshold (lowest frequency = fundamental).
-  // Problem 1 fix: when an expected string frequency is known, lower the acceptance
-  // threshold for peaks whose lag maps to within ±200 cents of the expected fundamental.
-  // This prevents a strong harmonic (e.g. D4 at 294 Hz) from outcompeting a slightly
-  // weaker fundamental (D3 at 147 Hz) during the first-peak selection pass.
-  const ON_TARGET_THRESHOLD = 0.32;  // easier bar for confirmed-fundamental peaks
-  const OFF_TARGET_THRESHOLD = 0.42; // original threshold for unknown/off-target peaks
+  // Problem 1 fix: lower threshold for on-target peaks helps weak fundamentals beat harmonics.
+  // Problem 6 fix: raise threshold for wound-string frequencies (55–200 Hz) to aggressively
+  // reject false early NSDF peaks caused by the stronger harmonics on wound strings (E2/A2/D3).
+  // Priority: ON_TARGET (0.32) always overrides WOUND_STRING (0.50) when both apply.
+  const ON_TARGET_THRESHOLD = 0.32;    // easier bar for confirmed-fundamental peaks
+  const WOUND_STRING_THRESHOLD = 0.50; // harder bar for wound-string off-target peaks
+  const OFF_TARGET_THRESHOLD = 0.42;   // original threshold for plain-string off-target peaks
   let bestTau = -1;
   let bestVal = -Infinity;
   for (const p of peaks) {
-    let peakThreshold = OFF_TARGET_THRESHOLD;
+    const peakFreq = sampleRate / p.tau;
+    // Base threshold: wound strings need a higher bar to reject false harmonic peaks
+    let peakThreshold = (peakFreq >= 55 && peakFreq <= 200)
+      ? WOUND_STRING_THRESHOLD
+      : OFF_TARGET_THRESHOLD;
     if (expectedFreq) {
-      const peakFreq = sampleRate / p.tau;
       const centsDiff = Math.abs(1200 * Math.log2(peakFreq / expectedFreq));
-      // Within ±200 cents (~2 semitones): treat as candidate fundamental
+      // On-target override: within ±200 cents of expected fundamental → lower threshold
+      // This always overrides the wound-string raise so weak D3 fundamentals still win.
       if (centsDiff <= 200) {
         peakThreshold = ON_TARGET_THRESHOLD;
       }
@@ -630,21 +635,39 @@ export default function TunerPanel() {
           if (history.length > FREQ_HISTORY_SIZE) history.shift();
           if (confHistory.length > FREQ_HISTORY_SIZE) confHistory.shift();
 
-          // ─── Fixed EMA Smoothing (α = 0.2) ───
-          // 80% old value + 20% new value on every frame that passes both
-          // the confidence gate and outlier rejection — no snapping for any case.
-          // On very large pitch jumps (>50% ratio) reset history to prevent
-          // stale median-filter data from re-entering the pipeline.
+          // ─── Fixed EMA Smoothing (α = 0.2) with Octave-Boundary Snap (Problem 3) ───
+          // Normal operation: 80% old + 20% new per frame — smooth transitions.
+          // Problem 3: when rawFreq is near 2× or 0.5× the expected string's frequency,
+          // bypass EMA and snap directly. Without this, an octave error takes ~15 frames
+          // (~250ms) to resolve, rendering the cents graph unreadable during the crossing.
           const EMA_ALPHA = 0.2;
           let freq = rawFreq;
           if (smoothedFreqRef.current !== null) {
             const ratio = rawFreq / smoothedFreqRef.current;
-            if (ratio > 1.5 || ratio < 0.67) {
-              // Very large note change: purge stale history, EMA still applies (no snap)
+
+            // Octave-boundary snap: fires when rawFreq lands near an octave multiple of
+            // the expected string, meaning the detector just jumped to/from a harmonic.
+            let snapToRaw = false;
+            if (expectedFreq) {
+              const ratioToExpected = rawFreq / expectedFreq;
+              // 1.8–2.2× = near one octave above; 0.45–0.55× = near one octave below
+              if ((ratioToExpected > 1.8 && ratioToExpected < 2.2) ||
+                  (ratioToExpected > 0.45 && ratioToExpected < 0.55)) {
+                snapToRaw = true;
+              }
+            }
+
+            if (snapToRaw || ratio > 1.5 || ratio < 0.67) {
+              // Purge stale history on octave snap OR any other large note change
               freqHistoryRef.current = [rawFreq];
               confidenceHistoryRef.current = [confidence];
             }
-            freq = smoothedFreqRef.current * (1 - EMA_ALPHA) + rawFreq * EMA_ALPHA;
+
+            // Apply snap or EMA — snap lets note-lock immediately see the new octave
+            // rather than evaluating ambiguous intermediate frequencies for many frames.
+            freq = snapToRaw
+              ? rawFreq
+              : smoothedFreqRef.current * (1 - EMA_ALPHA) + rawFreq * EMA_ALPHA;
           }
 
           smoothedFreqRef.current = freq;

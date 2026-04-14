@@ -1295,7 +1295,7 @@ export default function TunerPanel() {
                     <button
                       key={gs.string}
                       className={`
-                        flex-1 flex flex-col items-center justify-center rounded-lg px-0.5 py-0.5 transition-all duration-200 cursor-pointer min-h-[48px] active:scale-95
+                        flex-1 flex flex-col items-center justify-center rounded-lg px-0.5 py-0.5 transition-all duration-200 cursor-pointer min-h-[68px] active:scale-95
                         ${(isActive || isDetected) && stringInTune
                           ? 'bg-[hsl(142_71%_45%/0.18)] border-2 border-[hsl(142_71%_45%/0.5)] shadow-[0_0_14px_hsl(142_71%_45%/0.3)]'
                           : isActive
@@ -1342,8 +1342,7 @@ export default function TunerPanel() {
                             : 'text-[rgb(220,38,38)]'
                           : 'text-zinc-300'
                       }`}>
-                        <span className="sm:hidden">{gs.display}</span>
-                        <span className="hidden sm:inline">{gs.note}</span>
+                        <span>{gs.display}</span>
                       </span>
 
 

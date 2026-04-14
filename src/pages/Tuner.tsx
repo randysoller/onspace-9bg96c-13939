@@ -147,7 +147,13 @@ interface PitchResult {
 
 function autoCorrelate(buffer: Float32Array, sampleRate: number, expectedFreq?: number): PitchResult | null {
   // Use a sub-window for consistent, efficient analysis (4096 samples is plenty for guitar)
-  const windowSize = Math.min(buffer.length, 4096);
+  // Adaptive window: low strings (E2/A2/D3 < 150 Hz) need more cycles to stabilize NSDF.
+  // 8192 samples at 44100 Hz ≈ 186ms = 15+ full periods for E2 (82 Hz), vs. only 7.6 with 4096.
+  // More periods → more stable autocorrelation peak → less octave jumping on wound strings.
+  // Higher strings have 30+ periods in 4096 samples already — extra compute not justified.
+  const windowSize = (expectedFreq !== undefined && expectedFreq < 150)
+    ? buffer.length        // 8192 samples: max available — critical for E2/A2/D3
+    : Math.min(buffer.length, 4096); // 4096 adequate for G3, B3, E4
   const offset = Math.floor((buffer.length - windowSize) / 2);
 
   let rms = 0;
@@ -332,6 +338,10 @@ export default function TunerPanel() {
   const [displayFreq, setDisplayFreq] = useState<number | null>(null);
   const [displayClosest, setDisplayClosest] = useState<GuitarString | null>(null);
   const holdTimerRef = useRef<number>(0);
+  // Rolling noise floor: exponential average of RMS from silence frames.
+  // Used by dynamic threshold = max(preset_base, noiseFloor × 4).
+  // Provides 12 dB SNR headroom above ambient noise — self-calibrates in ~3s of ambient sound.
+  const noiseFloorRef = useRef<number>(0);
   const smoothedFreqRef = useRef<number | null>(null);
   // Frequency history buffer for median filtering / outlier rejection
   const freqHistoryRef = useRef<number[]>([]);
@@ -623,11 +633,24 @@ export default function TunerPanel() {
         // from being silenced by a threshold calibrated for higher-output plain strings.
         // Guard: only applies when expectedFreq is known (not chromatic mode or first frame).
         // Base threshold driven by active environment preset (quiet/normal/noisy).
-        let rmsThreshold = rmsBaseRef.current;
+        // Dynamic noise floor gate: adapts to current ambient noise level.
+        // noiseFloor is updated from silence frames above; × 4 = 12 dB SNR headroom.
+        // Always take the higher of preset_base and noise-floor-derived threshold so
+        // that a noisy environment raises the gate automatically without user action.
+        let rmsThreshold = Math.max(rmsBaseRef.current, noiseFloorRef.current * 4);
         if (expectedFreq !== undefined && expectedFreq < 200) {
-          rmsThreshold *= 0.70;
+          rmsThreshold *= 0.70; // wound-string compensation: lower output at pickup
         }
         (globalThis as any).__tunerRmsThreshold = rmsThreshold;
+
+        // Compute frame RMS independently so we can update the noise floor estimate
+        // even when autoCorrelate returns null (silence frames are the best noise samples).
+        const frameRms = (() => {
+          const buf = bufferRef.current!;
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+          return Math.sqrt(sum / buf.length);
+        })();
 
         const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate, expectedFreq);
 
@@ -676,12 +699,20 @@ export default function TunerPanel() {
           if (history.length > FREQ_HISTORY_SIZE) history.shift();
           if (confHistory.length > FREQ_HISTORY_SIZE) confHistory.shift();
 
-          // ─── Fixed EMA Smoothing (α = 0.2) with Octave-Boundary Snap (Problem 3) ───
-          // Normal operation: 80% old + 20% new per frame — smooth transitions.
-          // Problem 3: when rawFreq is near 2× or 0.5× the expected string's frequency,
-          // bypass EMA and snap directly. Without this, an octave error takes ~15 frames
-          // (~250ms) to resolve, rendering the cents graph unreadable during the crossing.
-          const EMA_ALPHA = 0.2;
+          // ─── Adaptive EMA Smoothing with Octave-Boundary Snap ───
+          // Fixed α=0.2 is too slow when switching strings: a 500-cent jump (D3→G3)
+          // takes ~12 frames (200ms) to settle. Three-tier alpha:
+          //   α=0.80  centsDelta > 150: major pitch change → jump immediately
+          //   α=0.45  centsDelta > 40 : medium movement → track quickly
+          //   α=0.15  centsDelta ≤ 40 : fine-tune zone → very smooth, reduces jitter ~25%
+          // Note: the octave-snap below handles ratio > 1.5 by resetting smoothedFreqRef
+          // entirely; the adaptive alpha handles the medium (40–150 cent) range.
+          const centsDeltaForAlpha = smoothedFreqRef.current !== null
+            ? Math.abs(1200 * Math.log2(rawFreq / smoothedFreqRef.current))
+            : 0;
+          const EMA_ALPHA = centsDeltaForAlpha > 150 ? 0.80
+            : centsDeltaForAlpha > 40  ? 0.45
+            : 0.15;
           let freq = rawFreq;
           if (smoothedFreqRef.current !== null) {
             const ratio = rawFreq / smoothedFreqRef.current;
@@ -834,6 +865,11 @@ export default function TunerPanel() {
             setInTuneConfirmed(false);
           }
         } else {
+          // Update rolling noise floor from silence frames (best ambient noise samples).
+          // Slow decay (α=0.003) so it adapts over ~3s without overreacting to brief gaps.
+          // The dynamic threshold in the next frame will be max(preset_base, noiseFloor × 4).
+          noiseFloorRef.current = noiseFloorRef.current * 0.997 + frameRms * 0.003;
+
           setFrequency(null);
           setNoteInfo(null);
           setClosestString(null);

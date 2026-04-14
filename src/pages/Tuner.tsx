@@ -724,7 +724,11 @@ export default function TunerPanel() {
 
           if (noteLockRef.current !== null) {
             const centsFromLock = 1200 * Math.log2(freq / noteLockRef.current.refFreq);
-            if (Math.abs(centsFromLock) > 50) {
+            // Wound strings (< 200 Hz) use a tighter 40-cent release threshold so harmonic
+            // interference at the D3/D4 boundary releases the lock sooner than the 50-cent
+            // default used for plain treble strings.
+            const lockReleaseThreshold = noteLockRef.current.refFreq < 200 ? 40 : 50;
+            if (Math.abs(centsFromLock) > lockReleaseThreshold) {
               // Pitch has genuinely moved: release lock and start counting new note
               noteLockRef.current = null;
               consecutiveCountRef.current = 1;

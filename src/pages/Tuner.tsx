@@ -583,6 +583,16 @@ export default function TunerPanel() {
       const detect = () => {
         if (!analyserRef.current || !bufferRef.current || !audioCtxRef.current) return;
 
+        // Browser auto-suspension fix: the AudioContext (mic-only, no output to ctx.destination)
+        // is silently suspended by the browser after ~10s of inactivity. When suspended,
+        // getFloatTimeDomainData returns a zero-filled buffer, causing RMS < threshold → null
+        // every frame. Resume and skip this frame — live data arrives on the next RAF tick.
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+          rafRef.current = requestAnimationFrame(detect);
+          return;
+        }
+
         analyserRef.current.getFloatTimeDomainData(bufferRef.current);
         // Problem 1: pass the previous frame's known expected frequency so autoCorrelate
         // can bias peak selection toward the fundamental lag, reducing octave-jump frequency.

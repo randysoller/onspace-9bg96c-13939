@@ -1122,28 +1122,28 @@ export default function TunerPanel() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-center gap-[2px] px-1">
                     {Array.from({ length: 41 }, (_, i) => {
-                      const segCents = (i - 20) * 2.5;
+                      // ±100 cents range: 41 segments × 5 cents each
+                      const segCents = (i - 20) * 5;
                       const isCenter = i === 20;
                       const absSegCents = Math.abs(segCents);
 
                       let hue: string;
                       if (absSegCents <= 5) hue = '142 71% 45%';
-                      else if (absSegCents <= 15) hue = '45 93% 47%';
+                      else if (absSegCents <= 25) hue = '45 93% 47%'; // proportional: 15/50 → 25/100
                       else hue = '0 72% 51%';
 
                       const cur = shownNote ? centsFromTarget : 0;
                       const hasSignal = !!shownNote;
                       let lit = false;
                       if (hasSignal) {
-                        if (isCenter && Math.abs(cur) < 2.5) {
+                        // Tolerance = half a segment step (5/2 = 2.5 cents)
+                        if (isCenter && Math.abs(cur) < 5) {
                           lit = true;
-                        } else if (cur > 0 && segCents > 0 && segCents <= cur + 1.25) {
+                        } else if (cur > 0 && segCents > 0 && segCents <= cur + 2.5) {
                           lit = true;
-                        } else if (cur < 0 && segCents < 0 && segCents >= cur - 1.25) {
+                        } else if (cur < 0 && segCents < 0 && segCents >= cur - 2.5) {
                           lit = true;
                         }
-                        // This condition seems to overlap with the first 'if (isCenter...)' condition
-                        // but it ensures the center is lit if within 5 cents, not just 2.5
                         if (isCenter && Math.abs(cur) <= 5) lit = true;
                       }
 

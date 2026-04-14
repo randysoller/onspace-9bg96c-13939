@@ -277,6 +277,11 @@ export default function TunerPanel() {
   const [selectedString, setSelectedString] = useState<GuitarString | null>(null);
   const [playingString, setPlayingString] = useState<number | null>(null);
   const [inTuneConfirmed, setInTuneConfirmed] = useState(false);
+  // inTuneActive: true while absCents <= 5 (drives counter + pulse)
+  const [inTuneActive, setInTuneActive] = useState(false);
+  const [heldSeconds, setHeldSeconds] = useState(0);
+  // pulseKey: incremented false→true on inTuneConfirmed to re-mount pulse ring
+  const [pulseKey, setPulseKey] = useState(0);
   const [showCalibration, setShowCalibration] = useState(false);
   // Use global detection settings for sensitivity
   const globalSettings = useDetectionSettingsStore();
@@ -468,6 +473,8 @@ export default function TunerPanel() {
     setDisplayFreq(null);
     setDisplayClosest(null);
     setInTuneConfirmed(false);
+    setInTuneActive(false);
+    setHeldSeconds(0);
   }, []);
 
   const startListening = useCallback(async () => {
@@ -675,6 +682,7 @@ export default function TunerPanel() {
           const absCents = Math.abs(centsOff);
           if (absCents <= 5) {
             if (inTuneStartRef.current === 0) inTuneStartRef.current = performance.now();
+            setInTuneActive(true);
             if (!inTuneSoundPlayedRef.current && performance.now() - inTuneStartRef.current >= 500) {
               inTuneSoundPlayedRef.current = true;
               setInTuneConfirmed(true);
@@ -683,6 +691,7 @@ export default function TunerPanel() {
           } else if (absCents > 12) {
             inTuneStartRef.current = 0;
             inTuneSoundPlayedRef.current = false;
+            setInTuneActive(false);
             setInTuneConfirmed(false);
           }
         } else {
@@ -702,6 +711,8 @@ export default function TunerPanel() {
               consecutiveCountRef.current = 0;
               lastNoteKeyRef.current = '';
               holdTimerRef.current = 0;
+              setInTuneActive(false);
+              setHeldSeconds(0);
             }, 400);
           }
         }
@@ -715,6 +726,23 @@ export default function TunerPanel() {
       setIsListening(false);
     }
   }, [getChimeCtx, playCowbellSound, stopListening]);
+
+  // Update held-seconds counter every 250ms while in-tune zone is active
+  useEffect(() => {
+    if (!inTuneActive) { setHeldSeconds(0); return; }
+    const interval = setInterval(() => {
+      if (inTuneStartRef.current > 0) {
+        setHeldSeconds(Math.floor((performance.now() - inTuneStartRef.current) / 1000));
+      }
+    }, 250);
+    return () => clearInterval(interval);
+  }, [inTuneActive]);
+
+  // Increment pulseKey each time inTuneConfirmed transitions false→true
+  // This re-mounts the pulse ring motion.div, triggering the one-shot animation
+  useEffect(() => {
+    if (inTuneConfirmed) setPulseKey((k) => k + 1);
+  }, [inTuneConfirmed]);
 
   useEffect(() => {
     const warmUp = () => {
@@ -872,6 +900,7 @@ export default function TunerPanel() {
                 {/* Detected note */}
                 <div className="text-center">
                   <div className="relative inline-flex items-center justify-center">
+                    {/* Persistent steady ring — shows while pitch is within ±2 cents */}
                     <motion.div
                       className="absolute rounded-full border-[3px] border-[hsl(142_71%_45%)] pointer-events-none"
                       style={{ width: 86, height: 86 }}
@@ -882,6 +911,17 @@ export default function TunerPanel() {
                       }
                       transition={{ duration: 0.35, ease: 'easeOut' }}
                     />
+                    {/* One-shot pulse ring — re-mounts (via key) on each in-tune confirmation */}
+                    {pulseKey > 0 && (
+                      <motion.div
+                        key={pulseKey}
+                        className="absolute rounded-full border-[3px] border-[hsl(142_71%_55%)] pointer-events-none"
+                        style={{ width: 86, height: 86 }}
+                        initial={{ scale: 1, opacity: 0.85 }}
+                        animate={{ scale: 1.6, opacity: 0 }}
+                        transition={{ duration: 0.5, ease: 'easeOut' }}
+                      />
+                    )}
                     <p className={`font-display text-4xl sm:text-5xl font-extrabold leading-none transition-colors duration-300 ${
                       !shownNote
                         ? 'text-[hsl(var(--text-muted)/0.25)]'
@@ -973,7 +1013,7 @@ export default function TunerPanel() {
                       className="font-display text-lg font-bold text-[hsl(142_71%_45%)] uppercase tracking-wider"
                       style={{ textShadow: '0 0 20px hsl(142 71% 45% / 0.3)' }}
                     >
-                      In Tune ✓
+                      In Tune ✓{heldSeconds > 0 ? ` · ${heldSeconds}s` : ''}
                     </motion.p>
                   ) : shownNote ? (
                     <p className="font-body text-sm text-zinc-400">

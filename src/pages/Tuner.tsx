@@ -576,10 +576,6 @@ export default function TunerPanel() {
       const detect = () => {
         if (!analyserRef.current || !bufferRef.current || !audioCtxRef.current) return;
 
-        const s = sensitivityRef.current;
-        const rmsThreshold = 0.05 * Math.pow(0.02, s / 100);
-        (globalThis as any).__tunerRmsThreshold = rmsThreshold;
-
         analyserRef.current.getFloatTimeDomainData(bufferRef.current);
         // Problem 1: pass the previous frame's known expected frequency so autoCorrelate
         // can bias peak selection toward the fundamental lag, reducing octave-jump frequency.
@@ -588,6 +584,18 @@ export default function TunerPanel() {
           selectedStringRef.current?.freq ??
           lastDisplayedClosestRef.current?.freq ??
           undefined;
+
+        const s = sensitivityRef.current;
+        // Wound-string RMS scaling: E2/A2/D3/G3 (< 200 Hz) produce less RMS energy at the
+        // pickup than plain treble strings. A 30% lower gate prevents valid wound-string signals
+        // from being silenced by a threshold calibrated for higher-output plain strings.
+        // Guard: only applies when expectedFreq is known (not chromatic mode or first frame).
+        let rmsThreshold = 0.05 * Math.pow(0.02, s / 100);
+        if (expectedFreq !== undefined && expectedFreq < 200) {
+          rmsThreshold *= 0.70;
+        }
+        (globalThis as any).__tunerRmsThreshold = rmsThreshold;
+
         const pitchResult = autoCorrelate(bufferRef.current, audioCtxRef.current.sampleRate, expectedFreq);
 
         if (pitchResult) {

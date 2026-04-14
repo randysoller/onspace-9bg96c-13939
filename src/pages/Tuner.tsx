@@ -1211,21 +1211,21 @@ export default function TunerPanel() {
                 </p>
               </div>
             ) : (
-            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-2 sm:p-3">
-              <div className="flex items-center justify-between mb-1">
+            <div className="rounded-xl border-2 border-zinc-700/60 bg-[hsl(var(--bg-elevated)/0.6)] backdrop-blur-sm p-2 sm:p-3 min-h-[220px] flex flex-col">
+              <div className="flex items-center justify-between mb-12">
                 <h3 className="font-display text-sm font-semibold text-zinc-400 uppercase tracking-wider">
                   Strings
                 </h3>
                 <button
                   onClick={() => setSelectedString(null)}
-                  className={`rounded-lg px-2 py-1 text-xs font-display font-bold transition-all active:scale-95 min-h-[32px] ${
+                  className={`rounded-lg px-4 py-2.5 text-sm font-display font-bold transition-all active:scale-95 min-h-[56px] ${`
                     !selectedString
                       ? 'bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))] border border-[hsl(var(--color-primary)/0.3)]'
                       : 'bg-[hsl(var(--bg-surface))] text-zinc-400 hover:bg-[hsl(var(--bg-overlay))] border border-transparent'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5">
-                    <Mic className="size-3.5" />
+                  <div className="flex items-center gap-2">
+                    <Mic className="size-4" />
                     Auto-Detect
                   </div>
                 </button>

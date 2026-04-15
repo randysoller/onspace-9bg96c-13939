@@ -54,6 +54,7 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useVoiceSynthesisLatency } from './useVoiceSynthesisLatency';
+import { useWakeLock } from './useWakeLock';
 import type { SoundGeneratorFunction } from '@/types/audio';
 import {
   generateClickSound,
@@ -79,7 +80,10 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
   } = useMetronomeStore();
   
   const { metronomeVolume, muted } = useAudioStore();
-  
+
+  // Prevent the screen from dimming/sleeping while the metronome is playing
+  useWakeLock(isPlaying);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);
   // Recursive timeout ref for swing scheduling

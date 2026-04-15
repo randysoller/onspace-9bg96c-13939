@@ -91,8 +91,19 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
 
   useEffect(() => {
     audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+
+    // Page Lifecycle Recovery: resume AudioContext when the user returns to the tab.
+    // Mirrors the same fix applied to the tuner — RAF/interval scheduling continues
+    // but ctx.currentTime is frozen while suspended, so sounds land in the past.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
     
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -110,9 +121,18 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
     const context = audioContextRef.current;
     if (!context) return;
 
+    // Browser auto-suspends AudioContext after ~10s with no output.
+    // When suspended, ctx.currentTime is frozen — all scheduled sounds are
+    // placed in the past and silently dropped. Resume before every sound so
+    // the first beat after idle gap plays immediately on the next tick.
+    if (context.state === 'suspended') {
+      context.resume().catch(() => {});
+      return; // skip this beat; scheduler will fire again on the next interval tick
+    }
+
     const now = context.currentTime;
     const baseVolume = volumeMultiplier;
-    const volume = isAccent ? baseVolume * 1.0 : baseVolume * 0.65;
+    const volume = isAccent ? baseVolume * 1.0 : baseVolume * 0.80;
 
     // Handle voice counting
     if (soundType === 'voiceCount' && beatNumber !== undefined) {

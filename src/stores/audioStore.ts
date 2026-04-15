@@ -16,13 +16,13 @@ function loadSettings(): AudioSettings {
       return {
         volume: typeof parsed.volume === 'number' ? Math.max(0, Math.min(1, parsed.volume)) : 0.7,
         muted: typeof parsed.muted === 'boolean' ? parsed.muted : false,
-        metronomeVolume: typeof parsed.metronomeVolume === 'number' ? Math.max(0, Math.min(1, parsed.metronomeVolume)) : 0.8,
+        metronomeVolume: typeof parsed.metronomeVolume === 'number' ? Math.max(0, Math.min(1, parsed.metronomeVolume)) : 0.95,
       };
     }
   } catch {
     // ignore
   }
-  return { volume: 0.7, muted: false, metronomeVolume: 0.8 };
+  return { volume: 0.7, muted: false, metronomeVolume: 0.95 };
 }
 
 function persist(settings: AudioSettings) {

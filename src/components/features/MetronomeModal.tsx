@@ -375,7 +375,12 @@ export default function MetronomeModal() {
                     : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
-                <span className="text-base">♪♩</span>
+                {/* Swing icon: quarter note | eighth note, triplet "3" above — represents swing/shuffle feel */}
+                <span className="relative inline-flex items-center gap-0.5 pb-0.5">
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold leading-none text-amber-500">3</span>
+                  <span className="text-base leading-none">♩</span>
+                  <span className="text-base leading-none">♪</span>
+                </span>
                 <span className="text-amber-500 font-bold">Swing</span>
                 <span className="text-[10px] text-amber-500">
                   {swingEnabled ? 'ON' : 'OFF'}

@@ -375,11 +375,23 @@ export default function MetronomeModal() {
                     : 'bg-zinc-800 border-amber-500/25 text-amber-300/70 hover:bg-zinc-700 hover:border-amber-500/40'
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
-                {/* Swing icon: quarter note | eighth note, triplet "3" above — represents swing/shuffle feel */}
-                <span className="relative inline-flex items-center gap-0.5 pb-0.5">
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[9px] font-bold leading-none text-amber-500">3</span>
-                  <span className="text-base leading-none">♩</span>
-                  <span className="text-base leading-none">♪</span>
+                {/* Swing icon: ♪♪ = ♩♪ with triplet bracket — standard swing/shuffle notation */}
+                <span className="inline-flex items-center gap-1 text-base leading-none">
+                  {/* Left: two eighth notes (straight feel) */}
+                  <span className="leading-none">♪♪</span>
+                  {/* Equals */}
+                  <span className="text-[11px] font-bold leading-none">=</span>
+                  {/* Right: quarter + eighth with triplet bracket above (swing feel) */}
+                  <span className="relative inline-flex items-end gap-0.5 pt-3.5">
+                    {/* Bracket arms use currentColor so they match the button's amber tint in both ON/OFF states */}
+                    <span className="absolute top-0 inset-x-0 flex items-start">
+                      <span className="border-t-2 border-l-2 border-current flex-1 h-2 rounded-tl-sm" />
+                      <span className="text-[8px] font-bold leading-none px-0.5 -mt-2">3</span>
+                      <span className="border-t-2 border-r-2 border-current flex-1 h-2 rounded-tr-sm" />
+                    </span>
+                    <span className="leading-none">♩</span>
+                    <span className="leading-none">♪</span>
+                  </span>
                 </span>
                 <span className="text-amber-500 font-bold">Swing</span>
                 <span className="text-[10px] text-amber-500">

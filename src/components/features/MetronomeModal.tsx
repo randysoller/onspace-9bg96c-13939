@@ -384,7 +384,7 @@ export default function MetronomeModal() {
                   {/* Right: quarter + eighth with triplet bracket above (swing feel) */}
                   <span className="relative inline-flex items-end gap-0.5 pt-3.5">
                     {/* Bracket arms use currentColor so they match the button's amber tint in both ON/OFF states */}
-                    <span className="absolute top-0 inset-x-0 flex items-start">
+                    <span className="absolute top-2.5 inset-x-0 flex items-start">
                       <span className="border-t-2 border-l-2 border-current flex-1 h-2" />
                       <span className="text-[8px] font-bold leading-none px-0.5 -mt-2">3</span>
                       <span className="border-t-2 border-r-2 border-current flex-1 h-2" />
@@ -393,7 +393,7 @@ export default function MetronomeModal() {
                     <span className="leading-none">♪</span>
                   </span>
                 </span>
-                <span className="text-amber-500 font-bold">Swing</span>
+                <span className="text-sm text-amber-500 font-bold">Swing</span>
                 <span className="text-[10px] text-amber-500">
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>

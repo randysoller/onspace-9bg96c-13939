@@ -377,17 +377,17 @@ export default function MetronomeModal() {
               >
                 {/* Swing icon: ♪♪ = ♩♪ with triplet bracket — standard swing/shuffle notation */}
                 <span className="inline-flex items-center gap-1 text-base leading-none">
-                  {/* Left: two eighth notes (straight feel) */}
-                  <span className="leading-none">♪♪</span>
+                  {/* Left: two beamed eighth notes (♫ U+266B) — matches uploaded swing notation image */}
+                  <span className="leading-none">♫</span>
                   {/* Equals */}
                   <span className="text-[11px] font-bold leading-none">=</span>
                   {/* Right: quarter + eighth with triplet bracket above (swing feel) */}
                   <span className="relative inline-flex items-end gap-0.5 pt-3.5">
                     {/* Bracket arms use currentColor so they match the button's amber tint in both ON/OFF states */}
                     <span className="absolute top-0 inset-x-0 flex items-start">
-                      <span className="border-t-2 border-l-2 border-current flex-1 h-2 rounded-tl-sm" />
+                      <span className="border-t-2 border-l-2 border-current flex-1 h-2" />
                       <span className="text-[8px] font-bold leading-none px-0.5 -mt-2">3</span>
-                      <span className="border-t-2 border-r-2 border-current flex-1 h-2 rounded-tr-sm" />
+                      <span className="border-t-2 border-r-2 border-current flex-1 h-2" />
                     </span>
                     <span className="leading-none">♩</span>
                     <span className="leading-none">♪</span>

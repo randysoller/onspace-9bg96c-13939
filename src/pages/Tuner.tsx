@@ -4,6 +4,7 @@ import { Mic, MicOff, Music, Volume2, X, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useGuitarString } from '@/hooks/useGuitarString';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 // ─── Constants ───────────────────────────────────────────
 
@@ -395,6 +396,9 @@ export default function TunerPanel() {
   const bufferRef = useRef<Float32Array | null>(null);
 
   const { playString: playGuitarString } = useGuitarString();
+
+  // Keep screen awake while microphone is actively listening — hands are on the guitar.
+  useWakeLock(isListening);
 
   const chimeCtxRef = useRef<AudioContext | null>(null);
   const getChimeCtx = useCallback(() => {

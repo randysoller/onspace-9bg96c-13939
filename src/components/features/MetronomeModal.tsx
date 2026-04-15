@@ -376,7 +376,7 @@ export default function MetronomeModal() {
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
                 {/* Swing icon: ♪♪ = ♩♪ with triplet bracket — standard swing/shuffle notation */}
-                <span className="inline-flex items-center gap-1 text-base leading-none mt-1.5">
+                <span className="inline-flex items-center gap-1 text-lg leading-none mt-1.5">
                   {/* Left: two beamed eighth notes (♫ U+266B) — matches uploaded swing notation image */}
                   <span className="leading-none">♫</span>
                   {/* Equals */}

@@ -52,6 +52,7 @@
 
 import { useEffect, useRef, useCallback, useMemo } from 'react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
+import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAudioStore } from '@/stores/audioStore';
 import { useVoiceSynthesisLatency } from './useVoiceSynthesisLatency';
 import { useWakeLock } from './useWakeLock';
@@ -81,8 +82,10 @@ export const useMetronomeAudio = (): UseMetronomeAudioReturn => {
   
   const { metronomeVolume, muted } = useAudioStore();
 
-  // Prevent the screen from dimming/sleeping while the metronome is playing
-  useWakeLock(isPlaying);
+  // Keep screen awake whenever the metronome modal is open OR actively playing.
+  // isPlaying alone is insufficient — the screen dims before the user presses Play.
+  const isMetronomeOpen = useMetronomeUIStore((s) => s.isOpen);
+  useWakeLock(isMetronomeOpen || isPlaying);
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const intervalRef = useRef<number | null>(null);

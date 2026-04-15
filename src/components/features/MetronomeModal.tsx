@@ -372,7 +372,7 @@ export default function MetronomeModal() {
                 className={`absolute right-4 h-[80px] flex flex-col items-center justify-center gap-1 px-4 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
                   swingEnabled
                     ? 'bg-amber-500/30 border-amber-500/60 text-amber-300'
-                    : 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-700'
+                    : 'bg-zinc-800 border-amber-500/25 text-amber-300/70 hover:bg-zinc-700 hover:border-amber-500/40'
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
                 {/* Swing icon: quarter note | eighth note, triplet "3" above — represents swing/shuffle feel */}

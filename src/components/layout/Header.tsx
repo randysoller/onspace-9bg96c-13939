@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Library, Edit, LogIn, LogOut } from 'lucide-react';
+import { Home, Library, Edit, LogIn, LogOut, Music } from 'lucide-react';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -54,6 +54,14 @@ export const Header = () => {
     <header className="fixed top-0 left-0 right-0 bg-black/40 backdrop-blur-lg border-b border-amber-500/20 z-[70]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
+
+          {/* Brand — visible on all screen sizes */}
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+            <Music className="w-5 h-5 text-amber-500" />
+            <span className="text-xl font-bold bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              Guitar Growth
+            </span>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">

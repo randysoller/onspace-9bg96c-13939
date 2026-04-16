@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Grid3x3, Music2, ChevronRight, Scale } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
+import randySollerLogo from '@/assets/randy-soller-logo.jpg';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -15,6 +16,14 @@ export default function Index() {
       <div className="container mx-auto px-4 pt-4 pb-10 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
+          {/* Randy Soller Logo */}
+          <div className="flex justify-center mb-6">
+            <img
+              src={randySollerLogo}
+              alt="Randy Soller"
+              className="w-64 sm:w-80 md:w-96 rounded-2xl shadow-lg"
+            />
+          </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-2">
             What Do You Want to
           </h1>

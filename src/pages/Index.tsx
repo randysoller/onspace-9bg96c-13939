@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Grid3x3, Music2, ChevronRight, Scale } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
-import randySollerLogo from '@/assets/randy-soller-logo.jpg';
+import randySollerLogo from '@/assets/randy-soller-logo-new.png';
 
 export default function Index() {
   const navigate = useNavigate();

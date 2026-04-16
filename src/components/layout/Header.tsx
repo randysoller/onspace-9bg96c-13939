@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Music, Home, Library, Edit, LogIn, LogOut } from 'lucide-react';
+import { Home, Library, Edit, LogIn, LogOut } from 'lucide-react';
+import randySollerLogo from '@/assets/randy-soller-logo-new.png';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -56,11 +57,12 @@ export const Header = () => {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <Music className="w-8 h-8 text-amber-500" />
-            <span className="text-xl font-bold bg-gradient-to-r from-amber-500 to-amber-300 bg-clip-text text-transparent">
-              FretMaster
-            </span>
+          <Link to="/" className="flex items-center">
+            <img
+              src={randySollerLogo}
+              alt="Randy Soller"
+              className="h-10 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Navigation */}

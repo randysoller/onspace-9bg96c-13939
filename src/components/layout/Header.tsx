@@ -1,6 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Library, Edit, LogIn, LogOut } from 'lucide-react';
-import randySollerLogo from '@/assets/randy-soller-logo-new.png';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api/auth';
@@ -55,15 +54,6 @@ export const Header = () => {
     <header className="fixed top-0 left-0 right-0 bg-black/40 backdrop-blur-lg border-b border-amber-500/20 z-[70]">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img
-              src={randySollerLogo}
-              alt="Randy Soller"
-              className="h-10 w-auto object-contain"
-            />
-          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">

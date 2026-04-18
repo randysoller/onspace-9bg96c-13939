@@ -1,7 +1,8 @@
 
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap } from 'lucide-react';
+import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, ArrowLeftRight, Target, Link2, MapPin, BookOpen, Star, CalendarCheck, Flame, Radio, ListChecks, TrendingUp, Timer } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 import { toast } from 'sonner';
 
@@ -66,6 +67,148 @@ const VAULT_CARDS = [
     borderColor: 'rgba(245,158,11,0.25)',
     route: null,
     soon: true,
+  },
+] as const;
+
+// ── Skill Boost cards ─────────────────────────────────────────────────────
+const SKILL_BOOST_CARDS = [
+  {
+    id: 'fix-chord-changes',
+    label: 'Fix Chord Changes Fast',
+    subtitle: 'Smooth transitions in days, not weeks',
+    Icon: ArrowLeftRight,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  {
+    id: 'picking-power',
+    label: 'Picking Power Techniques',
+    subtitle: 'Build real precision and speed',
+    Icon: Target,
+    accentColor: '#f97316',
+    bgColor: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+  },
+  {
+    id: 'chords-together',
+    label: 'Chords That Sound Great Together',
+    subtitle: 'Progressions used in real songs',
+    Icon: Link2,
+    accentColor: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.07)',
+    borderColor: 'rgba(139,92,246,0.25)',
+  },
+  {
+    id: 'stop-missing-notes',
+    label: 'Stop Missing Notes on the Fretboard',
+    subtitle: 'See the fretboard clearly for the first time',
+    Icon: MapPin,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
+  },
+] as const;
+
+// ── Learn & Grow cards ────────────────────────────────────────────────────
+const LEARN_GROW_CARDS = [
+  {
+    id: 'learn-notes',
+    label: 'Learn Notes the Easy Way',
+    subtitle: 'No theory overload — just what works',
+    Icon: BookOpen,
+    accentColor: '#3b82f6',
+    bgColor: 'rgba(59,130,246,0.07)',
+    borderColor: 'rgba(59,130,246,0.25)',
+  },
+  {
+    id: 'first-solo',
+    label: 'First Guitar Solo',
+    subtitle: 'Your first solo made simple',
+    Icon: Star,
+    accentColor: '#6366f1',
+    bgColor: 'rgba(99,102,241,0.07)',
+    borderColor: 'rgba(99,102,241,0.25)',
+  },
+  {
+    id: 'practice-like-pro',
+    label: 'Practice Like a Pro',
+    subtitle: 'A simple daily system that works',
+    Icon: CalendarCheck,
+    accentColor: '#14b8a6',
+    bgColor: 'rgba(20,184,166,0.07)',
+    borderColor: 'rgba(20,184,166,0.25)',
+  },
+] as const;
+
+// ── Fun & Identity cards ──────────────────────────────────────────────────
+const FUN_IDENTITY_CARDS = [
+  {
+    id: 'blues-licks',
+    label: 'Blues Licks You\'ll Use',
+    subtitle: 'Real licks that sound great immediately',
+    Icon: Flame,
+    accentColor: '#3b82f6',
+    bgColor: 'rgba(59,130,246,0.07)',
+    borderColor: 'rgba(59,130,246,0.25)',
+  },
+  {
+    id: 'rock-riffs',
+    label: 'Rock Riffs That Hit Hard',
+    subtitle: 'Classic riffs with real impact',
+    Icon: Zap,
+    accentColor: '#ef4444',
+    bgColor: 'rgba(239,68,68,0.07)',
+    borderColor: 'rgba(239,68,68,0.25)',
+  },
+  {
+    id: 'jam-tracks',
+    label: 'Jam Tracks',
+    subtitle: 'Feel like you\'re in a band',
+    Icon: Radio,
+    accentColor: '#a855f7',
+    bgColor: 'rgba(168,85,247,0.07)',
+    borderColor: 'rgba(168,85,247,0.25)',
+  },
+] as const;
+
+// ── Daily Progress cards ──────────────────────────────────────────────────
+const DAILY_PROGRESS_CARDS = [
+  {
+    id: 'todays-plan',
+    label: "Today's Guitar Plan",
+    subtitle: 'Clear steps. No thinking required.',
+    Icon: ListChecks,
+    accentColor: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.07)',
+    borderColor: 'rgba(245,158,11,0.25)',
+  },
+  {
+    id: 'keep-streak',
+    label: 'Keep Your Streak Alive',
+    subtitle: "Don't break your momentum.",
+    Icon: Flame,
+    accentColor: '#f97316',
+    bgColor: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+  },
+  {
+    id: 'level-up',
+    label: "Level Up, You're Playing Today",
+    subtitle: 'Small wins that stack fast',
+    Icon: TrendingUp,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  {
+    id: 'beat-yesterday',
+    label: "Beat Yesterday's Speed",
+    subtitle: 'Compete with yourself.',
+    Icon: Timer,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
   },
 ] as const;
 
@@ -231,6 +374,129 @@ export default function Index() {
             ))}
           </div>
         </div>
+
+        {/* ── SKILL BOOST ── */}
+        <SectionRail
+          emoji="🚀"
+          title="Skill Boost"
+          subtitle="Fix your weak points fast"
+          cards={SKILL_BOOST_CARDS}
+          navigate={navigate}
+        />
+
+        {/* ── LEARN & GROW ── */}
+        <SectionRail
+          emoji="🎯"
+          title="Learn & Grow"
+          subtitle="Build real guitar foundation"
+          cards={LEARN_GROW_CARDS}
+          navigate={navigate}
+        />
+
+        {/* ── FUN & IDENTITY ── */}
+        <SectionRail
+          emoji="🎶"
+          title="Fun & Identity"
+          subtitle="Play what you actually love"
+          cards={FUN_IDENTITY_CARDS}
+          navigate={navigate}
+        />
+
+        {/* ── DAILY PROGRESS ── */}
+        <SectionRail
+          emoji="📈"
+          title="Daily Progress"
+          subtitle="Build consistency"
+          cards={DAILY_PROGRESS_CARDS}
+          navigate={navigate}
+        />
+
+      </div>
+    </div>
+  );
+}
+
+// ── Reusable section rail ─────────────────────────────────────────────────
+type WideCard = {
+  readonly id: string;
+  readonly label: string;
+  readonly subtitle: string;
+  readonly Icon: React.ElementType;
+  readonly accentColor: string;
+  readonly bgColor: string;
+  readonly borderColor: string;
+};
+
+function SectionRail({
+  emoji,
+  title,
+  subtitle,
+  cards,
+  navigate,
+}: {
+  emoji: string;
+  title: string;
+  subtitle: string;
+  cards: readonly WideCard[];
+  navigate: (path: string) => void;
+}) {
+  return (
+    <div className="mt-8">
+      {/* Section header */}
+      <div className="flex items-start gap-2 mb-4 px-1">
+        <span className="text-lg leading-none mt-0.5" aria-hidden="true">{emoji}</span>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-white">{title}</h2>
+          <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>
+        </div>
+        <div className="self-center flex-shrink-0 h-px w-12 bg-gradient-to-r from-zinc-700/60 to-transparent" />
+      </div>
+
+      {/* Horizontally scrollable card rail */}
+      <div
+        className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {cards.map(card => (
+          <motion.button
+            key={card.id}
+            onClick={() =>
+              toast.info(`${card.label} coming soon`, {
+                description: 'This feature is being built. Check back soon.',
+                duration: 3000,
+              })
+            }
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.15 }}
+            className="flex-shrink-0 flex flex-col justify-between gap-3 rounded-xl p-4 border text-left cursor-pointer transition-colors"
+            style={{
+              width: '216px',
+              background: card.bgColor,
+              borderColor: card.borderColor,
+            }}
+          >
+            {/* Icon badge */}
+            <div
+              className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg flex-shrink-0"
+              style={{
+                backgroundColor: card.accentColor,
+                boxShadow: `0 4px 12px ${card.accentColor}55`,
+              }}
+            >
+              <card.Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+            </div>
+
+            {/* Text */}
+            <div>
+              <p className="text-[13px] font-bold text-white leading-tight">{card.label}</p>
+              <p className="text-[11px] text-zinc-400 leading-snug mt-1">{card.subtitle}</p>
+              <span className="mt-2 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">
+                Soon
+              </span>
+            </div>
+          </motion.button>
+        ))}
       </div>
     </div>
   );

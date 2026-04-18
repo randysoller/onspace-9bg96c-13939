@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, ArrowLeftRight, Target, Link2, MapPin, BookOpen, Star, CalendarCheck, Flame, Radio, ListChecks, TrendingUp, Timer } from 'lucide-react';
+import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 import { toast } from 'sonner';
 
@@ -70,105 +70,235 @@ const VAULT_CARDS = [
   },
 ] as const;
 
-// ── Skill Boost cards ─────────────────────────────────────────────────────
-const SKILL_BOOST_CARDS = [
+// ── Songbook cards ────────────────────────────────────────────────────────
+const SONGBOOK_CARDS = [
   {
-    id: 'fix-chord-changes',
-    label: 'Fix Chord Changes Fast',
-    subtitle: 'Smooth transitions in days, not weeks',
-    Icon: ArrowLeftRight,
-    accentColor: '#10b981',
-    bgColor: 'rgba(16,185,129,0.07)',
-    borderColor: 'rgba(16,185,129,0.25)',
+    id: 'song-search',
+    label: 'Song Search',
+    subtitle: 'Find any song in the library',
+    Icon: Search,
+    accentColor: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.07)',
+    borderColor: 'rgba(245,158,11,0.25)',
   },
   {
-    id: 'picking-power',
-    label: 'Picking Power Techniques',
-    subtitle: 'Build real precision and speed',
-    Icon: Target,
+    id: 'campfire-classics',
+    label: 'Campfire Classics',
+    subtitle: 'Timeless songs everyone loves',
+    Icon: Flame,
     accentColor: '#f97316',
     bgColor: 'rgba(249,115,22,0.07)',
     borderColor: 'rgba(249,115,22,0.25)',
   },
   {
-    id: 'chords-together',
-    label: 'Chords That Sound Great Together',
-    subtitle: 'Progressions used in real songs',
-    Icon: Link2,
-    accentColor: '#8b5cf6',
-    bgColor: 'rgba(139,92,246,0.07)',
-    borderColor: 'rgba(139,92,246,0.25)',
-  },
-  {
-    id: 'stop-missing-notes',
-    label: 'Stop Missing Notes on the Fretboard',
-    subtitle: 'See the fretboard clearly for the first time',
-    Icon: MapPin,
-    accentColor: '#06b6d4',
-    bgColor: 'rgba(6,182,212,0.07)',
-    borderColor: 'rgba(6,182,212,0.25)',
-  },
-] as const;
-
-// ── Learn & Grow cards ────────────────────────────────────────────────────
-const LEARN_GROW_CARDS = [
-  {
-    id: 'learn-notes',
-    label: 'Learn Notes the Easy Way',
-    subtitle: 'No theory overload — just what works',
-    Icon: BookOpen,
-    accentColor: '#3b82f6',
-    bgColor: 'rgba(59,130,246,0.07)',
-    borderColor: 'rgba(59,130,246,0.25)',
-  },
-  {
-    id: 'first-solo',
-    label: 'First Guitar Solo',
-    subtitle: 'Your first solo made simple',
-    Icon: Star,
-    accentColor: '#6366f1',
-    bgColor: 'rgba(99,102,241,0.07)',
-    borderColor: 'rgba(99,102,241,0.25)',
-  },
-  {
-    id: 'practice-like-pro',
-    label: 'Practice Like a Pro',
-    subtitle: 'A simple daily system that works',
-    Icon: CalendarCheck,
-    accentColor: '#14b8a6',
-    bgColor: 'rgba(20,184,166,0.07)',
-    borderColor: 'rgba(20,184,166,0.25)',
-  },
-] as const;
-
-// ── Fun & Identity cards ──────────────────────────────────────────────────
-const FUN_IDENTITY_CARDS = [
-  {
-    id: 'blues-licks',
-    label: 'Blues Licks You\'ll Use',
-    subtitle: 'Real licks that sound great immediately',
-    Icon: Flame,
-    accentColor: '#3b82f6',
-    bgColor: 'rgba(59,130,246,0.07)',
-    borderColor: 'rgba(59,130,246,0.25)',
-  },
-  {
-    id: 'rock-riffs',
-    label: 'Rock Riffs That Hit Hard',
-    subtitle: 'Classic riffs with real impact',
+    id: 'classic-rock',
+    label: 'Classic Rock',
+    subtitle: 'Anthems that defined a generation',
     Icon: Zap,
     accentColor: '#ef4444',
     bgColor: 'rgba(239,68,68,0.07)',
     borderColor: 'rgba(239,68,68,0.25)',
   },
   {
-    id: 'jam-tracks',
-    label: 'Jam Tracks',
-    subtitle: 'Feel like you\'re in a band',
-    Icon: Radio,
-    accentColor: '#a855f7',
-    bgColor: 'rgba(168,85,247,0.07)',
-    borderColor: 'rgba(168,85,247,0.25)',
+    id: 'acoustic-hits',
+    label: 'Acoustic Hits',
+    subtitle: 'Stripped-back songs that shine',
+    Icon: Music,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  {
+    id: 'easy-jazz',
+    label: 'Easy Jazz Standards',
+    subtitle: 'Sophisticated sounds, accessible entry',
+    Icon: Coffee,
+    accentColor: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.07)',
+    borderColor: 'rgba(139,92,246,0.25)',
+  },
+  {
+    id: 'legendary-rock',
+    label: 'Legendary Rock',
+    subtitle: 'The songs that built rock history',
+    Icon: Star,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
+  },
+] as const;
+
+// ── Skill Boost cards ─────────────────────────────────────────────────────
+const SKILL_BOOST_CARDS = [
+  {
+    id: 'finger-gym',
+    label: 'Finger Gym',
+    subtitle: 'Build strength and independence fast',
+    Icon: Dumbbell,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  {
+    id: 'pick-control',
+    label: 'Pick Control',
+    subtitle: 'Real precision and attack consistency',
+    Icon: MapPin,
+    accentColor: '#f97316',
+    bgColor: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+  },
+  {
+    id: 'fingerstyle-flow',
+    label: 'Fingerstyle Flow',
+    subtitle: 'Melody and bass at the same time',
+    Icon: Waves,
+    accentColor: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.07)',
+    borderColor: 'rgba(139,92,246,0.25)',
+  },
+  {
+    id: 'fretboard-map',
+    label: 'Fretboard Map',
+    subtitle: 'See every note — own the neck',
+    Icon: Layers,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
+  },
+  {
+    id: 'sub-5',
+    label: 'Sub 5',
+    subtitle: 'Coming soon',
+    Icon: Hash,
+    accentColor: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.07)',
+    borderColor: 'rgba(245,158,11,0.25)',
+  },
+  {
+    id: 'sub-6',
+    label: 'Sub 6',
+    subtitle: 'Coming soon',
+    Icon: Hash,
+    accentColor: '#ec4899',
+    bgColor: 'rgba(236,72,153,0.07)',
+    borderColor: 'rgba(236,72,153,0.25)',
+  },
+] as const;
+
+// ── Learn & Grow cards ────────────────────────────────────────────────────
+const LEARN_GROW_CARDS = [
+  {
+    id: 'chord-progression-lab',
+    label: 'Chord Progression Lab',
+    subtitle: 'Build progressions used in real songs',
+    Icon: FlaskConical,
+    accentColor: '#3b82f6',
+    bgColor: 'rgba(59,130,246,0.07)',
+    borderColor: 'rgba(59,130,246,0.25)',
+  },
+  {
+    id: 'triad-progression-lab',
+    label: 'Triad Progression Lab',
+    subtitle: 'Lean, powerful chord movement',
+    Icon: Triangle,
+    accentColor: '#6366f1',
+    bgColor: 'rgba(99,102,241,0.07)',
+    borderColor: 'rgba(99,102,241,0.25)',
+  },
+  {
+    id: 'mode-colors',
+    label: 'Mode Colors',
+    subtitle: 'Hear the emotion inside each mode',
+    Icon: Palette,
+    accentColor: '#14b8a6',
+    bgColor: 'rgba(20,184,166,0.07)',
+    borderColor: 'rgba(20,184,166,0.25)',
+  },
+] as const;
+
+// ── Jam Instantly cards ───────────────────────────────────────────────────
+const JAM_INSTANTLY_CARDS = [
+  {
+    id: 'major-keys',
+    label: 'Major Keys',
+    subtitle: 'Bright, uplifting progressions',
+    Icon: Sun,
+    accentColor: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.07)',
+    borderColor: 'rgba(245,158,11,0.25)',
+  },
+  {
+    id: 'minor-keys',
+    label: 'Minor Keys',
+    subtitle: 'Deep, emotional progressions',
+    Icon: Moon,
+    accentColor: '#6366f1',
+    bgColor: 'rgba(99,102,241,0.07)',
+    borderColor: 'rgba(99,102,241,0.25)',
+  },
+  {
+    id: 'modal',
+    label: 'Modal',
+    subtitle: 'Explore Dorian, Phrygian and beyond',
+    Icon: Layers,
+    accentColor: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.07)',
+    borderColor: 'rgba(139,92,246,0.25)',
+  },
+  {
+    id: 'rock-jam',
+    label: 'Rock',
+    subtitle: 'Power and drive backing tracks',
+    Icon: Zap,
+    accentColor: '#ef4444',
+    bgColor: 'rgba(239,68,68,0.07)',
+    borderColor: 'rgba(239,68,68,0.25)',
+  },
+  {
+    id: 'pop-jam',
+    label: 'Pop',
+    subtitle: 'Melodic, radio-ready grooves',
+    Icon: Star,
+    accentColor: '#ec4899',
+    bgColor: 'rgba(236,72,153,0.07)',
+    borderColor: 'rgba(236,72,153,0.25)',
+  },
+  {
+    id: 'blues-jam',
+    label: 'Blues',
+    subtitle: 'Raw feel — pure expression',
+    Icon: Flame,
+    accentColor: '#3b82f6',
+    bgColor: 'rgba(59,130,246,0.07)',
+    borderColor: 'rgba(59,130,246,0.25)',
+  },
+  {
+    id: 'country-jam',
+    label: 'Country',
+    subtitle: 'Twang and rhythm you can ride',
+    Icon: Music,
+    accentColor: '#f97316',
+    bgColor: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+  },
+  {
+    id: 'jazz-jam',
+    label: 'Jazz',
+    subtitle: 'Swinging harmony and improvisation',
+    Icon: Coffee,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+  },
+  {
+    id: 'reggae-jam',
+    label: 'Reggae',
+    subtitle: 'Offbeat groove, island soul',
+    Icon: BookOpen,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
   },
 ] as const;
 
@@ -375,6 +505,15 @@ export default function Index() {
           </div>
         </div>
 
+        {/* ── SONGBOOK ── */}
+        <SectionRail
+          emoji="🎸"
+          title="Songbook"
+          subtitle="Real songs to play right now"
+          cards={SONGBOOK_CARDS}
+          navigate={navigate}
+        />
+
         {/* ── SKILL BOOST ── */}
         <SectionRail
           emoji="🚀"
@@ -393,12 +532,12 @@ export default function Index() {
           navigate={navigate}
         />
 
-        {/* ── FUN & IDENTITY ── */}
+        {/* ── JAM INSTANTLY ── */}
         <SectionRail
           emoji="🎶"
-          title="Fun & Identity"
-          subtitle="Play what you actually love"
-          cards={FUN_IDENTITY_CARDS}
+          title="Jam Instantly"
+          subtitle="Pick a vibe and play"
+          cards={JAM_INSTANTLY_CARDS}
           navigate={navigate}
         />
 

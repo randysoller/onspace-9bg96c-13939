@@ -1,8 +1,73 @@
 
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Grid3x3, Music2, ChevronRight, Scale } from 'lucide-react';
+import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
+import { toast } from 'sonner';
+
+// ── Vault card definitions ─────────────────────────────────────────────────
+const VAULT_CARDS = [
+  {
+    id: 'chord-vault',
+    label: 'Chord Vault',
+    Icon: Grid3x3,
+    accentColor: '#10b981',
+    bgColor: 'rgba(16,185,129,0.07)',
+    borderColor: 'rgba(16,185,129,0.25)',
+    route: '/library',
+    soon: false,
+  },
+  {
+    id: 'strum-vault',
+    label: 'Strum Pattern Vault',
+    Icon: Sliders,
+    accentColor: '#f97316',
+    bgColor: 'rgba(249,115,22,0.07)',
+    borderColor: 'rgba(249,115,22,0.25)',
+    route: null,
+    soon: true,
+  },
+  {
+    id: 'triad-vault',
+    label: 'Triad Vault',
+    Icon: Triangle,
+    accentColor: '#8b5cf6',
+    bgColor: 'rgba(139,92,246,0.07)',
+    borderColor: 'rgba(139,92,246,0.25)',
+    route: null,
+    soon: true,
+  },
+  {
+    id: 'scale-vault',
+    label: 'Scale Vault',
+    Icon: Waves,
+    accentColor: '#06b6d4',
+    bgColor: 'rgba(6,182,212,0.07)',
+    borderColor: 'rgba(6,182,212,0.25)',
+    route: null,
+    soon: true,
+  },
+  {
+    id: 'lick-lab',
+    label: 'Lick Lab',
+    Icon: Mic2,
+    accentColor: '#f43f5e',
+    bgColor: 'rgba(244,63,94,0.07)',
+    borderColor: 'rgba(244,63,94,0.25)',
+    route: null,
+    soon: true,
+  },
+  {
+    id: 'riff-arena',
+    label: 'Riff Arena',
+    Icon: Zap,
+    accentColor: '#f59e0b',
+    bgColor: 'rgba(245,158,11,0.07)',
+    borderColor: 'rgba(245,158,11,0.25)',
+    route: null,
+    soon: true,
+  },
+] as const;
 
 export default function Index() {
   const navigate = useNavigate();
@@ -105,6 +170,66 @@ export default function Index() {
               </div>
             </div>
           </motion.button>
+        </div>
+
+        {/* ── PLAY NOW: Library Vault Row ── */}
+        <div className="mt-8">
+          {/* Section header */}
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <span className="text-amber-400" aria-hidden="true">⚡</span>
+            <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-amber-400">
+              Play Now
+            </h2>
+            <div className="flex-1 h-px bg-gradient-to-r from-amber-500/30 to-transparent" />
+          </div>
+
+          {/* Horizontally scrollable card rail */}
+          <div
+            className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            {VAULT_CARDS.map(card => (
+              <motion.button
+                key={card.id}
+                onClick={() => {
+                  if (card.route) {
+                    navigate(card.route);
+                  } else {
+                    toast.info(`${card.label} coming soon`, {
+                      description: 'This vault is being built. Check back soon.',
+                      duration: 3000,
+                    });
+                  }
+                }}
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
+                className="flex-shrink-0 flex flex-col items-start gap-3 w-36 rounded-xl p-4 border text-left cursor-pointer transition-colors"
+                style={{
+                  background: `${card.bgColor}`,
+                  borderColor: card.borderColor,
+                }}
+              >
+                {/* Icon badge */}
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: card.accentColor, boxShadow: `0 4px 12px ${card.accentColor}55` }}
+                >
+                  <card.Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+                </div>
+
+                {/* Label */}
+                <div>
+                  <p className="text-[13px] font-bold text-white leading-tight">{card.label}</p>
+                  {card.soon && (
+                    <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">
+                      Soon
+                    </span>
+                  )}
+                </div>
+              </motion.button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

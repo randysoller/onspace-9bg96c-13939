@@ -118,6 +118,8 @@ export const CHORD_DATABASE: ChordData[] = [
   // ============================================================================
   { id: 'open-a9', name: 'A9', symbol: 'A9', category: 'open', type: '9th',
     frets: [-1, 0, 2, 4, 2, 3], fingers: [0, 0, 1, 3, 2, 4], baseFret: 1, rootNoteString: 1 },
+  { id: 'open-e6', name: 'E Major 6 Open', symbol: 'E6', category: 'open', type: 'major6',
+    frets: [0, 2, 2, 1, 2, 0], fingers: [0, 2, 3, 1, 4, 0], baseFret: 1, rootNoteString: 0 },
   { id: 'open-e9', name: 'E9', symbol: 'E9', category: 'open', type: '9th',
     frets: [0, 2, 0, 1, 0, 2], fingers: [0, 2, 0, 1, 0, 3], baseFret: 1, rootNoteString: 0 },
   { id: 'open-caug7', name: 'Caug7', symbol: 'C+7', category: 'open', type: 'aug7',

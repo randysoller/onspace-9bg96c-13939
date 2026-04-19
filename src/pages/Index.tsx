@@ -492,8 +492,14 @@ export default function Index() {
                 style={{ overflow: 'hidden' }}
               >
                 <div
-                  className="flex gap-3 overflow-x-auto pb-3 pt-3 justify-center"
-                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  className="flex gap-3 overflow-x-auto pb-3 pt-3"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    scrollSnapType: 'x mandatory',
+                    paddingLeft: 'calc(50% - 125px)',
+                    paddingRight: 'calc(50% - 125px)',
+                  }}
                 >
                   {VAULT_CARDS.map(card => (
                     <motion.button
@@ -515,6 +521,7 @@ export default function Index() {
                       style={{
                         borderTopWidth: '4px',
                         borderTopColor: card.accentColor,
+                        scrollSnapAlign: 'center',
                       }}
                     >
                       {/* Icon badge */}

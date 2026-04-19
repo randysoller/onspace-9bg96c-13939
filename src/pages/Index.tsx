@@ -445,6 +445,9 @@ export default function Index() {
           </motion.button>
         </div>
 
+        {/* ── Divider ── */}
+        <div className="mt-8 h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
+
         {/* ── PLAY NOW: Library Vault Row ── */}
         <div className="mt-8">
           {/* Section header */}
@@ -581,6 +584,9 @@ function SectionRail({
 }) {
   return (
     <div className="mt-8">
+      {/* Gradient divider between sections */}
+      <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+
       {/* Section header */}
       <div className="flex items-start gap-2 mb-4 px-1">
         <span className="text-lg leading-none mt-0.5" aria-hidden="true">{emoji}</span>

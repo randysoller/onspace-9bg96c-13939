@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 import { toast } from 'sonner';
@@ -344,6 +344,7 @@ const DAILY_PROGRESS_CARDS = [
 
 export default function Index() {
   const navigate = useNavigate();
+  const [isPlayNowOpen, setIsPlayNowOpen] = useState(false);
   
   // Sync user data from backend when authenticated
   useBackendSync();
@@ -448,64 +449,102 @@ export default function Index() {
         {/* ── Divider ── */}
         <div className="mt-8 h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />
 
-        {/* ── PLAY NOW: Library Vault Row ── */}
+        {/* ── PLAY NOW: Expandable Practice-Mode Card ── */}
         <div className="mt-8">
-          {/* Section header */}
-          <div className="flex items-center gap-2 mb-4 px-1">
-            <span className="text-amber-400" aria-hidden="true">⚡</span>
-            <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-amber-400">
-              Play Now
-            </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-amber-500/30 to-transparent" />
-          </div>
-
-          {/* Horizontally scrollable card rail */}
-          <div
-            className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          <motion.button
+            onClick={() => setIsPlayNowOpen(prev => !prev)}
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-amber-500 rounded-xl p-5 hover:bg-amber-500/[0.07] hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-colors group cursor-pointer"
           >
-            {VAULT_CARDS.map(card => (
-              <motion.button
-                key={card.id}
-                onClick={() => {
-                  if (card.route) {
-                    navigate(card.route);
-                  } else {
-                    toast.info(`${card.label} coming soon`, {
-                      description: 'This vault is being built. Check back soon.',
-                      duration: 3000,
-                    });
-                  }
-                }}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-                className="flex-shrink-0 flex flex-col items-start gap-3 w-36 rounded-xl p-4 border text-left cursor-pointer transition-colors"
-                style={{
-                  background: `${card.bgColor}`,
-                  borderColor: card.borderColor,
-                }}
-              >
-                {/* Icon badge */}
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: card.accentColor, boxShadow: `0 4px 12px ${card.accentColor}55` }}
-                >
-                  <card.Icon className="w-5 h-5 text-white" strokeWidth={2.2} />
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-14 h-14 bg-amber-500 rounded-lg flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <Zap className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-white">Play Now</h3>
+                  <motion.div
+                    animate={{ rotate: isPlayNowOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 text-amber-500 group-hover:text-amber-400 font-semibold text-sm flex-shrink-0"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
                 </div>
+                <p className="text-sm leading-relaxed">
+                  <span className="font-bold text-amber-400 text-[17px]">Browse the full library.</span>{' '}
+                  <span className="text-zinc-400">Chord Vault, Scale Vault, Lick Lab, Riff Arena and more — all in one place.</span>
+                </p>
+              </div>
+            </div>
+          </motion.button>
 
-                {/* Label */}
-                <div>
-                  <p className="text-[13px] font-bold text-white leading-tight">{card.label}</p>
-                  {card.soon && (
-                    <span className="mt-1 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">
-                      Soon
-                    </span>
-                  )}
+          {/* Expanded vault card rail */}
+          <AnimatePresence>
+            {isPlayNowOpen && (
+              <motion.div
+                key="vault-rail"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div
+                  className="flex gap-3 overflow-x-auto pb-3 pt-3 -mx-4 px-4"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  {VAULT_CARDS.map(card => (
+                    <motion.button
+                      key={card.id}
+                      onClick={() => {
+                        if (card.route) {
+                          navigate(card.route);
+                        } else {
+                          toast.info(`${card.label} coming soon`, {
+                            description: 'This vault is being built. Check back soon.',
+                            duration: 3000,
+                          });
+                        }
+                      }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ duration: 0.15 }}
+                      className="flex-shrink-0 flex flex-col justify-between gap-3 w-[200px] rounded-xl p-4 text-left cursor-pointer transition-colors bg-zinc-900/50 border border-zinc-800 hover:border-opacity-60 group"
+                      style={{
+                        borderTopWidth: '4px',
+                        borderTopColor: card.accentColor,
+                      }}
+                    >
+                      {/* Icon badge */}
+                      <div
+                        className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg"
+                        style={{ backgroundColor: card.accentColor, boxShadow: `0 4px 12px ${card.accentColor}55` }}
+                      >
+                        <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
+                      </div>
+
+                      {/* Label + soon badge */}
+                      <div>
+                        <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                        {card.soon ? (
+                          <span className="mt-2 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">
+                            Soon
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                            <span className="text-[12px] font-semibold">Open</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+                      </div>
+                    </motion.button>
+                  ))}
                 </div>
-              </motion.button>
-            ))}
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ── SONGBOOK ── */}

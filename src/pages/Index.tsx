@@ -472,10 +472,14 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm leading-relaxed">
-                  <span className="font-bold text-amber-400 text-[17px]">Browse the full library.</span>{' '}
-                  <span className="text-zinc-400">Chord Vault, Scale Vault, Lick Lab, Riff Arena and more — all in one place.</span>
-                </p>
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-xs text-zinc-400 leading-snug">Find any chord instantly.</p>
+                  <p className="text-xs text-zinc-400 leading-snug">Solo in any key.</p>
+                  <p className="text-xs text-zinc-400 leading-snug">Triad builder.</p>
+                  <p className="text-xs text-zinc-400 leading-snug">Better strumming fast.</p>
+                  <p className="text-xs text-zinc-400 leading-snug">Licks you will actually use.</p>
+                  <p className="text-xs text-zinc-400 leading-snug">Iconic riffs.</p>
+                </div>
               </div>
             </div>
           </motion.button>

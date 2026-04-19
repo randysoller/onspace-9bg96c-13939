@@ -551,9 +551,15 @@ export default function Index() {
                       <div>
                         <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
                         {card.tagline && (
-                          <p className="text-[11px] font-semibold leading-snug mt-1" style={{ color: card.taglineColor }}>
-                            {card.tagline}
-                          </p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="flex-shrink-0 rounded-full"
+                              style={{ width: '5px', height: '5px', backgroundColor: card.accentColor }}
+                            />
+                            <p className="text-[11px] font-semibold leading-snug" style={{ color: card.taglineColor }}>
+                              {card.tagline}
+                            </p>
+                          </div>
                         )}
                         {card.soon ? (
                           <span className="mt-2 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">

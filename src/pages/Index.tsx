@@ -492,7 +492,7 @@ export default function Index() {
                 style={{ overflow: 'hidden' }}
               >
                 <div
-                  className="flex gap-3 overflow-x-auto pb-3 pt-3 -mx-4 px-4"
+                  className="flex gap-3 overflow-x-auto pb-3 pt-3 justify-center"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {VAULT_CARDS.map(card => (
@@ -511,7 +511,7 @@ export default function Index() {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ duration: 0.15 }}
-                      className="flex-shrink-0 flex flex-col justify-between gap-3 w-[200px] rounded-xl p-4 text-left cursor-pointer transition-colors bg-zinc-900/50 border border-zinc-800 hover:border-opacity-60 group"
+                      className="flex-shrink-0 flex flex-col justify-between gap-3 w-[250px] rounded-xl p-4 text-left cursor-pointer transition-colors bg-zinc-900/50 border border-zinc-800 hover:border-opacity-60 group"
                       style={{
                         borderTopWidth: '4px',
                         borderTopColor: card.accentColor,

@@ -17,6 +17,9 @@ const VAULT_CARDS = [
     borderColor: 'rgba(16,185,129,0.25)',
     route: '/library',
     soon: false,
+    tagline: 'Find any chord instantly.',
+    taglineColor: '#10b981',
+    openWhite: true,
   },
   {
     id: 'strum-vault',
@@ -27,6 +30,9 @@ const VAULT_CARDS = [
     borderColor: 'rgba(249,115,22,0.25)',
     route: null,
     soon: true,
+    tagline: undefined,
+    taglineColor: undefined,
+    openWhite: false,
   },
   {
     id: 'triad-vault',
@@ -37,6 +43,9 @@ const VAULT_CARDS = [
     borderColor: 'rgba(139,92,246,0.25)',
     route: null,
     soon: true,
+    tagline: 'Triad Builder.',
+    taglineColor: '#8b5cf6',
+    openWhite: false,
   },
   {
     id: 'scale-vault',
@@ -47,6 +56,9 @@ const VAULT_CARDS = [
     borderColor: 'rgba(6,182,212,0.25)',
     route: null,
     soon: true,
+    tagline: 'Solo in any key.',
+    taglineColor: '#06b6d4',
+    openWhite: false,
   },
   {
     id: 'lick-lab',
@@ -57,6 +69,9 @@ const VAULT_CARDS = [
     borderColor: 'rgba(244,63,94,0.25)',
     route: null,
     soon: true,
+    tagline: 'Licks you will actually use.',
+    taglineColor: '#f43f5e',
+    openWhite: false,
   },
   {
     id: 'riff-arena',
@@ -67,8 +82,11 @@ const VAULT_CARDS = [
     borderColor: 'rgba(245,158,11,0.25)',
     route: null,
     soon: true,
+    tagline: 'Iconic Riffs.',
+    taglineColor: '#f59e0b',
+    openWhite: false,
   },
-] as const;
+];
 
 // ── Songbook cards ────────────────────────────────────────────────────────
 const SONGBOOK_CARDS = [
@@ -472,14 +490,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-xs text-zinc-400 leading-snug">Find any chord instantly.</p>
-                  <p className="text-xs text-zinc-400 leading-snug">Solo in any key.</p>
-                  <p className="text-xs text-zinc-400 leading-snug">Triad builder.</p>
-                  <p className="text-xs text-zinc-400 leading-snug">Better strumming fast.</p>
-                  <p className="text-xs text-zinc-400 leading-snug">Licks you will actually use.</p>
-                  <p className="text-xs text-zinc-400 leading-snug">Iconic riffs.</p>
-                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">Browse the full library — Chord Vault, Scale Vault, Lick Lab, Riff Arena and more, all in one place.</p>
               </div>
             </div>
           </motion.button>
@@ -536,15 +547,20 @@ export default function Index() {
                         <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
                       </div>
 
-                      {/* Label + soon badge */}
+                      {/* Label + tagline + action */}
                       <div>
                         <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                        {card.tagline && (
+                          <p className="text-[11px] font-semibold leading-snug mt-1" style={{ color: card.taglineColor }}>
+                            {card.tagline}
+                          </p>
+                        )}
                         {card.soon ? (
                           <span className="mt-2 inline-block text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded bg-zinc-700/80 text-zinc-400">
                             Soon
                           </span>
                         ) : (
-                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.openWhite ? '#ffffff' : card.accentColor }}>
                             <span className="text-[12px] font-semibold">Open</span>
                             <ChevronRight className="w-3.5 h-3.5" />
                           </div>

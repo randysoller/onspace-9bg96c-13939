@@ -363,6 +363,8 @@ const DAILY_PROGRESS_CARDS = [
 export default function Index() {
   const navigate = useNavigate();
   const [isPlayNowOpen, setIsPlayNowOpen] = useState(false);
+  const [activeVaultIndex, setActiveVaultIndex] = useState(0);
+  const vaultRailRef = React.useRef<HTMLDivElement>(null);
   
   // Sync user data from backend when authenticated
   useBackendSync();
@@ -506,7 +508,14 @@ export default function Index() {
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
                 style={{ overflow: 'hidden' }}
               >
+                {/* Inner slide-in wrapper — animates rail + dots from right on open */}
+                <motion.div
+                  initial={{ x: 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                >
                 <div
+                  ref={vaultRailRef}
                   className="flex gap-3 overflow-x-auto pb-3 pt-3"
                   style={{
                     scrollbarWidth: 'none',
@@ -514,6 +523,12 @@ export default function Index() {
                     scrollSnapType: 'x mandatory',
                     paddingLeft: 'calc(50% - 125px)',
                     paddingRight: 'calc(50% - 125px)',
+                  }}
+                  onScroll={(e) => {
+                    const scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                    // cardWidth(250) + gap(12) = 262px per card step
+                    const index = Math.round(scrollLeft / 262);
+                    setActiveVaultIndex(Math.max(0, Math.min(index, VAULT_CARDS.length - 1)));
                   }}
                 >
                   {VAULT_CARDS.map(card => (
@@ -575,6 +590,21 @@ export default function Index() {
                     </motion.button>
                   ))}
                 </div>
+                {/* Dot indicators */}
+                <div className="flex justify-center items-center gap-1.5 py-2">
+                  {VAULT_CARDS.map((card, i) => (
+                    <span
+                      key={card.id}
+                      className="rounded-full transition-all duration-200"
+                      style={{
+                        width: i === activeVaultIndex ? '8px' : '6px',
+                        height: i === activeVaultIndex ? '8px' : '6px',
+                        backgroundColor: i === activeVaultIndex ? '#f59e0b' : '#52525b',
+                      }}
+                    />
+                  ))}
+                </div>
+                </motion.div>
               </motion.div>
             )}
           </AnimatePresence>

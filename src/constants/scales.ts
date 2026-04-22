@@ -514,6 +514,7 @@ export type ScaleVaultCategory =
 export interface ScaleVaultEntry {
   id: string;
   name: string;
+  altNames?: readonly string[];
   category: ScaleVaultCategory;
   intervals: readonly number[];
 }
@@ -529,6 +530,7 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'minor',
     name: 'Minor Scale',
+    altNames: ['Natural Minor', 'Aeolian'],
     category: 'diatonic',
     intervals: [0, 2, 3, 5, 7, 8, 10],
   },
@@ -551,12 +553,14 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'minor-blues',
     name: 'Minor Blues',
+    altNames: ['Blues Hexatonic'],
     category: 'blues',
     intervals: [0, 3, 5, 6, 7, 10],
   },
   {
     id: 'major-blues',
     name: 'Major Blues',
+    altNames: ['Major Blues Hexatonic'],
     category: 'blues',
     intervals: [0, 2, 3, 4, 7, 9],
   },
@@ -597,30 +601,35 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'harmonic-minor',
     name: 'Harmonic Minor Scale',
+    altNames: ['Mohammedan Scale'],
     category: 'harmonic-minor',
     intervals: [0, 2, 3, 5, 7, 8, 11],
   },
   {
     id: 'locrian-natural-6',
     name: 'Locrian Natural 6 (Harmonic Minor Mode 2)',
+    altNames: ['Locrian ♮6'],
     category: 'harmonic-minor',
     intervals: [0, 1, 3, 5, 6, 9, 10],
   },
   {
     id: 'ionian-augmented',
     name: 'Ionian Augmented (Harmonic Minor Mode 3)',
+    altNames: ['Major #5'],
     category: 'harmonic-minor',
     intervals: [0, 2, 4, 5, 8, 9, 11],
   },
   {
     id: 'dorian-sharp4',
     name: 'Dorian #4 (Harmonic Minor Mode 4)',
+    altNames: ['Ukrainian Dorian'],
     category: 'harmonic-minor',
     intervals: [0, 2, 3, 6, 7, 9, 10],
   },
   {
     id: 'phrygian-dominant',
     name: 'Phrygian Dominant (Harmonic Minor Mode 5)',
+    altNames: ['Spanish Gypsy', 'Freygish'],
     category: 'harmonic-minor',
     intervals: [0, 1, 4, 5, 7, 8, 10],
   },
@@ -634,6 +643,7 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
     // Corrected from 10 → 9 (Ab above B = 9 semitones, not 10)
     id: 'ultra-locrian',
     name: 'Ultra Locrian (Harmonic Minor Mode 7)',
+    altNames: ['Super Locrian bb7'],
     category: 'harmonic-minor',
     intervals: [0, 1, 3, 4, 6, 8, 9],
   },
@@ -642,42 +652,49 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'melodic-minor',
     name: 'Melodic Minor Scale',
+    altNames: ['Jazz Minor'],
     category: 'melodic-minor',
     intervals: [0, 2, 3, 5, 7, 9, 11],
   },
   {
     id: 'dorian-flat2',
     name: 'Dorian b2 (Melodic Minor Mode 2)',
+    altNames: ['Phrygian Natural 6'],
     category: 'melodic-minor',
     intervals: [0, 1, 3, 5, 7, 9, 10],
   },
   {
     id: 'lydian-augmented',
     name: 'Lydian Augmented (Melodic Minor Mode 3)',
+    altNames: ['Acoustic #5'],
     category: 'melodic-minor',
     intervals: [0, 2, 4, 6, 8, 9, 11],
   },
   {
     id: 'lydian-dominant',
     name: 'Lydian Dominant (Melodic Minor Mode 4)',
+    altNames: ['Acoustic Scale', 'Overtone Scale'],
     category: 'melodic-minor',
     intervals: [0, 2, 4, 6, 7, 9, 10],
   },
   {
     id: 'mixolydian-flat6',
     name: 'Mixolydian b6 (Melodic Minor Mode 5)',
+    altNames: ['Aeolian Dominant'],
     category: 'melodic-minor',
     intervals: [0, 2, 4, 5, 7, 8, 10],
   },
   {
     id: 'locrian-natural2',
     name: 'Locrian Natural 2 (Melodic Minor Mode 6)',
+    altNames: ['Half-Diminished Scale'],
     category: 'melodic-minor',
     intervals: [0, 2, 3, 5, 6, 8, 10],
   },
   {
     id: 'altered-scale',
     name: 'Altered Scale (Melodic Minor Mode 7)',
+    altNames: ['Super Locrian'],
     category: 'melodic-minor',
     intervals: [0, 1, 3, 4, 6, 8, 10],
   },
@@ -710,6 +727,7 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'mixolydian-flat2',
     name: 'Mixolydian b2 (Harmonic Major Mode 5)',
+    altNames: ['Phrygian Dominant Natural 6'],
     category: 'harmonic-major',
     intervals: [0, 1, 4, 5, 7, 9, 10],
   },
@@ -722,6 +740,7 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'locrian-bb7',
     name: 'Locrian bb7 (Harmonic Major Mode 7)',
+    altNames: ['Diminished b4'],
     category: 'harmonic-major',
     intervals: [0, 1, 3, 5, 6, 8, 9],
   },
@@ -730,6 +749,7 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'double-harmonic-major',
     name: 'Double Harmonic Major Scale',
+    altNames: ['Byzantine Scale', 'Arabic Scale'],
     category: 'double-harmonic',
     intervals: [0, 1, 4, 5, 7, 8, 11],
   },
@@ -742,12 +762,14 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'ultra-phrygian',
     name: 'Ultra Phrygian (Double Harmonic Major Mode 3)',
+    altNames: ['Ionian b2 #2'],
     category: 'double-harmonic',
     intervals: [0, 1, 3, 4, 7, 8, 9],
   },
   {
     id: 'hungarian-minor',
     name: 'Hungarian Minor (Double Harmonic Major Mode 4)',
+    altNames: ['Gypsy Minor'],
     category: 'double-harmonic',
     intervals: [0, 2, 3, 6, 7, 8, 11],
   },

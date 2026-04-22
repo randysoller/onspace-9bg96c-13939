@@ -497,6 +497,280 @@ function qualityToChordType(quality: string): string[] {
   return map[quality] ?? [];
 }
 
+// ========== SCALE VAULT DEFINITIONS ==========
+// 39 scales with verified semitone intervals from root (0 = unison).
+// Ultra Locrian corrected: interval 9 (not 10) for the 7th degree.
+
+export type ScaleVaultCategory =
+  | 'diatonic'
+  | 'pentatonic'
+  | 'blues'
+  | 'church-mode'
+  | 'harmonic-minor'
+  | 'melodic-minor'
+  | 'harmonic-major'
+  | 'double-harmonic';
+
+export interface ScaleVaultEntry {
+  id: string;
+  name: string;
+  category: ScaleVaultCategory;
+  intervals: readonly number[];
+}
+
+export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
+  // ── Diatonic ──────────────────────────────────────────────────────────
+  {
+    id: 'major',
+    name: 'Major Scale',
+    category: 'diatonic',
+    intervals: [0, 2, 4, 5, 7, 9, 11],
+  },
+  {
+    id: 'minor',
+    name: 'Minor Scale',
+    category: 'diatonic',
+    intervals: [0, 2, 3, 5, 7, 8, 10],
+  },
+
+  // ── Pentatonic ────────────────────────────────────────────────────────
+  {
+    id: 'major-pentatonic',
+    name: 'Major Pentatonic',
+    category: 'pentatonic',
+    intervals: [0, 2, 4, 7, 9],
+  },
+  {
+    id: 'minor-pentatonic',
+    name: 'Minor Pentatonic',
+    category: 'pentatonic',
+    intervals: [0, 3, 5, 7, 10],
+  },
+
+  // ── Blues ─────────────────────────────────────────────────────────────
+  {
+    id: 'minor-blues',
+    name: 'Minor Blues',
+    category: 'blues',
+    intervals: [0, 3, 5, 6, 7, 10],
+  },
+  {
+    id: 'major-blues',
+    name: 'Major Blues',
+    category: 'blues',
+    intervals: [0, 2, 3, 4, 7, 9],
+  },
+
+  // ── Church Modes ──────────────────────────────────────────────────────
+  {
+    id: 'dorian',
+    name: 'Dorian Mode',
+    category: 'church-mode',
+    intervals: [0, 2, 3, 5, 7, 9, 10],
+  },
+  {
+    id: 'phrygian',
+    name: 'Phrygian Mode',
+    category: 'church-mode',
+    intervals: [0, 1, 3, 5, 7, 8, 10],
+  },
+  {
+    id: 'lydian',
+    name: 'Lydian Mode',
+    category: 'church-mode',
+    intervals: [0, 2, 4, 6, 7, 9, 11],
+  },
+  {
+    id: 'mixolydian',
+    name: 'Mixolydian Mode',
+    category: 'church-mode',
+    intervals: [0, 2, 4, 5, 7, 9, 10],
+  },
+  {
+    id: 'locrian',
+    name: 'Locrian Mode',
+    category: 'church-mode',
+    intervals: [0, 1, 3, 5, 6, 8, 10],
+  },
+
+  // ── Harmonic Minor & Modes ────────────────────────────────────────────
+  {
+    id: 'harmonic-minor',
+    name: 'Harmonic Minor Scale',
+    category: 'harmonic-minor',
+    intervals: [0, 2, 3, 5, 7, 8, 11],
+  },
+  {
+    id: 'locrian-natural-6',
+    name: 'Locrian Natural 6 (Harmonic Minor Mode 2)',
+    category: 'harmonic-minor',
+    intervals: [0, 1, 3, 5, 6, 9, 10],
+  },
+  {
+    id: 'ionian-augmented',
+    name: 'Ionian Augmented (Harmonic Minor Mode 3)',
+    category: 'harmonic-minor',
+    intervals: [0, 2, 4, 5, 8, 9, 11],
+  },
+  {
+    id: 'dorian-sharp4',
+    name: 'Dorian #4 (Harmonic Minor Mode 4)',
+    category: 'harmonic-minor',
+    intervals: [0, 2, 3, 6, 7, 9, 10],
+  },
+  {
+    id: 'phrygian-dominant',
+    name: 'Phrygian Dominant (Harmonic Minor Mode 5)',
+    category: 'harmonic-minor',
+    intervals: [0, 1, 4, 5, 7, 8, 10],
+  },
+  {
+    id: 'lydian-sharp2',
+    name: 'Lydian #2 (Harmonic Minor Mode 6)',
+    category: 'harmonic-minor',
+    intervals: [0, 3, 4, 6, 7, 9, 11],
+  },
+  {
+    // Corrected from 10 → 9 (Ab above B = 9 semitones, not 10)
+    id: 'ultra-locrian',
+    name: 'Ultra Locrian (Harmonic Minor Mode 7)',
+    category: 'harmonic-minor',
+    intervals: [0, 1, 3, 4, 6, 8, 9],
+  },
+
+  // ── Melodic Minor & Modes ─────────────────────────────────────────────
+  {
+    id: 'melodic-minor',
+    name: 'Melodic Minor Scale',
+    category: 'melodic-minor',
+    intervals: [0, 2, 3, 5, 7, 9, 11],
+  },
+  {
+    id: 'dorian-flat2',
+    name: 'Dorian b2 (Melodic Minor Mode 2)',
+    category: 'melodic-minor',
+    intervals: [0, 1, 3, 5, 7, 9, 10],
+  },
+  {
+    id: 'lydian-augmented',
+    name: 'Lydian Augmented (Melodic Minor Mode 3)',
+    category: 'melodic-minor',
+    intervals: [0, 2, 4, 6, 8, 9, 11],
+  },
+  {
+    id: 'lydian-dominant',
+    name: 'Lydian Dominant (Melodic Minor Mode 4)',
+    category: 'melodic-minor',
+    intervals: [0, 2, 4, 6, 7, 9, 10],
+  },
+  {
+    id: 'mixolydian-flat6',
+    name: 'Mixolydian b6 (Melodic Minor Mode 5)',
+    category: 'melodic-minor',
+    intervals: [0, 2, 4, 5, 7, 8, 10],
+  },
+  {
+    id: 'locrian-natural2',
+    name: 'Locrian Natural 2 (Melodic Minor Mode 6)',
+    category: 'melodic-minor',
+    intervals: [0, 2, 3, 5, 6, 8, 10],
+  },
+  {
+    id: 'altered-scale',
+    name: 'Altered Scale (Melodic Minor Mode 7)',
+    category: 'melodic-minor',
+    intervals: [0, 1, 3, 4, 6, 8, 10],
+  },
+
+  // ── Harmonic Major & Modes ────────────────────────────────────────────
+  {
+    id: 'harmonic-major',
+    name: 'Harmonic Major Scale',
+    category: 'harmonic-major',
+    intervals: [0, 2, 4, 5, 7, 8, 11],
+  },
+  {
+    id: 'dorian-flat5',
+    name: 'Dorian b5 (Harmonic Major Mode 2)',
+    category: 'harmonic-major',
+    intervals: [0, 2, 3, 5, 6, 9, 10],
+  },
+  {
+    id: 'phrygian-flat4',
+    name: 'Phrygian b4 (Harmonic Major Mode 3)',
+    category: 'harmonic-major',
+    intervals: [0, 1, 3, 4, 7, 8, 10],
+  },
+  {
+    id: 'lydian-flat3',
+    name: 'Lydian b3 (Harmonic Major Mode 4)',
+    category: 'harmonic-major',
+    intervals: [0, 2, 3, 6, 7, 9, 11],
+  },
+  {
+    id: 'mixolydian-flat2',
+    name: 'Mixolydian b2 (Harmonic Major Mode 5)',
+    category: 'harmonic-major',
+    intervals: [0, 1, 4, 5, 7, 9, 10],
+  },
+  {
+    id: 'lydian-augmented-sharp2',
+    name: 'Lydian Augmented #2 (Harmonic Major Mode 6)',
+    category: 'harmonic-major',
+    intervals: [0, 3, 4, 6, 8, 9, 11],
+  },
+  {
+    id: 'locrian-bb7',
+    name: 'Locrian bb7 (Harmonic Major Mode 7)',
+    category: 'harmonic-major',
+    intervals: [0, 1, 3, 5, 6, 8, 9],
+  },
+
+  // ── Double Harmonic Major & Modes ─────────────────────────────────────
+  {
+    id: 'double-harmonic-major',
+    name: 'Double Harmonic Major Scale',
+    category: 'double-harmonic',
+    intervals: [0, 1, 4, 5, 7, 8, 11],
+  },
+  {
+    id: 'lydian-sharp2-sharp6',
+    name: 'Lydian #2 #6 (Double Harmonic Major Mode 2)',
+    category: 'double-harmonic',
+    intervals: [0, 3, 4, 6, 7, 10, 11],
+  },
+  {
+    id: 'ultra-phrygian',
+    name: 'Ultra Phrygian (Double Harmonic Major Mode 3)',
+    category: 'double-harmonic',
+    intervals: [0, 1, 3, 4, 7, 8, 9],
+  },
+  {
+    id: 'hungarian-minor',
+    name: 'Hungarian Minor (Double Harmonic Major Mode 4)',
+    category: 'double-harmonic',
+    intervals: [0, 2, 3, 6, 7, 8, 11],
+  },
+  {
+    id: 'oriental-scale',
+    name: 'Oriental Scale (Double Harmonic Major Mode 5)',
+    category: 'double-harmonic',
+    intervals: [0, 1, 4, 5, 6, 9, 10],
+  },
+  {
+    id: 'ionian-augmented-sharp2',
+    name: 'Ionian Augmented #2 (Double Harmonic Major Mode 6)',
+    category: 'double-harmonic',
+    intervals: [0, 3, 4, 5, 8, 9, 11],
+  },
+  {
+    id: 'locrian-bb3-bb7',
+    name: 'Locrian bb3 bb7 (Double Harmonic Major Mode 7)',
+    category: 'double-harmonic',
+    intervals: [0, 1, 2, 5, 6, 8, 9],
+  },
+] as const;
+
 function getEnharmonicEquivalents(symbol: string): string[] {
   const pairs = [
     ['C#', 'Db'],

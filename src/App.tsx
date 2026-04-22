@@ -23,6 +23,7 @@ import ScalePractice from '@/pages/ScalePractice';
 import NotFound from '@/pages/NotFound';
 
 // Lazy load heavy routes for code splitting and performance
+const ScaleVault = lazy(() => import('@/pages/ScaleVault'));
 const ChordLibrary = lazy(() => import('@/pages/ChordLibrary'));
 const PracticeHistory = lazy(() => import('@/pages/PracticeHistory'));
 const Leaderboard = lazy(() => import('@/pages/Leaderboard'));
@@ -108,6 +109,11 @@ function App() {
             <Route path="/challenges" element={
               <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading challenges" />}>
                 <Challenges />
+              </Suspense>
+            } />
+            <Route path="/scales" element={
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading Scale Vault" />}>
+                <ScaleVault />
               </Suspense>
             } />
             <Route path="/scale-setup" element={<ScaleSetup />} />

@@ -192,17 +192,17 @@ export default function ScaleVault() {
                 {/* Scale name + category badge */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[14px] font-bold text-white leading-snug">{scale.name}</p>
+                    <p className="text-[18px] font-bold text-white leading-snug">{scale.name}</p>
 
                     {/* ── altNames subtitle — rendered only when present ── */}
                     {hasAltNames && (
-                      <p className="text-[11px] text-zinc-400 leading-snug mt-0.5">
+                      <p className="text-[13px] text-zinc-300 leading-snug mt-0.5">
                         Also known as: {scale.altNames!.join(' · ')}
                       </p>
                     )}
                   </div>
 
-                  <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-500 whitespace-nowrap mt-0.5">
+                  <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-700 text-white whitespace-nowrap mt-0.5">
                     {CATEGORY_LABELS[scale.category]}
                   </span>
                 </div>
@@ -220,7 +220,7 @@ export default function ScaleVault() {
                       >
                         {notes[i]}
                       </span>
-                      <span className="text-[9px] text-zinc-600 mt-0.5">{interval}</span>
+                      <span className="text-[11px] text-zinc-400 mt-0.5">{interval}</span>
                     </div>
                   ))}
                 </div>

@@ -10,7 +10,7 @@ const CATEGORY_LABELS: Record<ScaleVaultCategory, string> = {
   'diatonic': 'Diatonic',
   'pentatonic': 'Pentatonic',
   'blues': 'Blues',
-  'church-mode': 'Major Scale Modes',
+  'major-scale-modes': 'Major Scale Modes',
   'harmonic-minor': 'Harmonic Minor',
   'melodic-minor': 'Melodic Minor',
   'harmonic-major': 'Harmonic Major',
@@ -22,7 +22,7 @@ const CATEGORY_ORDER: ScaleVaultCategory[] = [
   'diatonic',
   'pentatonic',
   'blues',
-  'church-mode',
+  'major-scale-modes',
   'harmonic-minor',
   'melodic-minor',
   'harmonic-major',
@@ -91,7 +91,7 @@ export default function ScaleVault() {
               <div className="min-w-0">
                 <h1 className="text-[17px] font-bold text-white leading-none">Scale Vault</h1>
                 <p className="text-[11px] text-zinc-400 mt-0.5 leading-none">Solo in any key</p>
-                <p className="text-[11px] text-cyan-400 mt-0.5 leading-none">press scale card to see patterns</p>
+                <p className="text-[13px] text-cyan-400 mt-0.5 leading-none">Press Scale Card to See Patterns</p>
               </div>
             </div>
             <span className="flex-shrink-0 text-[11px] font-semibold text-zinc-500 bg-zinc-800/80 px-2 py-0.5 rounded-full">

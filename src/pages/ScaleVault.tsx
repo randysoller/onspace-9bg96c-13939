@@ -239,7 +239,7 @@ export default function ScaleVault() {
                   {scale.intervals.map((interval, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <span
-                        className="text-[17px] font-bold w-9 h-9 rounded-lg flex items-center justify-center"
+                        className="text-[19px] font-bold w-9 h-9 rounded-lg flex items-center justify-center"
                         style={{
                           backgroundColor: i === 0 ? '#06b6d4' : 'rgba(6,182,212,0.10)',
                           color: i === 0 ? '#ffffff' : '#06b6d4',
@@ -247,7 +247,7 @@ export default function ScaleVault() {
                       >
                         {notes[i]}
                       </span>
-                      <span className="text-[15px] text-zinc-200 mt-0.5 font-medium">{SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
+                      <span className="text-[17px] text-zinc-200 mt-0.5 font-medium">{SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
                     </div>
                   ))}
                 </div>
@@ -258,7 +258,7 @@ export default function ScaleVault() {
                   {scale.intervals.slice(1).map((val, i) => (
                     <span
                       key={i}
-                      className="w-9 text-center text-[11px] text-zinc-500 font-medium"
+                      className="w-9 text-center text-[13px] text-zinc-300 font-medium"
                     >
                       {getStepLabel(val - scale.intervals[i])}
                     </span>

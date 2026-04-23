@@ -49,6 +49,14 @@ function getScaleNotes(root: RootNote, intervals: readonly number[]): string[] {
   });
 }
 
+// ── Scale degree formula lookup (semitones → scale degree label) ──────────
+// Uses standard guitar education convention: b5 for tritone, b6 for aug5, etc.
+const SEMITONE_TO_DEGREE: Record<number, string> = {
+  0: '1',   1: 'b2',  2: '2',   3: 'b3',
+  4: '3',   5: '4',   6: 'b5',  7: '5',
+  8: 'b6',  9: '6',  10: 'b7', 11: '7',
+};
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function ScaleVault() {
@@ -187,13 +195,13 @@ export default function ScaleVault() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: idx * 0.025 }}
-                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 py-[32px] hover:bg-zinc-800/40 transition-colors"
+                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 pt-3 pb-8 hover:bg-zinc-800/40 transition-colors"
                 style={{ borderLeftColor: '#06b6d4' }}
               >
                 {/* Scale name + category badge */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[18px] font-bold text-white leading-snug">{scale.name}</p>
+                    <p className="text-[24px] font-bold text-white leading-snug">{scale.name}</p>
 
                     {/* ── altNames subtitle — rendered only when present ── */}
                     {hasAltNames && (
@@ -221,7 +229,7 @@ export default function ScaleVault() {
                       >
                         {notes[i]}
                       </span>
-                      <span className="text-[11px] text-zinc-400 mt-0.5">{interval}</span>
+                      <span className="text-[11px] text-zinc-400 mt-0.5">{SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
                     </div>
                   ))}
                 </div>

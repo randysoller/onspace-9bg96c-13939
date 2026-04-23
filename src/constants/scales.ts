@@ -505,7 +505,7 @@ export type ScaleVaultCategory =
   | 'diatonic'
   | 'pentatonic'
   | 'blues'
-  | 'major-scale-modes'
+  | 'major-scale-mode'
   | 'harmonic-minor'
   | 'melodic-minor'
   | 'harmonic-major'
@@ -569,31 +569,31 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   {
     id: 'dorian',
     name: 'Dorian Mode',
-    category: 'major-scale-modes',
+    category: 'major-scale-mode',
     intervals: [0, 2, 3, 5, 7, 9, 10],
   },
   {
     id: 'phrygian',
     name: 'Phrygian Mode',
-    category: 'major-scale-modes',
+    category: 'major-scale-mode',
     intervals: [0, 1, 3, 5, 7, 8, 10],
   },
   {
     id: 'lydian',
     name: 'Lydian Mode',
-    category: 'major-scale-modes',
+    category: 'major-scale-mode',
     intervals: [0, 2, 4, 6, 7, 9, 11],
   },
   {
     id: 'mixolydian',
     name: 'Mixolydian Mode',
-    category: 'major-scale-modes',
+    category: 'major-scale-mode',
     intervals: [0, 2, 4, 5, 7, 9, 10],
   },
   {
     id: 'locrian',
     name: 'Locrian Mode',
-    category: 'major-scale-modes',
+    category: 'major-scale-mode',
     intervals: [0, 1, 3, 5, 6, 8, 10],
   },
 

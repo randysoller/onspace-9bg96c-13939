@@ -10,7 +10,7 @@ const CATEGORY_LABELS: Record<ScaleVaultCategory, string> = {
   'diatonic': 'Diatonic',
   'pentatonic': 'Pentatonic',
   'blues': 'Blues',
-  'major-scale-mode': 'Major Scale Modes',
+  'major-scale-mode': 'Major Scale Mode',
   'harmonic-minor': 'Harmonic Minor',
   'melodic-minor': 'Melodic Minor',
   'harmonic-major': 'Harmonic Major',

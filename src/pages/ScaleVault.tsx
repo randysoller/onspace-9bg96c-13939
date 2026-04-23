@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Waves, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory } from '@/constants/scales';
+import { Note, Interval } from '@tonaljs/tonal';
 
 // ── Category metadata ──────────────────────────────────────────────────────
 
@@ -33,20 +34,19 @@ const CATEGORY_ORDER: ScaleVaultCategory[] = [
 const ROOT_NOTES = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
 type RootNote = (typeof ROOT_NOTES)[number];
 
-// Semitone offset for each root
-const ROOT_OFFSET: Record<RootNote, number> = {
-  C: 0, 'C#': 1, D: 2, Eb: 3, E: 4, F: 5, 'F#': 6, G: 7, Ab: 8, A: 9, Bb: 10, B: 11,
-};
-
-// Chromatic note names (sharps)
-const CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
-
 // ── Helper ─────────────────────────────────────────────────────────────────
 
-/** Return the scale note names for a given root and interval array */
+/**
+ * Return the scale note names for a given root and interval semitone array.
+ * Uses Tonal.js Note.transpose + Interval.fromSemitones for accuracy,
+ * then strips the octave number from the result (e.g. "C#4" → "C#").
+ */
 function getScaleNotes(root: RootNote, intervals: readonly number[]): string[] {
-  const offset = ROOT_OFFSET[root];
-  return intervals.map((i) => CHROMATIC[(offset + i) % 12]);
+  return intervals.map((semitones) => {
+    const transposed = Note.transpose(`${root}4`, Interval.fromSemitones(semitones));
+    // Strip octave digit — Note.transpose returns e.g. "F#4", we want "F#"
+    return transposed.replace(/\d+$/, '');
+  });
 }
 
 // ── Component ──────────────────────────────────────────────────────────────

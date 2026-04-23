@@ -6,17 +6,10 @@
  * they can be safely used in useMemo callbacks and Zustand actions alike.
  */
 
-// Semitone value for each natural note name
-const NOTE_SEMITONE: Record<string, number> = {
-  C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11,
-};
+import { Scale, Note } from '@tonaljs/tonal';
 
-// Chromatic scale used to look up a noteName's semitone index.
-// Matches the NOTE_NAMES constant in scales.ts (mixed sharp/flat canonical form).
+// Chromatic scale used for semitone index lookups (canonical mixed sharp/flat form).
 const CHROMATIC_SCALE = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
-
-// Major scale intervals (semitones from root)
-const MAJOR_INTERVALS = [0, 2, 4, 5, 7, 9, 11] as const;
 
 /**
  * Returns the semitone index (0-11) of the root note of a chord symbol.
@@ -35,11 +28,10 @@ export function chordRootSemitone(symbol: string): number {
 }
 
 /**
- * Builds the set of 7 diatonic semitone values for a major key.
+ * Builds the set of 7 diatonic semitone values for a major key using Tonal.js.
  *
- * @param noteName - A note name as stored in KeySignature.noteName
- *                   (e.g. "C", "F#", "Bb" — matching CHROMATIC_SCALE entries)
- * @returns Set of 7 semitone indices, or null if noteName is unrecognised.
+ * @param noteName - A note name matching CHROMATIC_SCALE entries (e.g. "C", "F#", "Bb")
+ * @returns Set of 7 semitone indices (0–11), or null if noteName is unrecognised.
  *
  * Examples:
  *   buildMajorScaleNotes("C")  → Set {0, 2, 4, 5, 7, 9, 11}   (C D E F G A B)
@@ -47,9 +39,17 @@ export function chordRootSemitone(symbol: string): number {
  *   buildMajorScaleNotes("F#") → Set {6, 8, 10, 11, 1, 3, 5}  (F# G# A# B C# D# E#)
  */
 export function buildMajorScaleNotes(noteName: string): Set<number> | null {
-  const idx = (CHROMATIC_SCALE as readonly string[]).indexOf(noteName);
-  if (idx < 0) return null;
-  return new Set(MAJOR_INTERVALS.map(i => (idx + i) % 12));
+  // Validate the note name is in our canonical chromatic scale first
+  if (!(CHROMATIC_SCALE as readonly string[]).includes(noteName)) return null;
+  const scaleData = Scale.get(`${noteName} major`);
+  if (!scaleData.notes || scaleData.notes.length === 0) return null;
+  // Convert Tonal note names to semitone indices (0–11), handling enharmonics
+  return new Set(
+    scaleData.notes.map((n) => {
+      const pc = Note.get(n).chroma;
+      return pc ?? 0;
+    })
+  );
 }
 
 /**

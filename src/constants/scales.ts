@@ -5,6 +5,7 @@ import type { ChordData } from '@/types/chord';
 import { CHORD_DATABASE } from './chords-index';
 import { useCustomChordStore } from '@/stores/customChordStore';
 import { customToLibraryChord } from '@/types/customChord';
+import { Note } from '@tonaljs/tonal';
 
 // ========== NOTE SYSTEM ==========
 
@@ -793,23 +794,17 @@ export const SCALE_VAULT_DEFINITIONS: readonly ScaleVaultEntry[] = [
   },
 ] as const;
 
+/**
+ * Returns enharmonic equivalents for a chord symbol root using Tonal.js.
+ * e.g. "C#m7" → ["Dbm7"], "Bbmaj7" → ["A#maj7"]
+ */
 function getEnharmonicEquivalents(symbol: string): string[] {
-  const pairs = [
-    ['C#', 'Db'],
-    ['D#', 'Eb'],
-    ['F#', 'Gb'],
-    ['G#', 'Ab'],
-    ['A#', 'Bb'],
-  ];
-  const result: string[] = [];
-
-  for (const [sharp, flat] of pairs) {
-    if (symbol.startsWith(sharp)) {
-      result.push(symbol.replace(sharp, flat));
-    } else if (symbol.startsWith(flat)) {
-      result.push(symbol.replace(flat, sharp));
-    }
-  }
-
-  return result;
+  // Extract root (e.g. "C#", "Bb") and suffix (e.g. "m7", "maj7", "")
+  const rootMatch = symbol.match(/^([A-G][#b]?)(.*)$/);
+  if (!rootMatch) return [];
+  const [, root, suffix] = rootMatch;
+  const enharmonic = Note.enharmonic(root);
+  // Note.enharmonic returns empty string when no enharmonic exists
+  if (!enharmonic || enharmonic === root) return [];
+  return [enharmonic + suffix];
 }

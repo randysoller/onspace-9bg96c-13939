@@ -49,6 +49,16 @@ function getScaleNotes(root: RootNote, intervals: readonly number[]): string[] {
   });
 }
 
+// ── Step pattern label (semitone difference → step name) ──────────────────
+// Only differences 1, 2, 3 appear across all 39 scale entries.
+// Fallback renders the raw number for any future additions.
+function getStepLabel(diff: number): string {
+  if (diff === 1) return 'H';
+  if (diff === 2) return 'W';
+  if (diff === 3) return 'A2';
+  return String(diff);
+}
+
 // ── Scale degree formula lookup (semitones → scale degree label) ──────────
 // Uses standard guitar education convention: b5 for tritone, b6 for aug5, etc.
 const SEMITONE_TO_DEGREE: Record<number, string> = {
@@ -239,6 +249,19 @@ export default function ScaleVault() {
                       </span>
                       <span className="text-[15px] text-zinc-200 mt-0.5 font-medium">{SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
                     </div>
+                  ))}
+                </div>
+
+                {/* Step pattern row — N-1 labels centered between consecutive note chips */}
+                {/* pl-[21px] = half chip (18px) + half gap (3px) aligns each label between chip centers */}
+                <div className="flex items-center gap-1.5 mt-1.5 pl-[21px] flex-wrap">
+                  {scale.intervals.slice(1).map((val, i) => (
+                    <span
+                      key={i}
+                      className="w-9 text-center text-[11px] text-zinc-500 font-medium"
+                    >
+                      {getStepLabel(val - scale.intervals[i])}
+                    </span>
                   ))}
                 </div>
               </motion.div>

@@ -187,7 +187,7 @@ export default function ScaleVault() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: idx * 0.025 }}
-                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 py-3.5 hover:bg-zinc-800/40 transition-colors"
+                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 py-[21px] hover:bg-zinc-800/40 transition-colors"
                 style={{ borderLeftColor: '#06b6d4' }}
               >
                 {/* Scale name + category badge */}
@@ -209,7 +209,7 @@ export default function ScaleVault() {
                 </div>
 
                 {/* Interval numbers */}
-                <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                <div className="flex items-center gap-1.5 mt-[15px] flex-wrap">
                   {scale.intervals.map((interval, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <span

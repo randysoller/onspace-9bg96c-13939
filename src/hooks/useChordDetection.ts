@@ -65,8 +65,7 @@ const SILENCE_RESET_FRAMES = 8;
 
 // Calibration constants
 const CALIBRATION_FRAMES = 30; // ~2 seconds
-// Raised from 0.00005 — establishes a meaningful absolute noise floor
-const MIN_CALIBRATED_RMS = 0.0002;
+const MIN_CALIBRATED_RMS = 0.00005;
 
 /**
  * Detect platform and browser
@@ -264,9 +263,6 @@ function extractChroma(
   sensitivity: number,
   nsdfPitch: number,
   platform: PlatformInfo,
-  // Dynamic noise floor (linear energy units) derived from ambient calibration.
-  // Subtracted per-bin before chroma accumulation — reduces open-string bleed.
-  ambientFloor: number = 0
 ): Float64Array | null {
   const t = (sensitivity - 1) / 9;
   const dbFloor = lerp(-55, -85, t);
@@ -321,9 +317,7 @@ function extractChroma(
       }
     }
     
-    // Subtract ambient noise floor per bin; clamp to 0 so silent bins contribute nothing.
-    const rawLinear = Math.pow(10, db / 20) * normFactor;
-    const linear = Math.max(0, rawLinear - ambientFloor);
+    const linear = Math.pow(10, db / 20) * normFactor;
     const weight = getWeight(freq);
     const weightedEnergy = linear * weight;
     
@@ -709,8 +703,6 @@ export function useChordDetection({
   const calibrationRmsSumRef = useRef(0);
   const calibratedRmsThresholdRef = useRef<number | null>(null);
   const isCalibrating = useRef(false);
-  // Ambient linear energy floor passed into extractChroma for per-bin subtraction
-  const ambientNoiseFloorRef = useRef(0);
   
   const stopListening = useCallback(() => {
     console.log('🛑 Stopping detection...');
@@ -751,8 +743,6 @@ export function useChordDetection({
     calibrationRmsSumRef.current = 0;
     calibratedRmsThresholdRef.current = null;
     isCalibrating.current = false;
-    ambientNoiseFloorRef.current = 0;
-    
     logger.info('Detection stopped');
   }, []);
   
@@ -981,16 +971,10 @@ export function useChordDetection({
           
           if (calibrationFrameCountRef.current === CALIBRATION_FRAMES) {
             const avgRms = calibrationRmsSumRef.current / CALIBRATION_FRAMES;
-            // Gate at 3× ambient RMS — standard SNR gate; raised from 1.05× which was
-            // nearly indistinguishable from noise, causing phantom detections.
-            calibratedRmsThresholdRef.current = Math.max(MIN_CALIBRATED_RMS, avgRms * 3.0);
-            // Store ambient floor as linear energy for per-bin subtraction in extractChroma.
-            // avgRms is a time-domain value; convert to an approximate spectral linear level.
-            ambientNoiseFloorRef.current = avgRms * 0.5;
+            calibratedRmsThresholdRef.current = Math.max(MIN_CALIBRATED_RMS, avgRms * 1.05);
             console.log(`\n🎯 CALIBRATION COMPLETE:`);
             console.log(`   Ambient RMS: ${avgRms.toFixed(6)}`);
-            console.log(`   RMS Gate (3×): ${calibratedRmsThresholdRef.current.toFixed(6)}`);
-            console.log(`   Ambient Floor (per-bin): ${ambientNoiseFloorRef.current.toFixed(6)}`);
+            console.log(`   RMS Gate (1.05×): ${calibratedRmsThresholdRef.current.toFixed(6)}`);
             console.log(`   Platform: ${platform.isMobile ? 'Mobile' : 'Desktop'}\n`);
             isCalibrating.current = false;
           } else {
@@ -1066,8 +1050,8 @@ export function useChordDetection({
         // Pitch detection
         const nsdfPitch = autoCorrelateNSDF(timeBuf, audioContextRef.current.sampleRate, rmsThreshold);
         
-        // Chroma extraction — pass calibrated ambient floor for per-bin noise subtraction
-        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, platform, ambientNoiseFloorRef.current);
+        // Chroma extraction
+        const chroma = extractChroma(freqBuf, analyser, effectiveSens, nsdfPitch, platform);
         if (!chroma) {
           consecutiveMatchesRef.current = 0;
           return;

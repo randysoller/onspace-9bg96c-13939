@@ -57,6 +57,20 @@ const SEMITONE_TO_DEGREE: Record<number, string> = {
   8: 'b6',  9: '6',  10: 'b7', 11: '7',
 };
 
+// ── Per-scale overrides for semitone → degree label ───────────────────────
+// Lydian-family scales use #4 for semitone 6 (raised 4th), not b5.
+const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, string>>>> = {
+  'lydian':                   { 6: '#4' },
+  'lydian-augmented':         { 6: '#4' },
+  'lydian-dominant':          { 6: '#4' },
+  'lydian-flat3':             { 6: '#4' },
+  'lydian-sharp2':            { 6: '#4' },
+  'lydian-sharp2-sharp6':     { 6: '#4' },
+  'lydian-augmented-sharp2':  { 6: '#4' },
+  // Dorian #4: semitone 6 is the raised 4th degree (#4), not b5
+  'dorian-sharp4':            { 6: '#4' },
+};
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function ScaleVault() {
@@ -112,21 +126,18 @@ export default function ScaleVault() {
       <div className="container mx-auto px-4 max-w-2xl">
         {/* ── Root note selector ── */}
         <div className="mt-5">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 px-1">Root Note</p>
-          <div
-            className="flex gap-1.5 overflow-x-auto pb-1"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+          <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Root Note</p>
+          <div className="grid grid-cols-6 gap-1.5">
             {ROOT_NOTES.map((note) => {
               const isActive = selectedRoot === note;
               return (
                 <button
                   key={note}
                   onClick={() => setSelectedRoot(note)}
-                  className={`flex-shrink-0 min-w-[40px] h-9 rounded-lg text-[13px] font-bold transition-all ${
+                  className={`h-10 rounded-lg text-[17px] font-bold transition-all ${
                     isActive
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
-                      : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
                   }`}
                 >
                   {note}
@@ -138,22 +149,19 @@ export default function ScaleVault() {
 
         {/* ── Category filter chips ── */}
         <div className="mt-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-2 px-1">Category</p>
-          <div
-            className="flex gap-2 overflow-x-auto pb-1"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
+          <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Category</p>
+          <div className="flex flex-wrap gap-2">
             {/* All chip */}
             <button
               onClick={() => setSelectedCategory(null)}
-              className={`flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-semibold transition-all ${
+              className={`flex items-center gap-1.5 h-9 px-3 rounded-full text-[16px] font-semibold transition-all ${
                 selectedCategory === null
                   ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                  : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                  : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
               }`}
             >
               All
-              <span className={`text-[10px] font-bold ${selectedCategory === null ? 'text-white/70' : 'text-zinc-600'}`}>
+              <span className={`text-[12px] font-bold ${selectedCategory === null ? 'text-white/70' : 'text-zinc-500'}`}>
                 {SCALE_VAULT_DEFINITIONS.length}
               </span>
             </button>
@@ -164,14 +172,14 @@ export default function ScaleVault() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(isActive ? null : cat)}
-                  className={`flex-shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 h-9 px-3 rounded-full text-[16px] font-semibold transition-all ${
                     isActive
                       ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                      : 'bg-zinc-800/80 text-zinc-400 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
                   }`}
                 >
                   {CATEGORY_LABELS[cat]}
-                  <span className={`text-[10px] font-bold ${isActive ? 'text-white/70' : 'text-zinc-600'}`}>
+                  <span className={`text-[12px] font-bold ${isActive ? 'text-white/70' : 'text-zinc-500'}`}>
                     {categoryCounts[cat] ?? 0}
                   </span>
                   {isActive && (
@@ -221,7 +229,7 @@ export default function ScaleVault() {
                   {scale.intervals.map((interval, i) => (
                     <div key={i} className="flex flex-col items-center">
                       <span
-                        className="text-[13px] font-bold w-8 h-8 rounded-lg flex items-center justify-center"
+                        className="text-[17px] font-bold w-9 h-9 rounded-lg flex items-center justify-center"
                         style={{
                           backgroundColor: i === 0 ? '#06b6d4' : 'rgba(6,182,212,0.10)',
                           color: i === 0 ? '#ffffff' : '#06b6d4',
@@ -229,7 +237,7 @@ export default function ScaleVault() {
                       >
                         {notes[i]}
                       </span>
-                      <span className="text-[11px] text-zinc-400 mt-0.5">{SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
+                      <span className="text-[15px] text-zinc-200 mt-0.5 font-medium">{SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
                     </div>
                   ))}
                 </div>

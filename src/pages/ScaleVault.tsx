@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Waves, X } from 'lucide-react';
+import { ChevronLeft, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory } from '@/constants/scales';
 import { Note, Interval } from '@tonaljs/tonal';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 // ── Category metadata ──────────────────────────────────────────────────────
 
@@ -157,49 +158,38 @@ export default function ScaleVault() {
           </div>
         </div>
 
-        {/* ── Category filter chips ── */}
+        {/* ── Category filter dropdown ── */}
         <div className="mt-4">
           <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Category</p>
-          <div className="flex flex-wrap gap-2">
-            {/* All chip */}
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`flex items-center gap-1.5 h-9 px-3 rounded-full text-[16px] font-semibold transition-all ${
-                selectedCategory === null
-                  ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                  : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
-              }`}
-            >
-              All
-              <span className={`text-[12px] font-bold ${selectedCategory === null ? 'text-white/70' : 'text-zinc-500'}`}>
-                {SCALE_VAULT_DEFINITIONS.length}
-              </span>
-            </button>
-
-            {CATEGORY_ORDER.map((cat) => {
-              const isActive = selectedCategory === cat;
-              return (
-                <button
+          <Select
+            value={selectedCategory ?? 'all'}
+            onValueChange={(v) => setSelectedCategory(v === 'all' ? null : v as ScaleVaultCategory)}
+          >
+            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 text-white text-[16px] font-semibold rounded-xl focus:ring-cyan-500 focus:border-cyan-500">
+              <SelectValue placeholder="All scales" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+              <SelectItem value="all" className="text-[15px] text-zinc-200 focus:bg-zinc-700 focus:text-white">
+                All ({SCALE_VAULT_DEFINITIONS.length})
+              </SelectItem>
+              {CATEGORY_ORDER.map((cat) => (
+                <SelectItem
                   key={cat}
-                  onClick={() => setSelectedCategory(isActive ? null : cat)}
-                  className={`flex items-center gap-1.5 h-9 px-3 rounded-full text-[16px] font-semibold transition-all ${
-                    isActive
-                      ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                      : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
-                  }`}
+                  value={cat}
+                  className="text-[15px] text-zinc-200 focus:bg-zinc-700 focus:text-white"
                 >
-                  {CATEGORY_LABELS[cat]}
-                  <span className={`text-[12px] font-bold ${isActive ? 'text-white/70' : 'text-zinc-500'}`}>
-                    {categoryCounts[cat] ?? 0}
-                  </span>
-                  {isActive && (
-                    <X className="w-3 h-3 ml-0.5 opacity-70" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                  {CATEGORY_LABELS[cat]} ({categoryCounts[cat] ?? 0})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
+
+        {/* ── Step pattern legend ── */}
+        {/* Fret counts: W=2 frets (whole step/2 semitones), H=1 fret (half step/1 semitone), A2=3 frets (aug 2nd/3 semitones) */}
+        <p className="mt-3 text-[12px] text-zinc-500 leading-none px-1">
+          W = Whole Step (2 frets)&nbsp;&nbsp;·&nbsp;&nbsp;H = Half Step (1 fret)&nbsp;&nbsp;·&nbsp;&nbsp;A2 = Aug 2nd (3 frets)
+        </p>
 
         {/* ── Scale cards grid ── */}
         <div className="mt-5 space-y-2">

@@ -210,7 +210,7 @@ export default function ChordEditor() {
     );
     const message = isEditing ? 'Chord updated in your library!' : 'Chord saved to your library!';
     toast.success(message, {
-      description: `"${currentChord.symbol}" is now available in the Chord Library.`,
+      description: `"${currentChord.symbol}" is now available in the Chord Vault.`,
     });
   };
 

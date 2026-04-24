@@ -322,7 +322,7 @@ export default function PresetDropdown({
                 <Bookmark className="size-6 mx-auto mb-2 text-[hsl(var(--text-muted))] opacity-50" />
                 <p className="text-sm text-[hsl(var(--text-muted))]">No presets yet</p>
                 <p className="text-xs text-[hsl(var(--text-subtle))] mt-1">
-                  Save presets from the Chord Library
+                  Save presets from the Chord Vault
                 </p>
               </div>
             )}
@@ -332,7 +332,7 @@ export default function PresetDropdown({
               <p className="text-[10px] text-[hsl(var(--text-muted))] text-center">
                 {presets.length > 1
                   ? 'Drag the grip handle to reorder'
-                  : 'Save more presets from the Chord Library'}
+                  : 'Save more presets from the Chord Vault'}
               </p>
             </div>
           </motion.div>

@@ -2,66 +2,94 @@
  * HorizontalScaleFretboard — compact horizontal SVG fretboard diagram.
  *
  * Layout:
- *   • 6 strings run horizontally (String 1 / high-e at top, String 6 / low-E at bottom)
- *   • Strings have increasing stroke widths (thin at top → thick at bottom)
- *   • 5 fret columns are shown per position window
- *   • Nut (thick left border) is rendered when startFret === 0
- *   • Dots carry a short text label (finger number, note name, or degree)
- *   • Root note dots are rendered in cyan; scale note dots in amber
+ *   • Optional open-string zone on the far left (before the nut)
+ *   • Nut (thick vertical line) when startFret === 0, otherwise a fret-number label
+ *   • 5 fret columns (slots between wires)
+ *   • 6 strings run horizontally: stringIndex 0 = high e (top), 5 = low E (bottom)
+ *   • String stroke widths increase top→bottom (thin e → thick E)
+ *
+ * Dot styles:
+ *   Root fretted    → solid cyan diamond,  white label
+ *   Root open       → hollow cyan diamond outline, white label
+ *   Scale fretted   → solid amber circle,  white label
+ *   Scale open      → hollow amber circle outline, white label
  */
 
-interface FretDot {
-  /** 0 = String 6 (low E, bottom), 5 = String 1 (high e, top) in guitar terms.
-   *  In the SVG, stringIndex 0 renders at the TOP (high e) and 5 at the BOTTOM (low E)
-   *  so the visual matches how a guitarist looks down at the fretboard. */
-  stringIndex: number; // 0 = high e, 5 = low E (SVG top to bottom)
-  fret: number;        // absolute fret number on the neck
-  label: string;       // text shown inside the dot
+export interface FretDot {
+  stringIndex: number; // 0 = high e (SVG top), 5 = low E (SVG bottom)
+  fret: number;        // absolute fret (0 = open string)
+  label: string;
   isRoot: boolean;
+  isOpenString: boolean; // true when fret === 0
 }
 
 interface HorizontalScaleFretboardProps {
   dots: FretDot[];
-  startFret: number;  // first fret of the visible window (e.g. 5 → shows frets 5–9)
+  startFret: number;     // first fret of the visible window (0 = open position shown)
   positionLabel?: string;
 }
 
-// Visual constants
-const SVG_WIDTH = 320;
-const SVG_HEIGHT = 100;
-const LEFT_PAD = 34;   // space for fret number label on left
-const RIGHT_PAD = 8;
+// ── Visual constants ──────────────────────────────────────────────────────────
+
+const OPEN_ZONE_W = 28;   // width of the open-string column (left of nut)
+const NUT_W = 4;           // nut bar width
+const RIGHT_PAD = 6;
 const TOP_PAD = 12;
 const BOTTOM_PAD = 12;
+const LEFT_NUM_W = 28;     // width reserved for fret-number label (when no nut)
 
 const NUM_STRINGS = 6;
-const NUM_FRETS = 5;   // 5 fret slots visible (startFret … startFret+4)
+const NUM_FRETS = 5;       // visible fret slots
 
-const FRET_AREA_WIDTH = SVG_WIDTH - LEFT_PAD - RIGHT_PAD;
-const FRET_AREA_HEIGHT = SVG_HEIGHT - TOP_PAD - BOTTOM_PAD;
+// String stroke widths (index 0 = high e top, index 5 = low E bottom)
+const STRING_WIDTHS = [0.7, 1.0, 1.35, 1.75, 2.2, 2.9];
 
-// Fret column width
-const FRET_W = FRET_AREA_WIDTH / NUM_FRETS;
-// String row height
-const STR_H = FRET_AREA_HEIGHT / (NUM_STRINGS - 1);
+const DOT_R = 10;          // circle radius for fretted notes
+const DIA_HALF = 11;       // half-width/height of diamond
+const OPEN_R = 9;          // radius for open-string circles
+const OPEN_DIA_HALF = 10;  // half of open-string diamond
 
-// String stroke widths — index 0 = high e (top, thin), index 5 = low E (bottom, thick)
-const STRING_WIDTHS = [0.8, 1.1, 1.4, 1.8, 2.3, 3.0];
+// colours
+const CYAN = '#06b6d4';
+const AMBER = '#f59e0b';
+const WHITE = '#ffffff';
 
-// Dot radius
-const DOT_R = 11;
+// ── SVG dimensions (computed) ─────────────────────────────────────────────────
+
+// Total width = open zone (when fret 0 window) + nut/label + fret area + right pad
+// We always allocate both zones; open zone is simply unused when no open dots exist
+const SVG_W = OPEN_ZONE_W + NUT_W + NUM_FRETS * 55 + RIGHT_PAD; // ~322px
+const SVG_H = 90;
+
+const FRET_AREA_LEFT = OPEN_ZONE_W + NUT_W; // x where fret column 0 starts
+const FRET_AREA_W = NUM_FRETS * 55;
+const FRET_W = FRET_AREA_W / NUM_FRETS;     // width of one fret slot
+const FRET_AREA_H = SVG_H - TOP_PAD - BOTTOM_PAD;
+const STR_H = FRET_AREA_H / (NUM_STRINGS - 1);
+
+// Center x of fret slot (0-based offset from startFret)
+const fretX = (fretOffset: number) =>
+  FRET_AREA_LEFT + fretOffset * FRET_W + FRET_W / 2;
+
+// y of a string
+const stringY = (strIdx: number) => TOP_PAD + strIdx * STR_H;
+
+// ── Diamond polygon points ─────────────────────────────────────────────────────
+
+function diamondPoints(cx: number, cy: number, half: number): string {
+  return `${cx},${cy - half} ${cx + half},${cy} ${cx},${cy + half} ${cx - half},${cy}`;
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HorizontalScaleFretboard({
   dots,
   startFret,
   positionLabel,
 }: HorizontalScaleFretboardProps) {
-  // x coordinate of fret column (center of the slot between wire i and wire i+1)
-  const fretX = (fretOffset: number) =>
-    LEFT_PAD + fretOffset * FRET_W + FRET_W / 2;
-
-  // y coordinate for a string (0 = high e / top, 5 = low E / bottom)
-  const stringY = (strIdx: number) => TOP_PAD + strIdx * STR_H;
+  const openDots = dots.filter((d) => d.isOpenString);
+  const frettedDots = dots.filter((d) => !d.isOpenString);
+  const hasNut = startFret === 0;
 
   return (
     <div className="w-full">
@@ -71,88 +99,170 @@ export default function HorizontalScaleFretboard({
         </p>
       )}
       <svg
-        viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
+        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         className="w-full"
-        style={{ height: SVG_HEIGHT }}
+        style={{ height: SVG_H }}
       >
-        {/* ── Nut (thick left border when open position) ───────────────── */}
-        {startFret === 0 && (
-          <rect
-            x={LEFT_PAD - 4}
-            y={TOP_PAD - 4}
-            width={5}
-            height={FRET_AREA_HEIGHT + 8}
-            fill="#d4d4d8"
-            rx={1}
-          />
-        )}
-
-        {/* ── Fret wires (vertical lines) ──────────────────────────────── */}
-        {Array.from({ length: NUM_FRETS + 1 }).map((_, i) => (
-          <line
-            key={`fret-${i}`}
-            x1={LEFT_PAD + i * FRET_W}
-            y1={TOP_PAD - 2}
-            x2={LEFT_PAD + i * FRET_W}
-            y2={TOP_PAD + FRET_AREA_HEIGHT + 2}
-            stroke="#52525b"
-            strokeWidth={i === 0 && startFret === 0 ? 0 : 1.5}
-          />
-        ))}
-
-        {/* ── String lines (horizontal lines, thin→thick top→bottom) ─── */}
+        {/* ── String lines (full width, including open zone) ─────────── */}
         {Array.from({ length: NUM_STRINGS }).map((_, strIdx) => (
           <line
             key={`str-${strIdx}`}
-            x1={LEFT_PAD}
+            x1={hasNut ? OPEN_ZONE_W + NUT_W : LEFT_NUM_W}
             y1={stringY(strIdx)}
-            x2={LEFT_PAD + FRET_AREA_WIDTH}
+            x2={FRET_AREA_LEFT + FRET_AREA_W}
             y2={stringY(strIdx)}
             stroke="#a1a1aa"
             strokeWidth={STRING_WIDTHS[strIdx]}
           />
         ))}
 
-        {/* ── Fret number label (left side) ────────────────────────────── */}
-        <text
-          x={LEFT_PAD - 8}
-          y={TOP_PAD + FRET_AREA_HEIGHT / 2 + 4}
-          fill="#71717a"
-          fontSize={10}
-          fontWeight="700"
-          textAnchor="middle"
-          fontFamily="monospace"
-        >
-          {startFret === 0 ? 'O' : startFret}
-        </text>
+        {/* Extend strings into open zone when open position */}
+        {hasNut &&
+          Array.from({ length: NUM_STRINGS }).map((_, strIdx) => (
+            <line
+              key={`str-open-${strIdx}`}
+              x1={4}
+              y1={stringY(strIdx)}
+              x2={OPEN_ZONE_W}
+              y2={stringY(strIdx)}
+              stroke="#71717a"
+              strokeWidth={STRING_WIDTHS[strIdx] * 0.7}
+            />
+          ))}
 
-        {/* ── Scale dots ───────────────────────────────────────────────── */}
-        {dots.map((dot, i) => {
-          const fretOffset = dot.fret - startFret; // 0–4
+        {/* ── Nut or fret-number label ────────────────────────────────── */}
+        {hasNut ? (
+          <rect
+            x={OPEN_ZONE_W}
+            y={TOP_PAD - 4}
+            width={NUT_W}
+            height={FRET_AREA_H + 8}
+            fill="#d4d4d8"
+            rx={1}
+          />
+        ) : (
+          <text
+            x={LEFT_NUM_W / 2}
+            y={TOP_PAD + FRET_AREA_H / 2 + 4}
+            fill="#71717a"
+            fontSize={10}
+            fontWeight="700"
+            textAnchor="middle"
+            fontFamily="monospace"
+          >
+            {startFret}
+          </text>
+        )}
+
+        {/* ── Fret wires (vertical lines) ────────────────────────────── */}
+        {Array.from({ length: NUM_FRETS + 1 }).map((_, i) => (
+          <line
+            key={`fret-${i}`}
+            x1={FRET_AREA_LEFT + i * FRET_W}
+            y1={TOP_PAD - 2}
+            x2={FRET_AREA_LEFT + i * FRET_W}
+            y2={TOP_PAD + FRET_AREA_H + 2}
+            stroke="#52525b"
+            strokeWidth={1.5}
+          />
+        ))}
+
+        {/* ── Open-string dots (left of nut) ─────────────────────────── */}
+        {openDots.map((dot, i) => {
+          const cx = OPEN_ZONE_W / 2;
+          const cy = stringY(dot.stringIndex);
+          const fontSize = dot.label.length > 2 ? 6 : 8;
+
+          if (dot.isRoot) {
+            // Hollow cyan diamond outline
+            return (
+              <g key={`open-root-${i}`}>
+                <polygon
+                  points={diamondPoints(cx, cy, OPEN_DIA_HALF)}
+                  fill="none"
+                  stroke={CYAN}
+                  strokeWidth={1.8}
+                />
+                <text
+                  x={cx}
+                  y={cy + fontSize * 0.38}
+                  textAnchor="middle"
+                  fontSize={fontSize}
+                  fontWeight="800"
+                  fill={WHITE}
+                  fontFamily="system-ui, sans-serif"
+                >
+                  {dot.label}
+                </text>
+              </g>
+            );
+          } else {
+            // Hollow amber circle outline
+            return (
+              <g key={`open-scale-${i}`}>
+                <circle cx={cx} cy={cy} r={OPEN_R} fill="none" stroke={AMBER} strokeWidth={1.8} />
+                <text
+                  x={cx}
+                  y={cy + fontSize * 0.38}
+                  textAnchor="middle"
+                  fontSize={fontSize}
+                  fontWeight="800"
+                  fill={WHITE}
+                  fontFamily="system-ui, sans-serif"
+                >
+                  {dot.label}
+                </text>
+              </g>
+            );
+          }
+        })}
+
+        {/* ── Fretted dots ─────────────────────────────────────────────── */}
+        {frettedDots.map((dot, i) => {
+          const fretOffset = dot.fret - startFret; // 0-based slot index
           if (fretOffset < 0 || fretOffset >= NUM_FRETS) return null;
 
           const cx = fretX(fretOffset);
           const cy = stringY(dot.stringIndex);
-          const fill = dot.isRoot ? '#06b6d4' : '#f59e0b';
-          const textFill = dot.isRoot ? '#ffffff' : '#1c1917';
           const fontSize = dot.label.length > 2 ? 7 : 9;
 
-          return (
-            <g key={i}>
-              <circle cx={cx} cy={cy} r={DOT_R} fill={fill} />
-              <text
-                x={cx}
-                y={cy + fontSize * 0.38}
-                textAnchor="middle"
-                fontSize={fontSize}
-                fontWeight="800"
-                fill={textFill}
-                fontFamily="system-ui, sans-serif"
-              >
-                {dot.label}
-              </text>
-            </g>
-          );
+          if (dot.isRoot) {
+            // Solid cyan diamond
+            return (
+              <g key={`fret-root-${i}`}>
+                <polygon points={diamondPoints(cx, cy, DIA_HALF)} fill={CYAN} />
+                <text
+                  x={cx}
+                  y={cy + fontSize * 0.38}
+                  textAnchor="middle"
+                  fontSize={fontSize}
+                  fontWeight="800"
+                  fill={WHITE}
+                  fontFamily="system-ui, sans-serif"
+                >
+                  {dot.label}
+                </text>
+              </g>
+            );
+          } else {
+            // Solid amber circle
+            return (
+              <g key={`fret-scale-${i}`}>
+                <circle cx={cx} cy={cy} r={DOT_R} fill={AMBER} />
+                <text
+                  x={cx}
+                  y={cy + fontSize * 0.38}
+                  textAnchor="middle"
+                  fontSize={fontSize}
+                  fontWeight="800"
+                  fill={WHITE}
+                  fontFamily="system-ui, sans-serif"
+                >
+                  {dot.label}
+                </text>
+              </g>
+            );
+          }
         })}
       </svg>
     </div>

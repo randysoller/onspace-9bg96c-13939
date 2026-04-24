@@ -409,29 +409,49 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                       }}
                     >
                       {/* ── Card title bar ─────────────────────────────────── */}
-                      <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5 flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          {/* Line 1: root + scale name — 21px, cyan */}
-                          <p className="text-[21px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
-                            {rootNote} {scale.name}
-                          </p>
-                          {/* Line 2: card title — 15px, white */}
-                          <p className="text-[15px] font-bold text-white leading-tight mt-0.5">
-                            {cardDef.title}
-                          </p>
-                          {'subtitle' in cardDef && cardDef.subtitle && (
-                            <p className="text-[10px] text-zinc-500 font-medium leading-snug mt-1">
-                              {cardDef.subtitle}
+                      <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5">
+                        {/* Top row: title text + X */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            {/* Line 1: root + scale name — 21px, cyan */}
+                            <p className="text-[21px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
+                              {rootNote} {scale.name}
                             </p>
-                          )}
+                            {/* Line 2: card title — 15px, white */}
+                            <p className="text-[15px] font-bold text-white leading-tight mt-0.5">
+                              {cardDef.title}
+                            </p>
+                            {'subtitle' in cardDef && cardDef.subtitle && (
+                              <p className="text-[10px] text-zinc-500 font-medium leading-snug mt-1">
+                                {cardDef.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={onClose}
+                            className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors mt-0.5"
+                            aria-label="Close modal"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
                         </div>
-                        <button
-                          onClick={onClose}
-                          className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors mt-0.5"
-                          aria-label="Close modal"
-                        >
-                          <X className="w-5 h-5" />
-                        </button>
+
+                        {/* ── Progress dots — centered below title, above content ── */}
+                        {/* Mobile: normal size  |  lg: 75% smaller (25% of original) */}
+                        <div className="flex justify-center items-center gap-2 lg:gap-1 mt-2.5">
+                          {CARD_DEFS.map((_, dotIdx) => (
+                            <button
+                              key={dotIdx}
+                              onClick={() => scrollToCard(dotIdx)}
+                              className={`rounded-full transition-all duration-200 ${
+                                dotIdx === activeCard
+                                  ? 'bg-cyan-500 w-6 h-2.5 lg:w-1.5 lg:h-[2.5px]'
+                                  : 'bg-zinc-600 hover:bg-zinc-500 w-2.5 h-2.5 lg:w-[2.5px] lg:h-[2.5px]'
+                              }`}
+                              aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
+                            />
+                          ))}
+                        </div>
                       </div>
 
                       {/* ── Scrollable pattern content ────────────────────── */}
@@ -464,6 +484,33 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             </div>
                           )}
 
+                          {/* ── Symbol legend — moved here (below finger legend on Finger card, */}
+                          {/* top of content on Notes/Intervals cards); removed from bottom    */}
+                          <div className="pb-1 border-b border-zinc-800/50">
+                            <div className="flex items-center gap-4 px-0.5 flex-wrap">
+                              <div className="flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 14 14">
+                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
+                                </svg>
+                                <span className="text-[10px] text-zinc-500">Root (fretted)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 14 14">
+                                  <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
+                                </svg>
+                                <span className="text-[10px] text-zinc-500">Root (open)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                                <span className="text-[10px] text-zinc-500">Scale (open)</span>
+                              </div>
+                            </div>
+                          </div>
+
                           {/* 5 pattern diagrams */}
                           {patterns.map((pos, posIdx) => {
                             const fretDots: FretDot[] = pos.dots.map((dot) => {
@@ -495,32 +542,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             );
                           })}
 
-                          {/* Symbol legend — root/scale dot key */}
-                          <div className="pt-1 pb-1 border-t border-zinc-800/50">
-                            <div className="flex items-center gap-4 px-0.5 flex-wrap">
-                              <div className="flex items-center gap-1.5">
-                                <svg width="14" height="14" viewBox="0 0 14 14">
-                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
-                                </svg>
-                                <span className="text-[10px] text-zinc-500">Root (fretted)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <svg width="14" height="14" viewBox="0 0 14 14">
-                                  <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
-                                </svg>
-                                <span className="text-[10px] text-zinc-500">Root (open)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                                <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-                                <span className="text-[10px] text-zinc-500">Scale (open)</span>
-                              </div>
-                            </div>
-                          </div>
-
                           <div className="h-2" />
                         </div>
                       </div>
@@ -539,21 +560,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           </span>
                         </button>
 
-                        {/* Progress dots */}
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {CARD_DEFS.map((_, dotIdx) => (
-                            <button
-                              key={dotIdx}
-                              onClick={() => scrollToCard(dotIdx)}
-                              className={`rounded-full transition-all duration-200 ${
-                                dotIdx === activeCard
-                                  ? 'bg-cyan-500 w-6 h-2.5'
-                                  : 'bg-zinc-600 hover:bg-zinc-500 w-2.5 h-2.5'
-                              }`}
-                              aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
-                            />
-                          ))}
-                        </div>
+                        {/* Spacer — dots removed from footer, now live in title bar */}
+                        <div className="flex-1" />
 
                         <button
                           onClick={goNext}

@@ -1,18 +1,17 @@
 /**
- * ScaleDetailModal — fullscreen swipe carousel with 3 cards per scale.
+ * ScaleDetailModal
  *
- * Cards (in order):
- *   0 — Finger Patterns   (labels: finger numbers 1–4)
- *   1 — Note Names        (labels: note name, e.g. "C", "F#")
- *   2 — Interval Patterns (labels: scale degrees, e.g. "1", "b3", "#4")
+ * Visual design mirrors ChordDetailModal:
+ *   • bg-zinc-950  card,  border-2 border-cyan-500/40
+ *   • Same header layout (root·scale label, card title, X button)
+ *   • 3-card horizontal swipe carousel (Finger Patterns / Note Names / Interval Patterns)
+ *   • 40px peek on each side; progress dots at card bottom; arrow nav
+ *   • Each card scrolls vertically to fit all 5 pattern diagrams
+ *   • Fretboard rendering: HorizontalScaleFretboard (dark bg, SVGChordDiagram dot style)
  *
- * Each card shows 5 horizontally-stacked fretboard box-position diagrams.
- *
- * Carousel:
- *   • Active card = 95vw, with 40px peek on each side
- *   • Swipe left/right or tap arrows to navigate
- *   • Progress dots + arrow buttons in footer of each card
- *   • X button in modal header AND top-right of each card
+ * Data source:
+ *   • Major scale  → hard-coded 5-position CAGED patterns (scalePatterns.ts), transposed
+ *   • All other scales → algorithmic box-position generator
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -20,8 +19,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
+import { getMajorScalePatterns, type ResolvedPattern } from '@/constants/scalePatterns';
 
-// ── Music theory helpers ───────────────────────────────────────────────────────
+// ── Music-theory helpers ───────────────────────────────────────────────────────
 
 const NOTE_TO_SEMITONE: Record<string, number> = {
   C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3,
@@ -29,37 +29,30 @@ const NOTE_TO_SEMITONE: Record<string, number> = {
   Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
 };
 
-/**
- * Open-string semitones from C (mod 12), index 0 = String 1 high e (SVG top).
- * stringIndex 0 = high e, 5 = low E
- */
-const OPEN_STRING_SEMITONES = [4, 11, 7, 2, 9, 4]; // e B G D A E
+/** string 0 = high e, string 5 = low E  (open semitones from C mod 12) */
+const OPEN_STRING_SEM = [4, 11, 7, 2, 9, 4]; // e B G D A E
 
 const SEMITONE_TO_DEGREE: Record<number, string> = {
-  0: '1',  1: 'b2', 2: '2',  3: 'b3',
-  4: '3',  5: '4',  6: 'b5', 7: '5',
+  0: '1', 1: 'b2', 2: '2',  3: 'b3',
+  4: '3', 5: '4',  6: 'b5', 7: '5',
   8: 'b6', 9: '6', 10: 'b7', 11: '7',
 };
 
 const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, string>>>> = {
-  'lydian':                  { 6: '#4' },
-  'lydian-augmented':        { 6: '#4' },
-  'lydian-dominant':         { 6: '#4' },
-  'lydian-flat3':            { 6: '#4' },
-  'lydian-sharp2':           { 6: '#4' },
-  'lydian-sharp2-sharp6':    { 6: '#4' },
-  'lydian-augmented-sharp2': { 6: '#4' },
-  'dorian-sharp4':           { 6: '#4' },
+  'lydian': { 6: '#4' }, 'lydian-augmented': { 6: '#4' },
+  'lydian-dominant': { 6: '#4' }, 'lydian-flat3': { 6: '#4' },
+  'lydian-sharp2': { 6: '#4' }, 'lydian-sharp2-sharp6': { 6: '#4' },
+  'lydian-augmented-sharp2': { 6: '#4' }, 'dorian-sharp4': { 6: '#4' },
 };
 
-const NOTE_NAMES_CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+const NOTE_NAMES_CHROM = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-// ── Box position generation ────────────────────────────────────────────────────
+// ── Algorithmic box-position generator (fallback for non-Major scales) ─────────
 
 interface BoxDot {
-  stringIndex: number;
-  fret: number;          // 0 = open string
-  interval: number;      // semitones from root (0–11)
+  string: number;
+  fret: number;
+  interval: number;
   isRoot: boolean;
 }
 
@@ -73,86 +66,56 @@ function generateBoxPositions(rootNote: string, intervals: readonly number[]): B
   const rootSem = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const intervalSet = new Set(intervals);
 
-  // Find first occurrence of root on each string → candidate window anchors
   const anchors: number[] = [];
-  OPEN_STRING_SEMITONES.forEach((openSem) => {
+  OPEN_STRING_SEM.forEach((openSem) => {
     for (let fret = 0; fret <= 15; fret++) {
       if ((openSem + fret) % 12 === rootSem) {
-        // Window starts 1 fret before root to give approach-note headroom
         anchors.push(Math.max(0, fret - 1));
         break;
       }
     }
   });
 
-  // Sort and deduplicate (collapse anchors within 2 frets of each other)
   anchors.sort((a, b) => a - b);
   const dedup: number[] = [];
-  anchors.forEach((fret) => {
-    if (dedup.length === 0 || fret - dedup[dedup.length - 1] > 2) {
-      dedup.push(fret);
-    }
+  anchors.forEach((f) => {
+    if (dedup.length === 0 || f - dedup[dedup.length - 1] > 2) dedup.push(f);
   });
-
-  // Guarantee exactly 5 positions
-  while (dedup.length < 5) {
-    dedup.push((dedup[dedup.length - 1] ?? 0) + 3);
-  }
+  while (dedup.length < 5) dedup.push((dedup[dedup.length - 1] ?? 0) + 3);
 
   return dedup.slice(0, 5).map((startFret, posIdx) => {
-    const endFret = startFret + 4;
     const dots: BoxDot[] = [];
-
-    OPEN_STRING_SEMITONES.forEach((openSem, strIdx) => {
-      for (let fret = startFret; fret <= endFret; fret++) {
+    OPEN_STRING_SEM.forEach((openSem, strIdx) => {
+      for (let fret = startFret; fret <= startFret + 4; fret++) {
         const noteSem = (openSem + fret) % 12;
         const interval = (noteSem - rootSem + 12) % 12;
         if (intervalSet.has(interval)) {
-          dots.push({
-            stringIndex: strIdx,
-            fret,
-            interval,
-            isRoot: interval === 0,
-          });
+          dots.push({ string: strIdx, fret, interval, isRoot: interval === 0 });
         }
       }
     });
-
-    return {
-      startFret,
-      dots,
-      label: `Position ${posIdx + 1}${startFret === 0 ? ' — Open' : ` — Fret ${startFret}`}`,
-    };
+    const label = `Position ${posIdx + 1}${startFret === 0 ? ' — Open' : ` — Fret ${startFret}`}`;
+    return { startFret, dots, label };
   });
 }
 
 // ── Label builders ─────────────────────────────────────────────────────────────
 
-/** Finger number: 1–4 based on fret offset within the 4-fret window. Open string → '0' */
-function buildFingerLabel(dot: BoxDot, startFret: number): string {
-  if (dot.fret === 0) return '0'; // open string — no finger
-  return String(Math.min(4, Math.max(1, dot.fret - startFret + 1)));
+function noteLabel(interval: number, rootSem: number): string {
+  return NOTE_NAMES_CHROM[(rootSem + interval) % 12] ?? '?';
 }
 
-function buildNoteLabel(dot: BoxDot, rootSem: number): string {
-  return NOTE_NAMES_CHROMATIC[(rootSem + dot.interval) % 12] ?? '?';
+function degreeLabel(interval: number, scaleId: string): string {
+  return SCALE_DEGREE_OVERRIDES[scaleId]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval);
 }
 
-function buildDegreeLabel(dot: BoxDot, scaleId: string): string {
-  return (
-    SCALE_DEGREE_OVERRIDES[scaleId]?.[dot.interval] ??
-    SEMITONE_TO_DEGREE[dot.interval] ??
-    String(dot.interval)
-  );
-}
-
-// ── Card metadata ─────────────────────────────────────────────────────────────
+// ── Card metadata ──────────────────────────────────────────────────────────────
 
 const CARD_DEFS = [
   {
     id: 'finger',
     title: 'Finger Patterns',
-    subtitle: '1=index  ·  2=middle  ·  3=ring  ·  4=pinky  ·  0=open',
+    subtitle: '1 = Index  ·  2 = Middle  ·  3 = Ring  ·  4 = Pinky',
   },
   {
     id: 'notes',
@@ -162,16 +125,67 @@ const CARD_DEFS = [
   {
     id: 'intervals',
     title: 'Interval Patterns',
-    subtitle: 'Scale degrees relative to root  ·  1=root',
+    subtitle: 'Scale degrees relative to root  ·  1 = root',
   },
 ];
 
-// ── Layout ────────────────────────────────────────────────────────────────────
+// ── Layout constants ───────────────────────────────────────────────────────────
 
-const PEEK = 40;   // px of adjacent card visible on each side
-const CARD_GAP = 12; // px gap between cards
+const PEEK     = 40;   // px of adjacent card visible each side
+const CARD_GAP = 12;
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Pattern resolver ───────────────────────────────────────────────────────────
+
+interface DisplayPattern {
+  label: string;
+  startFret: number;
+  dots: Array<{
+    string: number;
+    fret: number;
+    finger: number;
+    isRoot: boolean;
+    isOpenString: boolean;
+    interval: number;
+  }>;
+}
+
+function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPattern[] {
+  if (scale.id === 'major') {
+    return getMajorScalePatterns(rootNote).map((p: ResolvedPattern) => ({
+      label: p.label,
+      startFret: p.baseFret,
+      dots: p.dots.map((d) => ({
+        string: d.string,
+        fret: d.fret,
+        finger: d.finger,
+        isRoot: d.isRoot,
+        isOpenString: d.isOpenString,
+        // Compute interval for label builders
+        interval: (() => {
+          const rootSem = NOTE_TO_SEMITONE[rootNote] ?? 0;
+          const openSem = OPEN_STRING_SEM[d.string] ?? 0;
+          return ((openSem + d.fret - rootSem) % 12 + 12) % 12;
+        })(),
+      })),
+    }));
+  }
+
+  // Algorithmic fallback
+  return generateBoxPositions(rootNote, scale.intervals).map((pos) => ({
+    label: pos.label,
+    startFret: pos.startFret,
+    dots: pos.dots.map((d) => ({
+      string: d.string,
+      fret: d.fret,
+      finger: Math.min(4, Math.max(1, d.fret === 0 ? 0 : d.fret - pos.startFret + 1)),
+      isRoot: d.isRoot,
+      isOpenString: d.fret === 0,
+      interval: d.interval,
+    })),
+  }));
+}
+
+// ── Component ──────────────────────────────────────────────────────────────────
 
 interface ScaleDetailModalProps {
   scale: ScaleVaultEntry;
@@ -180,34 +194,30 @@ interface ScaleDetailModalProps {
   onClose: () => void;
 }
 
-export default function ScaleDetailModal({
-  scale,
-  rootNote,
-  isOpen,
-  onClose,
-}: ScaleDetailModalProps) {
+export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: ScaleDetailModalProps) {
   const [activeCard, setActiveCard] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Recompute card width whenever the modal opens or window resizes
+  // Hide fixed header (same pattern as ChordDetailModal)
   useEffect(() => {
     if (!isOpen) return;
+    const header = document.querySelector('header') as HTMLElement | null;
+    if (header) header.style.visibility = 'hidden';
+    return () => { if (header) header.style.visibility = ''; };
+  }, [isOpen]);
 
+  // Measure card width after paint
+  useEffect(() => {
+    if (!isOpen) return;
     const measure = () => {
       if (viewportRef.current) {
         const vw = viewportRef.current.offsetWidth;
-        // active card width = viewport - 2×PEEK sides - 0 extra gap (gaps are between cards)
         setCardWidth(Math.max(0, vw - PEEK * 2));
       }
     };
-
-    // Defer to next paint so the DOM is fully laid out
-    rafRef.current = requestAnimationFrame(() => {
-      measure();
-    });
-
+    rafRef.current = requestAnimationFrame(measure);
     window.addEventListener('resize', measure);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -215,57 +225,47 @@ export default function ScaleDetailModal({
     };
   }, [isOpen]);
 
-  // Reset to card 0 on new scale or root
-  useEffect(() => {
-    setActiveCard(0);
-  }, [scale.id, rootNote]);
+  // Reset to card 0 when scale/root changes
+  useEffect(() => { setActiveCard(0); }, [scale.id, rootNote]);
 
-  const goNext = useCallback(
-    () => setActiveCard((c) => Math.min(CARD_DEFS.length - 1, c + 1)),
-    []
-  );
-  const goPrev = useCallback(
-    () => setActiveCard((c) => Math.max(0, c - 1)),
-    []
-  );
+  const goNext = useCallback(() => setActiveCard((c) => Math.min(CARD_DEFS.length - 1, c + 1)), []);
+  const goPrev = useCallback(() => setActiveCard((c) => Math.max(0, c - 1)), []);
 
-  // Drag-end handler: commit swipe if offset > 60px
   const handleDragEnd = useCallback(
     (_: unknown, info: { offset: { x: number } }) => {
       if (info.offset.x < -60) goNext();
       else if (info.offset.x > 60) goPrev();
     },
-    [goNext, goPrev]
+    [goNext, goPrev],
   );
 
-  const rootSem = NOTE_TO_SEMITONE[rootNote] ?? 0;
-  const boxPositions = generateBoxPositions(rootNote, scale.intervals);
-
-  // Track translateX: shift left by activeCard × (cardWidth + gap), offset by PEEK
-  const trackX = PEEK - activeCard * (cardWidth + CARD_GAP);
+  const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
+  const patterns = resolvePatterns(scale, rootNote);
+  const trackX   = PEEK - activeCard * (cardWidth + CARD_GAP);
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
+      {/* Full-screen backdrop */}
       <motion.div
-        key="scale-modal-bg"
+        key="sdm-bg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
-        className="fixed inset-0 z-50 flex flex-col"
-        style={{ background: 'rgba(0,0,0,0.95)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+        className="fixed inset-0 z-[100] flex flex-col"
+        style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
       >
         <motion.div
-          key="scale-modal-content"
+          key="sdm-content"
           initial={{ y: 40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           className="flex flex-col w-full h-full"
         >
-          {/* ── Modal header ──────────────────────────────────────────── */}
+          {/* ── Modal header (mirrors ChordDetailModal header) ─────────── */}
           <div className="flex items-center justify-between px-4 pt-safe pt-5 pb-3 flex-shrink-0">
             <div className="min-w-0 flex-1 pr-3">
               <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-500 leading-none">
@@ -275,22 +275,22 @@ export default function ScaleDetailModal({
                 {CARD_DEFS[activeCard].title}
               </h2>
             </div>
+            {/* X button — same style as ChordDetailModal */}
             <button
               onClick={onClose}
-              className="flex-shrink-0 w-11 h-11 rounded-full bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center transition-colors"
+              className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors p-1 -mr-1"
               aria-label="Close"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="w-7 h-7" />
             </button>
           </div>
 
           {/* ── Carousel viewport ─────────────────────────────────────── */}
-          {/* overflow-hidden clips adjacent cards; ref used for width measurement */}
-          <div ref={viewportRef} className="flex-1 overflow-hidden relative">
+          <div ref={viewportRef} className="flex-1 overflow-hidden relative min-h-0">
             {cardWidth > 0 ? (
               <motion.div
                 className="flex absolute inset-y-0"
-                style={{ gap: CARD_GAP, left: 0, right: 0 }}
+                style={{ gap: CARD_GAP, left: 0 }}
                 animate={{ x: trackX }}
                 transition={{ type: 'spring', damping: 34, stiffness: 360 }}
                 drag="x"
@@ -298,102 +298,99 @@ export default function ScaleDetailModal({
                 dragElastic={0.15}
                 onDragEnd={handleDragEnd}
               >
-                {CARD_DEFS.map((card, cardIdx) => {
+                {CARD_DEFS.map((cardDef, cardIdx) => {
                   const isActive = cardIdx === activeCard;
 
                   return (
                     <motion.div
-                      key={card.id}
-                      className="flex-shrink-0 flex flex-col rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden relative"
+                      key={cardDef.id}
+                      className="flex-shrink-0 flex flex-col rounded-xl bg-zinc-950 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
                       style={{ width: cardWidth, minWidth: cardWidth }}
                       animate={{ opacity: isActive ? 1 : 0.45, scale: isActive ? 1 : 0.97 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {/* Per-card X button (top-right corner) */}
-                      <button
-                        onClick={onClose}
-                        className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-zinc-800/90 hover:bg-zinc-700 flex items-center justify-center transition-colors"
-                        aria-label="Close modal"
-                      >
-                        <X className="w-4 h-4 text-zinc-400" />
-                      </button>
+                      {/* Card header — subtitle + per-card X */}
+                      <div className="px-3 pt-3 pb-2 border-b border-zinc-800/50 flex-shrink-0 flex items-start justify-between gap-2">
+                        <p className="text-[11px] text-zinc-400 font-medium leading-snug">
+                          {cardDef.subtitle}
+                        </p>
+                        <button
+                          onClick={onClose}
+                          className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors"
+                          aria-label="Close modal"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
 
-                      {/* Scrollable fretboard content */}
-                      <div className="flex-1 overflow-y-auto overscroll-contain">
-                        <div className="px-3 pt-3 pb-2">
-                          {/* Subtitle */}
-                          <p className="text-[11px] text-zinc-500 font-medium mb-3 px-1 pr-10">
-                            {card.subtitle}
-                          </p>
+                      {/* Scrollable pattern content */}
+                      <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
+                        <div className="px-3 pt-3 pb-2 space-y-3">
 
-                          {/* 5 box position diagrams */}
-                          <div className="space-y-3">
-                            {boxPositions.map((pos, posIdx) => {
-                              const fretDots: FretDot[] = pos.dots.map((dot) => {
-                                const isOpenString = dot.fret === 0;
-                                let label: string;
-                                if (card.id === 'finger') {
-                                  label = buildFingerLabel(dot, pos.startFret);
-                                } else if (card.id === 'notes') {
-                                  label = buildNoteLabel(dot, rootSem);
-                                } else {
-                                  label = buildDegreeLabel(dot, scale.id);
-                                }
-                                return {
-                                  stringIndex: dot.stringIndex,
-                                  fret: dot.fret,
-                                  label,
-                                  isRoot: dot.isRoot,
-                                  isOpenString,
-                                };
-                              });
+                          {/* 5 pattern diagrams */}
+                          {patterns.map((pos, posIdx) => {
+                            const fretDots: FretDot[] = pos.dots.map((dot) => {
+                              let label: string;
+                              if (cardDef.id === 'finger') {
+                                label = dot.isOpenString ? '0' : String(dot.finger);
+                              } else if (cardDef.id === 'notes') {
+                                label = noteLabel(dot.interval, rootSem);
+                              } else {
+                                label = degreeLabel(dot.interval, scale.id);
+                              }
+                              return {
+                                string: dot.string,
+                                fret: dot.fret,
+                                label,
+                                isRoot: dot.isRoot,
+                                isOpenString: dot.isOpenString,
+                              };
+                            });
 
-                              return (
-                                <div
-                                  key={posIdx}
-                                  className="bg-zinc-950 rounded-xl p-2 border border-zinc-800"
-                                >
-                                  <HorizontalScaleFretboard
-                                    dots={fretDots}
-                                    startFret={pos.startFret}
-                                    positionLabel={pos.label}
-                                  />
-                                </div>
-                              );
-                            })}
-                          </div>
+                            return (
+                              <div key={posIdx} className="border border-zinc-800 rounded-lg p-2 bg-zinc-900/40">
+                                <HorizontalScaleFretboard
+                                  dots={fretDots}
+                                  startFret={pos.startFret}
+                                  positionLabel={pos.label}
+                                />
+                              </div>
+                            );
+                          })}
 
-                          {/* Legend */}
-                          <div className="flex items-center gap-4 mt-3 px-1 flex-wrap">
-                            <div className="flex items-center gap-1.5">
-                              <svg width="14" height="14" viewBox="0 0 14 14">
-                                <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
-                              </svg>
-                              <span className="text-[10px] text-zinc-500">Root (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <svg width="14" height="14" viewBox="0 0 14 14">
-                                <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
-                              </svg>
-                              <span className="text-[10px] text-zinc-500">Root (open)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3.5 h-3.5 rounded-full bg-amber-500" />
-                              <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-500" />
-                              <span className="text-[10px] text-zinc-500">Scale (open)</span>
+                          {/* Legend (mirrors ChordDetailModal's Finger Positions section style) */}
+                          <div className="pt-1 pb-1 border-t border-zinc-800/50">
+                            <div className="flex items-center gap-4 px-0.5 flex-wrap">
+                              <div className="flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 14 14">
+                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
+                                </svg>
+                                <span className="text-[10px] text-zinc-500">Root (fretted)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 14 14">
+                                  <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
+                                </svg>
+                                <span className="text-[10px] text-zinc-500">Root (open)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                                <span className="text-[10px] text-zinc-500">Scale (open)</span>
+                              </div>
                             </div>
                           </div>
 
-                          <div className="h-4" />
+                          <div className="h-2" />
                         </div>
                       </div>
 
-                      {/* ── Card footer: arrows + progress dots ─────────── */}
-                      <div className="flex-shrink-0 border-t border-zinc-800 bg-zinc-900 px-3 py-3 flex items-center justify-between gap-2">
-                        {/* Prev arrow */}
+                      {/* ── Card footer: prev / dots / next ──────────── */}
+                      <div className="flex-shrink-0 border-t border-zinc-800/50 px-3 py-2.5 flex items-center justify-between gap-2 bg-zinc-950">
+                        {/* Prev */}
                         <button
                           onClick={goPrev}
                           disabled={activeCard === 0}
@@ -422,7 +419,7 @@ export default function ScaleDetailModal({
                           ))}
                         </div>
 
-                        {/* Next arrow */}
+                        {/* Next */}
                         <button
                           onClick={goNext}
                           disabled={activeCard === CARD_DEFS.length - 1}
@@ -440,7 +437,6 @@ export default function ScaleDetailModal({
                 })}
               </motion.div>
             ) : (
-              // Fallback while width is being measured
               <div className="flex items-center justify-center h-full">
                 <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
               </div>

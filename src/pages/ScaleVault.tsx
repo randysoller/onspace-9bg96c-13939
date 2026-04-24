@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory } from '@/constants/scales';
 import { Note, Interval } from '@tonaljs/tonal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useScaleVaultStore } from '@/stores/scaleVaultStore';
 
 // ── Category metadata ──────────────────────────────────────────────────────
 
@@ -94,8 +95,8 @@ export default function ScaleVault() {
     if (el) el.scrollTop = 0;
   }, []);
 
-  const [selectedCategory, setSelectedCategory] = useState<ScaleVaultCategory | null>(null);
-  const [selectedRoot, setSelectedRoot] = useState<RootNote>('C');
+  // Persisted in sessionStorage — survives back navigation from a future scale detail page
+  const { selectedCategory, setSelectedCategory, selectedRoot, setSelectedRoot } = useScaleVaultStore();
 
   // Filtered scales
   const visibleScales = useMemo(() => {
@@ -203,7 +204,7 @@ export default function ScaleVault() {
         {/* ── Scale cards grid ── */}
         <div className="mt-5 space-y-2">
           {visibleScales.map((scale, idx) => {
-            const notes = getScaleNotes(selectedRoot, scale.intervals);
+            const notes = getScaleNotes(selectedRoot as RootNote, scale.intervals);
             const hasAltNames = scale.altNames && scale.altNames.length > 0;
 
             return (

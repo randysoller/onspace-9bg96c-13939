@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { ChordCategory, ChordType, BarreRoot } from '@/types/chord';
 import type { KeySignature } from '@/constants/scales';
 
@@ -145,7 +145,8 @@ export const useChordLibraryStore = create<ChordLibraryState>()(
     }),
     {
       name: 'fretmaster-chord-library-filters',
-      version: 3, // v3: force-clear v2 state on phone; adds explicit migrate to guarantee reset
+      storage: createJSONStorage(() => sessionStorage),
+      version: 4, // v4: switched from localStorage to sessionStorage so filters clear on tab close
       migrate: () => ({
         // When stored version < current version, drop ALL persisted state.
         // Return empty object — the store initializer provides defaults.

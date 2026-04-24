@@ -437,16 +437,15 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
 
                         {/* ── Progress dots — centered below title, above content ── */}
-                        {/* Mobile: normal size  |  lg: 75% smaller (25% of original) */}
-                        <div className="flex justify-center items-center gap-2 lg:gap-1 mt-2.5">
+                        <div className="flex justify-center items-center gap-1.5 mt-2.5">
                           {CARD_DEFS.map((_, dotIdx) => (
                             <button
                               key={dotIdx}
                               onClick={() => scrollToCard(dotIdx)}
                               className={`rounded-full transition-all duration-200 ${
                                 dotIdx === activeCard
-                                  ? 'bg-cyan-500 w-6 h-2.5 lg:w-1.5 lg:h-[2.5px]'
-                                  : 'bg-zinc-600 hover:bg-zinc-500 w-2.5 h-2.5 lg:w-[2.5px] lg:h-[2.5px]'
+                                  ? 'bg-cyan-500 w-4 h-[6px]'
+                                  : 'bg-zinc-600 hover:bg-zinc-500 w-[6px] h-[6px]'
                               }`}
                               aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
                             />

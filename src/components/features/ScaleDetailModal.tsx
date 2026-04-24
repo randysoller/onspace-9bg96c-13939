@@ -10,7 +10,7 @@
  *   • Fretboard rendering: HorizontalScaleFretboard (dark bg, SVGChordDiagram dot style)
  *
  * Data source:
- *   • Major scale  → hard-coded 5-position CAGED patterns (scalePatterns.ts), transposed
+ *   • Major, Natural Minor, Major Pentatonic, Minor Pentatonic → hard-coded 5-position CAGED patterns
  *   • All other scales → algorithmic box-position generator
  */
 
@@ -19,7 +19,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
-import { getMajorScalePatterns, type ResolvedPattern } from '@/constants/scalePatterns';
+import {
+  getMajorScalePatterns,
+  getMinorScalePatterns,
+  getMajorPentPatterns,
+  getMinorPentPatterns,
+  type ResolvedPattern,
+} from '@/constants/scalePatterns';
 
 // ── Music-theory helpers ───────────────────────────────────────────────────────
 
@@ -149,9 +155,17 @@ interface DisplayPattern {
   }>;
 }
 
+const HARDCODED_RESOLVERS: Partial<Record<string, (root: string) => ResolvedPattern[]>> = {
+  'major':            getMajorScalePatterns,
+  'minor':            getMinorScalePatterns,
+  'major-pentatonic': getMajorPentPatterns,
+  'minor-pentatonic': getMinorPentPatterns,
+};
+
 function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPattern[] {
-  if (scale.id === 'major') {
-    return getMajorScalePatterns(rootNote).map((p: ResolvedPattern) => ({
+  const hardcodedResolver = HARDCODED_RESOLVERS[scale.id];
+  if (hardcodedResolver) {
+    return hardcodedResolver(rootNote).map((p: ResolvedPattern) => ({
       label: p.label,
       startFret: p.baseFret,
       dots: p.dots.map((d) => ({
@@ -170,7 +184,7 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
     }));
   }
 
-  // Algorithmic fallback
+  // Algorithmic fallback for all other scales
   return generateBoxPositions(rootNote, scale.intervals).map((pos) => ({
     label: pos.label,
     startFret: pos.startFret,

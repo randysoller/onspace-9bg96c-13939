@@ -138,7 +138,7 @@ const CARD_DEFS = [
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
-const PEEK     = 40;   // px of adjacent card visible each side
+const PEEK     = 32;   // px of adjacent card visible each side
 const CARD_GAP = 12;
 
 // ── Pattern resolver ───────────────────────────────────────────────────────────
@@ -245,9 +245,13 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const goPrev = useCallback(() => setActiveCard((c) => Math.max(0, c - 1)), []);
 
   const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number } }) => {
-      if (info.offset.x < -60) goNext();
-      else if (info.offset.x > 60) goPrev();
+    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
+      // Check both offset distance and flick velocity so quick swipes always advance
+      const SWIPE_OFFSET = 50;
+      const SWIPE_VEL    = 300;
+      if (info.offset.x < -SWIPE_OFFSET || info.velocity.x < -SWIPE_VEL) goNext();
+      else if (info.offset.x > SWIPE_OFFSET || info.velocity.x > SWIPE_VEL) goPrev();
+      // else: spring animation snaps card back to center automatically
     },
     [goNext, goPrev],
   );
@@ -311,7 +315,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                   return (
                     <motion.div
                       key={cardDef.id}
-                      className="flex-shrink-0 flex flex-col h-full rounded-xl bg-zinc-950 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
+                      className="flex-shrink-0 flex flex-col h-full rounded-xl bg-zinc-950 border-[3px] border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
                       style={{ width: cardWidth, minWidth: cardWidth }}
                       animate={{ opacity: isActive ? 1 : 0.45, scale: isActive ? 1 : 0.97 }}
                       transition={{ duration: 0.2 }}
@@ -323,8 +327,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                        */}
                       <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5 flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          {/* Line 1: root + scale name — 15px, cyan accent */}
-                          <p className="text-[15px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
+                          {/* Line 1: root + scale name — 21px (+6px per spec), cyan accent */}
+                          <p className="text-[21px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
                             {rootNote} {scale.name}
                           </p>
                           {/* Line 2: card title — 15px, white */}
@@ -371,6 +375,13 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   <span className="text-[11px] text-zinc-400 font-medium">{name}</span>
                                 </div>
                               ))}
+                              {/* Cyan diamond = Root — inline after Pinky, right side of legend */}
+                              <div className="flex items-center gap-1.5">
+                                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
+                                </svg>
+                                <span className="text-[11px] text-zinc-400 font-medium">Root</span>
+                              </div>
                             </div>
                           )}
 

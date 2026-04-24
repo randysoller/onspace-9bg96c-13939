@@ -71,11 +71,12 @@ const LEFT_PAD    = 4;   // before open zone
 const NUT_W   = 6;
 const NUT_CLR_FILL = NUT_CLR;
 
-// Fret slot width — reduced 10% vs original (52→47) for narrower diagrams
-const FRET_SLOT_W = 47;
+// Fret slot width — cumulative −19% from original 52 (47→42)
+const FRET_SLOT_W = 42;
 
 // ── Derived geometry ──────────────────────────────────────────────────────────
-const SVG_H    = TOP_PAD + BOT_PAD + (NUM_STRINGS - 1) * 18 + 18; // ~142
+// STRING_ROW_H 18→23: increases total SVG height by ~21% (140→170)
+const SVG_H    = TOP_PAD + BOT_PAD + NUM_STRINGS * 23; // = 20+12+138 = 170
 const GRID_H   = SVG_H - TOP_PAD - BOT_PAD;
 const STR_STEP = GRID_H / (NUM_STRINGS - 1);
 

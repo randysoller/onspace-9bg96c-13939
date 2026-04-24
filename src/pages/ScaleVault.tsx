@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -86,6 +86,14 @@ const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, stri
 
 export default function ScaleVault() {
   const navigate = useNavigate();
+
+  // Always scroll to top on fresh mount — prevents stale scroll position
+  // from a previous visit showing the page halfway down on navigation from home.
+  useEffect(() => {
+    const el = document.getElementById('main-content');
+    if (el) el.scrollTop = 0;
+  }, []);
+
   const [selectedCategory, setSelectedCategory] = useState<ScaleVaultCategory | null>(null);
   const [selectedRoot, setSelectedRoot] = useState<RootNote>('C');
 

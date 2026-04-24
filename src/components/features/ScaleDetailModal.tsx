@@ -2,13 +2,22 @@
  * ScaleDetailModal
  *
  * Visual design mirrors ChordDetailModal:
- *   • bg-zinc-950 card, border-2 border-cyan-500/40
- *   • Title bar INSIDE each card: root·scale name + card title (both 15px) + X
- *   • 3-card horizontal swipe carousel (Finger Patterns / Note Names / Interval Patterns)
- *   • 40px peek on each side; progress dots at card bottom; arrow nav
+ *   • bg-zinc-950 card, border-[3px] border-cyan-500/40
+ *   • Title bar INSIDE each card: root·scale name (21px) + card title (15px) + X
+ *   • 3-card horizontal carousel with CSS scroll-snap-type: x mandatory
+ *     → browser guarantees snap-to-center on every swipe; zero Framer Motion
+ *       driver conflict; works with both touch swipe and pointer drag
+ *   • 32px peek on each side; progress dots at card bottom; arrow nav
  *   • Each card scrolls vertically to fit all 5 pattern diagrams
- *   • Finger legend ("1=Index…") rendered in scrollable content above Pattern I (Finger card only)
+ *   • Finger legend rendered in scrollable content above Pattern I (Finger card only)
  *   • Fretboard rendering: HorizontalScaleFretboard (dark bg, SVGChordDiagram dot style)
+ *
+ * Carousel snap architecture:
+ *   • Single horizontally-scrollable container (overflow-x: scroll, scroll-snap-type: x mandatory)
+ *   • Each card has scroll-snap-align: center
+ *   • Arrow buttons + dot buttons call scrollTo({ behavior: 'smooth' })
+ *   • onScroll handler tracks activeCard for dot indicators and disabled states
+ *   • Eliminates the Framer Motion animate/drag conflict that caused the "hang"
  *
  * Data source:
  *   • Major, Natural Minor, Major Pentatonic, Minor Pentatonic → hard-coded 5-position CAGED patterns
@@ -122,7 +131,6 @@ const CARD_DEFS = [
   {
     id: 'finger',
     title: 'Finger Patterns',
-    // subtitle rendered below title bar, above Pattern I in scrollable content
   },
   {
     id: 'notes',
@@ -138,8 +146,8 @@ const CARD_DEFS = [
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
-const PEEK     = 32;   // px of adjacent card visible each side
-const CARD_GAP = 12;
+/** px of adjacent card visible on each side */
+const PEEK = 32;
 
 // ── Pattern resolver ───────────────────────────────────────────────────────────
 
@@ -210,8 +218,14 @@ interface ScaleDetailModalProps {
 export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: ScaleDetailModalProps) {
   const [activeCard, setActiveCard] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+
+  // scrollRef: the horizontally-scrollable snap container
+  const scrollRef  = useRef<HTMLDivElement>(null);
+  // wrapRef: outer div used to measure available width
+  const wrapRef    = useRef<HTMLDivElement>(null);
+  const rafRef     = useRef<number | null>(null);
+  // Prevent onScroll from fighting programmatic scrollTo
+  const scrollingRef = useRef(false);
 
   // Hide fixed app header while modal is open
   useEffect(() => {
@@ -221,12 +235,12 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     return () => { if (header) header.style.visibility = ''; };
   }, [isOpen]);
 
-  // Measure card width after paint (full viewport minus peek zones)
+  // Measure card width: full container minus peek on each side
   useEffect(() => {
     if (!isOpen) return;
     const measure = () => {
-      if (viewportRef.current) {
-        const vw = viewportRef.current.offsetWidth;
+      if (wrapRef.current) {
+        const vw = wrapRef.current.offsetWidth;
         setCardWidth(Math.max(0, vw - PEEK * 2));
       }
     };
@@ -238,28 +252,42 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     };
   }, [isOpen]);
 
-  // Reset carousel to card 0 when scale or root changes
-  useEffect(() => { setActiveCard(0); }, [scale.id, rootNote]);
+  // Reset to card 0 when scale or root changes
+  useEffect(() => {
+    setActiveCard(0);
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = 0;
+    }
+  }, [scale.id, rootNote]);
 
-  const goNext = useCallback(() => setActiveCard((c) => Math.min(CARD_DEFS.length - 1, c + 1)), []);
-  const goPrev = useCallback(() => setActiveCard((c) => Math.max(0, c - 1)), []);
+  // Programmatic scroll to a given card index
+  const scrollToCard = useCallback((idx: number) => {
+    if (!scrollRef.current || cardWidth === 0) return;
+    const clamped = Math.max(0, Math.min(CARD_DEFS.length - 1, idx));
+    setActiveCard(clamped);
+    scrollingRef.current = true;
+    // Each card occupies (cardWidth + gap). With scroll-snap-align:center and
+    // padding-inline:PEEK, card i centers at scrollLeft = i * (cardWidth + gap)
+    // where gap matches the CSS gap value (10px).
+    scrollRef.current.scrollTo({ left: clamped * (cardWidth + 10), behavior: 'smooth' });
+    // Release the guard after the smooth scroll settles (~400ms)
+    setTimeout(() => { scrollingRef.current = false; }, 450);
+  }, [cardWidth]);
 
-  const handleDragEnd = useCallback(
-    (_: unknown, info: { offset: { x: number }; velocity: { x: number } }) => {
-      // Check both offset distance and flick velocity so quick swipes always advance
-      const SWIPE_OFFSET = 50;
-      const SWIPE_VEL    = 300;
-      if (info.offset.x < -SWIPE_OFFSET || info.velocity.x < -SWIPE_VEL) goNext();
-      else if (info.offset.x > SWIPE_OFFSET || info.velocity.x > SWIPE_VEL) goPrev();
-      // else: spring animation snaps card back to center automatically
-    },
-    [goNext, goPrev],
-  );
+  const goNext = useCallback(() => scrollToCard(activeCard + 1), [activeCard, scrollToCard]);
+  const goPrev = useCallback(() => scrollToCard(activeCard - 1), [activeCard, scrollToCard]);
+
+  // Derive activeCard from scroll position so progress dots stay in sync
+  // after a native touch swipe (the user didn't use the buttons)
+  const handleScroll = useCallback(() => {
+    if (scrollingRef.current || !scrollRef.current || cardWidth === 0) return;
+    const idx = Math.round(scrollRef.current.scrollLeft / (cardWidth + 10));
+    const clamped = Math.max(0, Math.min(CARD_DEFS.length - 1, idx));
+    setActiveCard(clamped);
+  }, [cardWidth]);
 
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
-  // trackX: first card starts at PEEK; each subsequent card shifts left by (cardWidth + gap)
-  const trackX   = PEEK - activeCard * (cardWidth + CARD_GAP);
 
   if (!isOpen) return null;
 
@@ -286,22 +314,14 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
           exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           className="flex flex-col w-full h-full"
+          style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
         >
-          {/*
-           * NO global modal header — title bar lives inside each carousel card.
-           * Carousel viewport takes the full screen height.
-           */}
+          {/* ── Carousel wrapper (position:relative for circle arrow overlays) ── */}
+          <div ref={wrapRef} className="flex-1 relative min-h-0 overflow-hidden">
 
-          {/* ── Carousel viewport ─────────────────────────────────────────── */}
-          <div
-            ref={viewportRef}
-            className="flex-1 overflow-hidden relative min-h-0 pt-safe"
-            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
-          >
-            {/* ── Circle arrow overlays — vertically centred, outside drag track ── */}
+            {/* ── Circle arrow overlays — vertically centred, z-above the track ── */}
             {cardWidth > 0 && (
               <>
-                {/* Left arrow */}
                 <button
                   onClick={goPrev}
                   disabled={activeCard === 0}
@@ -320,7 +340,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                {/* Right arrow */}
                 <button
                   onClick={goNext}
                   disabled={activeCard === CARD_DEFS.length - 1}
@@ -341,36 +360,58 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                 </button>
               </>
             )}
+
             {cardWidth > 0 ? (
-              <motion.div
-                className="flex absolute inset-y-0"
-                style={{ gap: CARD_GAP, left: 0 }}
-                animate={{ x: trackX }}
-                transition={{ type: 'spring', damping: 34, stiffness: 360 }}
-                drag="x"
-                dragMomentum={false}
-                dragElastic={0.22}
-                onDragEnd={handleDragEnd}
+              /*
+               * ── CSS scroll-snap carousel track ────────────────────────────
+               * scroll-snap-type: x mandatory  → browser enforces snap after EVERY
+               *   swipe/drag release; no partial positions possible
+               * scroll-snap-align: center on each card → cards snap to horizontal center
+               * padding-inline: PEEK  → adjacent cards peek by PEEK px each side
+               * gap: 10px  → gap between cards (matches scrollToCard calculation)
+               * scrollbar-width: none  → hidden scrollbar
+               */
+              <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="flex h-full"
+                style={{
+                  overflowX: 'scroll',
+                  overflowY: 'hidden',
+                  scrollSnapType: 'x mandatory',
+                  scrollBehavior: 'auto',  // smooth is handled by scrollTo({behavior:'smooth'})
+                  WebkitOverflowScrolling: 'touch',
+                  paddingInline: PEEK,
+                  gap: 10,
+                  // Hide scrollbar cross-browser
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                }}
               >
+                <style>{`
+                  .sdm-track::-webkit-scrollbar { display: none; }
+                `}</style>
+
                 {CARD_DEFS.map((cardDef, cardIdx) => {
                   const isActive = cardIdx === activeCard;
 
                   return (
-                    <motion.div
+                    <div
                       key={cardDef.id}
-                      className="flex-shrink-0 flex flex-col h-full rounded-xl bg-zinc-950 border-[3px] border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
-                      style={{ width: cardWidth, minWidth: cardWidth }}
-                      animate={{ opacity: isActive ? 1 : 0.45, scale: isActive ? 1 : 0.97 }}
-                      transition={{ duration: 0.2 }}
+                      className="flex-shrink-0 flex flex-col rounded-xl bg-zinc-950 border-[3px] border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden"
+                      style={{
+                        width: cardWidth,
+                        minWidth: cardWidth,
+                        scrollSnapAlign: 'center',
+                        opacity: isActive ? 1 : 0.45,
+                        transform: isActive ? 'scale(1)' : 'scale(0.97)',
+                        transition: 'opacity 0.2s, transform 0.2s',
+                      }}
                     >
-                      {/*
-                       * ── Card title bar (replaces removed global header) ────────
-                       * Both lines rendered at text-[15px] — same size, per spec.
-                       * Background is bg-zinc-900 to visually separate from content.
-                       */}
+                      {/* ── Card title bar ─────────────────────────────────── */}
                       <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5 flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          {/* Line 1: root + scale name — 21px (+6px per spec), cyan accent */}
+                          {/* Line 1: root + scale name — 21px, cyan */}
                           <p className="text-[21px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
                             {rootNote} {scale.name}
                           </p>
@@ -378,14 +419,12 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           <p className="text-[15px] font-bold text-white leading-tight mt-0.5">
                             {cardDef.title}
                           </p>
-                          {/* Subtitle for Notes and Intervals cards */}
                           {'subtitle' in cardDef && cardDef.subtitle && (
                             <p className="text-[10px] text-zinc-500 font-medium leading-snug mt-1">
                               {cardDef.subtitle}
                             </p>
                           )}
                         </div>
-                        {/* X close button — top-right of title bar */}
                         <button
                           onClick={onClose}
                           className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors mt-0.5"
@@ -395,14 +434,11 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </button>
                       </div>
 
-                      {/* ── Scrollable pattern content ─────────────────────────── */}
+                      {/* ── Scrollable pattern content ────────────────────── */}
                       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                         <div className="px-3 pt-3 pb-2 space-y-3">
 
-                          {/*
-                           * Finger legend — only on Finger card, above Pattern I.
-                           * Moved OUT of the title bar subtitle into the content area.
-                           */}
+                          {/* Finger legend — only on Finger card, above Pattern I */}
                           {cardDef.id === 'finger' && (
                             <div className="flex items-center gap-3 flex-wrap px-0.5 pb-1">
                               {[
@@ -418,7 +454,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   <span className="text-[11px] text-zinc-400 font-medium">{name}</span>
                                 </div>
                               ))}
-                              {/* Cyan diamond = Root — inline after Pinky, right side of legend */}
+                              {/* Cyan diamond = Root — inline after Pinky */}
                               <div className="flex items-center gap-1.5">
                                 <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
                                   <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
@@ -459,7 +495,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             );
                           })}
 
-                          {/* Symbol legend — root/scale dot key at the bottom */}
+                          {/* Symbol legend — root/scale dot key */}
                           <div className="pt-1 pb-1 border-t border-zinc-800/50">
                             <div className="flex items-center gap-4 px-0.5 flex-wrap">
                               <div className="flex items-center gap-1.5">
@@ -489,9 +525,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
-                      {/* ── Card footer: prev / progress dots / next ───────────── */}
+                      {/* ── Card footer: prev / progress dots / next ──────── */}
                       <div className="flex-shrink-0 border-t border-zinc-800/50 px-3 py-2.5 flex items-center justify-between gap-2 bg-zinc-950">
-                        {/* Prev */}
                         <button
                           onClick={goPrev}
                           disabled={activeCard === 0}
@@ -509,7 +544,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           {CARD_DEFS.map((_, dotIdx) => (
                             <button
                               key={dotIdx}
-                              onClick={() => setActiveCard(dotIdx)}
+                              onClick={() => scrollToCard(dotIdx)}
                               className={`rounded-full transition-all duration-200 ${
                                 dotIdx === activeCard
                                   ? 'bg-cyan-500 w-6 h-2.5'
@@ -520,7 +555,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           ))}
                         </div>
 
-                        {/* Next */}
                         <button
                           onClick={goNext}
                           disabled={activeCard === CARD_DEFS.length - 1}
@@ -533,10 +567,10 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           <ChevronRight className="w-5 h-5 flex-shrink-0" />
                         </button>
                       </div>
-                    </motion.div>
+                    </div>
                   );
                 })}
-              </motion.div>
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />

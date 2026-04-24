@@ -442,13 +442,17 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             <button
                               key={dotIdx}
                               onClick={() => scrollToCard(dotIdx)}
-                              className={`rounded-full transition-all duration-200 ${
-                                dotIdx === activeCard
-                                  ? 'bg-cyan-500 w-4 h-[6px]'
-                                  : 'bg-zinc-600 hover:bg-zinc-500 w-[6px] h-[6px]'
-                              }`}
+                              className="p-0 bg-transparent border-0 flex items-center justify-center"
+                              style={{ lineHeight: 0 }}
                               aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
-                            />
+                            >
+                              <span
+                                className={`rounded-full block transition-all duration-200 ${
+                                  dotIdx === activeCard ? 'bg-cyan-500' : 'bg-zinc-600'
+                                }`}
+                                style={dotIdx === activeCard ? { width: 16, height: 6 } : { width: 6, height: 6 }}
+                              />
+                            </button>
                           ))}
                         </div>
                       </div>

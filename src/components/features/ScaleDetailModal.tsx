@@ -2,11 +2,12 @@
  * ScaleDetailModal
  *
  * Visual design mirrors ChordDetailModal:
- *   • bg-zinc-950  card,  border-2 border-cyan-500/40
- *   • Same header layout (root·scale label, card title, X button)
+ *   • bg-zinc-950 card, border-2 border-cyan-500/40
+ *   • Title bar INSIDE each card: root·scale name + card title (both 15px) + X
  *   • 3-card horizontal swipe carousel (Finger Patterns / Note Names / Interval Patterns)
  *   • 40px peek on each side; progress dots at card bottom; arrow nav
  *   • Each card scrolls vertically to fit all 5 pattern diagrams
+ *   • Finger legend ("1=Index…") rendered in scrollable content above Pattern I (Finger card only)
  *   • Fretboard rendering: HorizontalScaleFretboard (dark bg, SVGChordDiagram dot style)
  *
  * Data source:
@@ -53,7 +54,7 @@ const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, stri
 
 const NOTE_NAMES_CHROM = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-// ── Algorithmic box-position generator (fallback for non-Major scales) ─────────
+// ── Algorithmic box-position generator (fallback for non-hardcoded scales) ────
 
 interface BoxDot {
   string: number;
@@ -121,7 +122,7 @@ const CARD_DEFS = [
   {
     id: 'finger',
     title: 'Finger Patterns',
-    subtitle: '1 = Index  ·  2 = Middle  ·  3 = Ring  ·  4 = Pinky',
+    // subtitle rendered below title bar, above Pattern I in scrollable content
   },
   {
     id: 'notes',
@@ -174,7 +175,6 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
         finger: d.finger,
         isRoot: d.isRoot,
         isOpenString: d.isOpenString,
-        // Compute interval for label builders
         interval: (() => {
           const rootSem = NOTE_TO_SEMITONE[rootNote] ?? 0;
           const openSem = OPEN_STRING_SEM[d.string] ?? 0;
@@ -184,7 +184,6 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
     }));
   }
 
-  // Algorithmic fallback for all other scales
   return generateBoxPositions(rootNote, scale.intervals).map((pos) => ({
     label: pos.label,
     startFret: pos.startFret,
@@ -214,7 +213,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const viewportRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Hide fixed header (same pattern as ChordDetailModal)
+  // Hide fixed app header while modal is open
   useEffect(() => {
     if (!isOpen) return;
     const header = document.querySelector('header') as HTMLElement | null;
@@ -222,7 +221,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     return () => { if (header) header.style.visibility = ''; };
   }, [isOpen]);
 
-  // Measure card width after paint
+  // Measure card width after paint (full viewport minus peek zones)
   useEffect(() => {
     if (!isOpen) return;
     const measure = () => {
@@ -239,7 +238,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     };
   }, [isOpen]);
 
-  // Reset to card 0 when scale/root changes
+  // Reset carousel to card 0 when scale or root changes
   useEffect(() => { setActiveCard(0); }, [scale.id, rootNote]);
 
   const goNext = useCallback(() => setActiveCard((c) => Math.min(CARD_DEFS.length - 1, c + 1)), []);
@@ -255,6 +254,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
 
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
+  // trackX: first card starts at PEEK; each subsequent card shifts left by (cardWidth + gap)
   const trackX   = PEEK - activeCard * (cardWidth + CARD_GAP);
 
   if (!isOpen) return null;
@@ -269,7 +269,11 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
         exit={{ opacity: 0 }}
         transition={{ duration: 0.18 }}
         className="fixed inset-0 z-[100] flex flex-col"
-        style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}
+        style={{
+          background: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+        }}
       >
         <motion.div
           key="sdm-content"
@@ -279,28 +283,17 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           className="flex flex-col w-full h-full"
         >
-          {/* ── Modal header (mirrors ChordDetailModal header) ─────────── */}
-          <div className="flex items-center justify-between px-4 pt-safe pt-5 pb-3 flex-shrink-0">
-            <div className="min-w-0 flex-1 pr-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-500 leading-none">
-                {rootNote} · {scale.name}
-              </p>
-              <h2 className="text-[20px] font-bold text-white leading-snug mt-0.5">
-                {CARD_DEFS[activeCard].title}
-              </h2>
-            </div>
-            {/* X button — same style as ChordDetailModal */}
-            <button
-              onClick={onClose}
-              className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors p-1 -mr-1"
-              aria-label="Close"
-            >
-              <X className="w-7 h-7" />
-            </button>
-          </div>
+          {/*
+           * NO global modal header — title bar lives inside each carousel card.
+           * Carousel viewport takes the full screen height.
+           */}
 
-          {/* ── Carousel viewport ─────────────────────────────────────── */}
-          <div ref={viewportRef} className="flex-1 overflow-hidden relative min-h-0">
+          {/* ── Carousel viewport ─────────────────────────────────────────── */}
+          <div
+            ref={viewportRef}
+            className="flex-1 overflow-hidden relative min-h-0 pt-safe"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+          >
             {cardWidth > 0 ? (
               <motion.div
                 className="flex absolute inset-y-0"
@@ -323,23 +316,63 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                       animate={{ opacity: isActive ? 1 : 0.45, scale: isActive ? 1 : 0.97 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {/* Card header — subtitle + per-card X */}
-                      <div className="px-3 pt-3 pb-2 border-b border-zinc-800/50 flex-shrink-0 flex items-start justify-between gap-2">
-                        <p className="text-[11px] text-zinc-400 font-medium leading-snug">
-                          {cardDef.subtitle}
-                        </p>
+                      {/*
+                       * ── Card title bar (replaces removed global header) ────────
+                       * Both lines rendered at text-[15px] — same size, per spec.
+                       * Background is bg-zinc-900 to visually separate from content.
+                       */}
+                      <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5 flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          {/* Line 1: root + scale name — 15px, cyan accent */}
+                          <p className="text-[15px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
+                            {rootNote} {scale.name}
+                          </p>
+                          {/* Line 2: card title — 15px, white */}
+                          <p className="text-[15px] font-bold text-white leading-tight mt-0.5">
+                            {cardDef.title}
+                          </p>
+                          {/* Subtitle for Notes and Intervals cards */}
+                          {'subtitle' in cardDef && cardDef.subtitle && (
+                            <p className="text-[10px] text-zinc-500 font-medium leading-snug mt-1">
+                              {cardDef.subtitle}
+                            </p>
+                          )}
+                        </div>
+                        {/* X close button — top-right of title bar */}
                         <button
                           onClick={onClose}
-                          className="flex-shrink-0 text-zinc-500 hover:text-white transition-colors"
+                          className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors mt-0.5"
                           aria-label="Close modal"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-5 h-5" />
                         </button>
                       </div>
 
-                      {/* Scrollable pattern content */}
+                      {/* ── Scrollable pattern content ─────────────────────────── */}
                       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                         <div className="px-3 pt-3 pb-2 space-y-3">
+
+                          {/*
+                           * Finger legend — only on Finger card, above Pattern I.
+                           * Moved OUT of the title bar subtitle into the content area.
+                           */}
+                          {cardDef.id === 'finger' && (
+                            <div className="flex items-center gap-3 flex-wrap px-0.5 pb-1">
+                              {[
+                                { num: '1', name: 'Index' },
+                                { num: '2', name: 'Middle' },
+                                { num: '3', name: 'Ring' },
+                                { num: '4', name: 'Pinky' },
+                              ].map(({ num, name }) => (
+                                <div key={num} className="flex items-center gap-1.5">
+                                  <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-[10px] font-black text-white leading-none">{num}</span>
+                                  </div>
+                                  <span className="text-[11px] text-zinc-400 font-medium">{name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           {/* 5 pattern diagrams */}
                           {patterns.map((pos, posIdx) => {
@@ -372,7 +405,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             );
                           })}
 
-                          {/* Legend (mirrors ChordDetailModal's Finger Positions section style) */}
+                          {/* Symbol legend — root/scale dot key at the bottom */}
                           <div className="pt-1 pb-1 border-t border-zinc-800/50">
                             <div className="flex items-center gap-4 px-0.5 flex-wrap">
                               <div className="flex items-center gap-1.5">
@@ -402,7 +435,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
-                      {/* ── Card footer: prev / dots / next ──────────── */}
+                      {/* ── Card footer: prev / progress dots / next ───────────── */}
                       <div className="flex-shrink-0 border-t border-zinc-800/50 px-3 py-2.5 flex items-center justify-between gap-2 bg-zinc-950">
                         {/* Prev */}
                         <button

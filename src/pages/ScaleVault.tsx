@@ -109,29 +109,27 @@ export default function ScaleVault() {
       {/* ── Hero header ── */}
       <div>
         <div className="container mx-auto px-4 max-w-2xl">
-          <div className="flex items-center gap-3 py-3">
+          <div className="flex items-start gap-3 py-3">
             <button
               onClick={() => navigate(-1)}
-              className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 flex items-center justify-center hover:bg-zinc-600 transition-colors"
+              className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 flex items-center justify-center hover:bg-zinc-600 transition-colors mt-0.5"
               aria-label="Go back"
             >
               <ChevronLeft className="w-5 h-5 text-white" />
             </button>
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/30 flex-shrink-0 mt-0.5">
                 <Waves className="w-4 h-4 text-white" strokeWidth={2.3} />
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-[21px] font-bold text-white leading-none">Scale Vault</h1>
-                  <span className="flex-shrink-0 text-[11px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full">
-                    {visibleScales.length} scale{visibleScales.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-[21px] font-bold text-white leading-none">Scale Vault</h1>
                 <p className="text-[15px] text-zinc-400 mt-0.5 leading-none">Solo in any key</p>
                 <p className="text-[17px] text-cyan-400 mt-0.5 leading-none">Press Scale Card to See Patterns</p>
               </div>
             </div>
+            <span className="flex-shrink-0 text-[11px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">
+              {visibleScales.length} scale{visibleScales.length !== 1 ? 's' : ''}
+            </span>
           </div>
         </div>
       </div>

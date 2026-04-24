@@ -84,7 +84,7 @@ export const MobileTabBar = () => {
           }`}
         >
           <Library className="w-6 h-6 mb-1" />
-          <span className="text-xs font-medium">Library</span>
+          <span className="text-xs font-medium">Chord Vault</span>
         </Link>
 
         {/* Editor */}

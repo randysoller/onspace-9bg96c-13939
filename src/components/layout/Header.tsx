@@ -28,7 +28,7 @@ const TuningForkIcon = ({ className }: { className?: string }) => (
 const NAV_ITEMS = [
   { path: '/',        label: 'Home',    icon: Home },
   { path: '/tuner',   label: 'Tuner',   icon: TuningForkIcon },
-  { path: '/library', label: 'Library', icon: Library },
+  { path: '/library', label: 'Chord Vault', icon: Library },
   { path: '/editor',  label: 'Editor',  icon: Edit },
 ] as const;
 

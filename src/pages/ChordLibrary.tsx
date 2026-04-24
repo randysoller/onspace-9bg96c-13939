@@ -7,8 +7,9 @@ import {
   Guitar, Search, Sliders, Bookmark, Music, BarChart3, Move,
   Volume2, Library, Save, Heart,
   Package, ChevronDown, ChevronRight, Star, Sparkles, Zap,
-  CheckCircle2, Pencil, X, MapPin,
+  CheckCircle2, Pencil, X, MapPin, ChevronLeft,
 } from 'lucide-react';
+import { isAdmin } from '@/lib/admin';
 import { CHORD_DATABASE } from '@/constants/chords-index';
 import type { ChordData, ChordType, BarreRoot } from '@/types/chord';
 import { CHORD_TYPE_LABELS } from '@/types/chord';
@@ -582,70 +583,86 @@ export default function ChordLibrary() {
     <div className="min-h-screen bg-black text-white pb-24">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
 
-        {/* Header */}
+        {/* ── Chord Vault header (Scale Vault style) ── */}
         <div className="mb-6">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h1 className="text-4xl font-bold mb-1">Chord Library</h1>
-              <p className="text-sm text-zinc-500">
-                Browse all chord diagrams — tap the checkbox to select chords for a practice preset
-              </p>
+          <div className="flex items-start gap-3 py-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 flex items-center justify-center hover:bg-zinc-600 transition-colors mt-0.5"
+              aria-label="Go back"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0 mt-0.5">
+                <Guitar className="w-4 h-4 text-white" strokeWidth={2.3} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-[21px] font-bold text-white leading-none">Chord Vault</h1>
+                <p className="text-[15px] text-zinc-400 mt-0.5 leading-none">Browse all Chord Diagrams</p>
+                <p className="text-[17px] text-amber-400 mt-0.5 leading-none">Tap checkbox to select chords for a practice preset</p>
+              </div>
             </div>
-            {user && (
-              <button
-                onClick={handleManualSync}
-                disabled={syncStatus === 'syncing'}
-                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
-                style={{
-                  ...(syncStatus === 'synced'
-                    ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.35)', background: 'rgba(74,222,128,0.08)' }
-                    : syncStatus === 'failed'
-                    ? { color: '#fbbf24', borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.08)' }
-                    : syncStatus === 'syncing'
-                    ? { color: '#a1a1aa', borderColor: 'rgba(161,161,170,0.25)', background: 'rgba(161,161,170,0.05)' }
-                    : { color: '#71717a', borderColor: 'rgba(113,113,122,0.25)', background: 'transparent' }),
-                }}
-                aria-label={
-                  syncStatus === 'synced' ? `Synced ${syncTimeLabel ?? ''}. Click to sync again.`
-                  : syncStatus === 'failed' ? 'Sync failed. Click to retry.'
-                  : syncStatus === 'syncing' ? 'Syncing…'
-                  : 'Click to sync from cloud'
-                }
-              >
-                {syncStatus === 'syncing' && (
-                  <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                )}
-                {syncStatus === 'synced' && (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-                {syncStatus === 'failed' && (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                  </svg>
-                )}
-                {(syncStatus === 'idle' || syncStatus === 'failed') && (
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                )}
-                <span>
-                  {syncStatus === 'syncing' && 'Syncing…'}
-                  {syncStatus === 'synced' && (syncTimeLabel ? `Synced ${syncTimeLabel}` : 'Synced')}
-                  {syncStatus === 'failed' && 'Sync failed — retry'}
-                  {syncStatus === 'idle' && 'Sync'}
-                </span>
-              </button>
-            )}
+            <span className="flex-shrink-0 text-[11px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">
+              {filteredChords.length} chord{filteredChords.length !== 1 ? 's' : ''}
+            </span>
           </div>
+
+          {/* Sync button — admin only, below title */}
+          {user && isAdmin(user.id) && (
+            <button
+              onClick={handleManualSync}
+              disabled={syncStatus === 'syncing'}
+              className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black"
+              style={{
+                ...(syncStatus === 'synced'
+                  ? { color: '#4ade80', borderColor: 'rgba(74,222,128,0.35)', background: 'rgba(74,222,128,0.08)' }
+                  : syncStatus === 'failed'
+                  ? { color: '#fbbf24', borderColor: 'rgba(251,191,36,0.35)', background: 'rgba(251,191,36,0.08)' }
+                  : syncStatus === 'syncing'
+                  ? { color: '#a1a1aa', borderColor: 'rgba(161,161,170,0.25)', background: 'rgba(161,161,170,0.05)' }
+                  : { color: '#71717a', borderColor: 'rgba(113,113,122,0.25)', background: 'transparent' }),
+              }}
+              aria-label={
+                syncStatus === 'synced' ? `Synced ${syncTimeLabel ?? ''}. Click to sync again.`
+                : syncStatus === 'failed' ? 'Sync failed. Click to retry.'
+                : syncStatus === 'syncing' ? 'Syncing…'
+                : 'Click to sync from cloud'
+              }
+            >
+              {syncStatus === 'syncing' && (
+                <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+              {syncStatus === 'synced' && (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+              {syncStatus === 'failed' && (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              )}
+              {(syncStatus === 'idle' || syncStatus === 'failed') && (
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              )}
+              <span>
+                {syncStatus === 'syncing' && 'Syncing…'}
+                {syncStatus === 'synced' && (syncTimeLabel ? `Synced ${syncTimeLabel}` : 'Synced')}
+                {syncStatus === 'failed' && 'Sync failed — retry'}
+                {syncStatus === 'idle' && 'Sync'}
+              </span>
+            </button>
+          )}
         </div>
 
-        {/* Edit Pack Banner */}
+        {/* ── Edit Pack Banner */}
         {editingPackId && (() => {
           const pack = CHORD_PACKS.find((p) => p.id === editingPackId);
           return pack ? (
@@ -670,7 +687,7 @@ export default function ChordLibrary() {
         })()}
 
         {/* Preset Dropdown */}
-        <div className="mb-4 relative">
+        <div className="mb-4 mt-2 relative">
           <button
             onClick={() => setShowPresetMenu(prev => !prev)}
             className={`w-full border rounded-lg px-4 py-3 flex items-center justify-between transition-colors ${
@@ -867,7 +884,7 @@ export default function ChordLibrary() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4 mt-2 flex gap-2">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
             <input

@@ -65,7 +65,7 @@ function App() {
             <Route path="/progression-setup" element={<ProgressionSetup />} />
             <Route path="/progression-practice" element={<ProgressionPractice />} />
             <Route path="/library" element={
-              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading chord library" />}>
+              <Suspense fallback={<LoadingSpinner fullScreen aria-label="Loading Chord Vault" />}>
                 <ChordLibrary />
               </Suspense>
             } />

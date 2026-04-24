@@ -1,11 +1,12 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory } from '@/constants/scales';
+import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory, type ScaleVaultEntry } from '@/constants/scales';
 import { Note, Interval } from '@tonaljs/tonal';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useScaleVaultStore } from '@/stores/scaleVaultStore';
+import ScaleDetailModal from '@/components/features/ScaleDetailModal';
 
 // ── Category metadata ──────────────────────────────────────────────────────
 
@@ -97,6 +98,9 @@ export default function ScaleVault() {
 
   // Persisted in sessionStorage — survives back navigation from a future scale detail page
   const { selectedCategory, setSelectedCategory, selectedRoot, setSelectedRoot } = useScaleVaultStore();
+
+  // Scale detail modal state
+  const [modalScale, setModalScale] = useState<ScaleVaultEntry | null>(null);
 
   // Filtered scales
   const visibleScales = useMemo(() => {
@@ -213,8 +217,9 @@ export default function ScaleVault() {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.18, delay: idx * 0.025 }}
-                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 pt-3 pb-8 hover:bg-zinc-800/40 transition-colors"
+                className="bg-zinc-900/50 border border-zinc-800 border-l-4 rounded-xl px-4 pt-3 pb-8 hover:bg-zinc-800/40 transition-colors cursor-pointer active:scale-[0.99]"
                 style={{ borderLeftColor: '#06b6d4' }}
+                onClick={() => setModalScale(scale)}
               >
                 {/* Scale name + category badge */}
                 <div className="flex items-start justify-between gap-3">
@@ -269,6 +274,16 @@ export default function ScaleVault() {
           })}
         </div>
       </div>
+
+      {/* Scale detail modal */}
+      {modalScale && (
+        <ScaleDetailModal
+          scale={modalScale}
+          rootNote={selectedRoot}
+          isOpen={true}
+          onClose={() => setModalScale(null)}
+        />
+      )}
     </div>
   );
 }

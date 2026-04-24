@@ -298,6 +298,49 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
             className="flex-1 overflow-hidden relative min-h-0 pt-safe"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
           >
+            {/* ── Circle arrow overlays — vertically centred, outside drag track ── */}
+            {cardWidth > 0 && (
+              <>
+                {/* Left arrow */}
+                <button
+                  onClick={goPrev}
+                  disabled={activeCard === 0}
+                  aria-label="Previous card"
+                  className="
+                    absolute left-1 top-1/2 -translate-y-1/2 z-20
+                    w-9 h-9 rounded-full
+                    bg-zinc-900/80 backdrop-blur-sm
+                    border-2 border-cyan-500/60
+                    flex items-center justify-center
+                    text-cyan-400 hover:text-white hover:border-cyan-400
+                    disabled:opacity-20 disabled:cursor-not-allowed
+                    transition-all duration-150
+                    shadow-lg shadow-black/40
+                  "
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                {/* Right arrow */}
+                <button
+                  onClick={goNext}
+                  disabled={activeCard === CARD_DEFS.length - 1}
+                  aria-label="Next card"
+                  className="
+                    absolute right-1 top-1/2 -translate-y-1/2 z-20
+                    w-9 h-9 rounded-full
+                    bg-zinc-900/80 backdrop-blur-sm
+                    border-2 border-cyan-500/60
+                    flex items-center justify-center
+                    text-cyan-400 hover:text-white hover:border-cyan-400
+                    disabled:opacity-20 disabled:cursor-not-allowed
+                    transition-all duration-150
+                    shadow-lg shadow-black/40
+                  "
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
             {cardWidth > 0 ? (
               <motion.div
                 className="flex absolute inset-y-0"
@@ -305,8 +348,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                 animate={{ x: trackX }}
                 transition={{ type: 'spring', damping: 34, stiffness: 360 }}
                 drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.15}
+                dragMomentum={false}
+                dragElastic={0.22}
                 onDragEnd={handleDragEnd}
               >
                 {CARD_DEFS.map((cardDef, cardIdx) => {

@@ -71,8 +71,8 @@ const LEFT_PAD    = 4;   // before open zone
 const NUT_W   = 6;
 const NUT_CLR_FILL = NUT_CLR;
 
-// Fret slot width — wider than SVGChordDiagram's stringSpacing to accommodate labels
-const FRET_SLOT_W = 52;
+// Fret slot width — reduced 10% vs original (52→47) for narrower diagrams
+const FRET_SLOT_W = 47;
 
 // ── Derived geometry ──────────────────────────────────────────────────────────
 const SVG_H    = TOP_PAD + BOT_PAD + (NUM_STRINGS - 1) * 18 + 18; // ~142
@@ -115,7 +115,7 @@ export default function HorizontalScaleFretboard({
   return (
     <div className="w-full">
       {positionLabel && (
-        <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1 px-0.5">
+        <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-500 mb-1 px-0.5">
           {positionLabel}
         </p>
       )}

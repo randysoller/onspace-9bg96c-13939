@@ -127,7 +127,7 @@ export default function ScaleVault() {
                 <p className="text-[17px] text-cyan-400 mt-0.5 leading-none">Press Scale Card to See Patterns</p>
               </div>
             </div>
-            <span className="flex-shrink-0 text-[11px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">
+            <span className="flex-shrink-0 text-[14px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">
               {visibleScales.length} scale{visibleScales.length !== 1 ? 's' : ''}
             </span>
           </div>

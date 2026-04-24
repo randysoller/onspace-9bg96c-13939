@@ -606,7 +606,7 @@ export default function ChordLibrary() {
               <div className="min-w-0 flex-1">
                 <h1 className="text-[21px] font-bold text-white leading-none">Chord Vault</h1>
                 <p className="text-[15px] text-zinc-400 mt-0.5 leading-none">Browse all Chord Diagrams</p>
-                <p className="text-[17px] text-amber-400 mt-0.5 leading-none">Press Card for Details</p>
+                <p className="text-[17px] text-amber-400 mt-0.5 leading-none">Press Chord Card for Details</p>
               </div>
             </div>
             <span className="flex-shrink-0 text-[14px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">

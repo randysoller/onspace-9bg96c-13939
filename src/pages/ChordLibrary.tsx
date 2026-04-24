@@ -1255,14 +1255,7 @@ export default function ChordLibrary() {
 
         {/* Results Count & Legend */}
         <div className="mb-4">
-          {/* Row 1: chord count right-aligned */}
-          <div className="flex justify-end mb-1">
-            <div className="text-sm flex items-center gap-2">
-              <span className="text-amber-500 font-bold text-base">{filteredChords.length}</span>
-              <span className="text-zinc-500"> chord{filteredChords.length !== 1 ? 's' : ''}</span>
-            </div>
-          </div>
-          {/* Row 2: legend left-aligned */}
+          {/* Legend */}
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-amber-500" />

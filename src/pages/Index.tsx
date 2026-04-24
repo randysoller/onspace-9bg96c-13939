@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
+import { useHomeUIStore } from '@/stores/homeUIStore';
 import { toast } from 'sonner';
 
 // ── Vault card definitions ─────────────────────────────────────────────────
@@ -362,8 +363,8 @@ const DAILY_PROGRESS_CARDS = [
 
 export default function Index() {
   const navigate = useNavigate();
-  const [isPlayNowOpen, setIsPlayNowOpen] = useState(false);
-  const [activeVaultIndex, setActiveVaultIndex] = useState(0);
+  // Persist Play Now open state and active vault index across navigation
+  const { isPlayNowOpen, setIsPlayNowOpen, activeVaultIndex, setActiveVaultIndex } = useHomeUIStore();
   const vaultRailRef = React.useRef<HTMLDivElement>(null);
   
   // Sync user data from backend when authenticated

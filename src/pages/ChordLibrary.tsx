@@ -332,6 +332,16 @@ export default function ChordLibrary() {
 
   const getScrollEl = useCallback(() => document.getElementById('main-content'), []);
 
+  // Always scroll to top on fresh mount — prevents stale savedScrollY from
+  // showing the page halfway down when navigating in from the home page.
+  useEffect(() => {
+    const el = getScrollEl();
+    if (el) el.scrollTop = 0;
+    setSavedScrollY(0);
+    restoredRef.current = true; // skip the savedScrollY restoration below
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const el = getScrollEl();
     if (!el) return;

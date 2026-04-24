@@ -450,7 +450,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                 className={`rounded-full block transition-all duration-200 ${
                                   dotIdx === activeCard ? 'bg-cyan-500' : 'bg-zinc-600'
                                 }`}
-                                style={{ width: 6, height: 6 }}
+                                style={dotIdx === activeCard ? { width: 8, height: 8 } : { width: 6, height: 6 }}
                               />
                             </button>
                           ))}

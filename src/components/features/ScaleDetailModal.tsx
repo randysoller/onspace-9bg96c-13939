@@ -304,7 +304,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                   return (
                     <motion.div
                       key={cardDef.id}
-                      className="flex-shrink-0 flex flex-col rounded-xl bg-zinc-950 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
+                      className="flex-shrink-0 flex flex-col h-full rounded-xl bg-zinc-950 border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10 overflow-hidden relative"
                       style={{ width: cardWidth, minWidth: cardWidth }}
                       animate={{ opacity: isActive ? 1 : 0.45, scale: isActive ? 1 : 0.97 }}
                       transition={{ duration: 0.2 }}

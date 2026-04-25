@@ -372,7 +372,7 @@ export default function MetronomeModal() {
                 className={`absolute right-4 h-[80px] flex flex-col items-center justify-center gap-1 px-4 rounded-lg border font-semibold text-xs tracking-wide transition-all select-none cursor-pointer ${
                   swingEnabled
                     ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600/30 active:bg-emerald-600/40'
-                    : 'bg-red-600/20 border-red-500/40 text-red-400 hover:bg-red-600/30 active:bg-red-600/40'
+                    : 'bg-red-600/35 border-red-500/65 text-red-300 hover:bg-red-600/45 active:bg-red-600/55'
                 } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
               >
                 {/* Swing icon: ♪♪ = ♩♪ with triplet bracket — standard swing/shuffle notation */}
@@ -393,8 +393,8 @@ export default function MetronomeModal() {
                     <span className="leading-none">♪</span>
                   </span>
                 </span>
-                <span className={`text-sm font-bold ${swingEnabled ? 'text-emerald-400' : 'text-red-400'}`}>Swing</span>
-                <span className={`text-[10px] ${swingEnabled ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`text-sm font-bold ${swingEnabled ? 'text-emerald-400' : 'text-red-300'}`}>Swing</span>
+                <span className={`text-[10px] ${swingEnabled ? 'text-emerald-400' : 'text-red-300'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>
               </button>

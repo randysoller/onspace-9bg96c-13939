@@ -108,30 +108,30 @@ export const MAJOR_PATTERNS: readonly BoxPattern[] = [
     ],
   },
 
-  // Pattern III  (D-shape, window frets 7–11 for G major)
+  // Pattern III  (G-shape, window frets 7–11 for G major, roots on A str fret 10 & B str fret 8)
   {
     baseFretForG: 7,
     dots: [
-      // high e (str 0): fret7=f1, fret8=f2, fret10=f4
+      // high e (str 0): fret7=f1, fret8=f2, fret10=f4 — relFrets 0,1,3
       { string: 0, relFret: 0, finger: 1, isRoot: false },
       { string: 0, relFret: 1, finger: 2, isRoot: false },
       { string: 0, relFret: 3, finger: 4, isRoot: false },
-      // B (str 1): fret8=f2, fret10=f4
-      { string: 1, relFret: 1, finger: 2, isRoot: false },
+      // B (str 1): fret7=f1, fret8=root♦f2, fret10=f4 — relFrets 0,1,3
+      { string: 1, relFret: 0, finger: 1, isRoot: false },
+      { string: 1, relFret: 1, finger: 2, isRoot: true  },
       { string: 1, relFret: 3, finger: 4, isRoot: false },
-      // G (str 2): fret7=f1, fret9=f3, fret10=f4
+      // G (str 2): fret7=f1, fret9=f3 — relFrets 0,2 (two notes only)
       { string: 2, relFret: 0, finger: 1, isRoot: false },
       { string: 2, relFret: 2, finger: 3, isRoot: false },
-      { string: 2, relFret: 3, finger: 4, isRoot: false },
-      // D (str 3): fret7=f1, fret9=f3, fret10=f4
+      // D (str 3): fret7=f1, fret9=f3, fret10=f4 — relFrets 0,2,3
       { string: 3, relFret: 0, finger: 1, isRoot: false },
       { string: 3, relFret: 2, finger: 3, isRoot: false },
       { string: 3, relFret: 3, finger: 4, isRoot: false },
-      // A (str 4): fret7=root♦, fret9=f3, fret10=f4
-      { string: 4, relFret: 0, finger: 1, isRoot: true  },
+      // A (str 4): fret7=f1, fret9=f3, fret10=root♦f4 — relFrets 0,2,3
+      { string: 4, relFret: 0, finger: 1, isRoot: false },
       { string: 4, relFret: 2, finger: 3, isRoot: false },
-      { string: 4, relFret: 3, finger: 4, isRoot: false },
-      // low E (str 5): fret7=f1, fret8=f2, fret10=f4
+      { string: 4, relFret: 3, finger: 4, isRoot: true  },
+      // low E (str 5): fret7=f1, fret8=f2, fret10=f4 — relFrets 0,1,3
       { string: 5, relFret: 0, finger: 1, isRoot: false },
       { string: 5, relFret: 1, finger: 2, isRoot: false },
       { string: 5, relFret: 3, finger: 4, isRoot: false },

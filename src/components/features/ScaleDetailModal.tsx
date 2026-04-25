@@ -439,33 +439,29 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         {/* ── Progress dots — centered below title, above content ── */}
                         {/* Button layout box is constrained to exact dot dimensions so gap-1.5  */}
                         {/* separates dot edges (matching home page bare-span approach exactly). */}
+                        {/* Dots: bare span flex items — identical structure to home page vault dots */}
+                        {/* gap-1.5 separates dot edges directly with no button-box inflation   */}
                         <div className="flex justify-center items-center gap-1.5 mt-2.5">
                           {CARD_DEFS.map((_, dotIdx) => {
                             const isActiveDot = dotIdx === activeCard;
-                            const dotSize = isActiveDot ? 8 : 6;
                             return (
-                              <button
+                              <span
                                 key={dotIdx}
+                                role="button"
+                                tabIndex={0}
                                 onClick={() => scrollToCard(dotIdx)}
+                                onKeyDown={(e) => e.key === 'Enter' && scrollToCard(dotIdx)}
                                 aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
+                                className="rounded-full transition-all duration-200"
                                 style={{
-                                  width: dotSize,
-                                  height: dotSize,
-                                  padding: 0,
-                                  border: 'none',
-                                  background: 'transparent',
-                                  lineHeight: 0,
-                                  flexShrink: 0,
+                                  width: isActiveDot ? '8px' : '6px',
+                                  height: isActiveDot ? '8px' : '6px',
+                                  backgroundColor: isActiveDot ? '#06b6d4' : '#52525b',
                                   cursor: 'pointer',
+                                  flexShrink: 0,
+                                  display: 'block',
                                 }}
-                              >
-                                <span
-                                  className={`rounded-full block transition-all duration-200 ${
-                                    isActiveDot ? 'bg-cyan-500' : 'bg-zinc-600'
-                                  }`}
-                                  style={{ width: '100%', height: '100%' }}
-                                />
-                              </button>
+                              />
                             );
                           })}
                         </div>

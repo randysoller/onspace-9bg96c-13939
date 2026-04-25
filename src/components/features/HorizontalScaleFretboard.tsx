@@ -111,7 +111,7 @@ export default function HorizontalScaleFretboard({
 
   // Show nut when window starts at fret 0 or 1 (same logic as SVGChordDiagram baseFret===1)
   const showNut    = startFret <= 1;
-  const showFretNr = !showNut;
+  const showFretNr = !showNut; // used for fret-wire stroke-width emphasis on barre positions
 
   return (
     <div className="w-full">
@@ -150,21 +150,6 @@ export default function HorizontalScaleFretboard({
             strokeWidth={i === 0 && showFretNr ? 2.5 : 2}
           />
         ))}
-
-        {/* ── Fret position number (shown instead of nut for barre positions) ── */}
-        {showFretNr && (
-          <text
-            x={NUT_X - 4}
-            y={TOP_PAD - 6}
-            textAnchor="end"
-            fontSize={9}
-            fontWeight={700}
-            fill={FRET_NUM_CLR}
-            fontFamily="DM Sans, sans-serif"
-          >
-            {startFret}fr
-          </text>
-        )}
 
         {/* ── Per-fret number labels below each column ────────────────────── */}
         {/* Renders absolute fret numbers (e.g. 3 4 5 6 7) so players can    */}

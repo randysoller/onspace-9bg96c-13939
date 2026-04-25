@@ -6,10 +6,14 @@
  *   • Frets run downward (fret 1 just below nut, fret 13 at bottom)
  *   • Strings run left-to-right: low E (thickest) on left → high e on right
  *
- * Dot visual language mirrors HorizontalScaleFretboard exactly:
- *   • Filled cyan diamond  = root note   (no label)
- *   • Filled amber circle  = scale note  (no label)
- *   • Wrapped dots (Pattern V frets that exceeded 13 and were folded back)
+ * Visual language mirrors HorizontalScaleFretboard exactly:
+ *   • White fret wires           (matching SVGChordDiagram / HorizontalScaleFretboard)
+ *   • Light string lines         hsl(33 14% 72%)
+ *   • Cream nut bar              hsl(36 33% 93%)
+ *   • Muted brown inlay dots     hsl(30 15% 50%) @ 45% opacity
+ *   • Filled cyan diamond        = root note   (no label)
+ *   • Filled amber circle        = scale note  (no label)
+ *   • Wrapped dots (frets that exceeded 13 and folded back by -12)
  *     are rendered at 65% opacity to signal the octave wrapping
  *
  * String index convention (matches HorizontalScaleFretboard & ScaleDetailModal):
@@ -47,11 +51,17 @@ const NECK_H = N_FRETS * FH;           // 13 × 40 = 520
 const VB_W = L + NECK_W + R;           // 256
 const VB_H = T + NECK_H + B;           // 576
 
-// ── Visual constants — matching HorizontalScaleFretboard ratios ───────────────
-const CYAN  = '#06b6d4';          // root diamond fill
-const AMBER = 'hsl(38 92% 50%)'; // scale circle fill  (amber-500)
-const DOT_R = 9.5;               // scale circle radius (matches HorizontalScaleFretboard)
-const DIA_H = 13.1;              // diamond half-extent (DOT_R × 1.38, matches HSF)
+// ── Visual constants — matching HorizontalScaleFretboard exactly ──────────────
+const CYAN      = '#06b6d4';           // root diamond fill
+const AMBER     = 'hsl(38 92% 50%)';  // scale circle fill  (amber-500)
+const FRET_WIRE = 'white';            // matches HorizontalScaleFretboard FRET_WIRE
+const STR_CLR   = 'hsl(33 14% 72%)'; // matches HorizontalScaleFretboard STR_CLR
+const NUT_CLR   = 'hsl(36 33% 93%)'; // matches HorizontalScaleFretboard NUT_CLR
+const INLAY_CLR = 'hsl(30 15% 50%)'; // matches HorizontalScaleFretboard INLAY_CLR
+const LABEL_CLR = 'hsl(33 14% 72%)'; // fret numbers and string names
+
+const DOT_R = 9.5;   // scale circle radius (matches HorizontalScaleFretboard)
+const DIA_H = 13.1;  // diamond half-extent (DOT_R × 1.38, matches HSF)
 
 /** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
 function diamondPoints(cx: number, cy: number, h: number): string {
@@ -59,13 +69,15 @@ function diamondPoints(cx: number, cy: number, h: number): string {
 }
 
 // ── String metadata (left → right order) ──────────────────────────────────────
+// STRING_WIDTHS in HorizontalScaleFretboard: [0.7, 0.9, 1.4, 1.9, 2.5, 3.1]
+// top(e)→bottom(E). For vertical neck left(E)→right(e) we reverse this.
 const STRING_META = [
-  { s: 5, name: 'E',  strokeW: 2.4 },  // low E
-  { s: 4, name: 'A',  strokeW: 2.0 },
-  { s: 3, name: 'D',  strokeW: 1.6 },
-  { s: 2, name: 'G',  strokeW: 1.3 },
-  { s: 1, name: 'B',  strokeW: 1.0 },
-  { s: 0, name: 'e',  strokeW: 0.8 },  // high e
+  { s: 5, name: 'E', strokeW: 3.1 },  // low E  (leftmost, thickest)
+  { s: 4, name: 'A', strokeW: 2.5 },
+  { s: 3, name: 'D', strokeW: 1.9 },
+  { s: 2, name: 'G', strokeW: 1.4 },
+  { s: 1, name: 'B', strokeW: 0.9 },
+  { s: 0, name: 'e', strokeW: 0.7 },  // high e (rightmost, thinnest)
 ] as const;
 
 // ── Coordinate helpers ─────────────────────────────────────────────────────────
@@ -108,24 +120,24 @@ export default function VerticalNeckFretboard({ dots }: Props) {
           textAnchor="middle"
           fontSize={11}
           fontWeight={600}
-          fill="#a1a1aa"
+          fill={LABEL_CLR}
           fontFamily="ui-monospace, monospace"
         >
           {name}
         </text>
       ))}
 
-      {/* ── Nut (thick bar just above fret 1) ──────────────────────────── */}
+      {/* ── Nut (cream bar just above fret 1, matches HorizontalScaleFretboard) */}
       <rect
         x={L - 1}
         y={T - 7}
         width={NECK_W + 2}
         height={7}
-        fill="#d4d4d8"
-        rx={1.5}
+        fill={NUT_CLR}
+        rx={1}
       />
 
-      {/* ── Fret wires 1–13 ─────────────────────────────────────────────── */}
+      {/* ── Fret wires 1–13 (white, matching HorizontalScaleFretboard) ──── */}
       {Array.from({ length: N_FRETS }, (_, i) => i + 1).map((f) => (
         <line
           key={`fw-${f}`}
@@ -133,12 +145,12 @@ export default function VerticalNeckFretboard({ dots }: Props) {
           y1={yWire(f)}
           x2={L + NECK_W}
           y2={yWire(f)}
-          stroke="#3f3f46"
-          strokeWidth={f === 12 ? 1.8 : 1}
+          stroke={FRET_WIRE}
+          strokeWidth={f === 12 ? 2 : 1.5}
         />
       ))}
 
-      {/* ── String lines ────────────────────────────────────────────────── */}
+      {/* ── String lines (light colour, matching HorizontalScaleFretboard) ─ */}
       {STRING_META.map(({ s, strokeW }) => (
         <line
           key={`sl-${s}`}
@@ -146,24 +158,25 @@ export default function VerticalNeckFretboard({ dots }: Props) {
           y1={T - 7}
           x2={xStr(s)}
           y2={T + NECK_H}
-          stroke="#52525b"
+          stroke={STR_CLR}
           strokeWidth={strokeW}
         />
       ))}
 
-      {/* ── Neck inlay markers ───────────────────────────────────────────── */}
+      {/* ── Neck inlay markers (muted brown, matching HorizontalScaleFretboard) */}
       {SINGLE_INLAY_FRETS.map((f) => (
         <circle
           key={`inlay-${f}`}
           cx={midX}
           cy={yDot(f)}
           r={4.5}
-          fill="#27272a"
+          fill={INLAY_CLR}
+          fillOpacity={0.45}
         />
       ))}
       {/* Double inlay at fret 12 */}
-      <circle cx={L + SW * 1.5} cy={yDot(12)} r={4.5} fill="#27272a" />
-      <circle cx={L + SW * 3.5} cy={yDot(12)} r={4.5} fill="#27272a" />
+      <circle cx={L + SW * 1.5} cy={yDot(12)} r={4.5} fill={INLAY_CLR} fillOpacity={0.45} />
+      <circle cx={L + SW * 3.5} cy={yDot(12)} r={4.5} fill={INLAY_CLR} fillOpacity={0.45} />
 
       {/* ── Fret-number labels (left margin) ─────────────────────────────── */}
       {[1, 3, 5, 7, 9, 12, 13].map((f) => (
@@ -173,7 +186,8 @@ export default function VerticalNeckFretboard({ dots }: Props) {
           y={yDot(f) + 4}
           textAnchor="end"
           fontSize={9}
-          fill="#71717a"
+          fill={LABEL_CLR}
+          fillOpacity={0.75}
           fontFamily="ui-monospace, monospace"
         >
           {f}
@@ -187,7 +201,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
         const op = dot.isWrapped ? 0.65 : 1;
 
         return dot.isRoot ? (
-          // Filled cyan diamond — matches HorizontalScaleFretboard fretted root style
+          // Filled cyan diamond — matches HorizontalScaleFretboard fretted root
           <polygon
             key={i}
             points={diamondPoints(cx, cy, DIA_H)}
@@ -195,7 +209,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
             opacity={op}
           />
         ) : (
-          // Filled amber circle — matches HorizontalScaleFretboard fretted scale note style
+          // Filled amber circle — matches HorizontalScaleFretboard fretted scale note
           <circle
             key={i}
             cx={cx}

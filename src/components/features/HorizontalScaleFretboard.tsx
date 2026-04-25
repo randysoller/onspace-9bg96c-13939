@@ -60,7 +60,7 @@ const FONT_SZ = 13;        // label inside circles (r*1.37)
 
 // Padding
 const TOP_PAD    = 20;    // above top string (room for open-position fret number label)
-const BOT_PAD    = 12;
+const BOT_PAD    = 26;   // increased from 12 to fit per-fret number labels below bottom string
 const RIGHT_PAD  = 10;
 
 // Open-string zone (left of nut)
@@ -165,6 +165,25 @@ export default function HorizontalScaleFretboard({
             {startFret}fr
           </text>
         )}
+
+        {/* ── Per-fret number labels below each column ────────────────────── */}
+        {/* Renders absolute fret numbers (e.g. 3 4 5 6 7) so players can    */}
+        {/* immediately locate the pattern on the neck without counting frets */}
+        {Array.from({ length: NUM_FRETS }).map((_, i) => (
+          <text
+            key={`fnum-${i}`}
+            x={fretCX(i)}
+            y={TOP_PAD + GRID_H + 17}
+            textAnchor="middle"
+            fontSize={9}
+            fontWeight={600}
+            fill={FRET_NUM_CLR}
+            fillOpacity={0.75}
+            fontFamily="DM Sans, sans-serif"
+          >
+            {startFret + i}
+          </text>
+        ))}
 
         {/* ── Fret inlay dots (horizontal = map absolute frets to slot centres) ─ */}
         {Array.from({ length: NUM_FRETS }).map((_, i) => {

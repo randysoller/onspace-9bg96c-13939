@@ -521,12 +521,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             <div className="flex items-center gap-4 px-0.5 flex-wrap">
                               <div className="flex items-center gap-1.5">
                                 <svg width="14" height="14" viewBox="0 0 14 14">
-                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
-                                </svg>
-                                <span className="text-[10px] text-zinc-500">Root (fretted)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <svg width="14" height="14" viewBox="0 0 14 14">
                                   <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
                                 </svg>
                                 <span className="text-[10px] text-zinc-500">Root (open)</span>

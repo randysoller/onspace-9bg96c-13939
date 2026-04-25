@@ -135,11 +135,10 @@ const CARD_DEFS = [
   {
     id: 'notes',
     title: 'Note Names',
-    subtitle: 'Note name on each dot  ·  Cyan = root  ·  Amber = scale tone',
   },
   {
     id: 'intervals',
-    title: 'Interval Patterns',
+    title: 'Scale Formula Patterns',
     subtitle: 'Scale degrees relative to root  ·  1 = root',
   },
 ];
@@ -414,7 +413,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             {/* Line 1: root + scale name — 21px, cyan */}
-                            <p className="text-[21px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
+                            <p className="text-[27px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
                               {rootNote} {scale.name}
                             </p>
                             {/* Line 2: card title — 15px, white */}
@@ -422,17 +421,17 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                               {cardDef.title}
                             </p>
                             {'subtitle' in cardDef && cardDef.subtitle && (
-                              <p className="text-[10px] text-zinc-500 font-medium leading-snug mt-1">
+                              <p className="text-[12px] text-zinc-300 font-medium leading-snug mt-1">
                                 {cardDef.subtitle}
                               </p>
                             )}
                           </div>
                           <button
                             onClick={onClose}
-                            className="flex-shrink-0 text-zinc-400 hover:text-white transition-colors mt-0.5"
+                            className="flex-shrink-0 rounded-full bg-zinc-800/60 hover:bg-zinc-700/70 p-1 text-white hover:text-cyan-400 transition-colors"
                             aria-label="Close modal"
                           >
-                            <X className="w-5 h-5" />
+                            <X className="w-10 h-10" />
                           </button>
                         </div>
 

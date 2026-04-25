@@ -373,7 +373,7 @@ export default function MetronomeModal() {
                   swingEnabled
                     ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600/30 active:bg-emerald-600/40'
                     : 'bg-red-600/35 border-red-500/65 text-red-300 hover:bg-red-600/45 active:bg-red-600/55'
-                } ${subdivision !== 'eighth' ? 'opacity-50' : ''}`}
+                }`}
               >
                 {/* Swing icon: ♪♪ = ♩♪ with triplet bracket — standard swing/shuffle notation */}
                 <span className="inline-flex items-center gap-1 text-lg leading-none mt-1.5">

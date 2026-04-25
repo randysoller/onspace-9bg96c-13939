@@ -3,21 +3,19 @@
  *
  * Visual design mirrors ChordDetailModal:
  *   • bg-zinc-950 card, border-[3px] border-cyan-500/40
- *   • Title bar INSIDE each card: root·scale name (21px) + card title (15px) + X
- *   • 3-card horizontal carousel with CSS scroll-snap-type: x mandatory
- *     → browser guarantees snap-to-center on every swipe; zero Framer Motion
- *       driver conflict; works with both touch swipe and pointer drag
- *   • 32px peek on each side; progress dots at card bottom; arrow nav
- *   • Each card scrolls vertically to fit all 5 pattern diagrams
- *   • Finger legend rendered in scrollable content above Pattern I (Finger card only)
- *   • Fretboard rendering: HorizontalScaleFretboard (dark bg, SVGChordDiagram dot style)
+ *   • Title bar INSIDE each card: root·scale name (27px) + card title (15px) + X
+ *   • 4-card horizontal carousel with CSS scroll-snap-type: x mandatory
+ *     Card order: Finger Patterns → Full Neck Map → Note Names → Scale Formula Patterns
+ *   • 32px peek on each side; progress dots in title bar; circle arrow nav
+ *   • Finger Patterns card: 5 HorizontalScaleFretboard diagrams (scrollable)
+ *   • Full Neck Map card: single VerticalNeckFretboard (all 5 patterns merged, frets 1–12)
+ *   • Note Names / Scale Formula cards: 5 HorizontalScaleFretboard diagrams
  *
  * Carousel snap architecture:
  *   • Single horizontally-scrollable container (overflow-x: scroll, scroll-snap-type: x mandatory)
  *   • Each card has scroll-snap-align: center
  *   • Arrow buttons + dot buttons call scrollTo({ behavior: 'smooth' })
  *   • onScroll handler tracks activeCard for dot indicators and disabled states
- *   • Eliminates the Framer Motion animate/drag conflict that caused the "hang"
  *
  * Data source:
  *   • Major, Natural Minor, Major Pentatonic, Minor Pentatonic → hard-coded 5-position CAGED patterns
@@ -29,6 +27,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
+import VerticalNeckFretboard, { type NeckDot } from './VerticalNeckFretboard';
 import {
   getMajorScalePatterns,
   getMinorScalePatterns,
@@ -133,6 +132,11 @@ const CARD_DEFS = [
     title: 'Finger Patterns',
   },
   {
+    id: 'neck',
+    title: 'Full Neck Map',
+    subtitle: 'All 5 CAGED positions overlaid · frets 1–12',
+  },
+  {
     id: 'notes',
     title: 'Note Names',
   },
@@ -205,6 +209,44 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
   }));
 }
 
+// ── Full-neck dot builder ──────────────────────────────────────────────────────
+//
+// Merges all 5 resolved patterns onto a single 12-fret neck:
+//   • fret = 0  → open string, skipped (not shown in this view)
+//   • fret > 12 → wrap by −12 (Pattern V frets 13–15 fold to frets 1–3, shown
+//                 at 65% opacity to signal the octave wrapping)
+//   • duplicate (string, fret) → root status wins over scale-note status
+
+function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
+  const dotMap = new Map<string, NeckDot>();
+
+  for (const pattern of patterns) {
+    for (const dot of pattern.dots) {
+      if (dot.isOpenString) continue; // open strings excluded from neck view
+
+      let fret = dot.fret;
+      let isWrapped = false;
+
+      if (fret > 12) {
+        fret = fret - 12;
+        isWrapped = true;
+      }
+      if (fret < 1 || fret > 12) continue;
+
+      const key = `${dot.string}-${fret}`;
+      const existing = dotMap.get(key);
+      if (!existing) {
+        dotMap.set(key, { string: dot.string, fret, isRoot: dot.isRoot, isWrapped });
+      } else if (dot.isRoot && !existing.isRoot) {
+        // Root takes visual priority over scale-note colour
+        dotMap.set(key, { ...existing, isRoot: true });
+      }
+    }
+  }
+
+  return Array.from(dotMap.values());
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 interface ScaleDetailModalProps {
@@ -265,11 +307,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     const clamped = Math.max(0, Math.min(CARD_DEFS.length - 1, idx));
     setActiveCard(clamped);
     scrollingRef.current = true;
-    // Each card occupies (cardWidth + gap). With scroll-snap-align:center and
-    // padding-inline:PEEK, card i centers at scrollLeft = i * (cardWidth + gap)
-    // where gap matches the CSS gap value (10px).
     scrollRef.current.scrollTo({ left: clamped * (cardWidth + 10), behavior: 'smooth' });
-    // Release the guard after the smooth scroll settles (~400ms)
     setTimeout(() => { scrollingRef.current = false; }, 450);
   }, [cardWidth]);
 
@@ -277,7 +315,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const goPrev = useCallback(() => scrollToCard(activeCard - 1), [activeCard, scrollToCard]);
 
   // Derive activeCard from scroll position so progress dots stay in sync
-  // after a native touch swipe (the user didn't use the buttons)
   const handleScroll = useCallback(() => {
     if (scrollingRef.current || !scrollRef.current || cardWidth === 0) return;
     const idx = Math.round(scrollRef.current.scrollLeft / (cardWidth + 10));
@@ -287,6 +324,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
 
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
+  const neckDots = computeNeckDots(patterns);
 
   if (!isOpen) return null;
 
@@ -315,10 +353,10 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
           className="flex flex-col w-full h-full lg:w-[40vw] lg:max-w-3xl lg:h-[91vh] lg:rounded-2xl lg:overflow-hidden lg:shadow-2xl lg:shadow-black/60"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
         >
-          {/* ── Carousel wrapper (position:relative for circle arrow overlays) ── */}
+          {/* ── Carousel wrapper ── */}
           <div ref={wrapRef} className="flex-1 relative min-h-0 overflow-hidden">
 
-            {/* ── Circle arrow overlays — vertically centred, z-above the track ── */}
+            {/* ── Circle arrow overlays ── */}
             {cardWidth > 0 && (
               <>
                 <button
@@ -361,15 +399,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
             )}
 
             {cardWidth > 0 ? (
-              /*
-               * ── CSS scroll-snap carousel track ────────────────────────────
-               * scroll-snap-type: x mandatory  → browser enforces snap after EVERY
-               *   swipe/drag release; no partial positions possible
-               * scroll-snap-align: center on each card → cards snap to horizontal center
-               * padding-inline: PEEK  → adjacent cards peek by PEEK px each side
-               * gap: 10px  → gap between cards (matches scrollToCard calculation)
-               * scrollbar-width: none  → hidden scrollbar
-               */
               <div
                 ref={scrollRef}
                 onScroll={handleScroll}
@@ -378,18 +407,15 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                   overflowX: 'scroll',
                   overflowY: 'hidden',
                   scrollSnapType: 'x mandatory',
-                  scrollBehavior: 'auto',  // smooth is handled by scrollTo({behavior:'smooth'})
+                  scrollBehavior: 'auto',
                   WebkitOverflowScrolling: 'touch',
                   paddingInline: PEEK,
                   gap: 10,
-                  // Hide scrollbar cross-browser
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
                 }}
               >
-                <style>{`
-                  .sdm-track::-webkit-scrollbar { display: none; }
-                `}</style>
+                <style>{`.sdm-track::-webkit-scrollbar { display: none; }`}</style>
 
                 {CARD_DEFS.map((cardDef, cardIdx) => {
                   const isActive = cardIdx === activeCard;
@@ -409,14 +435,11 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                     >
                       {/* ── Card title bar ─────────────────────────────────── */}
                       <div className="flex-shrink-0 bg-zinc-900 border-b border-cyan-500/30 px-3 pt-3 pb-2.5">
-                        {/* Top row: title text + X */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            {/* Line 1: root + scale name — 21px, cyan */}
                             <p className="text-[27px] font-bold text-cyan-400 leading-tight tracking-tight truncate">
                               {rootNote} {scale.name}
                             </p>
-                            {/* Line 2: card title — 15px, white */}
                             <p className="text-[15px] font-bold text-white leading-tight mt-0.5">
                               {cardDef.title}
                             </p>
@@ -435,10 +458,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           </button>
                         </div>
 
-                        {/* ── Progress dots — Option B: button + appearance:none + max constraints ── */}
-                        {/* appearance:none kills all UA/platform control styling on iOS/Android.      */}
-                        {/* maxWidth + maxHeight prevent UA min-block-size from inflating the box.    */}
-                        {/* All styles are inline — zero Tailwind class interference.                 */}
+                        {/* Progress dots */}
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
                           {CARD_DEFS.map((_, dotIdx) => {
                             const isActiveDot = dotIdx === activeCard;
@@ -450,34 +470,19 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                 onKeyDown={(e) => e.key === 'Enter' && scrollToCard(dotIdx)}
                                 aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
                                 style={{
-                                  /* Kill all UA/platform button styling */
                                   appearance: 'none' as React.CSSProperties['appearance'],
                                   WebkitAppearance: 'none' as React.CSSProperties['WebkitAppearance'],
-                                  /* Exact dimensions — also clamp with max to defeat UA min-block-size */
-                                  width: sz,
-                                  height: sz,
-                                  minWidth: sz,
-                                  minHeight: sz,
-                                  maxWidth: sz,
-                                  maxHeight: sz,
-                                  /* Reset all box-model UA defaults */
-                                  padding: 0,
-                                  margin: 0,
-                                  border: 'none',
-                                  outline: 'none',
-                                  /* Visual */
+                                  width: sz, height: sz,
+                                  minWidth: sz, minHeight: sz,
+                                  maxWidth: sz, maxHeight: sz,
+                                  padding: 0, margin: 0,
+                                  border: 'none', outline: 'none',
                                   borderRadius: '50%',
                                   backgroundColor: isActiveDot ? '#06b6d4' : '#52525b',
-                                  /* Layout */
-                                  display: 'block',
-                                  flexShrink: 0,
-                                  overflow: 'hidden',
-                                  cursor: 'pointer',
-                                  /* Smooth color transition only — NOT width/height to avoid mid-transition bloat */
+                                  display: 'block', flexShrink: 0,
+                                  overflow: 'hidden', cursor: 'pointer',
                                   transition: 'background-color 0.2s',
-                                  /* Prevent any line-height inheritance from inflating computed height */
-                                  lineHeight: 0,
-                                  fontSize: 0,
+                                  lineHeight: 0, fontSize: 0,
                                 }}
                               />
                             );
@@ -485,9 +490,34 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
-                      {/* ── Scrollable pattern content ────────────────────── */}
+                      {/* ── Scrollable card content ───────────────────────── */}
                       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                         <div className="px-3 pt-3 pb-2 space-y-3">
+
+                          {/* ── Full Neck Map card ─────────────────────────── */}
+                          {cardDef.id === 'neck' && (
+                            <>
+                              {/* Legend */}
+                              <div className="flex items-center gap-4 pb-2 border-b border-zinc-800/50 flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-cyan-400" />
+                                  <span className="text-[10px] text-zinc-400">Root note</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                  <span className="text-[10px] text-zinc-400">Scale note</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-amber-500" style={{ opacity: 0.65 }} />
+                                  <span className="text-[10px] text-zinc-400">Wrapped (oct↑)</span>
+                                </div>
+                              </div>
+                              {/* Vertical neck SVG */}
+                              <div className="px-1 pt-1">
+                                <VerticalNeckFretboard dots={neckDots} />
+                              </div>
+                            </>
+                          )}
 
                           {/* Finger legend — only on Finger card, above Pattern I */}
                           {cardDef.id === 'finger' && (
@@ -505,7 +535,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   <span className="text-[11px] text-zinc-400 font-medium">{name}</span>
                                 </div>
                               ))}
-                              {/* Cyan diamond = Root — inline after Pinky */}
                               <div className="flex items-center gap-1.5">
                                 <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
                                   <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
@@ -515,29 +544,30 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             </div>
                           )}
 
-                          {/* ── Symbol legend — moved here (below finger legend on Finger card, */}
-                          {/* top of content on Notes/Intervals cards); removed from bottom    */}
-                          <div className="pb-1 border-b border-zinc-800/50">
-                            <div className="flex items-center gap-4 px-0.5 flex-wrap">
-                              <div className="flex items-center gap-1.5">
-                                <svg width="14" height="14" viewBox="0 0 14 14">
-                                  <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
-                                </svg>
-                                <span className="text-[10px] text-zinc-500">Root (open)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-full bg-amber-500" />
-                                <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-                                <span className="text-[10px] text-zinc-500">Scale (open)</span>
+                          {/* Symbol legend — on Finger / Notes / Intervals cards */}
+                          {cardDef.id !== 'neck' && (
+                            <div className="pb-1 border-b border-zinc-800/50">
+                              <div className="flex items-center gap-4 px-0.5 flex-wrap">
+                                <div className="flex items-center gap-1.5">
+                                  <svg width="14" height="14" viewBox="0 0 14 14">
+                                    <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
+                                  </svg>
+                                  <span className="text-[10px] text-zinc-500">Root (open)</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full bg-amber-500" />
+                                  <span className="text-[10px] text-zinc-500">Scale (fretted)</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                                  <span className="text-[10px] text-zinc-500">Scale (open)</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          )}
 
-                          {/* 5 pattern diagrams */}
-                          {patterns.map((pos, posIdx) => {
+                          {/* 5 pattern diagrams — Finger, Notes, Intervals cards only */}
+                          {cardDef.id !== 'neck' && patterns.map((pos, posIdx) => {
                             const fretDots: FretDot[] = pos.dots.map((dot) => {
                               let label: string;
                               if (cardDef.id === 'finger') {
@@ -571,7 +601,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
-                      {/* ── Card footer: prev / progress dots / next ──────── */}
+                      {/* ── Card footer ───────────────────────────────────── */}
                       <div className="flex-shrink-0 border-t border-zinc-800/50 px-3 py-2.5 flex items-center justify-between gap-2 bg-zinc-950">
                         <button
                           onClick={goPrev}
@@ -585,7 +615,6 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           </span>
                         </button>
 
-                        {/* Spacer — dots removed from footer, now live in title bar */}
                         <div className="flex-1" />
 
                         <button

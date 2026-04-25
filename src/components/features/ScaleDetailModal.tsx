@@ -428,10 +428,10 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           </div>
                           <button
                             onClick={onClose}
-                            className="flex-shrink-0 rounded-full bg-zinc-800/60 hover:bg-zinc-700/70 p-1 text-white hover:text-cyan-400 transition-colors"
+                            className="flex-shrink-0 rounded-full bg-zinc-800/60 hover:bg-zinc-700/70 p-1 text-zinc-300 hover:text-cyan-400 transition-colors"
                             aria-label="Close modal"
                           >
-                            <X className="w-10 h-10" />
+                            <X className="w-[30px] h-[30px]" />
                           </button>
                         </div>
 

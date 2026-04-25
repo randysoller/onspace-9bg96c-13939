@@ -1,5 +1,5 @@
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { X, Play, Square, Volume2 } from 'lucide-react';
 import { useMetronomeStore } from '@/stores/metronomeStore';
 import { useMetronomeUIStore } from '@/stores/metronomeUIStore';
@@ -39,6 +39,9 @@ export default function MetronomeModal() {
 
   // Tap Tempo: track timestamps of recent taps
   const tapTimestampsRef = useRef<number[]>([]);
+  // Tap Tempo pulse animation state
+  const [isTapping, setIsTapping] = useState(false);
+  const tapAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Long-press refs for − / + BPM buttons
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,6 +62,10 @@ export default function MetronomeModal() {
       const computedBpm = Math.round(60000 / avgInterval);
       setBpm(Math.max(20, Math.min(300, computedBpm)));
     }
+    // Trigger scale-pulse animation — reset timer on rapid taps
+    if (tapAnimTimerRef.current) clearTimeout(tapAnimTimerRef.current);
+    setIsTapping(true);
+    tapAnimTimerRef.current = setTimeout(() => setIsTapping(false), 120);
   };
 
   const handleTempoChange = (newTempo: number) => {
@@ -351,7 +358,7 @@ export default function MetronomeModal() {
             <div className="mb-6 relative h-[80px]">
               <button
                 onClick={handleTapTempo}
-                className="absolute left-1/2 -translate-x-1/2 h-[80px] px-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[17px] tracking-wide whitespace-nowrap transition-all select-none"
+                className={`absolute left-1/2 -translate-x-1/2 h-[80px] px-4 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 active:bg-amber-500/40 border border-amber-500/40 text-amber-400 font-semibold text-[17px] tracking-wide whitespace-nowrap transition-all select-none${isTapping ? ' animate-tap-pulse' : ''}`}
               >
                 Tap Tempo
               </button>
@@ -394,7 +401,7 @@ export default function MetronomeModal() {
                   </span>
                 </span>
                 <span className={`text-sm font-bold ${swingEnabled ? 'text-emerald-400' : 'text-red-300'}`}>Swing</span>
-                <span className={`text-[10px] ${swingEnabled ? 'text-emerald-400' : 'text-red-300'}`}>
+                <span className={`text-sm mb-3 ${swingEnabled ? 'text-emerald-400' : 'text-red-300'}`}>
                   {swingEnabled ? 'ON' : 'OFF'}
                 </span>
               </button>

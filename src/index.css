@@ -211,6 +211,19 @@ body {
   }
 }
 
+/* Tap Tempo button pulse animation — scale 1.0 → 1.06 → 1.0 over 120ms.
+   translateX(-50%) is included in every keyframe to preserve the button's
+   absolute-centering transform (left-1/2 -translate-x-1/2) which Tailwind v3
+   sets via CSS custom properties that a raw `transform: scale()` would override. */
+@keyframes tapPulse {
+  0%   { transform: translateX(-50%) scale(1.0); }
+  50%  { transform: translateX(-50%) scale(1.06); }
+  100% { transform: translateX(-50%) scale(1.0); }
+}
+.animate-tap-pulse {
+  animation: tapPulse 120ms ease-in-out;
+}
+
 /* Metronome Quick Presets — scroll-down indicator arrow styling.
    !important is required: Lucide sets stroke-width as an SVG attribute which
    outranks CSS presentation rules without !important. Width/height !important

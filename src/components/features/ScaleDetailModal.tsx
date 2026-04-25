@@ -222,10 +222,21 @@ function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
 
   for (const pattern of patterns) {
     for (const dot of pattern.dots) {
-      if (dot.isOpenString) continue; // open strings excluded from neck view
-
       let fret = dot.fret;
       let isWrapped = false;
+      const isOpenString = dot.isOpenString;
+
+      if (isOpenString) {
+        // Open strings rendered above nut — use string as key to deduplicate
+        const key = `open-${dot.string}`;
+        const existing = dotMap.get(key);
+        if (!existing) {
+          dotMap.set(key, { string: dot.string, fret: 0, isRoot: dot.isRoot, isOpenString: true });
+        } else if (dot.isRoot && !existing.isRoot) {
+          dotMap.set(key, { ...existing, isRoot: true });
+        }
+        continue;
+      }
 
       if (fret > 13) {
         fret = fret - 12;
@@ -498,20 +509,30 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           {cardDef.id === 'neck' && (
                             <>
                               {/* Legend */}
-                              <div className="flex items-center gap-4 pb-2 border-b border-zinc-800/50 flex-wrap">
+                              <div className="flex items-center gap-3 pb-2 border-b border-zinc-800/50 flex-wrap">
                                 <div className="flex items-center gap-1.5">
                                   <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
                                     <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
                                   </svg>
-                                  <span className="text-[10px] text-zinc-400">Root note</span>
+                                  <span className="text-[10px] text-zinc-400">Root (fretted)</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+                                    <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="none" stroke="#06b6d4" strokeWidth="2" />
+                                  </svg>
+                                  <span className="text-[10px] text-zinc-400">Root (open)</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-3 h-3 rounded-full bg-amber-500" />
-                                  <span className="text-[10px] text-zinc-400">Scale note</span>
+                                  <span className="text-[10px] text-zinc-400">Scale (fretted)</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                                  <span className="text-[10px] text-zinc-400">Scale (open)</span>
                                 </div>
                               </div>
-                              {/* Vertical neck SVG */}
-                              <div className="px-1 pt-1">
+                              {/* Vertical neck SVG — constrained to 75% width, centred */}
+                              <div style={{ maxWidth: '75%', margin: '0 auto' }}>
                                 <VerticalNeckFretboard dots={neckDots} />
                               </div>
                             </>

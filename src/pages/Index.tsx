@@ -500,7 +500,7 @@ export default function Index() {
         {/* ── PLAY NOW: Expandable Practice-Mode Card ── */}
         <div className="mt-8">
           <motion.button
-            onClick={() => setIsPlayNowOpen(prev => !prev)}
+            onClick={() => setIsPlayNowOpen(!isPlayNowOpen)}
             whileHover={{ scale: 1.015 }}
             transition={{ duration: 0.2 }}
             className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 border-t-amber-500 rounded-xl p-5 hover:bg-amber-500/[0.07] hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-colors group cursor-pointer"

@@ -244,7 +244,7 @@ export default function MetronomeModal() {
                       if (sig) setTimeSignature(sig.beats, sig.noteValue);
                     }}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -255,7 +255,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={`${sig.beats}/${sig.noteValue}`}
                           value={`${sig.beats}/${sig.noteValue}`}
-                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {sig.display}
                         </SelectItem>
@@ -271,7 +271,7 @@ export default function MetronomeModal() {
                     value={soundType}
                     onValueChange={(val) => setSoundType(val as typeof soundType)}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -282,7 +282,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={s.value}
                           value={s.value}
-                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {s.label}
                         </SelectItem>
@@ -301,7 +301,7 @@ export default function MetronomeModal() {
                     value={subdivision}
                     onValueChange={(val) => setSubdivision(val as typeof subdivision)}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-sm">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -312,7 +312,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={s.value}
                           value={s.value}
-                          className="text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {s.label}
                         </SelectItem>

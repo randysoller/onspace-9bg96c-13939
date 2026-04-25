@@ -8,7 +8,7 @@
  *     Card order: Finger Patterns → Full Neck Map → Note Names → Scale Formula Patterns
  *   • 32px peek on each side; progress dots in title bar; circle arrow nav
  *   • Finger Patterns card: 5 HorizontalScaleFretboard diagrams (scrollable)
- *   • Full Neck Map card: single VerticalNeckFretboard (all 5 patterns merged, frets 1–12)
+ *   • Full Neck Map card: single VerticalNeckFretboard (all 5 patterns merged, frets 1–13)
  *   • Note Names / Scale Formula cards: 5 HorizontalScaleFretboard diagrams
  *
  * Carousel snap architecture:
@@ -134,7 +134,7 @@ const CARD_DEFS = [
   {
     id: 'neck',
     title: 'Full Neck Map',
-    subtitle: 'All 5 CAGED positions overlaid · frets 1–12',
+    subtitle: 'All 5 CAGED positions overlaid · frets 1–13',
   },
   {
     id: 'notes',
@@ -211,9 +211,9 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
 
 // ── Full-neck dot builder ──────────────────────────────────────────────────────
 //
-// Merges all 5 resolved patterns onto a single 12-fret neck:
+// Merges all 5 resolved patterns onto a single 13-fret neck:
 //   • fret = 0  → open string, skipped (not shown in this view)
-//   • fret > 12 → wrap by −12 (Pattern V frets 13–15 fold to frets 1–3, shown
+//   • fret > 13 → wrap by −12 (Pattern V frets 14–15 fold to frets 2–3, shown
 //                 at 65% opacity to signal the octave wrapping)
 //   • duplicate (string, fret) → root status wins over scale-note status
 
@@ -227,11 +227,11 @@ function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
       let fret = dot.fret;
       let isWrapped = false;
 
-      if (fret > 12) {
+      if (fret > 13) {
         fret = fret - 12;
         isWrapped = true;
       }
-      if (fret < 1 || fret > 12) continue;
+      if (fret < 1 || fret > 13) continue;
 
       const key = `${dot.string}-${fret}`;
       const existing = dotMap.get(key);

@@ -1,13 +1,15 @@
 /**
  * VerticalNeckFretboard
  *
- * Renders a full 12-fret guitar neck oriented vertically:
+ * Renders a full 13-fret guitar neck oriented vertically:
  *   • Nut at the top
- *   • Frets run downward (fret 1 just below nut, fret 12 at bottom)
+ *   • Frets run downward (fret 1 just below nut, fret 13 at bottom)
  *   • Strings run left-to-right: low E (thickest) on left → high e on right
- *   • Cyan filled dot  = root note
- *   • Amber filled dot = other scale note
- *   • Wrapped dots (Pattern V frets that exceeded 12 and were folded back)
+ *
+ * Dot visual language mirrors HorizontalScaleFretboard exactly:
+ *   • Filled cyan diamond  = root note   (no label)
+ *   • Filled amber circle  = scale note  (no label)
+ *   • Wrapped dots (Pattern V frets that exceeded 13 and were folded back)
  *     are rendered at 65% opacity to signal the octave wrapping
  *
  * String index convention (matches HorizontalScaleFretboard & ScaleDetailModal):
@@ -17,10 +19,10 @@
 export interface NeckDot {
   /** 0 = high e (right), 5 = low E (left) */
   string: number;
-  /** 1–12  (already wrapped; 0 = open string, excluded from this view) */
+  /** 1–13 (already wrapped; 0 = open string, excluded from this view) */
   fret: number;
   isRoot: boolean;
-  /** true when this dot originated from a fret > 12 that was folded back by -12 */
+  /** true when this dot originated from a fret > 13 that was folded back by -12 */
   isWrapped?: boolean;
 }
 
@@ -36,14 +38,25 @@ const B  = 18;   // bottom padding
 const FH = 40;   // fret height   — px per fret cell
 const SW = 44;   // string spacing — px between adjacent string lines
 
-const N_FRETS   = 12;
+const N_FRETS   = 13;
 const N_STRINGS = 6;
 
 const NECK_W = (N_STRINGS - 1) * SW;  // 5 × 44 = 220
-const NECK_H = N_FRETS * FH;           // 12 × 40 = 480
+const NECK_H = N_FRETS * FH;           // 13 × 40 = 520
 
 const VB_W = L + NECK_W + R;           // 256
-const VB_H = T + NECK_H + B;           // 536
+const VB_H = T + NECK_H + B;           // 576
+
+// ── Visual constants — matching HorizontalScaleFretboard ratios ───────────────
+const CYAN  = '#06b6d4';          // root diamond fill
+const AMBER = 'hsl(38 92% 50%)'; // scale circle fill  (amber-500)
+const DOT_R = 9.5;               // scale circle radius (matches HorizontalScaleFretboard)
+const DIA_H = 13.1;              // diamond half-extent (DOT_R × 1.38, matches HSF)
+
+/** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
+function diamondPoints(cx: number, cy: number, h: number): string {
+  return `${cx},${cy - h} ${cx + h},${cy} ${cx},${cy + h} ${cx - h},${cy}`;
+}
 
 // ── String metadata (left → right order) ──────────────────────────────────────
 const STRING_META = [
@@ -67,14 +80,13 @@ function yDot(f: number): number {
   return T + (f - 0.5) * FH;
 }
 
-/** SVG y for a fret wire (0 = nut-edge, 1-12 = fret wires) */
+/** SVG y for a fret wire (0 = nut-edge, 1–13 = fret wires) */
 function yWire(f: number): number {
   return T + f * FH;
 }
 
 // Standard guitar neck inlays
 const SINGLE_INLAY_FRETS = [3, 5, 7, 9];
-const DOT_R = 8;   // scale-dot radius
 
 export default function VerticalNeckFretboard({ dots }: Props) {
   const midX = L + NECK_W / 2;
@@ -84,7 +96,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
       viewBox={`0 0 ${VB_W} ${VB_H}`}
       width="100%"
       preserveAspectRatio="xMidYMid meet"
-      aria-label="Full 12-fret neck map with all CAGED scale patterns overlaid"
+      aria-label="Full 13-fret neck map with all CAGED scale patterns overlaid"
       style={{ display: 'block' }}
     >
       {/* ── String-name labels (top) ────────────────────────────────────── */}
@@ -113,7 +125,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
         rx={1.5}
       />
 
-      {/* ── Fret wires 1–12 ─────────────────────────────────────────────── */}
+      {/* ── Fret wires 1–13 ─────────────────────────────────────────────── */}
       {Array.from({ length: N_FRETS }, (_, i) => i + 1).map((f) => (
         <line
           key={`fw-${f}`}
@@ -154,7 +166,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
       <circle cx={L + SW * 3.5} cy={yDot(12)} r={4.5} fill="#27272a" />
 
       {/* ── Fret-number labels (left margin) ─────────────────────────────── */}
-      {[1, 3, 5, 7, 9, 12].map((f) => (
+      {[1, 3, 5, 7, 9, 12, 13].map((f) => (
         <text
           key={`fl-${f}`}
           x={L - 5}
@@ -169,16 +181,31 @@ export default function VerticalNeckFretboard({ dots }: Props) {
       ))}
 
       {/* ── Scale dots ──────────────────────────────────────────────────── */}
-      {dots.map((dot, i) => (
-        <circle
-          key={i}
-          cx={xStr(dot.string)}
-          cy={yDot(dot.fret)}
-          r={DOT_R}
-          fill={dot.isRoot ? '#06b6d4' : '#f59e0b'}
-          opacity={dot.isWrapped ? 0.65 : 1}
-        />
-      ))}
+      {dots.map((dot, i) => {
+        const cx = xStr(dot.string);
+        const cy = yDot(dot.fret);
+        const op = dot.isWrapped ? 0.65 : 1;
+
+        return dot.isRoot ? (
+          // Filled cyan diamond — matches HorizontalScaleFretboard fretted root style
+          <polygon
+            key={i}
+            points={diamondPoints(cx, cy, DIA_H)}
+            fill={CYAN}
+            opacity={op}
+          />
+        ) : (
+          // Filled amber circle — matches HorizontalScaleFretboard fretted scale note style
+          <circle
+            key={i}
+            cx={cx}
+            cy={cy}
+            r={DOT_R}
+            fill={AMBER}
+            opacity={op}
+          />
+        );
+      })}
     </svg>
   );
 }

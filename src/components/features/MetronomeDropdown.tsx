@@ -91,7 +91,7 @@ export const MetronomeDropdown = () => {
   return (
     <div className="relative">
       <Select onValueChange={handlePresetChange}>
-        <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-white text-base">
+        <SelectTrigger className="w-full bg-zinc-900 border-zinc-800 text-white text-lg">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-amber-500" />
             <SelectValue placeholder="Quick Presets" />
@@ -108,16 +108,16 @@ export const MetronomeDropdown = () => {
               <div className="flex items-center justify-between gap-6">
                 <div>
                   {/* Larger, brighter name */}
-                  <div className="font-semibold text-lg text-zinc-100 flex items-center gap-2">
+                  <div className="font-semibold text-xl text-zinc-100 flex items-center gap-2">
                     {preset.name}
-                    <span className="text-amber-400 text-base font-bold">
+                    <span className="text-amber-400 text-lg font-bold">
                       {preset.tempo} BPM
                     </span>
                   </div>
                   {/* Brighter description */}
-                  <div className="text-base text-zinc-400 mt-0.5">{preset.description}</div>
+                  <div className="text-lg text-zinc-400 mt-0.5">{preset.description}</div>
                 </div>
-                <div className="text-base text-zinc-500 font-mono flex-shrink-0">
+                <div className="text-lg text-zinc-500 font-mono flex-shrink-0">
                   {preset.timeSignature.beats}/{preset.timeSignature.noteValue}
                 </div>
               </div>

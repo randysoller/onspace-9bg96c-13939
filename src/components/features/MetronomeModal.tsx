@@ -236,7 +236,7 @@ export default function MetronomeModal() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Time Signature */}
                 <div>
-                  <span className="text-[15px] text-amber-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
+                  <span className="text-base text-amber-500 uppercase tracking-wider block mb-1.5">Time Signature</span>
                   <Select
                     value={currentTimeSigValue}
                     onValueChange={(val) => {
@@ -244,7 +244,7 @@ export default function MetronomeModal() {
                       if (sig) setTimeSignature(sig.beats, sig.noteValue);
                     }}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -255,7 +255,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={`${sig.beats}/${sig.noteValue}`}
                           value={`${sig.beats}/${sig.noteValue}`}
-                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-lg text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {sig.display}
                         </SelectItem>
@@ -266,12 +266,12 @@ export default function MetronomeModal() {
 
                 {/* Sound */}
                 <div>
-                  <span className="text-[15px] text-amber-500 uppercase tracking-wider block mb-1.5">Sound</span>
+                  <span className="text-base text-amber-500 uppercase tracking-wider block mb-1.5">Sound</span>
                   <Select
                     value={soundType}
                     onValueChange={(val) => setSoundType(val as typeof soundType)}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -282,7 +282,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={s.value}
                           value={s.value}
-                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-lg text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {s.label}
                         </SelectItem>
@@ -296,12 +296,12 @@ export default function MetronomeModal() {
               <div className="grid grid-cols-2 gap-4">
                 {/* Subdivision */}
                 <div>
-                  <span className="text-[15px] text-amber-500 uppercase tracking-wider block mb-1.5">Beat Division</span>
+                  <span className="text-base text-amber-500 uppercase tracking-wider block mb-1.5">Beat Division</span>
                   <Select
                     value={subdivision}
                     onValueChange={(val) => setSubdivision(val as typeof subdivision)}
                   >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-base">
+                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-700 text-white h-10 text-lg">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent
@@ -312,7 +312,7 @@ export default function MetronomeModal() {
                         <SelectItem
                           key={s.value}
                           value={s.value}
-                          className="text-base text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
+                          className="text-lg text-zinc-200 focus:bg-zinc-800 focus:text-white py-3"
                         >
                           {s.label}
                         </SelectItem>
@@ -326,7 +326,7 @@ export default function MetronomeModal() {
 
                 {/* Accent — 50% width, centred under the Sound dropdown */}
                 <div>
-                  <span className="text-[15px] text-amber-500 uppercase tracking-wider block mb-1.5">
+                  <span className="text-base text-amber-500 uppercase tracking-wider block mb-1.5">
                     {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                   </span>
                   <button

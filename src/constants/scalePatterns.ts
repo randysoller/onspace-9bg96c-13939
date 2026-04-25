@@ -49,11 +49,11 @@ function patternLabel(idx: number, baseFret: number): string {
 // Fret positions of G (root): str5=3, str4=10, str3=5, str2=0/12, str1=8, str0=3
 
 export const MAJOR_PATTERNS: readonly BoxPattern[] = [
-  // Pattern I  (G-shape, window frets 2–6 for G major)
+  // Pattern I  (E-shape, window frets 2–6 for G major, root on low E fret 3 & high e fret 3)
   {
     baseFretForG: 2,
     dots: [
-      // high e (str 0): fret2=f1, fret3=root♦, fret5=f4 — relFrets 0,1,3
+      // high e (str 0): fret2=f1, fret3=root♦f2, fret5=f4 — relFrets 0,1,3
       { string: 0, relFret: 0, finger: 1, isRoot: false },
       { string: 0, relFret: 1, finger: 2, isRoot: true  },
       { string: 0, relFret: 3, finger: 4, isRoot: false },
@@ -64,17 +64,17 @@ export const MAJOR_PATTERNS: readonly BoxPattern[] = [
       { string: 2, relFret: 0, finger: 1, isRoot: false },
       { string: 2, relFret: 2, finger: 3, isRoot: false },
       { string: 2, relFret: 3, finger: 4, isRoot: false },
-      // D (str 3): fret2=f1, fret4=f3, fret5=root♦ — relFrets 0,2,3
+      // D (str 3): fret2=f1, fret4=f3, fret5=f4 — relFrets 0,2,3
       { string: 3, relFret: 0, finger: 1, isRoot: false },
       { string: 3, relFret: 2, finger: 3, isRoot: false },
-      { string: 3, relFret: 3, finger: 4, isRoot: true  },
+      { string: 3, relFret: 3, finger: 4, isRoot: false },
       // A (str 4): fret2=f1, fret3=f2, fret5=f4 — relFrets 0,1,3
       { string: 4, relFret: 0, finger: 1, isRoot: false },
       { string: 4, relFret: 1, finger: 2, isRoot: false },
       { string: 4, relFret: 3, finger: 4, isRoot: false },
-      // low E (str 5): fret3=root♦, fret5=f4 — relFrets 1,3
-      { string: 5, relFret: 1, finger: 2, isRoot: true  },
-      { string: 5, relFret: 3, finger: 4, isRoot: false },
+      // low E (str 5): fret3=root♦f1, fret5=f3 — relFrets 1,3
+      { string: 5, relFret: 1, finger: 1, isRoot: true  },
+      { string: 5, relFret: 3, finger: 3, isRoot: false },
     ],
   },
 

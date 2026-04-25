@@ -13,8 +13,7 @@
  *   • Muted brown inlay dots     hsl(30 15% 50%) @ 45% opacity
  *   • Filled cyan diamond        = root note   (no label)
  *   • Filled amber circle        = scale note  (no label)
- *   • Wrapped dots (frets that exceeded 13 and folded back by -12)
- *     are rendered at 65% opacity to signal the octave wrapping
+ *   • All dots rendered at full opacity — no faded/wrapped distinction
  *
  * String index convention (matches HorizontalScaleFretboard & ScaleDetailModal):
  *   0 = high e (rightmost)   5 = low E (leftmost)
@@ -39,7 +38,7 @@ const L  = 28;   // left padding  — room for fret-number labels
 const R  = 8;    // right padding
 const T  = 38;   // top padding   — room for string-name labels + nut
 const B  = 18;   // bottom padding
-const FH = 40;   // fret height   — px per fret cell
+const FH = 32;   // fret height   — px per fret cell (shorter = wider cells, matches reference)
 const SW = 44;   // string spacing — px between adjacent string lines
 
 const N_FRETS   = 13;
@@ -60,8 +59,8 @@ const NUT_CLR   = 'hsl(36 33% 93%)'; // matches HorizontalScaleFretboard NUT_CLR
 const INLAY_CLR = 'hsl(30 15% 50%)'; // matches HorizontalScaleFretboard INLAY_CLR
 const LABEL_CLR = 'hsl(33 14% 72%)'; // fret numbers and string names
 
-const DOT_R = 9.5;   // scale circle radius (matches HorizontalScaleFretboard)
-const DIA_H = 13.1;  // diamond half-extent (DOT_R × 1.38, matches HSF)
+const DOT_R = 10;    // scale circle radius
+const DIA_H = 13.8;  // diamond half-extent (DOT_R × 1.38)
 
 /** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
 function diamondPoints(cx: number, cy: number, h: number): string {
@@ -194,11 +193,10 @@ export default function VerticalNeckFretboard({ dots }: Props) {
         </text>
       ))}
 
-      {/* ── Scale dots ──────────────────────────────────────────────────── */}
+      {/* ── Scale dots — all at full opacity ─────────────────────────── */}
       {dots.map((dot, i) => {
         const cx = xStr(dot.string);
         const cy = yDot(dot.fret);
-        const op = dot.isWrapped ? 0.65 : 1;
 
         return dot.isRoot ? (
           // Filled cyan diamond — matches HorizontalScaleFretboard fretted root
@@ -206,7 +204,6 @@ export default function VerticalNeckFretboard({ dots }: Props) {
             key={i}
             points={diamondPoints(cx, cy, DIA_H)}
             fill={CYAN}
-            opacity={op}
           />
         ) : (
           // Filled amber circle — matches HorizontalScaleFretboard fretted scale note
@@ -216,7 +213,6 @@ export default function VerticalNeckFretboard({ dots }: Props) {
             cy={cy}
             r={DOT_R}
             fill={AMBER}
-            opacity={op}
           />
         );
       })}

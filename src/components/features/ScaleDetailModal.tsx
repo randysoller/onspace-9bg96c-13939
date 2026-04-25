@@ -500,16 +500,14 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                               {/* Legend */}
                               <div className="flex items-center gap-4 pb-2 border-b border-zinc-800/50 flex-wrap">
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-3 rounded-full bg-cyan-400" />
+                                  <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+                                    <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
+                                  </svg>
                                   <span className="text-[10px] text-zinc-400">Root note</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-3 h-3 rounded-full bg-amber-500" />
                                   <span className="text-[10px] text-zinc-400">Scale note</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-3 h-3 rounded-full bg-amber-500" style={{ opacity: 0.65 }} />
-                                  <span className="text-[10px] text-zinc-400">Wrapped (oct↑)</span>
                                 </div>
                               </div>
                               {/* Vertical neck SVG */}

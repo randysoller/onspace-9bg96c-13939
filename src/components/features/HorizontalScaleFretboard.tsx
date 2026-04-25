@@ -60,7 +60,7 @@ const FONT_SZ = 13;        // label inside circles (r*1.37)
 
 // Padding
 const TOP_PAD    = 20;    // above top string (room for open-position fret number label)
-const BOT_PAD    = 26;   // increased from 12 to fit per-fret number labels below bottom string
+const BOT_PAD    = 38;   // increased to fit per-fret number labels well below the bottommost dots
 const RIGHT_PAD  = 10;
 
 // Open-string zone (left of nut)
@@ -76,7 +76,7 @@ const FRET_SLOT_W = 42;
 
 // ── Derived geometry ──────────────────────────────────────────────────────────
 // STRING_ROW_H 18→23: increases total SVG height by ~21% (140→170)
-const SVG_H    = TOP_PAD + BOT_PAD + NUM_STRINGS * 23; // = 20+12+138 = 170
+const SVG_H    = TOP_PAD + BOT_PAD + NUM_STRINGS * 23; // = 20+38+138 = 196
 const GRID_H   = SVG_H - TOP_PAD - BOT_PAD;
 const STR_STEP = GRID_H / (NUM_STRINGS - 1);
 
@@ -173,9 +173,9 @@ export default function HorizontalScaleFretboard({
           <text
             key={`fnum-${i}`}
             x={fretCX(i)}
-            y={TOP_PAD + GRID_H + 17}
+            y={TOP_PAD + GRID_H + 31}
             textAnchor="middle"
-            fontSize={9}
+            fontSize={11}
             fontWeight={600}
             fill={FRET_NUM_CLR}
             fillOpacity={0.75}

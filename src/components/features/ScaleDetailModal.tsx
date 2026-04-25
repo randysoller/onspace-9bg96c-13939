@@ -313,7 +313,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="flex flex-col w-full h-full lg:w-[50vw] lg:max-w-3xl lg:h-[70vh] lg:rounded-2xl lg:overflow-hidden lg:shadow-2xl lg:shadow-black/60"
+          className="flex flex-col w-full h-full lg:w-[40vw] lg:max-w-3xl lg:h-[91vh] lg:rounded-2xl lg:overflow-hidden lg:shadow-2xl lg:shadow-black/60"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
         >
           {/* ── Carousel wrapper (position:relative for circle arrow overlays) ── */}
@@ -436,30 +436,49 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                           </button>
                         </div>
 
-                        {/* ── Progress dots — centered below title, above content ── */}
-                        {/* Button layout box is constrained to exact dot dimensions so gap-1.5  */}
-                        {/* separates dot edges (matching home page bare-span approach exactly). */}
-                        {/* Dots: bare span flex items — identical structure to home page vault dots */}
-                        {/* gap-1.5 separates dot edges directly with no button-box inflation   */}
-                        <div className="flex justify-center items-center gap-1.5 mt-2.5">
+                        {/* ── Progress dots — Option B: button + appearance:none + max constraints ── */}
+                        {/* appearance:none kills all UA/platform control styling on iOS/Android.      */}
+                        {/* maxWidth + maxHeight prevent UA min-block-size from inflating the box.    */}
+                        {/* All styles are inline — zero Tailwind class interference.                 */}
+                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '10px' }}>
                           {CARD_DEFS.map((_, dotIdx) => {
                             const isActiveDot = dotIdx === activeCard;
+                            const sz = isActiveDot ? '8px' : '6px';
                             return (
-                              <span
+                              <button
                                 key={dotIdx}
-                                role="button"
-                                tabIndex={0}
                                 onClick={() => scrollToCard(dotIdx)}
                                 onKeyDown={(e) => e.key === 'Enter' && scrollToCard(dotIdx)}
                                 aria-label={`Go to ${CARD_DEFS[dotIdx].title}`}
-                                className="rounded-full transition-all duration-200"
                                 style={{
-                                  width: isActiveDot ? '8px' : '6px',
-                                  height: isActiveDot ? '8px' : '6px',
+                                  /* Kill all UA/platform button styling */
+                                  appearance: 'none' as React.CSSProperties['appearance'],
+                                  WebkitAppearance: 'none' as React.CSSProperties['WebkitAppearance'],
+                                  /* Exact dimensions — also clamp with max to defeat UA min-block-size */
+                                  width: sz,
+                                  height: sz,
+                                  minWidth: sz,
+                                  minHeight: sz,
+                                  maxWidth: sz,
+                                  maxHeight: sz,
+                                  /* Reset all box-model UA defaults */
+                                  padding: 0,
+                                  margin: 0,
+                                  border: 'none',
+                                  outline: 'none',
+                                  /* Visual */
+                                  borderRadius: '50%',
                                   backgroundColor: isActiveDot ? '#06b6d4' : '#52525b',
-                                  cursor: 'pointer',
-                                  flexShrink: 0,
+                                  /* Layout */
                                   display: 'block',
+                                  flexShrink: 0,
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                  /* Smooth color transition only — NOT width/height to avoid mid-transition bloat */
+                                  transition: 'background-color 0.2s',
+                                  /* Prevent any line-height inheritance from inflating computed height */
+                                  lineHeight: 0,
+                                  fontSize: 0,
                                 }}
                               />
                             );

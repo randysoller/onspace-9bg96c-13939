@@ -317,17 +317,17 @@ export default function MetronomeModal() {
                   </p>
                 </div>
 
-                {/* Accent */}
+                {/* Accent — 50% width, centred under the Sound dropdown */}
                 <div>
                   <span className="text-[15px] text-amber-500 uppercase tracking-wider block mb-1.5">
                     {beatsPerMeasure === 5 ? 'Accent 1 & 3' : beatsPerMeasure === 6 ? 'Accent 1 & 4' : beatsPerMeasure === 7 ? 'Accent 1 & 5' : beatsPerMeasure === 12 ? 'Accent 1,4,7,10' : 'Accent Beat 1'}
                   </span>
                   <button
                     onClick={() => setAccentFirstBeat(!accentFirstBeat)}
-                    className={`w-full h-10 rounded font-semibold text-sm transition-all ${
+                    className={`w-1/2 mx-auto h-10 flex items-center justify-center rounded border font-semibold text-sm transition-all ${
                       accentFirstBeat
-                        ? 'bg-amber-500 text-zinc-950'
-                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700'
+                        ? 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-600/30 active:bg-emerald-600/40'
+                        : 'bg-red-600/35 border-red-500/65 text-red-300 hover:bg-red-600/45 active:bg-red-600/55'
                     }`}
                   >
                     {accentFirstBeat ? 'On' : 'Off'}

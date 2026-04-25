@@ -64,10 +64,10 @@ export const MAJOR_PATTERNS: readonly BoxPattern[] = [
       { string: 2, relFret: 0, finger: 1, isRoot: false },
       { string: 2, relFret: 2, finger: 3, isRoot: false },
       { string: 2, relFret: 3, finger: 4, isRoot: false },
-      // D (str 3): fret2=f1, fret4=f3, fret5=f4 — relFrets 0,2,3
+      // D (str 3): fret2=f1, fret4=f3, fret5=root♦f4 — relFrets 0,2,3
       { string: 3, relFret: 0, finger: 1, isRoot: false },
       { string: 3, relFret: 2, finger: 3, isRoot: false },
-      { string: 3, relFret: 3, finger: 4, isRoot: false },
+      { string: 3, relFret: 3, finger: 4, isRoot: true  },
       // A (str 4): fret2=f1, fret3=f2, fret5=f4 — relFrets 0,1,3
       { string: 4, relFret: 0, finger: 1, isRoot: false },
       { string: 4, relFret: 1, finger: 2, isRoot: false },

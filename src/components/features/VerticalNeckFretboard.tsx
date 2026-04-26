@@ -36,7 +36,7 @@ interface Props {
 }
 
 // ── SVG coordinate constants ───────────────────────────────────────────────────
-const L  = 28;   // left padding  — room for fret-number labels
+const L  = 60;   // left padding  — wider to accommodate larger fret labels (size 15) shifted further left
 const R  = 16;   // right padding  — must be ≥ DIA_H+2 (13.8+2=15.8) so rightmost string dots don't clip
 const T  = 68;   // top padding   — room for string-name labels + open-string zone + nut
 const B  = 18;   // bottom padding
@@ -61,10 +61,10 @@ const NUT_CLR   = 'hsl(36 33% 93%)'; // matches HorizontalScaleFretboard NUT_CLR
 const INLAY_CLR = 'hsl(30 15% 50%)'; // matches HorizontalScaleFretboard INLAY_CLR
 const LABEL_CLR = 'hsl(33 14% 72%)'; // fret numbers and string names
 
-const DOT_R  = 10;   // fretted scale circle radius
-const DIA_H  = 13.8; // fretted root diamond half-extent (DOT_R × 1.38)
-const OPEN_R  = 6.65; // open-string circle radius — matches HorizontalScaleFretboard OPEN_R exactly
-const OPEN_DH = 10.4; // open-string diamond half-extent — matches HorizontalScaleFretboard OPEN_DH exactly
+const DOT_R  = 14;   // fretted scale circle radius (-1 from 15)
+const DIA_H  = 17.8; // fretted root diamond half-extent (-1 from 18.8)
+const OPEN_R  = 10.65; // open-string circle radius (-1 from 11.65)
+const OPEN_DH = 14.4; // open-string diamond half-extent (-1 from 15.4)
 
 /** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
 function diamondPoints(cx: number, cy: number, h: number): string {
@@ -128,7 +128,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
           x={L + col * SW}
           y={T - 52}
           textAnchor="middle"
-          fontSize={11}
+          fontSize={21}
           fontWeight={600}
           fill={LABEL_CLR}
           fontFamily="ui-monospace, monospace"
@@ -192,10 +192,10 @@ export default function VerticalNeckFretboard({ dots }: Props) {
       {[1, 3, 5, 7, 9, 12].map((f) => (
         <text
           key={`fl-${f}`}
-          x={L - 5}
+          x={L - 38}
           y={yDot(f) + 4}
           textAnchor="end"
-          fontSize={9}
+          fontSize={15}
           fill={LABEL_CLR}
           fillOpacity={0.75}
           fontFamily="ui-monospace, monospace"

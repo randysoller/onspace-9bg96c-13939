@@ -212,22 +212,19 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
 // ── Full-neck dot builder ──────────────────────────────────────────────────────
 //
 // Merges all 5 resolved patterns onto a single 13-fret neck:
-//   • fret = 0  → open string, skipped (not shown in this view)
-//   • fret > 13 → wrap by −12 (Pattern V frets 14–15 fold to frets 2–3, shown
-//                 at 65% opacity to signal the octave wrapping)
+//   • fret > 13 → wrap by −12 (Pattern V high frets fold back)
 //   • duplicate (string, fret) → root status wins over scale-note status
+//   • Open strings (fret 0) computed from music theory independently of pattern
+//     windows — hardcoded patterns start at baseFret≥2 so they never include
+//     absFret=0 dots even when the open string pitch is in the scale.
 
-function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
+function computeNeckDots(patterns: DisplayPattern[], scale: ScaleVaultEntry, rootNote: string): NeckDot[] {
   const dotMap = new Map<string, NeckDot>();
 
   for (const pattern of patterns) {
     for (const dot of pattern.dots) {
-      let fret = dot.fret;
-      let isWrapped = false;
-      const isOpenString = dot.isOpenString;
-
-      if (isOpenString) {
-        // Open strings rendered above nut — use string as key to deduplicate
+      // Treat any dot with isOpenString flag OR fret===0 as an open string
+      if (dot.isOpenString || dot.fret === 0) {
         const key = `open-${dot.string}`;
         const existing = dotMap.get(key);
         if (!existing) {
@@ -238,6 +235,8 @@ function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
         continue;
       }
 
+      let fret = dot.fret;
+      let isWrapped = false;
       if (fret > 13) {
         fret = fret - 12;
         isWrapped = true;
@@ -249,9 +248,30 @@ function computeNeckDots(patterns: DisplayPattern[]): NeckDot[] {
       if (!existing) {
         dotMap.set(key, { string: dot.string, fret, isRoot: dot.isRoot, isWrapped });
       } else if (dot.isRoot && !existing.isRoot) {
-        // Root takes visual priority over scale-note colour
         dotMap.set(key, { ...existing, isRoot: true });
       }
+    }
+  }
+
+  // ── Open-string pass (music-theory derived) ───────────────────────────────
+  // Hardcoded CAGED patterns start at baseFret ≥ 2, so their absFret values
+  // are never 0 — even when the open-string pitch IS in the scale.
+  // We resolve open strings independently: for each string, if its open pitch
+  // belongs to the scale interval set, add it as an open-string dot.
+  const rootSemOC   = NOTE_TO_SEMITONE[rootNote] ?? 0;
+  const intervalSet = new Set(scale.intervals);
+  for (let s = 0; s < 6; s++) {
+    const openKey = `open-${s}`;
+    if (dotMap.has(openKey)) continue; // already added from pattern data
+    const openSem  = OPEN_STRING_SEM[s] ?? 0;
+    const interval = ((openSem - rootSemOC) % 12 + 12) % 12;
+    if (intervalSet.has(interval)) {
+      dotMap.set(openKey, {
+        string: s,
+        fret: 0,
+        isRoot: interval === 0,
+        isOpenString: true,
+      });
     }
   }
 
@@ -335,7 +355,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
 
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
-  const neckDots = computeNeckDots(patterns);
+  const neckDots = computeNeckDots(patterns, scale, rootNote);
 
   if (!isOpen) return null;
 

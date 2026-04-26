@@ -43,7 +43,7 @@ const B  = 18;   // bottom padding
 const FH = 54;   // fret height   — px per fret cell (taller = narrower cells, matches reference photo ~1:3.1 aspect ratio)
 const SW = 44;   // string spacing — px between adjacent string lines
 
-const N_FRETS   = 13;
+const N_FRETS   = 12;
 const N_STRINGS = 6;
 
 const NECK_W = (N_STRINGS - 1) * SW;  // 5 × 44 = 220
@@ -189,7 +189,7 @@ export default function VerticalNeckFretboard({ dots }: Props) {
       <circle cx={L + SW * 3.5} cy={yDot(12)} r={4.5} fill={INLAY_CLR} fillOpacity={0.45} />
 
       {/* ── Fret-number labels (left margin) ─────────────────────────────── */}
-      {[1, 3, 5, 7, 9, 12, 13].map((f) => (
+      {[1, 3, 5, 7, 9, 12].map((f) => (
         <text
           key={`fl-${f}`}
           x={L - 5}

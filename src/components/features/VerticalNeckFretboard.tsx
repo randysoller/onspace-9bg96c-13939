@@ -37,7 +37,7 @@ interface Props {
 
 // ── SVG coordinate constants ───────────────────────────────────────────────────
 const L  = 28;   // left padding  — room for fret-number labels
-const R  = 8;    // right padding
+const R  = 16;   // right padding  — must be ≥ DIA_H+2 (13.8+2=15.8) so rightmost string dots don't clip
 const T  = 68;   // top padding   — room for string-name labels + open-string zone + nut
 const B  = 18;   // bottom padding
 const FH = 54;   // fret height   — px per fret cell (taller = narrower cells, matches reference photo ~1:3.1 aspect ratio)
@@ -63,8 +63,8 @@ const LABEL_CLR = 'hsl(33 14% 72%)'; // fret numbers and string names
 
 const DOT_R  = 10;   // fretted scale circle radius
 const DIA_H  = 13.8; // fretted root diamond half-extent (DOT_R × 1.38)
-const OPEN_R  = 8;   // open-string circle radius (slightly smaller)
-const OPEN_DH = 11;  // open-string diamond half-extent
+const OPEN_R  = 6.65; // open-string circle radius — matches HorizontalScaleFretboard OPEN_R exactly
+const OPEN_DH = 10.4; // open-string diamond half-extent — matches HorizontalScaleFretboard OPEN_DH exactly
 
 /** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
 function diamondPoints(cx: number, cy: number, h: number): string {

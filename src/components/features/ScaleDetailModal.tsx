@@ -22,12 +22,12 @@
  *   • All other scales → algorithmic box-position generator
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Brackets } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
-import VerticalNeckFretboard, { type NeckDot } from './VerticalNeckFretboard';
+import VerticalNeckFretboard, { type NeckDot, type PatternBracket } from './VerticalNeckFretboard';
 import {
   getMajorScalePatterns,
   getMinorScalePatterns,
@@ -213,24 +213,27 @@ function resolvePatterns(scale: ScaleVaultEntry, rootNote: string): DisplayPatte
 //
 // Merges all 5 resolved patterns onto a single 13-fret neck:
 //   • fret > 13 → wrap by −12 (Pattern V high frets fold back)
-//   • duplicate (string, fret) → root status wins over scale-note status
+//   • duplicate (string, fret) → root status wins; patternIndices accumulates all owners
 //   • Open strings (fret 0) computed from music theory independently of pattern
 //     windows — hardcoded patterns start at baseFret≥2 so they never include
 //     absFret=0 dots even when the open string pitch is in the scale.
+//   • Each dot carries patternIndices: number[] for isolation opacity control.
 
 function computeNeckDots(patterns: DisplayPattern[], scale: ScaleVaultEntry, rootNote: string): NeckDot[] {
   const dotMap = new Map<string, NeckDot>();
 
-  for (const pattern of patterns) {
+  patterns.forEach((pattern, patternIdx) => {
     for (const dot of pattern.dots) {
       // Treat any dot with isOpenString flag OR fret===0 as an open string
       if (dot.isOpenString || dot.fret === 0) {
         const key = `open-${dot.string}`;
         const existing = dotMap.get(key);
         if (!existing) {
-          dotMap.set(key, { string: dot.string, fret: 0, isRoot: dot.isRoot, isOpenString: true });
-        } else if (dot.isRoot && !existing.isRoot) {
-          dotMap.set(key, { ...existing, isRoot: true });
+          // Open strings from pattern data get patternIndices tracking
+          dotMap.set(key, { string: dot.string, fret: 0, isRoot: dot.isRoot, isOpenString: true, patternIndices: [patternIdx] });
+        } else {
+          const updatedIndices = existing.patternIndices ? [...existing.patternIndices, patternIdx] : [patternIdx];
+          dotMap.set(key, { ...existing, isRoot: existing.isRoot || dot.isRoot, patternIndices: updatedIndices });
         }
         continue;
       }
@@ -246,18 +249,19 @@ function computeNeckDots(patterns: DisplayPattern[], scale: ScaleVaultEntry, roo
       const key = `${dot.string}-${fret}`;
       const existing = dotMap.get(key);
       if (!existing) {
-        dotMap.set(key, { string: dot.string, fret, isRoot: dot.isRoot, isWrapped });
-      } else if (dot.isRoot && !existing.isRoot) {
-        dotMap.set(key, { ...existing, isRoot: true });
+        dotMap.set(key, { string: dot.string, fret, isRoot: dot.isRoot, isWrapped, patternIndices: [patternIdx] });
+      } else {
+        // Accumulate pattern ownership; root status wins
+        const updatedIndices = existing.patternIndices ? [...existing.patternIndices, patternIdx] : [patternIdx];
+        dotMap.set(key, { ...existing, isRoot: existing.isRoot || dot.isRoot, patternIndices: updatedIndices });
       }
     }
-  }
+  });
 
   // ── Open-string pass (music-theory derived) ───────────────────────────────
   // Hardcoded CAGED patterns start at baseFret ≥ 2, so their absFret values
   // are never 0 — even when the open-string pitch IS in the scale.
-  // We resolve open strings independently: for each string, if its open pitch
-  // belongs to the scale interval set, add it as an open-string dot.
+  // Music-theory open strings get patternIndices=[] (universal, always full opacity).
   const rootSemOC   = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const intervalSet = new Set(scale.intervals);
   for (let s = 0; s < 6; s++) {
@@ -271,11 +275,36 @@ function computeNeckDots(patterns: DisplayPattern[], scale: ScaleVaultEntry, roo
         fret: 0,
         isRoot: interval === 0,
         isOpenString: true,
+        patternIndices: [], // universal — not isolated to any specific pattern
       });
     }
   }
 
   return Array.from(dotMap.values());
+}
+
+// ── Pattern bracket range calculator ──────────────────────────────────────────
+// Derives the min/max fret range for each of the 5 CAGED patterns from their dots.
+function computePatternBrackets(patterns: DisplayPattern[]): PatternBracket[] {
+  const ROMAN_LABELS = ['I', 'II', 'III', 'IV', 'V'];
+  return patterns.map((pattern, idx) => {
+    const frettedFrets = pattern.dots
+      .filter((d) => !d.isOpenString && d.fret > 0)
+      .map((d) => {
+        let f = d.fret;
+        if (f > 12) f = f - 12;
+        return f;
+      })
+      .filter((f) => f >= 1 && f <= 12);
+    const minFret = frettedFrets.length > 0 ? Math.min(...frettedFrets) : 1;
+    const maxFret = frettedFrets.length > 0 ? Math.max(...frettedFrets) : 4;
+    return {
+      patternIdx: idx,
+      label: ROMAN_LABELS[idx] ?? String(idx + 1),
+      minFret,
+      maxFret,
+    };
+  });
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -290,6 +319,10 @@ interface ScaleDetailModalProps {
 export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: ScaleDetailModalProps) {
   const [activeCard, setActiveCard] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
+  /** Set of 0-based pattern indices currently highlighted. Empty = all shown. */
+  const [highlightedPatterns, setHighlightedPatterns] = useState<Set<number>>(new Set());
+  /** Whether pattern bracket bars are visible on the Full Neck Map */
+  const [showBrackets, setShowBrackets] = useState(false);
 
   // scrollRef: the horizontally-scrollable snap container
   const scrollRef  = useRef<HTMLDivElement>(null);
@@ -356,6 +389,25 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
   const neckDots = computeNeckDots(patterns, scale, rootNote);
+  const patternBrackets = useMemo(() => computePatternBrackets(patterns), [patterns]);
+
+  /** Toggle one pattern in/out of the highlighted set */
+  const togglePattern = useCallback((idx: number) => {
+    setHighlightedPatterns((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+      }
+      return next;
+    });
+  }, []);
+
+  /** Clear all highlighted patterns → returns to "All" state */
+  const clearHighlight = useCallback(() => {
+    setHighlightedPatterns(new Set());
+  }, []);
 
   if (!isOpen) return null;
 
@@ -551,9 +603,70 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   <span className="text-[10px] text-zinc-400">Scale (open)</span>
                                 </div>
                               </div>
+
+                              {/* ── Pattern Isolator + Bracket toggle row ── */}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* All button */}
+                                <button
+                                  onClick={clearHighlight}
+                                  className={[
+                                    'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150',
+                                    highlightedPatterns.size === 0
+                                      ? 'bg-zinc-300 border-zinc-300 text-zinc-900'
+                                      : 'bg-transparent border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300',
+                                  ].join(' ')}
+                                  aria-label="Show all patterns"
+                                  aria-pressed={highlightedPatterns.size === 0}
+                                >
+                                  All
+                                </button>
+
+                                {/* Pattern I–V pills */}
+                                {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => {
+                                  const isActive = highlightedPatterns.has(idx);
+                                  return (
+                                    <button
+                                      key={roman}
+                                      onClick={() => togglePattern(idx)}
+                                      className={[
+                                        'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 min-w-[32px]',
+                                        isActive
+                                          ? 'bg-zinc-300 border-zinc-300 text-zinc-900'
+                                          : 'bg-transparent border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300',
+                                      ].join(' ')}
+                                      aria-label={`Toggle Pattern ${roman}`}
+                                      aria-pressed={isActive}
+                                    >
+                                      {roman}
+                                    </button>
+                                  );
+                                })}
+
+                                {/* Bracket toggle */}
+                                <button
+                                  onClick={() => setShowBrackets((b) => !b)}
+                                  title={showBrackets ? 'Hide pattern brackets' : 'Show pattern brackets'}
+                                  aria-label={showBrackets ? 'Hide pattern brackets' : 'Show pattern brackets'}
+                                  aria-pressed={showBrackets}
+                                  className={[
+                                    'ml-auto p-1.5 rounded-md border transition-colors duration-150',
+                                    showBrackets
+                                      ? 'bg-zinc-300 border-zinc-300 text-zinc-900'
+                                      : 'bg-transparent border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300',
+                                  ].join(' ')}
+                                >
+                                  <Brackets className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+
                               {/* Vertical neck SVG — constrained to 75% width, centred */}
                               <div style={{ maxWidth: '67.5%', margin: '0 auto' }}>
-                                <VerticalNeckFretboard dots={neckDots} />
+                                <VerticalNeckFretboard
+                                  dots={neckDots}
+                                  highlightedPatterns={highlightedPatterns}
+                                  showBrackets={showBrackets}
+                                  patternBrackets={patternBrackets}
+                                />
                               </div>
                             </>
                           )}

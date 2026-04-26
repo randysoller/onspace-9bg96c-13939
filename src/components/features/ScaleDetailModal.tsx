@@ -381,7 +381,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 40, opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
-          className="flex flex-col w-full h-full lg:w-[32vw] lg:max-w-[614px] lg:h-[73vh] lg:rounded-2xl lg:overflow-hidden lg:shadow-2xl lg:shadow-black/60"
+          className="flex flex-col w-full h-full lg:w-[32vw] lg:max-w-[614px] lg:h-[95vh] lg:rounded-2xl lg:overflow-hidden lg:shadow-2xl lg:shadow-black/60"
           style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
         >
           {/* ── Carousel wrapper ── */}

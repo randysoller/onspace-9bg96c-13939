@@ -134,7 +134,7 @@ const CARD_DEFS = [
   {
     id: 'neck',
     title: 'Full Neck Map',
-    subtitle: 'All 5 CAGED positions overlaid · frets 1–13',
+    subtitle: 'All 5 CAGED positions overlaid · frets 1–12',  // one chromatic octave
   },
   {
     id: 'notes',
@@ -237,11 +237,11 @@ function computeNeckDots(patterns: DisplayPattern[], scale: ScaleVaultEntry, roo
 
       let fret = dot.fret;
       let isWrapped = false;
-      if (fret > 13) {
+      if (fret > 12) {
         fret = fret - 12;
         isWrapped = true;
       }
-      if (fret < 1 || fret > 13) continue;
+      if (fret < 1 || fret > 12) continue;
 
       const key = `${dot.string}-${fret}`;
       const existing = dotMap.get(key);
@@ -552,7 +552,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                 </div>
                               </div>
                               {/* Vertical neck SVG — constrained to 75% width, centred */}
-                              <div style={{ maxWidth: '75%', margin: '0 auto' }}>
+                              <div style={{ maxWidth: '67.5%', margin: '0 auto' }}>
                                 <VerticalNeckFretboard dots={neckDots} />
                               </div>
                             </>

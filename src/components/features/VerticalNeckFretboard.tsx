@@ -40,7 +40,7 @@ const L  = 28;   // left padding  — room for fret-number labels
 const R  = 8;    // right padding
 const T  = 68;   // top padding   — room for string-name labels + open-string zone + nut
 const B  = 18;   // bottom padding
-const FH = 32;   // fret height   — px per fret cell (shorter = wider cells, matches reference)
+const FH = 54;   // fret height   — px per fret cell (taller = narrower cells, matches reference photo ~1:3.1 aspect ratio)
 const SW = 44;   // string spacing — px between adjacent string lines
 
 const N_FRETS   = 13;

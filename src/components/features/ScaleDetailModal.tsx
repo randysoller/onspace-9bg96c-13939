@@ -565,30 +565,30 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                               <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
                                 <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
                               </svg>
-                              <span className="text-[10px] text-zinc-400">Root (fretted)</span>
+                              <span className="text-[18px] text-zinc-400">Root (fretted)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
                                 <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="none" stroke="#06b6d4" strokeWidth="2" />
                               </svg>
-                              <span className="text-[10px] text-zinc-400">Root (open)</span>
+                              <span className="text-[18px] text-zinc-400">Root (open)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="w-3 h-3 rounded-full bg-amber-500" />
-                              <span className="text-[10px] text-zinc-400">Scale (fretted)</span>
+                              <span className="text-[18px] text-zinc-400">Scale (fretted)</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-                              <span className="text-[10px] text-zinc-400">Scale (open)</span>
+                              <span className="text-[18px] text-zinc-400">Scale (open)</span>
                             </div>
 
                             {/* Pattern Isolator dropdown — pushes to the right */}
                             <div className="ml-auto flex items-center gap-1.5">
-                              <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">Pattern Isolator</span>
+                              <span className="text-[18px] text-zinc-500 font-medium whitespace-nowrap">Pattern Isolator</span>
                               <div className="relative">
                                 <button
                                   onClick={() => setPatternDropdownOpen((p) => !p)}
-                                  className="flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-600 bg-zinc-800/60 text-[10px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
+                                  className="flex items-center gap-1 px-2 py-0.5 min-w-[70px] rounded border border-zinc-600 bg-zinc-800/60 text-[10px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
                                   aria-haspopup="listbox"
                                   aria-expanded={patternDropdownOpen}
                                   aria-label="Pattern Isolator"
@@ -605,11 +605,11 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                       onClick={() => setPatternDropdownOpen(false)}
                                     />
                                     {/* Dropdown panel */}
-                                    <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[130px] py-1 overflow-hidden">
+                                    <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[260px] py-1 overflow-hidden">
                                       {/* All Patterns option */}
                                       <button
                                         onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
-                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
                                         role="option"
                                         aria-selected={highlightedPatterns.size === 0}
                                       >
@@ -622,7 +622,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                         <button
                                           key={roman}
                                           onClick={() => togglePattern(idx)}
-                                          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                          className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
                                           role="option"
                                           aria-selected={highlightedPatterns.has(idx)}
                                         >

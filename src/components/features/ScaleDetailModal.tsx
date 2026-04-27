@@ -26,7 +26,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, Check, Volume2, Square } from 'lucide-react';
+import { useScalePatternAudio } from '@/hooks/useScalePatternAudio';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
 import VerticalNeckFretboard, { type NeckDot } from './VerticalNeckFretboard';
@@ -373,6 +374,14 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
     setActiveCard(clamped);
   }, [cardWidth]);
 
+  // Scale pattern audio — 90 BPM, ascending then descending guitar pluck
+  const { playPattern, stop: stopPattern, isPlaying: isPatternPlaying, playingIdx } = useScalePatternAudio();
+
+  // Stop playback when modal closes
+  useEffect(() => {
+    if (!isOpen) stopPattern();
+  }, [isOpen, stopPattern]);
+
   const rootSem  = NOTE_TO_SEMITONE[rootNote] ?? 0;
   const patterns = resolvePatterns(scale, rootNote);
   const neckDots = computeNeckDots(patterns, scale, rootNote);
@@ -696,13 +705,38 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                               };
                             });
 
+                            // Finger Patterns card: track which pattern button is actively playing
+                            const isThisPlaying = isPatternPlaying && playingIdx === posIdx;
+
                             return (
-                              <div key={posIdx} className="border border-zinc-800 rounded-lg p-2 bg-zinc-900/40">
-                                <HorizontalScaleFretboard
-                                  dots={fretDots}
-                                  startFret={pos.startFret}
-                                  positionLabel={pos.label}
-                                />
+                              <div key={posIdx} className="border border-zinc-800 rounded-lg p-2 bg-zinc-900/40 flex items-center gap-2">
+                                {/* Play/Stop button — Finger Patterns card only */}
+                                {cardDef.id === 'finger' && (
+                                  <button
+                                    onClick={() => {
+                                      if (isThisPlaying) {
+                                        stopPattern();
+                                      } else {
+                                        playPattern(pos.dots, 90, posIdx);
+                                      }
+                                    }}
+                                    className="flex-shrink-0 w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-zinc-950 rounded-lg flex items-center justify-center transition-colors border border-amber-500/25 shadow-md"
+                                    aria-label={isThisPlaying ? `Stop Pattern ${posIdx + 1}` : `Play Pattern ${posIdx + 1} ascending and descending`}
+                                    title={isThisPlaying ? 'Stop' : 'Play scale — ascending & descending at 90 BPM'}
+                                  >
+                                    {isThisPlaying
+                                      ? <Square className="w-7 h-7 fill-zinc-950 stroke-zinc-950" />
+                                      : <Volume2 className="w-8 h-8 stroke-[2.5]" />
+                                    }
+                                  </button>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <HorizontalScaleFretboard
+                                    dots={fretDots}
+                                    startFret={pos.startFret}
+                                    positionLabel={pos.label}
+                                  />
+                                </div>
                               </div>
                             );
                           })}

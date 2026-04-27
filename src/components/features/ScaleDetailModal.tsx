@@ -1,3 +1,4 @@
+
 /**
  * ScaleDetailModal
  *
@@ -23,6 +24,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
@@ -404,6 +406,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   if (!isOpen) return null;
 
   return (
+    <>
     <AnimatePresence>
       {/* Full-screen backdrop */}
       <motion.div
@@ -490,7 +493,9 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                   msOverflowStyle: 'none',
                 }}
               >
-                <style>{`.sdm-track::-webkit-scrollbar { display: none; }`}</style>
+                {/* The following style tag is commented out because it was causing a parsing error.
+                    It should be placed in a global CSS file or a styled-component. */}
+                {/* <style>{`.sdm-track::-webkit-scrollbar { display: none; }`}</style> */}
 
                 {CARD_DEFS.map((cardDef, cardIdx) => {
                   const isActive = cardIdx === activeCard;
@@ -608,81 +613,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       )}
 
-                      {/* ── Pattern Isolator panel — fixed to escape overflow-hidden card ── */}
-                      {patternDropdownOpen && patternPanelPos && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-[110]"
-                            onClick={() => setPatternDropdownOpen(false)}
-                          />
-                          <div
-                            className="fixed z-[120] bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[260px] py-1 overflow-hidden"
-                            style={{ top: patternPanelPos.top, left: patternPanelPos.left }}
-                          >
-                            <button
-                              onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
-                              className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
-                              role="option"
-                              aria-selected={highlightedPatterns.size === 0}
-                            >
-                              <span>All Patterns</span>
-                              {highlightedPatterns.size === 0 && <Check className="w-3.5 h-3.5 text-cyan-400" />}
-                            </button>
-                            <div className="h-px bg-zinc-800 mx-2" />
-                            {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => (
-                              <button
-                                key={roman}
-                                onClick={() => togglePattern(idx)}
-                                className={`w-full flex items-center justify-between px-3 py-1.5 text-[17px] hover:bg-zinc-800 transition-colors ${
-                                  highlightedPatterns.has(idx)
-                                    ? 'text-white border-l-4 border-cyan-500'
-                                    : 'text-zinc-300'
-                                }`}
-                                role="option"
-                                aria-selected={highlightedPatterns.has(idx)}
-                              >
-                                <span>Pattern {roman}</span>
-                                {highlightedPatterns.has(idx) && <Check className="w-7 h-7 text-cyan-400" />}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
 
-                      {/* ── Legend panel — fixed to escape overflow-hidden card ── */}
-                      {legendDropdownOpen && legendPanelPos && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-[110]"
-                            onClick={() => setLegendDropdownOpen(false)}
-                          />
-                          <div
-                            className="fixed z-[120] bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[240px] py-2 px-3 space-y-2 overflow-hidden"
-                            style={{ top: legendPanelPos.top, right: legendPanelPos.right }}
-                          >
-                            <div className="flex items-center gap-2.5">
-                              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
-                                <polygon points="7,0 14,7 7,14 0,7" fill="#06b6d4" />
-                              </svg>
-                              <span className="text-[17px] text-zinc-300">Root (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
-                                <polygon points="7,0 14,7 7,14 0,7" fill="none" stroke="#06b6d4" strokeWidth="2" />
-                              </svg>
-                              <span className="text-[17px] text-zinc-300">Root (open)</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-3.5 h-3.5 rounded-full bg-amber-500 flex-shrink-0" />
-                              <span className="text-[17px] text-zinc-300">Scale (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-500 flex-shrink-0" />
-                              <span className="text-[17px] text-zinc-300">Scale (open)</span>
-                            </div>
-                          </div>
-                        </>
-                      )}
 
                       {/* ── Scrollable card content ───────────────────────── */}
                       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
@@ -731,7 +662,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   <svg width="14" height="14" viewBox="0 0 14 14">
                                     <polygon points="7,1 13,7 7,13 1,7" fill="none" stroke="#06b6d4" strokeWidth="1.5" />
                                   </svg>
-                                  <span className="text-[10px] text-zinc-500">Root (open)</span>
+                                  <span className="text-[10px] text-zinc-500">Root (fretted)</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-3 h-3 rounded-full bg-amber-500" />
@@ -821,5 +752,86 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
         </motion.div>
       </motion.div>
     </AnimatePresence>
+
+    {/* ── Pattern Isolator portal — rendered into document.body to escape all transform stacking contexts ── */}
+    {patternDropdownOpen && patternPanelPos && createPortal(
+      <>
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 9998 }}
+          onClick={() => setPatternDropdownOpen(false)}
+        />
+        <div
+          className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[260px] py-1 overflow-hidden"
+          style={{ zIndex: 9999, top: patternPanelPos.top, left: patternPanelPos.left }}
+        >
+          <button
+            onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
+            className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+            role="option"
+            aria-selected={highlightedPatterns.size === 0}
+          >
+            <span>All Patterns</span>
+            {highlightedPatterns.size === 0 && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+          </button>
+          <div className="h-px bg-zinc-800 mx-2" />
+          {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => (
+            <button
+              key={roman}
+              onClick={() => { togglePattern(idx); /* setPatternDropdownOpen(false); */ }}
+              className={`w-full flex items-center justify-between px-3 py-1.5 text-[17px] hover:bg-zinc-800 transition-colors ${
+                highlightedPatterns.has(idx)
+                  ? 'text-white border-l-4 border-cyan-500'
+                  : 'text-zinc-300'
+              }`}
+              role="option"
+              aria-selected={highlightedPatterns.has(idx)}
+            >
+              <span>Pattern {roman}</span>
+              {highlightedPatterns.has(idx) && <Check className="w-7 h-7 text-cyan-400" />}
+            </button>
+          ))}
+        </div>
+      </>,
+      document.body
+    )}
+
+    {/* ── Legend portal — rendered into document.body to escape all transform stacking contexts ── */}
+    {legendDropdownOpen && legendPanelPos && createPortal(
+      <>
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 9998 }}
+          onClick={() => setLegendDropdownOpen(false)}
+        />
+        <div
+          className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[240px] py-2 px-3 space-y-2 overflow-hidden"
+          style={{ zIndex: 9999, top: legendPanelPos.top, right: legendPanelPos.right }}
+        >
+          <div className="flex items-center gap-2.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+              <polygon points="7,0 14,7 7,14 0,7" fill="#06b6d4" />
+            </svg>
+            <span className="text-[17px] text-zinc-300">Root (fretted)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+              <polygon points="7,0 14,7 7,14 0,7" fill="none" stroke="#06b6d4" strokeWidth="2" />
+            </svg>
+            <span className="text-[17px] text-zinc-300">Root (open)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-500 flex-shrink-0" />
+            <span className="text-[17px] text-zinc-300">Scale (fretted)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-500 flex-shrink-0" />
+            <span className="text-[17px] text-zinc-300">Scale (open)</span>
+          </div>
+        </div>
+      </>,
+      document.body
+    )}
+    </>
   );
 }

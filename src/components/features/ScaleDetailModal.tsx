@@ -635,14 +635,14 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                 onClick={() => togglePattern(idx)}
                                 className={`w-full flex items-center justify-between px-3 py-1.5 text-[17px] hover:bg-zinc-800 transition-colors ${
                                   highlightedPatterns.has(idx)
-                                    ? 'text-white border-l-2 border-cyan-500'
+                                    ? 'text-white border-l-4 border-cyan-500'
                                     : 'text-zinc-300'
                                 }`}
                                 role="option"
                                 aria-selected={highlightedPatterns.has(idx)}
                               >
                                 <span>Pattern {roman}</span>
-                                {highlightedPatterns.has(idx) && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                                {highlightedPatterns.has(idx) && <Check className="w-7 h-7 text-cyan-400" />}
                               </button>
                             ))}
                           </div>

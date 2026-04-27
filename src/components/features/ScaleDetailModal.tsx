@@ -24,7 +24,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ChevronDown, Check } from 'lucide-react';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
 import VerticalNeckFretboard, { type NeckDot } from './VerticalNeckFretboard';
@@ -297,6 +297,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const [cardWidth, setCardWidth] = useState(0);
   /** Set of 0-based pattern indices currently highlighted. Empty = all shown. */
   const [highlightedPatterns, setHighlightedPatterns] = useState<Set<number>>(new Set());
+  /** Controls open/closed state of the Pattern Isolator dropdown */
+  const [patternDropdownOpen, setPatternDropdownOpen] = useState(false);
 
   // scrollRef: the horizontally-scrollable snap container
   const scrollRef  = useRef<HTMLDivElement>(null);
@@ -381,6 +383,14 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const clearHighlight = useCallback(() => {
     setHighlightedPatterns(new Set());
   }, []);
+
+  /** Label shown on the dropdown trigger button */
+  const dropdownLabel = highlightedPatterns.size === 0
+    ? 'All'
+    : Array.from(highlightedPatterns)
+        .sort((a, b) => a - b)
+        .map((i) => (['I', 'II', 'III', 'IV', 'V'] as const)[i])
+        .join(', ');
 
   if (!isOpen) return null;
 
@@ -546,90 +556,101 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
+                      {/* ── Neck-only: legend + Pattern Isolator — pinned flush below header ── */}
+                      {cardDef.id === 'neck' && (
+                        <div className="flex-shrink-0 border-b border-zinc-800/50 px-3 py-2.5 bg-zinc-900/50">
+                          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
+                            {/* Legend symbols */}
+                            <div className="flex items-center gap-1.5">
+                              <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+                                <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
+                              </svg>
+                              <span className="text-[10px] text-zinc-400">Root (fretted)</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
+                                <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="none" stroke="#06b6d4" strokeWidth="2" />
+                              </svg>
+                              <span className="text-[10px] text-zinc-400">Root (open)</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-3 rounded-full bg-amber-500" />
+                              <span className="text-[10px] text-zinc-400">Scale (fretted)</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
+                              <span className="text-[10px] text-zinc-400">Scale (open)</span>
+                            </div>
+
+                            {/* Pattern Isolator dropdown — pushes to the right */}
+                            <div className="ml-auto flex items-center gap-1.5">
+                              <span className="text-[10px] text-zinc-500 font-medium whitespace-nowrap">Pattern Isolator</span>
+                              <div className="relative">
+                                <button
+                                  onClick={() => setPatternDropdownOpen((p) => !p)}
+                                  className="flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-600 bg-zinc-800/60 text-[10px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
+                                  aria-haspopup="listbox"
+                                  aria-expanded={patternDropdownOpen}
+                                  aria-label="Pattern Isolator"
+                                >
+                                  <span className="font-semibold">{dropdownLabel}</span>
+                                  <ChevronDown className="w-3 h-3" />
+                                </button>
+
+                                {patternDropdownOpen && (
+                                  <>
+                                    {/* Transparent backdrop — closes dropdown on outside click */}
+                                    <div
+                                      className="fixed inset-0 z-20"
+                                      onClick={() => setPatternDropdownOpen(false)}
+                                    />
+                                    {/* Dropdown panel */}
+                                    <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[130px] py-1 overflow-hidden">
+                                      {/* All Patterns option */}
+                                      <button
+                                        onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
+                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                        role="option"
+                                        aria-selected={highlightedPatterns.size === 0}
+                                      >
+                                        <span>All Patterns</span>
+                                        {highlightedPatterns.size === 0 && <Check className="w-3 h-3 text-cyan-400" />}
+                                      </button>
+                                      <div className="h-px bg-zinc-800 mx-2" />
+                                      {/* Pattern I – V options */}
+                                      {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => (
+                                        <button
+                                          key={roman}
+                                          onClick={() => togglePattern(idx)}
+                                          className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                          role="option"
+                                          aria-selected={highlightedPatterns.has(idx)}
+                                        >
+                                          <span>Pattern {roman}</span>
+                                          {highlightedPatterns.has(idx) && <Check className="w-3 h-3 text-cyan-400" />}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* ── Scrollable card content ───────────────────────── */}
                       <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                         <div className="px-3 pt-3 pb-2 space-y-3">
 
-                          {/* ── Full Neck Map card ─────────────────────────── */}
+                          {/* ── Full Neck Map card — SVG only (legend+isolator pinned above) ── */}
                           {cardDef.id === 'neck' && (
-                            <>
-                              {/* ── Combined legend + pattern isolator box ── */}
-                              <div className="rounded-lg border border-zinc-800/70 bg-zinc-900/40 px-3 py-2.5 space-y-2">
-                                {/* Row A — legend symbols */}
-                                <div className="flex items-center gap-3 flex-wrap">
-                                  <div className="flex items-center gap-1.5">
-                                    <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-                                      <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
-                                    </svg>
-                                    <span className="text-[10px] text-zinc-400">Root (fretted)</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-                                      <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="none" stroke="#06b6d4" strokeWidth="2" />
-                                    </svg>
-                                    <span className="text-[10px] text-zinc-400">Root (open)</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-3 h-3 rounded-full bg-amber-500" />
-                                    <span className="text-[10px] text-zinc-400">Scale (fretted)</span>
-                                  </div>
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-                                    <span className="text-[10px] text-zinc-400">Scale (open)</span>
-                                  </div>
-                                </div>
-
-                                {/* Thin divider */}
-                                <div className="border-t border-zinc-700/50" />
-
-                                {/* Row B — pattern isolator pills */}
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  {/* All button */}
-                                  <button
-                                    onClick={clearHighlight}
-                                    className={[
-                                      'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150',
-                                      highlightedPatterns.size === 0
-                                        ? 'bg-zinc-300 border-zinc-300 text-zinc-900'
-                                        : 'bg-transparent border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300',
-                                    ].join(' ')}
-                                    aria-label="Show all patterns"
-                                    aria-pressed={highlightedPatterns.size === 0}
-                                  >
-                                    All
-                                  </button>
-
-                                  {/* Pattern I–V pills */}
-                                  {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => {
-                                    const isActive = highlightedPatterns.has(idx);
-                                    return (
-                                      <button
-                                        key={roman}
-                                        onClick={() => togglePattern(idx)}
-                                        className={[
-                                          'px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 min-w-[32px]',
-                                          isActive
-                                            ? 'bg-zinc-300 border-zinc-300 text-zinc-900'
-                                            : 'bg-transparent border-zinc-600 text-zinc-400 hover:border-zinc-400 hover:text-zinc-300',
-                                        ].join(' ')}
-                                        aria-label={`Toggle Pattern ${roman}`}
-                                        aria-pressed={isActive}
-                                      >
-                                        {roman}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-
-                              {/* Vertical neck SVG — constrained to 75% width, centred */}
-                              <div style={{ maxWidth: '67.5%', margin: '0 auto' }}>
-                                <VerticalNeckFretboard
-                                  dots={neckDots}
-                                  highlightedPatterns={highlightedPatterns}
-                                />
-                              </div>
-                            </>
+                            <div style={{ maxWidth: '67.5%', margin: '0 auto' }}>
+                              <VerticalNeckFretboard
+                                dots={neckDots}
+                                highlightedPatterns={highlightedPatterns}
+                              />
+                            </div>
                           )}
 
                           {/* Finger legend — only on Finger card, above Pattern I */}

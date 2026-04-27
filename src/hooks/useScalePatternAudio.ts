@@ -99,8 +99,11 @@ export function useScalePatternAudio() {
     // For each dot: pitch = STRING_FREQUENCIES[string] * SEMITONE_RATIO^fret
     // We sort ascending by frequency for the "up" run.
     const sorted = [...dots].sort((a, b) => {
-      const freqA = getNoteFrequency(a.string, a.fret);
-      const freqB = getNoteFrequency(b.string, b.fret);
+      // ScaleDetailModal uses string 0 = high e, 5 = low E.
+      // shared-singleton STRING_FREQUENCIES uses 0 = low E, 5 = high e.
+      // Reverse the index so pitch sorting is correct.
+      const freqA = getNoteFrequency(5 - a.string, a.fret);
+      const freqB = getNoteFrequency(5 - b.string, b.fret);
       return freqA - freqB;
     });
 
@@ -119,7 +122,7 @@ export function useScalePatternAudio() {
 
     try {
       sequence.forEach((dot, i) => {
-        const freq = getNoteFrequency(dot.string, dot.fret);
+        const freq = getNoteFrequency(5 - dot.string, dot.fret); // reverse: ScaleDetailModal 0=high-e → singleton 0=low-E
         const startTime = now + i * beatDuration;
         // Consistent pluck volume — slightly louder than chord strum per-string vol
         const oscs = createPluck(ctx, freq, startTime, noteDuration, 0.28, masterGain);

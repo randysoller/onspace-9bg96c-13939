@@ -46,31 +46,15 @@ export interface NeckDot {
   patternIndices?: number[];
 }
 
-/** One bracket entry passed from ScaleDetailModal */
-export interface PatternBracket {
-  /** 0-based pattern index */
-  patternIdx: number;
-  /** Roman numeral label: I–V */
-  label: string;
-  /** Lowest fret in this pattern (1-based; 0 = open) */
-  minFret: number;
-  /** Highest fret in this pattern (1-based) */
-  maxFret: number;
-}
-
 interface Props {
   dots: NeckDot[];
   /** Empty set or undefined → all patterns shown at full opacity */
   highlightedPatterns?: Set<number>;
-  /** When true, draw bracket bars on the right SVG margin */
-  showBrackets?: boolean;
-  /** Bracket ranges for each of the 5 CAGED patterns */
-  patternBrackets?: PatternBracket[];
 }
 
 // ── SVG coordinate constants ───────────────────────────────────────────────────
 const L  = 60;   // left padding  — wider to accommodate larger fret labels (size 15) shifted further left
-const R  = 36;   // right padding — increased from 16 to fit 5 staggered bracket bars (max offset 4×4=16 + 3px bar + 3 label)
+const R  = 16;   // right padding
 const T  = 68;   // top padding   — room for string-name labels + open-string zone + nut
 const B  = 18;   // bottom padding
 const FH = 54;   // fret height   — px per fret cell (taller = narrower cells, matches reference photo ~1:3.1 aspect ratio)
@@ -94,19 +78,10 @@ const NUT_CLR   = 'hsl(36 33% 93%)'; // matches HorizontalScaleFretboard NUT_CLR
 const INLAY_CLR = 'hsl(30 15% 50%)'; // matches HorizontalScaleFretboard INLAY_CLR
 const LABEL_CLR = 'hsl(33 14% 72%)'; // fret numbers and string names
 
-// Neutral color for bracket bars — single tone differentiating only by label
-const BRACKET_CLR = 'hsl(220 9% 62%)';
-
 const DOT_R  = 14;   // fretted scale circle radius
 const DIA_H  = 17.8; // fretted root diamond half-extent
 const OPEN_R  = 10.65; // open-string circle radius
 const OPEN_DH = 14.4; // open-string diamond half-extent
-
-// Bracket geometry
-const BRACKET_X_BASE = L + NECK_W + 6;  // x of the innermost (Pattern I) bracket bar
-const BRACKET_STEP   = 5;               // each subsequent pattern steps 5px further right
-const BRACKET_W      = 3;               // bar width in px
-const BRACKET_SERIF  = 5;               // horizontal cap extent on each side of bar
 
 /** SVG polygon points for a diamond centred at (cx,cy) with half-extent h */
 function diamondPoints(cx: number, cy: number, h: number): string {
@@ -154,8 +129,6 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 export default function VerticalNeckFretboard({
   dots,
   highlightedPatterns,
-  showBrackets = false,
-  patternBrackets = [],
 }: Props) {
   const midX = L + NECK_W / 2;
   const openDots    = dots.filter((d) => d.isOpenString);
@@ -266,68 +239,6 @@ export default function VerticalNeckFretboard({
           {f}
         </text>
       ))}
-
-      {/* ── Pattern bracket bars (right margin) — only when showBrackets=true ── */}
-      {showBrackets && patternBrackets.map((bracket) => {
-        const { patternIdx, label, minFret, maxFret } = bracket;
-        // x position: stagger each pattern bar 5px further right
-        const bx = BRACKET_X_BASE + patternIdx * BRACKET_STEP;
-        // y range: top of minFret cell → bottom of maxFret cell
-        const yTop    = minFret === 0 ? yOpen() - OPEN_DH - 4 : yWire(minFret - 1);
-        const yBottom = yWire(maxFret);
-        const yMid    = (yTop + yBottom) / 2;
-        // Opacity: dim non-highlighted brackets when isolating
-        const isHighlightedBracket = !isolating || (highlightedPatterns?.has(patternIdx) ?? false);
-        const bOpacity = isHighlightedBracket ? 0.85 : 0.2;
-
-        return (
-          <g key={`bracket-${patternIdx}`} opacity={bOpacity}>
-            {/* Vertical bar */}
-            <line
-              x1={bx}
-              y1={yTop}
-              x2={bx}
-              y2={yBottom}
-              stroke={BRACKET_CLR}
-              strokeWidth={BRACKET_W}
-              strokeLinecap="round"
-            />
-            {/* Top serif */}
-            <line
-              x1={bx - BRACKET_SERIF}
-              y1={yTop}
-              x2={bx + BRACKET_SERIF}
-              y2={yTop}
-              stroke={BRACKET_CLR}
-              strokeWidth={BRACKET_W}
-              strokeLinecap="round"
-            />
-            {/* Bottom serif */}
-            <line
-              x1={bx - BRACKET_SERIF}
-              y1={yBottom}
-              x2={bx + BRACKET_SERIF}
-              y2={yBottom}
-              stroke={BRACKET_CLR}
-              strokeWidth={BRACKET_W}
-              strokeLinecap="round"
-            />
-            {/* Roman numeral label — centred vertically along bar */}
-            <text
-              x={bx + 8}
-              y={yMid + 4}
-              textAnchor="start"
-              fontSize={9}
-              fontWeight={700}
-              fill={BRACKET_CLR}
-              fontFamily="ui-monospace, monospace"
-              style={{ userSelect: 'none' }}
-            >
-              {label}
-            </text>
-          </g>
-        );
-      })}
 
       {/* ── Open-string dots — hollow outline above nut ─────────────────── */}
       {openDots.map((dot, i) => {

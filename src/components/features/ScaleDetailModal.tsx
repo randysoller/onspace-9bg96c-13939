@@ -299,6 +299,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const [highlightedPatterns, setHighlightedPatterns] = useState<Set<number>>(new Set());
   /** Controls open/closed state of the Pattern Isolator dropdown */
   const [patternDropdownOpen, setPatternDropdownOpen] = useState(false);
+  /** Controls open/closed state of the Legend dropdown */
+  const [legendDropdownOpen, setLegendDropdownOpen] = useState(false);
 
   // scrollRef: the horizontally-scrollable snap container
   const scrollRef  = useRef<HTMLDivElement>(null);
@@ -556,86 +558,108 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
-                      {/* ── Neck-only: legend + Pattern Isolator — pinned flush below header ── */}
+                      {/* ── Neck-only: Legend + Pattern Isolator — pinned flush below header ── */}
                       {cardDef.id === 'neck' && (
-                        <div className="flex-shrink-0 border-b border-zinc-800/50 px-3 py-2.5 bg-zinc-900/50">
-                          <div className="flex items-center gap-x-3 gap-y-1.5 flex-wrap">
-                            {/* Legend symbols */}
-                            <div className="flex items-center gap-1.5">
-                              <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-                                <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="#06b6d4" />
-                              </svg>
-                              <span className="text-[18px] text-zinc-400">Root (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true">
-                                <polygon points="6.5,0 13,6.5 6.5,13 0,6.5" fill="none" stroke="#06b6d4" strokeWidth="2" />
-                              </svg>
-                              <span className="text-[18px] text-zinc-400">Root (open)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3 h-3 rounded-full bg-amber-500" />
-                              <span className="text-[18px] text-zinc-400">Scale (fretted)</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-3 h-3 rounded-full border-2 border-amber-500" />
-                              <span className="text-[18px] text-zinc-400">Scale (open)</span>
-                            </div>
+                        <div className="flex-shrink-0 border-b border-zinc-800/50 px-3 py-2 bg-zinc-900/50 space-y-1.5">
 
-                            {/* Pattern Isolator dropdown — pushes to the right */}
-                            <div className="ml-auto flex items-center gap-1.5">
-                              <span className="text-[18px] text-zinc-500 font-medium whitespace-nowrap">Pattern Isolator</span>
-                              <div className="relative">
-                                <button
-                                  onClick={() => setPatternDropdownOpen((p) => !p)}
-                                  className="flex items-center gap-1 px-2 py-0.5 min-w-[70px] rounded border border-zinc-600 bg-zinc-800/60 text-[10px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
-                                  aria-haspopup="listbox"
-                                  aria-expanded={patternDropdownOpen}
-                                  aria-label="Pattern Isolator"
-                                >
-                                  <span className="font-semibold">{dropdownLabel}</span>
-                                  <ChevronDown className="w-3 h-3" />
-                                </button>
+                          {/* Row 1 — Legend dropdown */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[17px] text-zinc-400 font-medium">Legend</span>
+                            <div className="relative">
+                              <button
+                                onClick={() => setLegendDropdownOpen((p) => !p)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-zinc-600 bg-zinc-800/60 text-[17px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
+                                aria-haspopup="listbox"
+                                aria-expanded={legendDropdownOpen}
+                                aria-label="Show legend"
+                              >
+                                <span className="font-semibold">Legend</span>
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
 
-                                {patternDropdownOpen && (
-                                  <>
-                                    {/* Transparent backdrop — closes dropdown on outside click */}
-                                    <div
-                                      className="fixed inset-0 z-20"
-                                      onClick={() => setPatternDropdownOpen(false)}
-                                    />
-                                    {/* Dropdown panel */}
-                                    <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[260px] py-1 overflow-hidden">
-                                      {/* All Patterns option */}
-                                      <button
-                                        onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
-                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
-                                        role="option"
-                                        aria-selected={highlightedPatterns.size === 0}
-                                      >
-                                        <span>All Patterns</span>
-                                        {highlightedPatterns.size === 0 && <Check className="w-3 h-3 text-cyan-400" />}
-                                      </button>
-                                      <div className="h-px bg-zinc-800 mx-2" />
-                                      {/* Pattern I – V options */}
-                                      {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => (
-                                        <button
-                                          key={roman}
-                                          onClick={() => togglePattern(idx)}
-                                          className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
-                                          role="option"
-                                          aria-selected={highlightedPatterns.has(idx)}
-                                        >
-                                          <span>Pattern {roman}</span>
-                                          {highlightedPatterns.has(idx) && <Check className="w-3 h-3 text-cyan-400" />}
-                                        </button>
-                                      ))}
+                              {legendDropdownOpen && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-20"
+                                    onClick={() => setLegendDropdownOpen(false)}
+                                  />
+                                  <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[240px] py-2 px-3 space-y-2 overflow-hidden">
+                                    <div className="flex items-center gap-2.5">
+                                      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+                                        <polygon points="7,0 14,7 7,14 0,7" fill="#06b6d4" />
+                                      </svg>
+                                      <span className="text-[17px] text-zinc-300">Root (fretted)</span>
                                     </div>
-                                  </>
-                                )}
-                              </div>
+                                    <div className="flex items-center gap-2.5">
+                                      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+                                        <polygon points="7,0 14,7 7,14 0,7" fill="none" stroke="#06b6d4" strokeWidth="2" />
+                                      </svg>
+                                      <span className="text-[17px] text-zinc-300">Root (open)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-3.5 h-3.5 rounded-full bg-amber-500 flex-shrink-0" />
+                                      <span className="text-[17px] text-zinc-300">Scale (fretted)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2.5">
+                                      <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-500 flex-shrink-0" />
+                                      <span className="text-[17px] text-zinc-300">Scale (open)</span>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
+
+                          {/* Row 2 — Pattern Isolator dropdown */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-[17px] text-zinc-400 font-medium">Pattern Isolator</span>
+                            <div className="relative">
+                              <button
+                                onClick={() => setPatternDropdownOpen((p) => !p)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 min-w-[80px] rounded border border-zinc-600 bg-zinc-800/60 text-[17px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
+                                aria-haspopup="listbox"
+                                aria-expanded={patternDropdownOpen}
+                                aria-label="Pattern Isolator"
+                              >
+                                <span className="font-semibold">{dropdownLabel}</span>
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+
+                              {patternDropdownOpen && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-20"
+                                    onClick={() => setPatternDropdownOpen(false)}
+                                  />
+                                  <div className="absolute right-0 top-full mt-1 z-30 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[260px] py-1 overflow-hidden">
+                                    <button
+                                      onClick={() => { clearHighlight(); setPatternDropdownOpen(false); }}
+                                      className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                      role="option"
+                                      aria-selected={highlightedPatterns.size === 0}
+                                    >
+                                      <span>All Patterns</span>
+                                      {highlightedPatterns.size === 0 && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                                    </button>
+                                    <div className="h-px bg-zinc-800 mx-2" />
+                                    {(['I', 'II', 'III', 'IV', 'V'] as const).map((roman, idx) => (
+                                      <button
+                                        key={roman}
+                                        onClick={() => togglePattern(idx)}
+                                        className="w-full flex items-center justify-between px-3 py-1.5 text-[17px] text-zinc-300 hover:bg-zinc-800 transition-colors"
+                                        role="option"
+                                        aria-selected={highlightedPatterns.has(idx)}
+                                      >
+                                        <span>Pattern {roman}</span>
+                                        {highlightedPatterns.has(idx) && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
                         </div>
                       )}
 

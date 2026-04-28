@@ -13,7 +13,7 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   getSingletonContext,
   createSingletonContext,
-  createPluck,
+  createKarplusPluck,
   getNoteFrequency,
   markContextStaleOnWake,
 } from '@/lib/audio/shared-singleton';
@@ -38,7 +38,8 @@ export function useScalePatternAudio() {
   const [currentNoteIdx, setCurrentNoteIdx] = useState<number | null>(null);
 
   const stopFlagRef = useRef(false);
-  const activeOscsRef = useRef<OscillatorNode[]>([]);
+  // AudioBufferSourceNode[] when using Karplus-Strong; OscillatorNode[] for createPluck
+  const activeOscsRef = useRef<(OscillatorNode | AudioBufferSourceNode)[]>([]);
   const activeGainsRef = useRef<GainNode[]>([]);
   const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Per-note highlight timeouts — cleared on stop()
@@ -56,8 +57,8 @@ export function useScalePatternAudio() {
     noteTimeoutsRef.current.forEach((t) => clearTimeout(t));
     noteTimeoutsRef.current = [];
 
-    activeOscsRef.current.forEach((osc) => {
-      try { osc.stop(); osc.disconnect(); } catch { /* already stopped */ }
+    activeOscsRef.current.forEach((node) => {
+      try { node.stop(); node.disconnect(); } catch { /* already stopped */ }
     });
     activeOscsRef.current = [];
 
@@ -131,14 +132,14 @@ export function useScalePatternAudio() {
     const noteDuration = beatDuration * 0.85; // slight articulation gap
     const now = ctx.currentTime + 0.05;
 
-    const allOscs: OscillatorNode[] = [];
+    const allOscs: (OscillatorNode | AudioBufferSourceNode)[] = [];
 
     try {
       sequence.forEach((dot, i) => {
         const freq = getNoteFrequency(5 - dot.string, dot.fret); // reverse: ScaleDetailModal 0=high-e → singleton 0=low-E
         const startTime = now + i * beatDuration;
-        // Consistent pluck volume — slightly louder than chord strum per-string vol
-        const oscs = createPluck(ctx, freq, startTime, noteDuration, 0.28, masterGain);
+        // Karplus-Strong pluck — realistic pick transient + string resonance decay
+        const oscs = createKarplusPluck(ctx, freq, startTime, noteDuration, 0.28, masterGain);
         allOscs.push(...oscs);
       });
     } catch (err) {

@@ -1,10 +1,10 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Waves } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Check, Waves } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { SCALE_VAULT_DEFINITIONS, type ScaleVaultCategory, type ScaleVaultEntry } from '@/constants/scales';
 import { Note, Interval } from '@tonaljs/tonal';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useScaleVaultStore } from '@/stores/scaleVaultStore';
 import ScaleDetailModal from '@/components/features/ScaleDetailModal';
 
@@ -39,22 +39,13 @@ type RootNote = (typeof ROOT_NOTES)[number];
 
 // ── Helper ─────────────────────────────────────────────────────────────────
 
-/**
- * Return the scale note names for a given root and interval semitone array.
- * Uses Tonal.js Note.transpose + Interval.fromSemitones for accuracy,
- * then strips the octave number from the result (e.g. "C#4" → "C#").
- */
 function getScaleNotes(root: RootNote, intervals: readonly number[]): string[] {
   return intervals.map((semitones) => {
     const transposed = Note.transpose(`${root}4`, Interval.fromSemitones(semitones));
-    // Strip octave digit — Note.transpose returns e.g. "F#4", we want "F#"
     return transposed.replace(/\d+$/, '');
   });
 }
 
-// ── Step pattern label (semitone difference → step name) ──────────────────
-// Only differences 1, 2, 3 appear across all 39 scale entries.
-// Fallback renders the raw number for any future additions.
 function getStepLabel(diff: number): string {
   if (diff === 1) return 'H';
   if (diff === 2) return 'W';
@@ -62,16 +53,12 @@ function getStepLabel(diff: number): string {
   return String(diff);
 }
 
-// ── Scale degree formula lookup (semitones → scale degree label) ──────────
-// Uses standard guitar education convention: b5 for tritone, b6 for aug5, etc.
 const SEMITONE_TO_DEGREE: Record<number, string> = {
   0: '1',   1: 'b2',  2: '2',   3: 'b3',
   4: '3',   5: '4',   6: 'b5',  7: '5',
   8: 'b6',  9: '6',  10: 'b7', 11: '7',
 };
 
-// ── Per-scale overrides for semitone → degree label ───────────────────────
-// Lydian-family scales use #4 for semitone 6 (raised 4th), not b5.
 const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, string>>>> = {
   'lydian':                   { 6: '#4' },
   'lydian-augmented':         { 6: '#4' },
@@ -80,27 +67,47 @@ const SCALE_DEGREE_OVERRIDES: Partial<Record<string, Partial<Record<number, stri
   'lydian-sharp2':            { 6: '#4' },
   'lydian-sharp2-sharp6':     { 6: '#4' },
   'lydian-augmented-sharp2':  { 6: '#4' },
-  // Dorian #4: semitone 6 is the raised 4th degree (#4), not b5
   'dorian-sharp4':            { 6: '#4' },
 };
+
+// ── Shared dropdown item style — matches Pattern Isolator exactly ──────────
+// selected:   border-l-4 border-cyan-500, text-white,   Check w-7 h-7 text-cyan-400
+// unselected: no left border,             text-zinc-300, no check
 
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function ScaleVault() {
   const navigate = useNavigate();
 
-  // Always scroll to top on fresh mount — prevents stale scroll position
-  // from a previous visit showing the page halfway down on navigation from home.
   useEffect(() => {
     const el = document.getElementById('main-content');
     if (el) el.scrollTop = 0;
   }, []);
 
-  // Persisted in sessionStorage — survives back navigation from a future scale detail page
   const { selectedCategory, setSelectedCategory, selectedRoot, setSelectedRoot } = useScaleVaultStore();
-
-  // Scale detail modal state
   const [modalScale, setModalScale] = useState<ScaleVaultEntry | null>(null);
+
+  // ── Custom dropdown state ─────────────────────────────────────────────────
+  const [rootOpen, setRootOpen] = useState(false);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [rootPanelPos, setRootPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [categoryPanelPos, setCategoryPanelPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const rootBtnRef = useRef<HTMLButtonElement>(null);
+  const categoryBtnRef = useRef<HTMLButtonElement>(null);
+
+  const openRootDropdown = () => {
+    const rect = rootBtnRef.current?.getBoundingClientRect();
+    if (rect) setRootPanelPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    setRootOpen((p) => !p);
+    setCategoryOpen(false);
+  };
+
+  const openCategoryDropdown = () => {
+    const rect = categoryBtnRef.current?.getBoundingClientRect();
+    if (rect) setCategoryPanelPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    setCategoryOpen((p) => !p);
+    setRootOpen(false);
+  };
 
   // Filtered scales
   const visibleScales = useMemo(() => {
@@ -108,7 +115,7 @@ export default function ScaleVault() {
     return SCALE_VAULT_DEFINITIONS.filter((s) => s.category === selectedCategory);
   }, [selectedCategory]);
 
-  // Count per category (for badge numbers on chips)
+  // Count per category
   const categoryCounts = useMemo(() => {
     const counts: Partial<Record<ScaleVaultCategory, number>> = {};
     for (const s of SCALE_VAULT_DEFINITIONS) {
@@ -146,73 +153,53 @@ export default function ScaleVault() {
       </div>
 
       <div className="container mx-auto px-4 max-w-2xl">
-        {/* ── Root note selector ── */}
+
+        {/* ── Root note selector — custom portal dropdown ── */}
         <div className="mt-5">
-          <Select
-            value={selectedRoot}
-            onValueChange={(v) => setSelectedRoot(v as RootNote)}
+          <button
+            ref={rootBtnRef}
+            onClick={openRootDropdown}
+            className="w-full h-11 bg-zinc-800/80 border border-zinc-700 rounded-xl flex items-center justify-between px-3 hover:border-zinc-500 transition-colors"
+            aria-haspopup="listbox"
+            aria-expanded={rootOpen}
+            aria-label="Pick a key or root note"
           >
-            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
-              <div className="flex items-center justify-between w-full pr-1">
-                <span className="text-cyan-400 text-[19px] font-semibold truncate">Tap to pick a key or root note</span>
-                {selectedRoot && (
-                  <span className="text-cyan-300 text-[19px] font-bold ml-2 flex-shrink-0">{selectedRoot}</span>
-                )}
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
-              {ROOT_NOTES.map((note) => (
-                <SelectItem
-                  key={note}
-                  value={note}
-                  className="text-[21px] text-zinc-200 focus:bg-zinc-700 focus:text-white py-2.5"
-                >
-                  {note}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <span className="text-cyan-400 text-[19px] font-semibold truncate">Tap to pick a key or root note</span>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+              {selectedRoot && (
+                <span className="text-cyan-300 text-[19px] font-bold">{selectedRoot}</span>
+              )}
+              <ChevronDown className="w-5 h-5 text-cyan-400" />
+            </div>
+          </button>
         </div>
 
-        {/* ── Category filter dropdown ── */}
+        {/* ── Category filter — custom portal dropdown ── */}
         <div className="mt-4">
-          <Select
-            value={selectedCategory ?? 'all'}
-            onValueChange={(v) => setSelectedCategory(v === 'all' ? null : v as ScaleVaultCategory)}
+          <button
+            ref={categoryBtnRef}
+            onClick={openCategoryDropdown}
+            className="w-full h-11 bg-zinc-800/80 border border-zinc-700 rounded-xl flex items-center justify-between px-3 hover:border-zinc-500 transition-colors"
+            aria-haspopup="listbox"
+            aria-expanded={categoryOpen}
+            aria-label="Pick scale category"
           >
-            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
-              <div className="flex items-center justify-between w-full pr-1">
-                <span className="text-cyan-400 text-[19px] font-semibold truncate">Tap to pick scale category</span>
-                <span className="text-cyan-300 text-[19px] font-bold ml-2 flex-shrink-0">
-                  {selectedCategory ? CATEGORY_LABELS[selectedCategory] : 'All'}
-                </span>
-              </div>
-            </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
-              <SelectItem value="all" className="text-[21px] text-zinc-200 focus:bg-zinc-700 focus:text-white py-2.5">
-                All ({SCALE_VAULT_DEFINITIONS.length})
-              </SelectItem>
-              {CATEGORY_ORDER.map((cat) => (
-                <SelectItem
-                  key={cat}
-                  value={cat}
-                  className="text-[21px] text-zinc-200 focus:bg-zinc-700 focus:text-white py-2.5"
-                >
-                  {CATEGORY_LABELS[cat]} ({categoryCounts[cat] ?? 0})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
+            <span className="text-cyan-400 text-[19px] font-semibold truncate">Tap to pick scale category</span>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+              <span className="text-cyan-300 text-[19px] font-bold">
+                {selectedCategory ? CATEGORY_LABELS[selectedCategory] : 'All'}
+              </span>
+              <ChevronDown className="w-5 h-5 text-cyan-400" />
+            </div>
+          </button>
         </div>
 
         {/* ── Step pattern legend ── */}
-        {/* Fret counts: W=2 frets (whole step/2 semitones), H=1 fret (half step/1 semitone), A2=3 frets (aug 2nd/3 semitones) */}
         <p className="mt-3 text-[12px] text-zinc-500 leading-none px-1">
           W = Whole Step (2 frets)&nbsp;&nbsp;·&nbsp;&nbsp;H = Half Step (1 fret)&nbsp;&nbsp;·&nbsp;&nbsp;A2 = Aug 2nd (3 frets)
         </p>
 
-        {/* ── Press-to-open hint — positioned directly above first card ── */}
+        {/* ── Tap hint — directly above first card ── */}
         <p className="mt-4 px-1 text-[21px] font-semibold text-cyan-400 leading-snug">
           Tap Scale Card to See Patterns
         </p>
@@ -233,25 +220,20 @@ export default function ScaleVault() {
                 style={{ borderLeftColor: '#06b6d4' }}
                 onClick={() => setModalScale(scale)}
               >
-                {/* Scale name + category badge */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-[24px] font-bold text-white leading-snug">{scale.name}</p>
-
-                    {/* ── altNames subtitle — rendered only when present ── */}
                     {hasAltNames && (
                       <p className="text-[13px] text-zinc-300 leading-snug mt-0.5">
                         Also known as: {scale.altNames!.join(' · ')}
                       </p>
                     )}
                   </div>
-
                   <span className="flex-shrink-0 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-zinc-700 text-white whitespace-nowrap mt-0.5">
                     {CATEGORY_LABELS[scale.category]}
                   </span>
                 </div>
 
-                {/* Interval numbers */}
                 <div className="flex items-center gap-1.5 mt-[24px] flex-wrap">
                   {scale.intervals.map((interval, i) => (
                     <div key={i} className="flex flex-col items-center">
@@ -264,19 +246,16 @@ export default function ScaleVault() {
                       >
                         {notes[i]}
                       </span>
-                      <span className="text-[17px] text-zinc-200 mt-0.5 font-medium">{SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}</span>
+                      <span className="text-[17px] text-zinc-200 mt-0.5 font-medium">
+                        {SCALE_DEGREE_OVERRIDES[scale.id]?.[interval] ?? SEMITONE_TO_DEGREE[interval] ?? String(interval)}
+                      </span>
                     </div>
                   ))}
                 </div>
 
-                {/* Step pattern row — N-1 labels centered between consecutive note chips */}
-                {/* pl-[21px] = half chip (18px) + half gap (3px) aligns each label between chip centers */}
                 <div className="flex items-center gap-1.5 mt-1.5 pl-[21px] flex-wrap">
                   {scale.intervals.slice(1).map((val, i) => (
-                    <span
-                      key={i}
-                      className="w-9 text-center text-[13px] text-zinc-300 font-medium"
-                    >
+                    <span key={i} className="w-9 text-center text-[13px] text-zinc-300 font-medium">
                       {getStepLabel(val - scale.intervals[i])}
                     </span>
                   ))}
@@ -295,6 +274,113 @@ export default function ScaleVault() {
           isOpen={true}
           onClose={() => setModalScale(null)}
         />
+      )}
+
+      {/* ── Root note portal dropdown ── */}
+      {rootOpen && rootPanelPos && createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setRootOpen(false)}
+          />
+          {/* Panel */}
+          <div
+            className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl py-1 overflow-y-auto"
+            style={{
+              zIndex: 9999,
+              top: rootPanelPos.top,
+              left: rootPanelPos.left,
+              width: rootPanelPos.width,
+              maxHeight: '60vh',
+            }}
+          >
+            {ROOT_NOTES.map((note) => {
+              const isSelected = selectedRoot === note;
+              return (
+                <button
+                  key={note}
+                  onClick={() => {
+                    setSelectedRoot(note as RootNote);
+                    setRootOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 text-[21px] hover:bg-zinc-800 transition-colors ${
+                    isSelected
+                      ? 'text-white border-l-4 border-cyan-500'
+                      : 'text-zinc-300'
+                  }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span>{note}</span>
+                  {isSelected && <Check className="w-7 h-7 text-cyan-400 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body
+      )}
+
+      {/* ── Category portal dropdown ── */}
+      {categoryOpen && categoryPanelPos && createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setCategoryOpen(false)}
+          />
+          {/* Panel */}
+          <div
+            className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl py-1 overflow-y-auto"
+            style={{
+              zIndex: 9999,
+              top: categoryPanelPos.top,
+              left: categoryPanelPos.left,
+              width: categoryPanelPos.width,
+              maxHeight: '60vh',
+            }}
+          >
+            {/* All option */}
+            {(() => {
+              const isSelected = !selectedCategory;
+              return (
+                <button
+                  onClick={() => { setSelectedCategory(null); setCategoryOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 text-[21px] hover:bg-zinc-800 transition-colors ${
+                    isSelected ? 'text-white border-l-4 border-cyan-500' : 'text-zinc-300'
+                  }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span>All ({SCALE_VAULT_DEFINITIONS.length})</span>
+                  {isSelected && <Check className="w-7 h-7 text-cyan-400 flex-shrink-0" />}
+                </button>
+              );
+            })()}
+            <div className="h-px bg-zinc-800 mx-2" />
+            {CATEGORY_ORDER.map((cat) => {
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => { setSelectedCategory(cat); setCategoryOpen(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 text-[21px] hover:bg-zinc-800 transition-colors ${
+                    isSelected ? 'text-white border-l-4 border-cyan-500' : 'text-zinc-300'
+                  }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span>{CATEGORY_LABELS[cat]} ({categoryCounts[cat] ?? 0})</span>
+                  {isSelected && <Check className="w-7 h-7 text-cyan-400 flex-shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   );

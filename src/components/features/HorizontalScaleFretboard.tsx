@@ -163,6 +163,18 @@ export default function HorizontalScaleFretboard({
         style={{ display: 'block' }}
         aria-label={positionLabel ?? 'Scale pattern'}
       >
+        {/* Keyframe: pulse ring scale 1→1.25→1 during playback */}
+        <defs>
+          <style>{`
+            @keyframes hsfb-ring-pulse {
+              0%, 100% { transform: scale(1);    opacity: 0.9; }
+              50%       { transform: scale(1.25); opacity: 1;   }
+            }
+            .hsfb-ring-pulse {
+              animation: hsfb-ring-pulse 0.8s ease-in-out infinite;
+            }
+          `}</style>
+        </defs>
         {/* ── Nut (thick vertical bar, mirrors SVGChordDiagram nut rect) ───── */}
         {showNut && (
           <rect
@@ -277,15 +289,20 @@ export default function HorizontalScaleFretboard({
           return dot.isRoot ? (
             // Hollow cyan diamond — mirrors SVGChordDiagram openDiamonds
             <g key={`oroot-${arrIdx}`}>
-              {/* Active highlight: bright white outer ring */}
+              {/* Active highlight: bright white outer ring with pulse */}
               {isActive && (
-                <polygon
-                  points={diamondPoints(OPEN_X, cy, OPEN_DH + 5)}
-                  fill="none"
-                  stroke="white"
-                  strokeWidth={2.5}
-                  opacity={0.9}
-                />
+                <g
+                  className="hsfb-ring-pulse"
+                  style={{ transformOrigin: `${OPEN_X}px ${cy}px` }}
+                >
+                  <polygon
+                    points={diamondPoints(OPEN_X, cy, OPEN_DH + 5)}
+                    fill="none"
+                    stroke="white"
+                    strokeWidth={2.5}
+                    opacity={0.9}
+                  />
+                </g>
               )}
               <polygon
                 points={diamondPoints(OPEN_X, cy, OPEN_DH)}
@@ -311,9 +328,14 @@ export default function HorizontalScaleFretboard({
           ) : (
             // Hollow amber circle — mirrors SVGChordDiagram openStrings
             <g key={`oscale-${arrIdx}`}>
-              {/* Active highlight: bright white outer ring */}
+              {/* Active highlight: bright white outer ring with pulse */}
               {isActive && (
-                <circle cx={OPEN_X} cy={cy} r={OPEN_R + 5} fill="none" stroke="white" strokeWidth={2} opacity={0.9} />
+                <g
+                  className="hsfb-ring-pulse"
+                  style={{ transformOrigin: `${OPEN_X}px ${cy}px` }}
+                >
+                  <circle cx={OPEN_X} cy={cy} r={OPEN_R + 5} fill="none" stroke="white" strokeWidth={2} opacity={0.9} />
+                </g>
               )}
               <circle cx={OPEN_X} cy={cy} r={OPEN_R} fill="none" stroke={isActive ? '#fbbf24' : AMBER} strokeWidth={2.5} />
               {lbl && (
@@ -349,15 +371,20 @@ export default function HorizontalScaleFretboard({
           return dot.isRoot ? (
             // Solid cyan diamond — mirrors SVGChordDiagram diamond marker
             <g key={`froot-${i}`}>
-              {/* Active highlight: white outer ring + brighter fill */}
+              {/* Active highlight: white outer ring + brighter fill + pulse */}
               {isActive && (
-                <polygon
-                  points={diamondPoints(cx, cy, DIA_H + 5)}
-                  fill="none"
-                  stroke="white"
-                  strokeWidth={2.5}
-                  opacity={0.95}
-                />
+                <g
+                  className="hsfb-ring-pulse"
+                  style={{ transformOrigin: `${cx}px ${cy}px` }}
+                >
+                  <polygon
+                    points={diamondPoints(cx, cy, DIA_H + 5)}
+                    fill="none"
+                    stroke="white"
+                    strokeWidth={2.5}
+                    opacity={0.95}
+                  />
+                </g>
               )}
               <polygon points={diamondPoints(cx, cy, DIA_H)} fill={isActive ? '#22d3ee' : CYAN} />
               {lbl && (
@@ -379,9 +406,14 @@ export default function HorizontalScaleFretboard({
           ) : (
             // Solid amber circle — mirrors SVGChordDiagram circle marker
             <g key={`fscale-${i}`}>
-              {/* Active highlight: white outer ring + brighter fill */}
+              {/* Active highlight: white outer ring + brighter fill + pulse */}
               {isActive && (
-                <circle cx={cx} cy={cy} r={DOT_R + 5} fill="none" stroke="white" strokeWidth={2.5} opacity={0.95} />
+                <g
+                  className="hsfb-ring-pulse"
+                  style={{ transformOrigin: `${cx}px ${cy}px` }}
+                >
+                  <circle cx={cx} cy={cy} r={DOT_R + 5} fill="none" stroke="white" strokeWidth={2.5} opacity={0.95} />
+                </g>
               )}
               <circle cx={cx} cy={cy} r={DOT_R} fill={isActive ? '#fbbf24' : AMBER} />
               {lbl && (

@@ -154,9 +154,9 @@ export default function ScaleVault() {
           >
             <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
               <div className="flex items-center justify-between w-full pr-1">
-                <span className="text-cyan-400 text-[16px] font-semibold truncate">Tap to pick a key or root note</span>
+                <span className="text-cyan-400 text-[20px] font-semibold truncate">Tap to pick a key or root note</span>
                 {selectedRoot && (
-                  <span className="text-cyan-300 text-[15px] font-bold ml-2 flex-shrink-0">{selectedRoot}</span>
+                  <span className="text-cyan-300 text-[19px] font-bold ml-2 flex-shrink-0">{selectedRoot}</span>
                 )}
               </div>
             </SelectTrigger>
@@ -182,10 +182,10 @@ export default function ScaleVault() {
           >
             <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
               <div className="flex items-center justify-between w-full pr-1">
-                <span className="text-cyan-400 text-[16px] font-semibold truncate">Tap to pick scale category</span>
-                {selectedCategory && (
-                  <span className="text-cyan-300 text-[15px] font-bold ml-2 flex-shrink-0">{CATEGORY_LABELS[selectedCategory]}</span>
-                )}
+                <span className="text-cyan-400 text-[20px] font-semibold truncate">Tap to pick scale category</span>
+                <span className="text-cyan-300 text-[19px] font-bold ml-2 flex-shrink-0">
+                  {selectedCategory ? CATEGORY_LABELS[selectedCategory] : 'All'}
+                </span>
               </div>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-700 text-white">

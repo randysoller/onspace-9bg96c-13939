@@ -57,6 +57,7 @@ const OPEN_R  = 6.65;   // open string: r * 0.7 (SVGChordDiagram head-indicator 
 const OPEN_DH = 10.4;   // open root diamond: OPEN_R * 1.56
 const FONT_SZ_SMALL = 11; // label inside larger diamonds
 const FONT_SZ = 13;        // label inside circles (r*1.37)
+const FRET_LABEL_SZ = 13;  // per-fret number labels below diagram (+2 from 11)
 
 // Padding
 const TOP_PAD    = 20;    // above top string (room for open-position fret number label)
@@ -116,7 +117,7 @@ export default function HorizontalScaleFretboard({
   return (
     <div className="w-full">
       {positionLabel && (
-        <p className="text-[12px] font-bold uppercase tracking-widest text-zinc-500 mb-1 px-0.5">
+        <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-1 px-0.5">
           {positionLabel}
         </p>
       )}
@@ -160,7 +161,7 @@ export default function HorizontalScaleFretboard({
             x={fretCX(i)}
             y={TOP_PAD + GRID_H + 31}
             textAnchor="middle"
-            fontSize={11}
+            fontSize={FRET_LABEL_SZ}
             fontWeight={600}
             fill={FRET_NUM_CLR}
             fillOpacity={0.75}

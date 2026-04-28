@@ -152,8 +152,13 @@ export default function ScaleVault() {
             value={selectedRoot}
             onValueChange={(v) => setSelectedRoot(v as RootNote)}
           >
-            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 text-cyan-400 text-[16px] font-semibold rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
-              <SelectValue placeholder="Tap to pick a key or root note" />
+            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
+              <div className="flex items-center justify-between w-full pr-1">
+                <span className="text-cyan-400 text-[16px] font-semibold truncate">Tap to pick a key or root note</span>
+                {selectedRoot && (
+                  <span className="text-cyan-300 text-[15px] font-bold ml-2 flex-shrink-0">{selectedRoot}</span>
+                )}
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
               {ROOT_NOTES.map((note) => (
@@ -175,8 +180,13 @@ export default function ScaleVault() {
             value={selectedCategory ?? 'all'}
             onValueChange={(v) => setSelectedCategory(v === 'all' ? null : v as ScaleVaultCategory)}
           >
-            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 text-white text-[16px] font-semibold rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-zinc-200 [&_svg]:w-5 [&_svg]:h-5">
-              <SelectValue placeholder="Tap to pick scale category" />
+            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
+              <div className="flex items-center justify-between w-full pr-1">
+                <span className="text-cyan-400 text-[16px] font-semibold truncate">Tap to pick scale category</span>
+                {selectedCategory && (
+                  <span className="text-cyan-300 text-[15px] font-bold ml-2 flex-shrink-0">{CATEGORY_LABELS[selectedCategory]}</span>
+                )}
+              </div>
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
               <SelectItem value="all" className="text-[15px] text-zinc-200 focus:bg-zinc-700 focus:text-white">

@@ -390,7 +390,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   }, [cardWidth]);
 
   // Scale pattern audio — 90 BPM, ascending then descending guitar pluck
-  const { playPattern, stop: stopPattern, isPlaying: isPatternPlaying, playingIdx } = useScalePatternAudio();
+  const { playPattern, stop: stopPattern, isPlaying: isPatternPlaying, playingIdx, currentNoteIdx } = useScalePatternAudio();
 
   // Stop playback when modal closes
   useEffect(() => {
@@ -751,8 +751,12 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                   dots={fretDots}
                                   startFret={pos.startFret}
                                   positionLabel={pos.label}
+                                  activeDotIdx={isThisPlaying ? currentNoteIdx : null}
                                 />
                                 {/* Play/Stop button below diagram, centered — zero horizontal offset so SVG gets full width */}
+                                {/* Fretboard diagram — rendered for all cards except 'neck' */}
+                                {/* activeDotIdx only applies when this specific pattern is playing */}
+
                                 {cardDef.id === 'finger' && (
                                   <div className="flex justify-center mt-2">
                                     <button
@@ -777,7 +781,10 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                 {/* Guitar tab notation — Finger Patterns card only */}
                                 {cardDef.id === 'finger' && (
                                   <div className="mt-3 border-t border-zinc-800/60 pt-2">
-                                    <ScaleTabNotation dots={pos.dots} />
+                                    <ScaleTabNotation
+                                      dots={pos.dots}
+                                      currentNoteIdx={isThisPlaying ? currentNoteIdx : null}
+                                    />
                                   </div>
                                 )}
                               </div>

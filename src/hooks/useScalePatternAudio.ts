@@ -30,11 +30,19 @@ export interface PatternDot {
 export function useScalePatternAudio() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  /**
+   * Index of the currently-sounding note within the frequency-sorted ascending
+   * sequence (0 = lowest pitch dot, N-1 = highest).  Pingpongs up then back
+   * down during playback so callers can highlight the active dot.
+   */
+  const [currentNoteIdx, setCurrentNoteIdx] = useState<number | null>(null);
 
   const stopFlagRef = useRef(false);
   const activeOscsRef = useRef<OscillatorNode[]>([]);
   const activeGainsRef = useRef<GainNode[]>([]);
   const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Per-note highlight timeouts — cleared on stop()
+  const noteTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const getEffectiveVolume = useAudioStore((s) => s.getEffectiveVolume);
 
@@ -43,6 +51,10 @@ export function useScalePatternAudio() {
     stopFlagRef.current = true;
     if (playTimeoutRef.current) clearTimeout(playTimeoutRef.current);
     playTimeoutRef.current = null;
+
+    // Clear all per-note highlight timeouts
+    noteTimeoutsRef.current.forEach((t) => clearTimeout(t));
+    noteTimeoutsRef.current = [];
 
     activeOscsRef.current.forEach((osc) => {
       try { osc.stop(); osc.disconnect(); } catch { /* already stopped */ }
@@ -56,6 +68,7 @@ export function useScalePatternAudio() {
 
     setIsPlaying(false);
     setPlayingIdx(null);
+    setCurrentNoteIdx(null);
   }, []);
 
   /**
@@ -141,6 +154,25 @@ export function useScalePatternAudio() {
     stopFlagRef.current = false;
     setIsPlaying(true);
     setPlayingIdx(patternIdx);
+    setCurrentNoteIdx(0); // start highlight at first note
+
+    // ── Per-note highlight timeouts ───────────────────────────────────────
+    // For each note in the full sequence (asc + desc), compute which index
+    // within the ascending half it maps to so both tab and fretboard can
+    // highlight the matching dot.  Ascending: idx = i.  Descending: idx pingpongs
+    // back down: idx = 2*(N-1) - i  (where N = sorted.length).
+    const N = sorted.length;
+    const highlightTimeouts: ReturnType<typeof setTimeout>[] = [];
+    sequence.forEach((_dot, i) => {
+      // Map sequence position to ascending-sort index
+      const ascIdx = i < N ? i : 2 * (N - 1) - i;
+      const delayMs = i * beatDuration * 1000 + 50; // +50 ms to align with audio onset
+      const t = setTimeout(() => {
+        if (!stopFlagRef.current) setCurrentNoteIdx(ascIdx);
+      }, delayMs);
+      highlightTimeouts.push(t);
+    });
+    noteTimeoutsRef.current = highlightTimeouts;
 
     // Auto-reset state when playback finishes
     const totalDuration = sequence.length * beatDuration + noteDuration;
@@ -148,6 +180,7 @@ export function useScalePatternAudio() {
       if (!stopFlagRef.current) {
         setIsPlaying(false);
         setPlayingIdx(null);
+        setCurrentNoteIdx(null);
       }
     }, (totalDuration + 0.1) * 1000);
   }, [getEffectiveVolume, stop]);
@@ -167,5 +200,5 @@ export function useScalePatternAudio() {
     };
   }, [stop]);
 
-  return { playPattern, stop, isPlaying, playingIdx };
+  return { playPattern, stop, isPlaying, playingIdx, currentNoteIdx };
 }

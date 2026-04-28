@@ -12,6 +12,10 @@
  *   • Scale fretted → solid amber circle  (#f59e0b), white label
  *   • Scale open    → hollow amber circle outline, white label
  *   • Open strings sit LEFT of the nut in a dedicated column
+ *
+ * Playback highlight:
+ *   • activeDotIdx = index into the frequency-sorted ascending dot array
+ *   • Matching dot gets a bright white outer ring to follow audio playback
  */
 
 export interface FretDot {
@@ -29,6 +33,13 @@ interface HorizontalScaleFretboardProps {
   dots: FretDot[];
   startFret: number;
   positionLabel?: string;
+  /**
+   * Index (into the frequency-sorted ascending order of dots) of the note
+   * currently being played.  When set, a bright white ring is drawn around
+   * that dot so the highlight follows audio playback.
+   * Uses the same sort as useScalePatternAudio: ascending absolute pitch.
+   */
+  activeDotIdx?: number | null;
 }
 
 // ── Colours matching SVGChordDiagram exactly ──────────────────────────────────
@@ -100,13 +111,38 @@ function diamondPoints(cx: number, cy: number, h: number): string {
 const INLAY_SINGLE = [3, 5, 7, 9, 15, 17, 19, 21];
 const INLAY_DOUBLE = [12, 24];
 
+// ── Open-string semitone table (matches ScaleTabNotation + audio hook sort) ──
+// Used to build a frequency-sorted index so activeDotIdx maps correctly.
+const OPEN_SEM_H = [64, 59, 55, 50, 45, 40] as const; // e B G D A E (absolute MIDI approx)
+
+/**
+ * Build a Map<originalDotArrayIndex, frequencySortedPosition>.
+ * This lets the fretboard know which dot index corresponds to the audio hook's
+ * currentNoteIdx (which is also frequency-sorted ascending).
+ */
+function buildSortedIndexMap(dots: FretDot[]): Map<number, number> {
+  const indexed = dots.map((d, i) => ({ d, i }));
+  const sorted  = [...indexed].sort((a, b) => {
+    const pa = OPEN_SEM_H[a.d.string] + a.d.fret;
+    const pb = OPEN_SEM_H[b.d.string] + b.d.fret;
+    return pa - pb;
+  });
+  const map = new Map<number, number>();
+  sorted.forEach(({ i }, sortedPos) => map.set(i, sortedPos));
+  return map;
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HorizontalScaleFretboard({
   dots,
   startFret,
   positionLabel,
+  activeDotIdx = null,
 }: HorizontalScaleFretboardProps) {
+  // Build sorted-position lookup so we can find which dot matches activeDotIdx
+  const sortedPosMap = activeDotIdx != null ? buildSortedIndexMap(dots) : null;
+
   const openDots    = dots.filter((d) => d.isOpenString);
   const frettedDots = dots.filter((d) => !d.isOpenString);
 
@@ -230,18 +266,31 @@ export default function HorizontalScaleFretboard({
         ))}
 
         {/* ── Open-string dots (left of nut, mirrors SVGChordDiagram head indicators) */}
-        {openDots.map((dot, i) => {
+        {openDots.map((dot, arrIdx) => {
           const cy  = strCY(dot.string);
           const lbl = dot.label ?? '';
           const fs  = lbl.length > 2 ? FONT_SZ_SMALL - 1 : FONT_SZ_SMALL;
+          // Resolve original index in the full `dots` array for highlight lookup
+          const originalIdx = dots.indexOf(dot);
+          const isActive = activeDotIdx != null && sortedPosMap?.get(originalIdx) === activeDotIdx;
 
           return dot.isRoot ? (
             // Hollow cyan diamond — mirrors SVGChordDiagram openDiamonds
-            <g key={`oroot-${i}`}>
+            <g key={`oroot-${arrIdx}`}>
+              {/* Active highlight: bright white outer ring */}
+              {isActive && (
+                <polygon
+                  points={diamondPoints(OPEN_X, cy, OPEN_DH + 5)}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth={2.5}
+                  opacity={0.9}
+                />
+              )}
               <polygon
                 points={diamondPoints(OPEN_X, cy, OPEN_DH)}
                 fill="none"
-                stroke={CYAN}
+                stroke={isActive ? '#22d3ee' : CYAN}
                 strokeWidth={2.5}
               />
               {lbl && (
@@ -261,8 +310,12 @@ export default function HorizontalScaleFretboard({
             </g>
           ) : (
             // Hollow amber circle — mirrors SVGChordDiagram openStrings
-            <g key={`oscale-${i}`}>
-              <circle cx={OPEN_X} cy={cy} r={OPEN_R} fill="none" stroke={AMBER} strokeWidth={2.5} />
+            <g key={`oscale-${arrIdx}`}>
+              {/* Active highlight: bright white outer ring */}
+              {isActive && (
+                <circle cx={OPEN_X} cy={cy} r={OPEN_R + 5} fill="none" stroke="white" strokeWidth={2} opacity={0.9} />
+              )}
+              <circle cx={OPEN_X} cy={cy} r={OPEN_R} fill="none" stroke={isActive ? '#fbbf24' : AMBER} strokeWidth={2.5} />
               {lbl && (
                 <text
                   x={OPEN_X}
@@ -289,11 +342,24 @@ export default function HorizontalScaleFretboard({
           const cx  = fretCX(slot);
           const cy  = strCY(dot.string);
           const lbl = dot.label ?? '';
+          // Resolve original index in the full `dots` array for highlight lookup
+          const originalIdx = dots.indexOf(dot);
+          const isActive = activeDotIdx != null && sortedPosMap?.get(originalIdx) === activeDotIdx;
 
           return dot.isRoot ? (
             // Solid cyan diamond — mirrors SVGChordDiagram diamond marker
             <g key={`froot-${i}`}>
-              <polygon points={diamondPoints(cx, cy, DIA_H)} fill={CYAN} />
+              {/* Active highlight: white outer ring + brighter fill */}
+              {isActive && (
+                <polygon
+                  points={diamondPoints(cx, cy, DIA_H + 5)}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth={2.5}
+                  opacity={0.95}
+                />
+              )}
+              <polygon points={diamondPoints(cx, cy, DIA_H)} fill={isActive ? '#22d3ee' : CYAN} />
               {lbl && (
                 <text
                   x={cx}
@@ -313,7 +379,11 @@ export default function HorizontalScaleFretboard({
           ) : (
             // Solid amber circle — mirrors SVGChordDiagram circle marker
             <g key={`fscale-${i}`}>
-              <circle cx={cx} cy={cy} r={DOT_R} fill={AMBER} />
+              {/* Active highlight: white outer ring + brighter fill */}
+              {isActive && (
+                <circle cx={cx} cy={cy} r={DOT_R + 5} fill="none" stroke="white" strokeWidth={2.5} opacity={0.95} />
+              )}
+              <circle cx={cx} cy={cy} r={DOT_R} fill={isActive ? '#fbbf24' : AMBER} />
               {lbl && (
                 <text
                   x={cx}

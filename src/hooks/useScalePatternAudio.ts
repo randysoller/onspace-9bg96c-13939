@@ -13,7 +13,7 @@ import { useRef, useCallback, useEffect, useState } from 'react';
 import {
   getSingletonContext,
   createSingletonContext,
-  createKarplusPluck,
+  createPluck,
   getNoteFrequency,
   markContextStaleOnWake,
 } from '@/lib/audio/shared-singleton';
@@ -38,8 +38,7 @@ export function useScalePatternAudio() {
   const [currentNoteIdx, setCurrentNoteIdx] = useState<number | null>(null);
 
   const stopFlagRef = useRef(false);
-  // AudioBufferSourceNode[] when using Karplus-Strong; OscillatorNode[] for createPluck
-  const activeOscsRef = useRef<(OscillatorNode | AudioBufferSourceNode)[]>([]);
+  const activeOscsRef = useRef<OscillatorNode[]>([]);
   const activeGainsRef = useRef<GainNode[]>([]);
   const playTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Per-note highlight timeouts — cleared on stop()
@@ -132,14 +131,13 @@ export function useScalePatternAudio() {
     const noteDuration = beatDuration * 0.85; // slight articulation gap
     const now = ctx.currentTime + 0.05;
 
-    const allOscs: (OscillatorNode | AudioBufferSourceNode)[] = [];
+    const allOscs: OscillatorNode[] = [];
 
     try {
       sequence.forEach((dot, i) => {
         const freq = getNoteFrequency(5 - dot.string, dot.fret); // reverse: ScaleDetailModal 0=high-e → singleton 0=low-E
         const startTime = now + i * beatDuration;
-        // Karplus-Strong pluck — realistic pick transient + string resonance decay
-        const oscs = createKarplusPluck(ctx, freq, startTime, noteDuration, 0.28, masterGain);
+        const oscs = createPluck(ctx, freq, startTime, noteDuration, 0.28, masterGain);
         allOscs.push(...oscs);
       });
     } catch (err) {

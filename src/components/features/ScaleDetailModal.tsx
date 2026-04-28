@@ -709,36 +709,35 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             const isThisPlaying = isPatternPlaying && playingIdx === posIdx;
 
                             return (
-                              <div key={posIdx} className={`border border-zinc-800 rounded-lg p-2 bg-zinc-900/40${cardDef.id === 'finger' ? ' relative' : ''}`}>
-                                {/* Play/Stop button — absolutely positioned so it does NOT consume horizontal layout space */}
-                                {/* This keeps the diagram at identical width to Note Names / Scale Formula cards */}
+                              <div key={posIdx} className="border border-zinc-800 rounded-lg p-2 bg-zinc-900/40">
+                                {/* Diagram at full container width — identical to Note Names / Scale Formula cards */}
+                                <HorizontalScaleFretboard
+                                  dots={fretDots}
+                                  startFret={pos.startFret}
+                                  positionLabel={pos.label}
+                                />
+                                {/* Play/Stop button below diagram, centered — zero horizontal offset so SVG gets full width */}
                                 {cardDef.id === 'finger' && (
-                                  <button
-                                    onClick={() => {
-                                      if (isThisPlaying) {
-                                        stopPattern();
-                                      } else {
-                                        playPattern(pos.dots, 90, posIdx);
+                                  <div className="flex justify-center mt-2">
+                                    <button
+                                      onClick={() => {
+                                        if (isThisPlaying) {
+                                          stopPattern();
+                                        } else {
+                                          playPattern(pos.dots, 90, posIdx);
+                                        }
+                                      }}
+                                      className="w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-zinc-950 rounded-lg flex items-center justify-center transition-colors border border-amber-500/25 shadow-md"
+                                      aria-label={isThisPlaying ? `Stop Pattern ${posIdx + 1}` : `Play Pattern ${posIdx + 1} ascending and descending`}
+                                      title={isThisPlaying ? 'Stop' : 'Play scale — ascending & descending at 90 BPM'}
+                                    >
+                                      {isThisPlaying
+                                        ? <Square className="w-7 h-7 fill-zinc-950 stroke-zinc-950" />
+                                        : <Volume2 className="w-8 h-8 stroke-[2.5]" />
                                       }
-                                    }}
-                                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-zinc-950 rounded-lg flex items-center justify-center transition-colors border border-amber-500/25 shadow-md"
-                                    aria-label={isThisPlaying ? `Stop Pattern ${posIdx + 1}` : `Play Pattern ${posIdx + 1} ascending and descending`}
-                                    title={isThisPlaying ? 'Stop' : 'Play scale — ascending & descending at 90 BPM'}
-                                  >
-                                    {isThisPlaying
-                                      ? <Square className="w-7 h-7 fill-zinc-950 stroke-zinc-950" />
-                                      : <Volume2 className="w-8 h-8 stroke-[2.5]" />
-                                    }
-                                  </button>
+                                    </button>
+                                  </div>
                                 )}
-                                {/* pl-16 offset on Finger card keeps diagram content clear of the absolute button */}
-                                <div className={cardDef.id === 'finger' ? 'pl-16' : ''}>
-                                  <HorizontalScaleFretboard
-                                    dots={fretDots}
-                                    startFret={pos.startFret}
-                                    positionLabel={pos.label}
-                                  />
-                                </div>
                               </div>
                             );
                           })}

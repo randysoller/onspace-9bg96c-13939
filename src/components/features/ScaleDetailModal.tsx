@@ -30,6 +30,7 @@ import { X, ChevronLeft, ChevronRight, ChevronDown, Check, Volume2, Square } fro
 import { useScalePatternAudio } from '@/hooks/useScalePatternAudio';
 import type { ScaleVaultEntry } from '@/constants/scales';
 import HorizontalScaleFretboard, { type FretDot } from './HorizontalScaleFretboard';
+import ScaleTabNotation from './ScaleTabNotation';
 import VerticalNeckFretboard, { type NeckDot } from './VerticalNeckFretboard';
 import {
   getMajorScalePatterns,
@@ -771,6 +772,12 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                         : <Volume2 className="w-8 h-8 stroke-[2.5]" />
                                       }
                                     </button>
+                                  </div>
+                                )}
+                                {/* Guitar tab notation — Finger Patterns card only */}
+                                {cardDef.id === 'finger' && (
+                                  <div className="mt-3 border-t border-zinc-800/60 pt-2">
+                                    <ScaleTabNotation dots={pos.dots} />
                                   </div>
                                 )}
                               </div>

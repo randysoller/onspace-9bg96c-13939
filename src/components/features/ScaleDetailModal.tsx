@@ -709,8 +709,9 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             const isThisPlaying = isPatternPlaying && playingIdx === posIdx;
 
                             return (
-                              <div key={posIdx} className="border border-zinc-800 rounded-lg p-2 bg-zinc-900/40 flex items-center gap-2">
-                                {/* Play/Stop button — Finger Patterns card only */}
+                              <div key={posIdx} className={`border border-zinc-800 rounded-lg p-2 bg-zinc-900/40${cardDef.id === 'finger' ? ' relative' : ''}`}>
+                                {/* Play/Stop button — absolutely positioned so it does NOT consume horizontal layout space */}
+                                {/* This keeps the diagram at identical width to Note Names / Scale Formula cards */}
                                 {cardDef.id === 'finger' && (
                                   <button
                                     onClick={() => {
@@ -720,7 +721,7 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                         playPattern(pos.dots, 90, posIdx);
                                       }
                                     }}
-                                    className="flex-shrink-0 w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-zinc-950 rounded-lg flex items-center justify-center transition-colors border border-amber-500/25 shadow-md"
+                                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-[52px] h-[52px] bg-amber-500 hover:bg-amber-600 active:scale-95 text-zinc-950 rounded-lg flex items-center justify-center transition-colors border border-amber-500/25 shadow-md"
                                     aria-label={isThisPlaying ? `Stop Pattern ${posIdx + 1}` : `Play Pattern ${posIdx + 1} ascending and descending`}
                                     title={isThisPlaying ? 'Stop' : 'Play scale — ascending & descending at 90 BPM'}
                                   >
@@ -730,7 +731,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                                     }
                                   </button>
                                 )}
-                                <div className="flex-1 min-w-0">
+                                {/* pl-16 offset on Finger card keeps diagram content clear of the absolute button */}
+                                <div className={cardDef.id === 'finger' ? 'pl-16' : ''}>
                                   <HorizontalScaleFretboard
                                     dots={fretDots}
                                     startFret={pos.startFret}

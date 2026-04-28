@@ -135,9 +135,7 @@ export default function ScaleVault() {
                 <Waves className="w-4 h-4 text-white" strokeWidth={2.3} />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="text-[21px] font-bold text-white leading-none">Scale Vault</h1>
-                <p className="text-[15px] text-zinc-400 mt-0.5 leading-none">Solo in any key</p>
-                <p className="text-[17px] text-cyan-400 mt-0.5 leading-none">Press Scale Card to See Patterns</p>
+                <h1 className="text-[26px] font-bold text-white leading-none">Scale Vault</h1>
               </div>
             </div>
             <span className="flex-shrink-0 text-[14px] font-semibold text-zinc-100 bg-zinc-700/80 px-2 py-0.5 rounded-full mt-1">
@@ -150,7 +148,7 @@ export default function ScaleVault() {
       <div className="container mx-auto px-4 max-w-2xl">
         {/* ── Root note selector ── */}
         <div className="mt-5">
-          <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Root Note / Key</p>
+          <p className="text-[14px] font-bold uppercase tracking-widest text-cyan-400 mb-2 px-1">Choose a Key or Root Note</p>
           <div className="grid grid-cols-6 gap-1.5">
             {ROOT_NOTES.map((note) => {
               const isActive = selectedRoot === note;
@@ -173,7 +171,7 @@ export default function ScaleVault() {
 
         {/* ── Category filter dropdown ── */}
         <div className="mt-4">
-          <p className="text-[14px] font-bold uppercase tracking-widest text-zinc-400 mb-2 px-1">Category</p>
+          <p className="text-[14px] font-bold uppercase tracking-widest text-cyan-400 mb-2 px-1">Choose Category of Scale</p>
           <Select
             value={selectedCategory ?? 'all'}
             onValueChange={(v) => setSelectedCategory(v === 'all' ? null : v as ScaleVaultCategory)}
@@ -196,7 +194,7 @@ export default function ScaleVault() {
               ))}
             </SelectContent>
           </Select>
-          <p className="mt-1.5 px-1 text-[15px] text-cyan-400 leading-none">Press to choose type of scale</p>
+
         </div>
 
         {/* ── Step pattern legend ── */}
@@ -205,8 +203,13 @@ export default function ScaleVault() {
           W = Whole Step (2 frets)&nbsp;&nbsp;·&nbsp;&nbsp;H = Half Step (1 fret)&nbsp;&nbsp;·&nbsp;&nbsp;A2 = Aug 2nd (3 frets)
         </p>
 
+        {/* ── Press-to-open hint — positioned directly above first card ── */}
+        <p className="mt-4 px-1 text-[21px] font-semibold text-cyan-400 leading-snug">
+          Press Scale Card to See Patterns
+        </p>
+
         {/* ── Scale cards grid ── */}
-        <div className="mt-5 space-y-2">
+        <div className="mt-3 space-y-2">
           {visibleScales.map((scale, idx) => {
             const notes = getScaleNotes(selectedRoot as RootNote, scale.intervals);
             const hasAltNames = scale.altNames && scale.altNames.length > 0;

@@ -312,6 +312,20 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
   const patternBtnRef = useRef<HTMLButtonElement>(null);
   const legendBtnRef = useRef<HTMLButtonElement>(null);
 
+  /** Label mode for Finger Patterns card — controls what appears on fret dots */
+  const [labelMode, setLabelMode] = useState<'finger' | 'notes' | 'formula'>('finger');
+  /** Controls open/closed state of the Label Picker dropdown (Finger card) */
+  const [labelDropdownOpen, setLabelDropdownOpen] = useState(false);
+  /** Fixed-position coords for Label Picker panel */
+  const [labelPanelPos, setLabelPanelPos] = useState<{ top: number; left: number } | null>(null);
+  /** Controls open/closed state of the Finger card Legend dropdown */
+  const [fingerLegendOpen, setFingerLegendOpen] = useState(false);
+  /** Fixed-position coords for Finger card Legend panel */
+  const [fingerLegendPos, setFingerLegendPos] = useState<{ top: number; right: number } | null>(null);
+  /** Refs for Finger card dropdowns */
+  const labelBtnRef = useRef<HTMLButtonElement>(null);
+  const fingerLegendBtnRef = useRef<HTMLButtonElement>(null);
+
   // scrollRef: the horizontally-scrollable snap container
   const scrollRef  = useRef<HTMLDivElement>(null);
   // wrapRef: outer div used to measure available width
@@ -579,6 +593,46 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                         </div>
                       </div>
 
+                      {/* ── Finger card: Label Picker (left) + Legend (right) — single pinned row ── */}
+                      {cardDef.id === 'finger' && (
+                        <div className="flex-shrink-0 border-b border-zinc-800/50 px-3 py-2 bg-zinc-900/50 flex items-center justify-between gap-2">
+                          {/* Label picker dropdown — left side */}
+                          <button
+                            ref={labelBtnRef}
+                            onClick={() => {
+                              const rect = labelBtnRef.current?.getBoundingClientRect();
+                              if (rect) setLabelPanelPos({ top: rect.bottom + 4, left: rect.left });
+                              setLabelDropdownOpen((p) => !p);
+                              setFingerLegendOpen(false);
+                            }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 flex-1 min-w-0 rounded border border-zinc-600 bg-zinc-800/60 text-[15px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors"
+                            aria-haspopup="listbox"
+                            aria-expanded={labelDropdownOpen}
+                            aria-label="Pick label style"
+                          >
+                            <span className="font-semibold text-cyan-400 truncate">Tap to pick your labels</span>
+                            <ChevronDown className="w-3.5 h-3.5 ml-auto flex-shrink-0" />
+                          </button>
+                          {/* Finger card Legend dropdown — right side */}
+                          <button
+                            ref={fingerLegendBtnRef}
+                            onClick={() => {
+                              const rect = fingerLegendBtnRef.current?.getBoundingClientRect();
+                              if (rect) setFingerLegendPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                              setFingerLegendOpen((p) => !p);
+                              setLabelDropdownOpen(false);
+                            }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded border border-zinc-600 bg-zinc-800/60 text-[15px] text-zinc-300 hover:border-zinc-400 hover:text-white transition-colors flex-shrink-0"
+                            aria-haspopup="listbox"
+                            aria-expanded={fingerLegendOpen}
+                            aria-label="Show legend"
+                          >
+                            <span className="font-semibold">Legend</span>
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+
                       {/* ── Neck-only: Pattern Isolator (left) + Legend (right) — single pinned row ── */}
                       {cardDef.id === 'neck' && (
                         <div className="flex-shrink-0 border-b border-zinc-800/50 px-3 py-2 bg-zinc-900/50 flex items-center justify-between gap-2">
@@ -638,33 +692,8 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             </div>
                           )}
 
-                          {/* Finger legend — only on Finger card, above Pattern I */}
-                          {cardDef.id === 'finger' && (
-                            <div className="flex items-center gap-3 flex-wrap px-0.5 pb-1">
-                              {[
-                                { num: '1', name: 'Index' },
-                                { num: '2', name: 'Middle' },
-                                { num: '3', name: 'Ring' },
-                                { num: '4', name: 'Pinky' },
-                              ].map(({ num, name }) => (
-                                <div key={num} className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-[10px] font-black text-white leading-none">{num}</span>
-                                  </div>
-                                  <span className="text-[11px] text-zinc-400 font-medium">{name}</span>
-                                </div>
-                              ))}
-                              <div className="flex items-center gap-1.5">
-                                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-                                  <polygon points="7,1 13,7 7,13 1,7" fill="#06b6d4" />
-                                </svg>
-                                <span className="text-[11px] text-zinc-400 font-medium">Root</span>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Symbol legend — on Finger / Notes / Intervals cards */}
-                          {cardDef.id !== 'neck' && (
+                          {/* Symbol legend — on Notes / Intervals cards only; Finger card legend lives in its Legend dropdown */}
+                          {(cardDef.id === 'notes' || cardDef.id === 'intervals') && (
                             <div className="pb-1 border-b border-zinc-800/50">
                               <div className="flex items-center gap-4 px-0.5 flex-wrap">
                                 <div className="flex items-center gap-1.5">
@@ -690,7 +719,13 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
                             const fretDots: FretDot[] = pos.dots.map((dot) => {
                               let label: string;
                               if (cardDef.id === 'finger') {
-                                label = dot.isOpenString ? '0' : String(dot.finger);
+                                if (labelMode === 'notes') {
+                                  label = noteLabel(dot.interval, rootSem);
+                                } else if (labelMode === 'formula') {
+                                  label = degreeLabel(dot.interval, scale.id);
+                                } else {
+                                  label = dot.isOpenString ? '0' : String(dot.finger);
+                                }
                               } else if (cardDef.id === 'notes') {
                                 label = noteLabel(dot.interval, rootSem);
                               } else {
@@ -787,6 +822,104 @@ export default function ScaleDetailModal({ scale, rootNote, isOpen, onClose }: S
         </motion.div>
       </motion.div>
     </AnimatePresence>
+
+    {/* ── Label Picker portal (Finger card) — rendered into document.body ── */}
+    {labelDropdownOpen && labelPanelPos && createPortal(
+      <>
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 9998 }}
+          onClick={() => setLabelDropdownOpen(false)}
+        />
+        <div
+          className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[240px] py-1 overflow-hidden"
+          style={{ zIndex: 9999, top: labelPanelPos.top, left: labelPanelPos.left }}
+        >
+          {(['finger', 'notes', 'formula'] as const).map((mode) => {
+            const isSelected = labelMode === mode;
+            const modeLabel = mode === 'finger' ? 'Finger Numbers (default)' : mode === 'notes' ? 'Note Names' : 'Formula';
+            return (
+              <button
+                key={mode}
+                onClick={() => { setLabelMode(mode); setLabelDropdownOpen(false); }}
+                className={`w-full flex items-center justify-between px-3 py-1.5 text-[17px] hover:bg-zinc-800 transition-colors ${
+                  isSelected ? 'text-white border-l-4 border-cyan-500' : 'text-zinc-300'
+                }`}
+                role="option"
+                aria-selected={isSelected}
+              >
+                <span>{modeLabel}</span>
+                {isSelected && <Check className="w-7 h-7 text-cyan-400 flex-shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </>,
+      document.body
+    )}
+
+    {/* ── Finger card Legend portal — context-aware based on labelMode ── */}
+    {fingerLegendOpen && fingerLegendPos && createPortal(
+      <>
+        <div
+          className="fixed inset-0"
+          style={{ zIndex: 9998 }}
+          onClick={() => setFingerLegendOpen(false)}
+        />
+        <div
+          className="fixed bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl min-w-[240px] py-2 px-3 space-y-2 overflow-hidden"
+          style={{ zIndex: 9999, top: fingerLegendPos.top, right: fingerLegendPos.right }}
+        >
+          {/* Row A — finger assignments: only shown in Finger Numbers mode */}
+          {labelMode === 'finger' && (
+            <>
+              {[
+                { num: '1', name: 'Index' },
+                { num: '2', name: 'Middle' },
+                { num: '3', name: 'Ring' },
+                { num: '4', name: 'Pinky' },
+              ].map(({ num, name }) => (
+                <div key={num} className="flex items-center gap-2.5">
+                  <div className="w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-black text-white leading-none">{num}</span>
+                  </div>
+                  <span className="text-[17px] text-zinc-300">{name}</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-2.5">
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+                  <polygon points="7,0 14,7 7,14 0,7" fill="#06b6d4" />
+                </svg>
+                <span className="text-[17px] text-zinc-300">Root</span>
+              </div>
+              <div className="h-px bg-zinc-800" />
+            </>
+          )}
+          {/* Row B — symbol legend: always shown */}
+          <div className="flex items-center gap-2.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+              <polygon points="7,0 14,7 7,14 0,7" fill="#06b6d4" />
+            </svg>
+            <span className="text-[17px] text-zinc-300">Root (fretted)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" className="flex-shrink-0">
+              <polygon points="7,0 14,7 7,14 0,7" fill="none" stroke="#06b6d4" strokeWidth="2" />
+            </svg>
+            <span className="text-[17px] text-zinc-300">Root (open)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3.5 h-3.5 rounded-full bg-amber-500 flex-shrink-0" />
+            <span className="text-[17px] text-zinc-300">Scale (fretted)</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="w-3.5 h-3.5 rounded-full border-2 border-amber-500 flex-shrink-0" />
+            <span className="text-[17px] text-zinc-300">Scale (open)</span>
+          </div>
+        </div>
+      </>,
+      document.body
+    )}
 
     {/* ── Pattern Isolator portal — rendered into document.body to escape all transform stacking contexts ── */}
     {patternDropdownOpen && patternPanelPos && createPortal(

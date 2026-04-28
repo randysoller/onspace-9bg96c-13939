@@ -148,36 +148,35 @@ export default function ScaleVault() {
       <div className="container mx-auto px-4 max-w-2xl">
         {/* ── Root note selector ── */}
         <div className="mt-5">
-          <p className="text-[14px] font-bold uppercase tracking-widest text-cyan-400 mb-2 px-1">Choose a Key or Root Note</p>
-          <div className="grid grid-cols-6 gap-1.5">
-            {ROOT_NOTES.map((note) => {
-              const isActive = selectedRoot === note;
-              return (
-                <button
+          <Select
+            value={selectedRoot}
+            onValueChange={(v) => setSelectedRoot(v as RootNote)}
+          >
+            <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 text-cyan-400 text-[16px] font-semibold rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-cyan-400 [&_svg]:w-5 [&_svg]:h-5">
+              <SelectValue placeholder="Tap to pick a key or root note" />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+              {ROOT_NOTES.map((note) => (
+                <SelectItem
                   key={note}
-                  onClick={() => setSelectedRoot(note)}
-                  className={`h-10 rounded-lg text-[17px] font-bold transition-all ${
-                    isActive
-                      ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30'
-                      : 'bg-zinc-800/80 text-zinc-200 hover:bg-zinc-700 hover:text-white'
-                  }`}
+                  value={note}
+                  className="text-[15px] text-zinc-200 focus:bg-zinc-700 focus:text-white"
                 >
                   {note}
-                </button>
-              );
-            })}
-          </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* ── Category filter dropdown ── */}
         <div className="mt-4">
-          <p className="text-[14px] font-bold uppercase tracking-widest text-cyan-400 mb-2 px-1">Choose Category of Scale</p>
           <Select
             value={selectedCategory ?? 'all'}
             onValueChange={(v) => setSelectedCategory(v === 'all' ? null : v as ScaleVaultCategory)}
           >
             <SelectTrigger className="w-full h-11 bg-zinc-800/80 border-zinc-700 text-white text-[16px] font-semibold rounded-xl focus:ring-cyan-500 focus:border-cyan-500 [&_svg]:text-zinc-200 [&_svg]:w-5 [&_svg]:h-5">
-              <SelectValue placeholder="All scales" />
+              <SelectValue placeholder="Tap to pick scale category" />
             </SelectTrigger>
             <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
               <SelectItem value="all" className="text-[15px] text-zinc-200 focus:bg-zinc-700 focus:text-white">
@@ -205,7 +204,7 @@ export default function ScaleVault() {
 
         {/* ── Press-to-open hint — positioned directly above first card ── */}
         <p className="mt-4 px-1 text-[21px] font-semibold text-cyan-400 leading-snug">
-          Press Scale Card to See Patterns
+          Tap Scale Card to See Patterns
         </p>
 
         {/* ── Scale cards grid ── */}

@@ -232,9 +232,10 @@ export default function VerticalNeckFretboard({
           y={yDot(f) + 4}
           textAnchor="end"
           fontSize={13}
+          fontWeight={600}
           fill={LABEL_CLR}
           fillOpacity={0.75}
-          fontFamily="ui-monospace, monospace"
+          fontFamily="DM Sans, sans-serif"
         >
           {f}
         </text>

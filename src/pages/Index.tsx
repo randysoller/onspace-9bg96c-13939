@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash, Rocket } from 'lucide-react';
+import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash, Rocket, Target } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 import { useHomeUIStore } from '@/stores/homeUIStore';
 import { toast } from 'sonner';
@@ -369,6 +369,8 @@ export default function Index() {
     isSongbookOpen, setIsSongbookOpen, activeSongbookIndex, setActiveSongbookIndex,
     isSkillBoostOpen, setIsSkillBoostOpen, activeSkillBoostIndex, setActiveSkillBoostIndex,
     isJamInstantlyOpen, setIsJamInstantlyOpen, activeJamInstantlyIndex, setActiveJamInstantlyIndex,
+    isLearnGrowOpen, setIsLearnGrowOpen, activeLearnGrowIndex, setActiveLearnGrowIndex,
+    isDailyProgressOpen, setIsDailyProgressOpen, activeDailyProgressIndex, setActiveDailyProgressIndex,
   } = useHomeUIStore();
   const vaultRailRef = React.useRef<HTMLDivElement>(null);
   const songbookRailRef = React.useRef<HTMLDivElement>(null);
@@ -379,6 +381,10 @@ export default function Index() {
   const hasRestoredSongbookScroll = React.useRef(false);
   const hasRestoredSkillBoostScroll = React.useRef(false);
   const hasRestoredJamInstantlyScroll = React.useRef(false);
+  const learnGrowRailRef = React.useRef<HTMLDivElement>(null);
+  const dailyProgressRailRef = React.useRef<HTMLDivElement>(null);
+  const hasRestoredLearnGrowScroll = React.useRef(false);
+  const hasRestoredDailyProgressScroll = React.useRef(false);
   
   // Sync user data from backend when authenticated
   useBackendSync();
@@ -430,6 +436,30 @@ export default function Index() {
       }
     });
   }, [isJamInstantlyOpen, activeJamInstantlyIndex]);
+
+  // Restore Learn & Grow rail scroll position.
+  React.useEffect(() => {
+    if (!isLearnGrowOpen || hasRestoredLearnGrowScroll.current) return;
+    hasRestoredLearnGrowScroll.current = true;
+    if (activeLearnGrowIndex === 0) return;
+    requestAnimationFrame(() => {
+      if (learnGrowRailRef.current) {
+        learnGrowRailRef.current.scrollLeft = activeLearnGrowIndex * 228;
+      }
+    });
+  }, [isLearnGrowOpen, activeLearnGrowIndex]);
+
+  // Restore Daily Progress rail scroll position.
+  React.useEffect(() => {
+    if (!isDailyProgressOpen || hasRestoredDailyProgressScroll.current) return;
+    hasRestoredDailyProgressScroll.current = true;
+    if (activeDailyProgressIndex === 0) return;
+    requestAnimationFrame(() => {
+      if (dailyProgressRailRef.current) {
+        dailyProgressRailRef.current.scrollLeft = activeDailyProgressIndex * 228;
+      }
+    });
+  }, [isDailyProgressOpen, activeDailyProgressIndex]);
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
@@ -874,14 +904,145 @@ export default function Index() {
           </AnimatePresence>
         </div>
 
-        {/* ── LEARN & GROW ── */}
-        <SectionRail
-          emoji="🎯"
-          title="Learn & Grow"
-          subtitle="Build real guitar foundation"
-          cards={LEARN_GROW_CARDS}
-          navigate={navigate}
-        />
+        {/* ── LEARN & GROW: Expandable vault-style card ── */}
+        <div className="mt-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+          <motion.button
+            onClick={() => setIsLearnGrowOpen(!isLearnGrowOpen)}
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 rounded-xl p-5 hover:shadow-lg transition-colors group cursor-pointer"
+            style={{ borderTopColor: '#3b82f6' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.07)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(59,130,246,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '';
+              (e.currentTarget as HTMLElement).style.borderColor = '';
+              (e.currentTarget as HTMLElement).style.borderTopColor = '#3b82f6';
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: '#3b82f6', boxShadow: '0 4px 16px rgba(59,130,246,0.35)' }}
+              >
+                <Target className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-white">Learn &amp; Grow</h3>
+                  <motion.div
+                    animate={{ rotate: isLearnGrowOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 font-semibold text-sm flex-shrink-0"
+                    style={{ color: '#3b82f6' }}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">Build real guitar foundation — Chord Progression Lab, Triad Progression Lab, and Mode Colors.</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <AnimatePresence>
+            {isLearnGrowOpen && (
+              <motion.div
+                key="learngrow-rail"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <motion.div
+                  initial={{ x: 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                >
+                  <div
+                    ref={learnGrowRailRef}
+                    className="flex gap-3 overflow-x-auto pb-3 pt-3"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      scrollSnapType: 'x mandatory',
+                      paddingLeft: 'calc(50% - 108px)',
+                      paddingRight: 'calc(50% - 108px)',
+                    }}
+                    onScroll={(e) => {
+                      const scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                      const index = Math.round(scrollLeft / 228);
+                      setActiveLearnGrowIndex(Math.max(0, Math.min(index, LEARN_GROW_CARDS.length - 1)));
+                    }}
+                  >
+                    {LEARN_GROW_CARDS.map((card) => (
+                      <motion.button
+                        key={card.id}
+                        onClick={() => {
+                          toast.info(`${card.label} coming soon`, {
+                            description: 'This feature is being built. Check back soon.',
+                            duration: 3000,
+                          });
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-shrink-0 flex flex-col justify-between gap-3 w-[216px] rounded-xl p-4 text-left cursor-pointer bg-zinc-900/50 border border-zinc-800"
+                        style={{
+                          borderTopWidth: '4px',
+                          borderTopColor: card.accentColor,
+                          scrollSnapAlign: 'center',
+                        }}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg"
+                          style={{
+                            backgroundColor: card.accentColor,
+                            boxShadow: `0 4px 12px ${card.accentColor}55`,
+                          }}
+                        >
+                          <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="flex-shrink-0 rounded-full"
+                              style={{ width: '5px', height: '5px', backgroundColor: card.accentColor }}
+                            />
+                            <p className="text-[11px] font-semibold leading-snug" style={{ color: card.accentColor }}>
+                              {card.subtitle}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                            <span className="text-[12px] font-semibold">Open</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex justify-center items-center gap-1.5 py-2">
+                    {LEARN_GROW_CARDS.map((card, i) => (
+                      <span
+                        key={card.id}
+                        className="rounded-full transition-all duration-200"
+                        style={{
+                          width: i === activeLearnGrowIndex ? '8px' : '6px',
+                          height: i === activeLearnGrowIndex ? '8px' : '6px',
+                          backgroundColor: i === activeLearnGrowIndex ? '#3b82f6' : '#52525b',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── JAM INSTANTLY: Expandable vault-style card ── */}
         <div className="mt-8">
@@ -1023,14 +1184,145 @@ export default function Index() {
           </AnimatePresence>
         </div>
 
-        {/* ── DAILY PROGRESS ── */}
-        <SectionRail
-          emoji="📈"
-          title="Daily Progress"
-          subtitle="Build consistency"
-          cards={DAILY_PROGRESS_CARDS}
-          navigate={navigate}
-        />
+        {/* ── DAILY PROGRESS: Expandable vault-style card ── */}
+        <div className="mt-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+          <motion.button
+            onClick={() => setIsDailyProgressOpen(!isDailyProgressOpen)}
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 rounded-xl p-5 hover:shadow-lg transition-colors group cursor-pointer"
+            style={{ borderTopColor: '#f59e0b' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(245,158,11,0.07)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(245,158,11,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '';
+              (e.currentTarget as HTMLElement).style.borderColor = '';
+              (e.currentTarget as HTMLElement).style.borderTopColor = '#f59e0b';
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: '#f59e0b', boxShadow: '0 4px 16px rgba(245,158,11,0.35)' }}
+              >
+                <TrendingUp className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-white">Daily Progress</h3>
+                  <motion.div
+                    animate={{ rotate: isDailyProgressOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 font-semibold text-sm flex-shrink-0"
+                    style={{ color: '#f59e0b' }}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">Stay consistent and track real growth — Today's Plan, Streak, Level Up, and Speed Challenge.</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <AnimatePresence>
+            {isDailyProgressOpen && (
+              <motion.div
+                key="dailyprogress-rail"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <motion.div
+                  initial={{ x: 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                >
+                  <div
+                    ref={dailyProgressRailRef}
+                    className="flex gap-3 overflow-x-auto pb-3 pt-3"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      scrollSnapType: 'x mandatory',
+                      paddingLeft: 'calc(50% - 108px)',
+                      paddingRight: 'calc(50% - 108px)',
+                    }}
+                    onScroll={(e) => {
+                      const scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                      const index = Math.round(scrollLeft / 228);
+                      setActiveDailyProgressIndex(Math.max(0, Math.min(index, DAILY_PROGRESS_CARDS.length - 1)));
+                    }}
+                  >
+                    {DAILY_PROGRESS_CARDS.map((card) => (
+                      <motion.button
+                        key={card.id}
+                        onClick={() => {
+                          toast.info(`${card.label} coming soon`, {
+                            description: 'This feature is being built. Check back soon.',
+                            duration: 3000,
+                          });
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-shrink-0 flex flex-col justify-between gap-3 w-[216px] rounded-xl p-4 text-left cursor-pointer bg-zinc-900/50 border border-zinc-800"
+                        style={{
+                          borderTopWidth: '4px',
+                          borderTopColor: card.accentColor,
+                          scrollSnapAlign: 'center',
+                        }}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg"
+                          style={{
+                            backgroundColor: card.accentColor,
+                            boxShadow: `0 4px 12px ${card.accentColor}55`,
+                          }}
+                        >
+                          <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="flex-shrink-0 rounded-full"
+                              style={{ width: '5px', height: '5px', backgroundColor: card.accentColor }}
+                            />
+                            <p className="text-[11px] font-semibold leading-snug" style={{ color: card.accentColor }}>
+                              {card.subtitle}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                            <span className="text-[12px] font-semibold">Open</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex justify-center items-center gap-1.5 py-2">
+                    {DAILY_PROGRESS_CARDS.map((card, i) => (
+                      <span
+                        key={card.id}
+                        className="rounded-full transition-all duration-200"
+                        style={{
+                          width: i === activeDailyProgressIndex ? '8px' : '6px',
+                          height: i === activeDailyProgressIndex ? '8px' : '6px',
+                          backgroundColor: i === activeDailyProgressIndex ? '#f59e0b' : '#52525b',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── Divider before Practice Mode cards ── */}
         <div className="mt-8 h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent" />

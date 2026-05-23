@@ -23,6 +23,14 @@ interface HomeUIState {
   activeJamInstantlyIndex: number;
   setIsJamInstantlyOpen: (open: boolean) => void;
   setActiveJamInstantlyIndex: (index: number) => void;
+  isLearnGrowOpen: boolean;
+  activeLearnGrowIndex: number;
+  setIsLearnGrowOpen: (open: boolean) => void;
+  setActiveLearnGrowIndex: (index: number) => void;
+  isDailyProgressOpen: boolean;
+  activeDailyProgressIndex: number;
+  setIsDailyProgressOpen: (open: boolean) => void;
+  setActiveDailyProgressIndex: (index: number) => void;
 }
 
 export const useHomeUIStore = create<HomeUIState>()(
@@ -44,6 +52,14 @@ export const useHomeUIStore = create<HomeUIState>()(
       activeJamInstantlyIndex: 0,
       setIsJamInstantlyOpen: (open) => set({ isJamInstantlyOpen: open }),
       setActiveJamInstantlyIndex: (index) => set({ activeJamInstantlyIndex: index }),
+      isLearnGrowOpen: false,
+      activeLearnGrowIndex: 0,
+      setIsLearnGrowOpen: (open) => set({ isLearnGrowOpen: open }),
+      setActiveLearnGrowIndex: (index) => set({ activeLearnGrowIndex: index }),
+      isDailyProgressOpen: false,
+      activeDailyProgressIndex: 0,
+      setIsDailyProgressOpen: (open) => set({ isDailyProgressOpen: open }),
+      setActiveDailyProgressIndex: (index) => set({ activeDailyProgressIndex: index }),
     }),
     {
       name: 'guitar-growth-home-ui',

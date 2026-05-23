@@ -535,7 +535,7 @@ export default function Index() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-2xl font-bold text-white">Play Now</h3>
+                  <h3 className="text-2xl font-bold text-white">The Vault</h3>
                   <motion.div
                     animate={{ rotate: isPlayNowOpen ? 90 : 0 }}
                     transition={{ duration: 0.2 }}

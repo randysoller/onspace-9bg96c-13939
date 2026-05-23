@@ -2,7 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash } from 'lucide-react';
+import { Grid3x3, Music2, ChevronRight, Scale, Sliders, Triangle, Waves, Mic2, Zap, MapPin, BookOpen, Star, Flame, ListChecks, TrendingUp, Timer, Search, Dumbbell, FlaskConical, Palette, Sun, Moon, Layers, Music, Coffee, Hash, Rocket } from 'lucide-react';
 import { useBackendSync } from '@/hooks/useBackendSync';
 import { useHomeUIStore } from '@/stores/homeUIStore';
 import { toast } from 'sonner';
@@ -367,12 +367,18 @@ export default function Index() {
   const {
     isPlayNowOpen, setIsPlayNowOpen, activeVaultIndex, setActiveVaultIndex,
     isSongbookOpen, setIsSongbookOpen, activeSongbookIndex, setActiveSongbookIndex,
+    isSkillBoostOpen, setIsSkillBoostOpen, activeSkillBoostIndex, setActiveSkillBoostIndex,
+    isJamInstantlyOpen, setIsJamInstantlyOpen, activeJamInstantlyIndex, setActiveJamInstantlyIndex,
   } = useHomeUIStore();
   const vaultRailRef = React.useRef<HTMLDivElement>(null);
   const songbookRailRef = React.useRef<HTMLDivElement>(null);
+  const skillBoostRailRef = React.useRef<HTMLDivElement>(null);
+  const jamInstantlyRailRef = React.useRef<HTMLDivElement>(null);
   // One-shot flag: restore rail scroll only on navigation return, not on user toggle
   const hasRestoredRailScroll = React.useRef(false);
   const hasRestoredSongbookScroll = React.useRef(false);
+  const hasRestoredSkillBoostScroll = React.useRef(false);
+  const hasRestoredJamInstantlyScroll = React.useRef(false);
   
   // Sync user data from backend when authenticated
   useBackendSync();
@@ -396,11 +402,34 @@ export default function Index() {
     if (activeSongbookIndex === 0) return;
     requestAnimationFrame(() => {
       if (songbookRailRef.current) {
-        // 228 = card width (216px) + gap (12px)
         songbookRailRef.current.scrollLeft = activeSongbookIndex * 228;
       }
     });
   }, [isSongbookOpen, activeSongbookIndex]);
+
+  // Restore Skill Boost rail scroll position.
+  React.useEffect(() => {
+    if (!isSkillBoostOpen || hasRestoredSkillBoostScroll.current) return;
+    hasRestoredSkillBoostScroll.current = true;
+    if (activeSkillBoostIndex === 0) return;
+    requestAnimationFrame(() => {
+      if (skillBoostRailRef.current) {
+        skillBoostRailRef.current.scrollLeft = activeSkillBoostIndex * 228;
+      }
+    });
+  }, [isSkillBoostOpen, activeSkillBoostIndex]);
+
+  // Restore Jam Instantly rail scroll position.
+  React.useEffect(() => {
+    if (!isJamInstantlyOpen || hasRestoredJamInstantlyScroll.current) return;
+    hasRestoredJamInstantlyScroll.current = true;
+    if (activeJamInstantlyIndex === 0) return;
+    requestAnimationFrame(() => {
+      if (jamInstantlyRailRef.current) {
+        jamInstantlyRailRef.current.scrollLeft = activeJamInstantlyIndex * 228;
+      }
+    });
+  }, [isJamInstantlyOpen, activeJamInstantlyIndex]);
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
@@ -705,14 +734,145 @@ export default function Index() {
           </AnimatePresence>
         </div>
 
-        {/* ── SKILL BOOST ── */}
-        <SectionRail
-          emoji="🚀"
-          title="Skill Boost"
-          subtitle="Fix your weak points fast"
-          cards={SKILL_BOOST_CARDS}
-          navigate={navigate}
-        />
+        {/* ── SKILL BOOST: Expandable vault-style card ── */}
+        <div className="mt-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+          <motion.button
+            onClick={() => setIsSkillBoostOpen(!isSkillBoostOpen)}
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 rounded-xl p-5 hover:shadow-lg transition-colors group cursor-pointer"
+            style={{ borderTopColor: '#10b981' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(16,185,129,0.07)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(16,185,129,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '';
+              (e.currentTarget as HTMLElement).style.borderColor = '';
+              (e.currentTarget as HTMLElement).style.borderTopColor = '#10b981';
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: '#10b981', boxShadow: '0 4px 16px rgba(16,185,129,0.35)' }}
+              >
+                <Rocket className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-white">Skill Boost</h3>
+                  <motion.div
+                    animate={{ rotate: isSkillBoostOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 font-semibold text-sm flex-shrink-0"
+                    style={{ color: '#10b981' }}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">Fix your weak points fast — Finger Gym, Pick Control, Fingerstyle Flow, Fretboard Map and more.</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <AnimatePresence>
+            {isSkillBoostOpen && (
+              <motion.div
+                key="skillboost-rail"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <motion.div
+                  initial={{ x: 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                >
+                  <div
+                    ref={skillBoostRailRef}
+                    className="flex gap-3 overflow-x-auto pb-3 pt-3"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      scrollSnapType: 'x mandatory',
+                      paddingLeft: 'calc(50% - 108px)',
+                      paddingRight: 'calc(50% - 108px)',
+                    }}
+                    onScroll={(e) => {
+                      const scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                      const index = Math.round(scrollLeft / 228);
+                      setActiveSkillBoostIndex(Math.max(0, Math.min(index, SKILL_BOOST_CARDS.length - 1)));
+                    }}
+                  >
+                    {SKILL_BOOST_CARDS.map((card) => (
+                      <motion.button
+                        key={card.id}
+                        onClick={() => {
+                          toast.info(`${card.label} coming soon`, {
+                            description: 'This feature is being built. Check back soon.',
+                            duration: 3000,
+                          });
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-shrink-0 flex flex-col justify-between gap-3 w-[216px] rounded-xl p-4 text-left cursor-pointer bg-zinc-900/50 border border-zinc-800"
+                        style={{
+                          borderTopWidth: '4px',
+                          borderTopColor: card.accentColor,
+                          scrollSnapAlign: 'center',
+                        }}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg"
+                          style={{
+                            backgroundColor: card.accentColor,
+                            boxShadow: `0 4px 12px ${card.accentColor}55`,
+                          }}
+                        >
+                          <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="flex-shrink-0 rounded-full"
+                              style={{ width: '5px', height: '5px', backgroundColor: card.accentColor }}
+                            />
+                            <p className="text-[11px] font-semibold leading-snug" style={{ color: card.accentColor }}>
+                              {card.subtitle}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                            <span className="text-[12px] font-semibold">Open</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex justify-center items-center gap-1.5 py-2">
+                    {SKILL_BOOST_CARDS.map((card, i) => (
+                      <span
+                        key={card.id}
+                        className="rounded-full transition-all duration-200"
+                        style={{
+                          width: i === activeSkillBoostIndex ? '8px' : '6px',
+                          height: i === activeSkillBoostIndex ? '8px' : '6px',
+                          backgroundColor: i === activeSkillBoostIndex ? '#10b981' : '#52525b',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── LEARN & GROW ── */}
         <SectionRail
@@ -723,14 +883,145 @@ export default function Index() {
           navigate={navigate}
         />
 
-        {/* ── JAM INSTANTLY ── */}
-        <SectionRail
-          emoji="🎶"
-          title="Jam Instantly"
-          subtitle="Pick a vibe and play"
-          cards={JAM_INSTANTLY_CARDS}
-          navigate={navigate}
-        />
+        {/* ── JAM INSTANTLY: Expandable vault-style card ── */}
+        <div className="mt-8">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+          <motion.button
+            onClick={() => setIsJamInstantlyOpen(!isJamInstantlyOpen)}
+            whileHover={{ scale: 1.015 }}
+            transition={{ duration: 0.2 }}
+            className="w-full text-left bg-zinc-900/50 border border-zinc-800 border-t-4 rounded-xl p-5 hover:shadow-lg transition-colors group cursor-pointer"
+            style={{ borderTopColor: '#8b5cf6' }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'rgba(139,92,246,0.07)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(139,92,246,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = '';
+              (e.currentTarget as HTMLElement).style.borderColor = '';
+              (e.currentTarget as HTMLElement).style.borderTopColor = '#8b5cf6';
+            }}
+          >
+            <div className="flex items-start gap-4">
+              <div
+                className="flex-shrink-0 w-14 h-14 rounded-lg flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: '#8b5cf6', boxShadow: '0 4px 16px rgba(139,92,246,0.35)' }}
+              >
+                <Music2 className="w-7 h-7 text-white" strokeWidth={2.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-white">Jam Instantly</h3>
+                  <motion.div
+                    animate={{ rotate: isJamInstantlyOpen ? 90 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center gap-1.5 font-semibold text-sm flex-shrink-0"
+                    style={{ color: '#8b5cf6' }}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </motion.div>
+                </div>
+                <p className="text-sm text-zinc-400 leading-relaxed">Pick a vibe and play — Major, Minor, Modal, Rock, Blues, Country, Jazz, Reggae and more.</p>
+              </div>
+            </div>
+          </motion.button>
+
+          <AnimatePresence>
+            {isJamInstantlyOpen && (
+              <motion.div
+                key="jaminstantly-rail"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                style={{ overflow: 'hidden' }}
+              >
+                <motion.div
+                  initial={{ x: 80, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 280, damping: 28 }}
+                >
+                  <div
+                    ref={jamInstantlyRailRef}
+                    className="flex gap-3 overflow-x-auto pb-3 pt-3"
+                    style={{
+                      scrollbarWidth: 'none',
+                      msOverflowStyle: 'none',
+                      scrollSnapType: 'x mandatory',
+                      paddingLeft: 'calc(50% - 108px)',
+                      paddingRight: 'calc(50% - 108px)',
+                    }}
+                    onScroll={(e) => {
+                      const scrollLeft = (e.currentTarget as HTMLDivElement).scrollLeft;
+                      const index = Math.round(scrollLeft / 228);
+                      setActiveJamInstantlyIndex(Math.max(0, Math.min(index, JAM_INSTANTLY_CARDS.length - 1)));
+                    }}
+                  >
+                    {JAM_INSTANTLY_CARDS.map((card) => (
+                      <motion.button
+                        key={card.id}
+                        onClick={() => {
+                          toast.info(`${card.label} coming soon`, {
+                            description: 'This feature is being built. Check back soon.',
+                            duration: 3000,
+                          });
+                        }}
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        transition={{ duration: 0.15 }}
+                        className="flex-shrink-0 flex flex-col justify-between gap-3 w-[216px] rounded-xl p-4 text-left cursor-pointer bg-zinc-900/50 border border-zinc-800"
+                        style={{
+                          borderTopWidth: '4px',
+                          borderTopColor: card.accentColor,
+                          scrollSnapAlign: 'center',
+                        }}
+                      >
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center shadow-lg"
+                          style={{
+                            backgroundColor: card.accentColor,
+                            boxShadow: `0 4px 12px ${card.accentColor}55`,
+                          }}
+                        >
+                          <card.Icon className="w-6 h-6 text-white" strokeWidth={2.3} />
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-white leading-tight">{card.label}</p>
+                          <div className="flex items-center gap-1.5 mt-1">
+                            <span
+                              className="flex-shrink-0 rounded-full"
+                              style={{ width: '5px', height: '5px', backgroundColor: card.accentColor }}
+                            />
+                            <p className="text-[11px] font-semibold leading-snug" style={{ color: card.accentColor }}>
+                              {card.subtitle}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 mt-2" style={{ color: card.accentColor }}>
+                            <span className="text-[12px] font-semibold">Open</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                  <div className="flex justify-center items-center gap-1.5 py-2">
+                    {JAM_INSTANTLY_CARDS.map((card, i) => (
+                      <span
+                        key={card.id}
+                        className="rounded-full transition-all duration-200"
+                        style={{
+                          width: i === activeJamInstantlyIndex ? '8px' : '6px',
+                          height: i === activeJamInstantlyIndex ? '8px' : '6px',
+                          backgroundColor: i === activeJamInstantlyIndex ? '#8b5cf6' : '#52525b',
+                        }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── DAILY PROGRESS ── */}
         <SectionRail

@@ -616,8 +616,8 @@ export default function Index() {
         </div>
 
         {/* ── SONGBOOK: Expandable card matching Play Now layout ── */}
-        <div className="mt-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+        <div className="mt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-3" />
           <motion.button
             onClick={() => setIsSongbookOpen(!isSongbookOpen)}
             whileHover={{ scale: 1.015 }}
@@ -765,8 +765,8 @@ export default function Index() {
         </div>
 
         {/* ── SKILL BOOST: Expandable vault-style card ── */}
-        <div className="mt-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+        <div className="mt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-3" />
           <motion.button
             onClick={() => setIsSkillBoostOpen(!isSkillBoostOpen)}
             whileHover={{ scale: 1.015 }}
@@ -905,8 +905,8 @@ export default function Index() {
         </div>
 
         {/* ── LEARN & GROW: Expandable vault-style card ── */}
-        <div className="mt-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+        <div className="mt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-3" />
           <motion.button
             onClick={() => setIsLearnGrowOpen(!isLearnGrowOpen)}
             whileHover={{ scale: 1.015 }}
@@ -1045,8 +1045,8 @@ export default function Index() {
         </div>
 
         {/* ── JAM INSTANTLY: Expandable vault-style card ── */}
-        <div className="mt-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+        <div className="mt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-3" />
           <motion.button
             onClick={() => setIsJamInstantlyOpen(!isJamInstantlyOpen)}
             whileHover={{ scale: 1.015 }}
@@ -1185,8 +1185,8 @@ export default function Index() {
         </div>
 
         {/* ── DAILY PROGRESS: Expandable vault-style card ── */}
-        <div className="mt-8">
-          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-6" />
+        <div className="mt-4">
+          <div className="h-px bg-gradient-to-r from-transparent via-zinc-800 to-transparent mb-3" />
           <motion.button
             onClick={() => setIsDailyProgressOpen(!isDailyProgressOpen)}
             whileHover={{ scale: 1.015 }}

@@ -31,6 +31,10 @@ interface HomeUIState {
   activeDailyProgressIndex: number;
   setIsDailyProgressOpen: (open: boolean) => void;
   setActiveDailyProgressIndex: (index: number) => void;
+  isPickControlOpen: boolean;
+  activePickControlIndex: number;
+  setIsPickControlOpen: (open: boolean) => void;
+  setActivePickControlIndex: (index: number) => void;
 }
 
 export const useHomeUIStore = create<HomeUIState>()(
@@ -60,6 +64,10 @@ export const useHomeUIStore = create<HomeUIState>()(
       activeDailyProgressIndex: 0,
       setIsDailyProgressOpen: (open) => set({ isDailyProgressOpen: open }),
       setActiveDailyProgressIndex: (index) => set({ activeDailyProgressIndex: index }),
+      isPickControlOpen: false,
+      activePickControlIndex: 0,
+      setIsPickControlOpen: (open) => set({ isPickControlOpen: open }),
+      setActivePickControlIndex: (index) => set({ activePickControlIndex: index }),
     }),
     {
       name: 'guitar-growth-home-ui',

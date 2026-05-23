@@ -11,6 +11,10 @@ interface HomeUIState {
   activeVaultIndex: number;
   setIsPlayNowOpen: (open: boolean) => void;
   setActiveVaultIndex: (index: number) => void;
+  isSongbookOpen: boolean;
+  activeSongbookIndex: number;
+  setIsSongbookOpen: (open: boolean) => void;
+  setActiveSongbookIndex: (index: number) => void;
 }
 
 export const useHomeUIStore = create<HomeUIState>()(
@@ -20,6 +24,10 @@ export const useHomeUIStore = create<HomeUIState>()(
       activeVaultIndex: 0,
       setIsPlayNowOpen: (open) => set({ isPlayNowOpen: open }),
       setActiveVaultIndex: (index) => set({ activeVaultIndex: index }),
+      isSongbookOpen: false,
+      activeSongbookIndex: 0,
+      setIsSongbookOpen: (open) => set({ isSongbookOpen: open }),
+      setActiveSongbookIndex: (index) => set({ activeSongbookIndex: index }),
     }),
     {
       name: 'guitar-growth-home-ui',

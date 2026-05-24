@@ -702,7 +702,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Real songs to play right now — Campfire Classics, Classic Rock, Acoustic Hits, Jazz Standards and more.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Real songs to play right now — Campfire Classics, Classic Rock, Acoustic Hits, Jazz Standards and more.</p>
               </div>
             </div>
           </motion.button>
@@ -849,7 +849,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Fix your weak points fast — Finger Gym, Pick Control, Fingerstyle Flow, Fretboard Map and more.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Fix your weak points fast — Finger Gym, Pick Control, Fingerstyle Flow, Fretboard Map and more.</p>
               </div>
             </div>
           </motion.button>
@@ -1103,7 +1103,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Build real guitar foundation — Chord Progression Lab, Triad Progression Lab, and Mode Colors.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Build real guitar foundation — Chord Progression Lab, Triad Progression Lab, and Mode Colors.</p>
               </div>
             </div>
           </motion.button>
@@ -1243,7 +1243,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Pick a vibe and play — Major, Minor, Modal, Rock, Blues, Country, Jazz, Reggae and more.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Pick a vibe and play — Major, Minor, Modal, Rock, Blues, Country, Jazz, Reggae and more.</p>
               </div>
             </div>
           </motion.button>
@@ -1383,7 +1383,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Stay consistent and track real growth — Today's Plan, Streak, Level Up, and Speed Challenge.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Stay consistent and track real growth — Today's Plan, Streak, Level Up, and Speed Challenge.</p>
               </div>
             </div>
           </motion.button>

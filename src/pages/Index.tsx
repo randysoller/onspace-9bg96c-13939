@@ -544,7 +544,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-sm text-zinc-400 leading-relaxed">Browse the full library — Chord Vault, Scale Vault, Lick Lab, Riff Arena and more, all in one place.</p>
+                <p className="text-sm text-zinc-400 leading-relaxed">Your complete guitar library — Chords, Scales, Triads, Licks and more, all in one place.</p>
               </div>
             </div>
           </motion.button>

@@ -702,7 +702,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-base text-zinc-300 leading-relaxed">Play real songs now — Campfire Classics, rock and acoustic hits, jazz standards and more.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Play real songs now —<br />Campfire Classics, rock and acoustic<br />hits, jazz standards and more.</p>
               </div>
             </div>
           </motion.button>

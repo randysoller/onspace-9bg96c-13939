@@ -26,9 +26,9 @@ const VAULT_CARDS = [
     id: 'strum-vault',
     label: 'Strum Pattern Vault',
     Icon: Sliders,
-    accentColor: '#f97316',
-    bgColor: 'rgba(249,115,22,0.07)',
-    borderColor: 'rgba(249,115,22,0.25)',
+    accentColor: '#fde047',
+    bgColor: 'rgba(253,224,71,0.07)',
+    borderColor: 'rgba(253,224,71,0.25)',
     route: null,
     soon: true,
     tagline: undefined,
@@ -702,7 +702,7 @@ export default function Index() {
                     <ChevronRight className="w-5 h-5" />
                   </motion.div>
                 </div>
-                <p className="text-base text-zinc-300 leading-relaxed">Play real songs now —<br />Campfire Classics, rock and acoustic<br />hits, jazz standards and more.</p>
+                <p className="text-base text-zinc-300 leading-relaxed">Play real songs now —<br className="sm:hidden" />Campfire Classics, rock and acoustic<br className="sm:hidden" />hits, jazz standards and more.</p>
               </div>
             </div>
           </motion.button>

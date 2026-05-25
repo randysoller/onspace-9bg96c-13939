@@ -12,12 +12,13 @@
  *   '_'  — rest (renders as blank — no marker, no beat label)
  *
  * Visual style: music-standard notation on dark background.
- * - Note heads: white filled circles
+ * - Note heads: white filled, tilted ellipse (~20° tilt, music-standard oval)
  * - Stems: vertical line from right side of note head going up
- * - Downstroke: bold "V" shape below note head (standard music notation)
+ * - Downstroke: bold "V" shape below note head
  * - Upstroke: inverted "V" (Λ shape) below note head
+ * - Direction word: "down" / "up" / "down up" between arrow and beat label
  * - Rest slots: completely invisible — no SVG elements rendered
- * - Beat labels: only on active (non-rest) slots
+ * - Beat labels: only on active (non-rest) slots; DU uses "{n} and" format
  *
  * During playback, `activeSlot` highlights the current slot in the accent color.
  */
@@ -33,23 +34,29 @@ interface Props {
   compact?: boolean; // smaller render for card view
 }
 
-// Beat labels — only beat numbers show (shown only on non-rest slots)
-const BEAT_LABELS = ['1', '+', '2', '+', '3', '+', '4', '+'];
+// Beat number for each slot index (0-indexed)
+const BEAT_NUMBERS = ['1', '1', '2', '2', '3', '3', '4', '4'];
 
 // SVG layout constants
 const SLOT_W = 38;
 const SVG_W = SLOT_W * 8; // 304
-const SVG_H = 88;
+const SVG_H = 110;
 
-// Y positions
+// Y positions — extra height added for direction word row below the V symbol
 const STEM_TOP = 6;           // top of stem
-const NOTE_HEAD_Y = 32;       // vertical center of note head
+const NOTE_HEAD_Y = 34;       // vertical center of note head
 const NOTE_HEAD_R = 7;        // note head radius
 const STEM_X_OFFSET = NOTE_HEAD_R - 1; // stem attaches to right side of head
-const V_TOP_Y = NOTE_HEAD_Y + NOTE_HEAD_R + 4;   // top of V symbol
-const V_BOTTOM_Y = V_TOP_Y + 13;                 // apex/bottom of V
-const V_HALF_W = 8;           // half-width of V at the top
-const BEAT_LABEL_Y = SVG_H - 6;
+
+// V symbol — larger, further from note head, heavier stroke
+const V_TOP_Y = NOTE_HEAD_Y + NOTE_HEAD_R + 10; // 51 — more gap from note head
+const V_BOTTOM_Y = V_TOP_Y + 16;               // 67 — taller V
+const V_HALF_W = 11;          // wider V (was 8)
+const V_STROKE = 3.0;         // heavier stroke (was 2.5)
+
+// Text rows below V symbol
+const DIR_LABEL_Y = V_BOTTOM_Y + 13;  // 80 — direction word ("down", "up", "down up")
+const BEAT_LABEL_Y = DIR_LABEL_Y + 14; // 94 — beat number ("1", "2 and", etc.)
 
 // Colors
 const INACTIVE_NOTE_COLOR = '#e4e4e7'; // zinc-200 — near-white on dark bg
@@ -71,9 +78,13 @@ function downVPath(cx: number): string {
  * Inverted V (Λ) upstroke path: two lines from bottom meeting at top apex.
  */
 function upVPath(cx: number): string {
-  const topY = V_TOP_Y;
-  const bottomY = V_BOTTOM_Y;
-  return `M ${cx - V_HALF_W} ${bottomY} L ${cx} ${topY} L ${cx + V_HALF_W} ${bottomY}`;
+  return `M ${cx - V_HALF_W} ${V_BOTTOM_Y} L ${cx} ${V_TOP_Y} L ${cx + V_HALF_W} ${V_BOTTOM_Y}`;
+}
+
+/** Beat label text for a given slot — DU slots show "{n} and", others show beat number only */
+function beatLabel(slotIndex: number, slot: StrumSlot): string {
+  const num = BEAT_NUMBERS[slotIndex];
+  return slot === 'DU' ? `${num} and` : num;
 }
 
 interface SlotRenderProps {
@@ -85,18 +96,19 @@ interface SlotRenderProps {
 
 function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): React.ReactNode {
   const cx = slotCenterX(slotIndex);
-  const label = BEAT_LABELS[slotIndex];
   const noteColor = isActive ? color : INACTIVE_NOTE_COLOR;
   const labelColor = isActive ? color : INACTIVE_LABEL_COLOR;
 
   // Rest: render nothing — completely blank column
   if (slot === '_') return null;
 
-  // Half note: open note head + stem + V + dashed hold line + beat label
+  const bl = beatLabel(slotIndex, slot);
+
+  // Half note: open note head + stem + V + dashed hold line + direction word + beat label
   if (slot === 'H') {
     return (
       <g key={slotIndex}>
-        {/* Stem: top of stem to top of note head */}
+        {/* Stem */}
         <line
           x1={cx + STEM_X_OFFSET}
           y1={STEM_TOP}
@@ -111,12 +123,13 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           cx={cx}
           cy={NOTE_HEAD_Y}
           rx={NOTE_HEAD_R + 1}
-          ry={NOTE_HEAD_R - 1}
+          ry={NOTE_HEAD_R - 1.5}
           fill="none"
           stroke={noteColor}
           strokeWidth={2}
+          transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`}
         />
-        {/* Dashed hold bridge extending to the right (shows duration) */}
+        {/* Dashed hold bridge extending to the right */}
         <line
           x1={cx + NOTE_HEAD_R + 2}
           y1={NOTE_HEAD_Y}
@@ -128,16 +141,20 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           opacity={0.5}
         />
         {/* V downstroke symbol */}
-        <path d={downVPath(cx)} stroke={noteColor} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={downVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Direction word */}
+        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={8} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="500" letterSpacing="0.3">
+          down
+        </text>
         {/* Beat label */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={10} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '500'}>
-          {label}
+          {bl}
         </text>
       </g>
     );
   }
 
-  // Quarter note downstroke: filled note head + stem + V
+  // Quarter note downstroke: filled note head + stem + V + direction word + beat label
   if (slot === 'D') {
     return (
       <g key={slotIndex}>
@@ -151,28 +168,32 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           strokeWidth={2}
           strokeLinecap="round"
         />
-        {/* Filled note head — slightly tilted ellipse (music notation standard) */}
+        {/* Filled note head — tilted ellipse (~20°, music-notation standard oval) */}
         <ellipse
           cx={cx}
           cy={NOTE_HEAD_Y}
           rx={NOTE_HEAD_R + 1}
-          ry={NOTE_HEAD_R - 1.5}
+          ry={NOTE_HEAD_R - 2}
           fill={noteColor}
           stroke={noteColor}
           strokeWidth={0.5}
-          transform={`rotate(-12, ${cx}, ${NOTE_HEAD_Y})`}
+          transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`}
         />
         {/* V downstroke symbol */}
-        <path d={downVPath(cx)} stroke={noteColor} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={downVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Direction word */}
+        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={8} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="500" letterSpacing="0.3">
+          down
+        </text>
         {/* Beat label */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={10} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '500'}>
-          {label}
+          {bl}
         </text>
       </g>
     );
   }
 
-  // Quarter note upstroke: filled note head (stem down) + inverted V
+  // Quarter note upstroke: filled note head (stem down) + inverted V + direction word + beat label
   if (slot === 'U') {
     return (
       <g key={slotIndex}>
@@ -191,32 +212,39 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           cx={cx}
           cy={NOTE_HEAD_Y}
           rx={NOTE_HEAD_R + 1}
-          ry={NOTE_HEAD_R - 1.5}
+          ry={NOTE_HEAD_R - 2}
           fill={noteColor}
           stroke={noteColor}
           strokeWidth={0.5}
-          transform={`rotate(-12, ${cx}, ${NOTE_HEAD_Y})`}
+          transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`}
         />
         {/* Inverted V (Λ) upstroke symbol */}
-        <path d={upVPath(cx)} stroke={noteColor} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={upVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        {/* Direction word */}
+        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={8} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="500" letterSpacing="0.3">
+          up
+        </text>
         {/* Beat label */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={10} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '500'}>
-          {label}
+          {bl}
         </text>
       </g>
     );
   }
 
-  // Eighth-note pair (DU): two beamed notes, V under first, inverted-V under second
+  // Eighth-note pair (DU): two beamed notes, V under first, Λ under second,
+  // "down up" direction label, "{n} and" beat label
   if (slot === 'DU') {
-    // Position two note heads within the slot
-    const cx1 = cx - 9;       // down note (beat)
-    const cx2 = cx + 9;       // up note (the "+")
+    const cx1 = cx - 9;  // down note (beat)
+    const cx2 = cx + 9;  // up note (the "and")
     const beamY = STEM_TOP + 3;
 
-    // V symbol for the pair: centered between both heads
+    // V under down note — same size as quarter note V
     const vCx1 = cx1;
     const vCx2 = cx2;
+    // Scale V slightly smaller so both fit side-by-side within SLOT_W
+    const duHalfW = V_HALF_W - 2; // 9px
+    const duStroke = V_STROKE - 0.2; // 2.8
 
     return (
       <g key={slotIndex}>
@@ -225,7 +253,7 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           x={cx1 + STEM_X_OFFSET - 1}
           y={beamY}
           width={cx2 - cx1 + 2}
-          height={3}
+          height={3.5}
           fill={noteColor}
           rx={1}
         />
@@ -247,45 +275,49 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
           stroke={noteColor}
           strokeWidth={2}
         />
-        {/* Note head 1 — down */}
+        {/* Note head 1 — down — 20° tilt */}
         <ellipse
           cx={cx1}
           cy={NOTE_HEAD_Y}
           rx={NOTE_HEAD_R}
           ry={NOTE_HEAD_R - 2}
           fill={noteColor}
-          transform={`rotate(-12, ${cx1}, ${NOTE_HEAD_Y})`}
+          transform={`rotate(-20, ${cx1}, ${NOTE_HEAD_Y})`}
         />
-        {/* Note head 2 — up */}
+        {/* Note head 2 — up — 20° tilt */}
         <ellipse
           cx={cx2}
           cy={NOTE_HEAD_Y}
           rx={NOTE_HEAD_R}
           ry={NOTE_HEAD_R - 2}
           fill={noteColor}
-          transform={`rotate(-12, ${cx2}, ${NOTE_HEAD_Y})`}
+          transform={`rotate(-20, ${cx2}, ${NOTE_HEAD_Y})`}
         />
-        {/* V under first note (downstroke) */}
+        {/* V under down note */}
         <path
-          d={`M ${vCx1 - V_HALF_W + 2} ${V_TOP_Y} L ${vCx1} ${V_BOTTOM_Y - 2} L ${vCx1 + V_HALF_W - 2} ${V_TOP_Y}`}
+          d={`M ${vCx1 - duHalfW} ${V_TOP_Y} L ${vCx1} ${V_BOTTOM_Y} L ${vCx1 + duHalfW} ${V_TOP_Y}`}
           stroke={noteColor}
-          strokeWidth={2.2}
+          strokeWidth={duStroke}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {/* Inverted V under second note (upstroke) */}
+        {/* Λ under up note */}
         <path
-          d={`M ${vCx2 - V_HALF_W + 2} ${V_BOTTOM_Y - 2} L ${vCx2} ${V_TOP_Y} L ${vCx2 + V_HALF_W - 2} ${V_BOTTOM_Y - 2}`}
+          d={`M ${vCx2 - duHalfW} ${V_BOTTOM_Y} L ${vCx2} ${V_TOP_Y} L ${vCx2 + duHalfW} ${V_BOTTOM_Y}`}
           stroke={noteColor}
-          strokeWidth={2.2}
+          strokeWidth={duStroke}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        {/* Beat label centered in slot */}
+        {/* Direction word — centered across both notes */}
+        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={8} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="500" letterSpacing="0.3">
+          down up
+        </text>
+        {/* Beat label — "{n} and" format */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={10} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '500'}>
-          {label}
+          {bl}
         </text>
       </g>
     );
@@ -335,8 +367,8 @@ export function StrumPatternDiagram({ notation, activeSlot = -1, accentColor = '
           })
         )}
 
-        {/* Subtle separator line above beat labels */}
-        <line x1={0} y1={SVG_H - 17} x2={SVG_W} y2={SVG_H - 17} stroke="#3f3f46" strokeWidth={0.5} />
+        {/* Subtle separator line above direction + beat labels */}
+        <line x1={0} y1={DIR_LABEL_Y - 6} x2={SVG_W} y2={DIR_LABEL_Y - 6} stroke="#3f3f46" strokeWidth={0.5} />
       </svg>
     </div>
   );

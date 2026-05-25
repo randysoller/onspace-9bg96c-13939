@@ -204,66 +204,79 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
 
   // ── Eighth-note pair (DU): two beamed notes, V + Λ side by side ──────────
   if (slot === 'DU') {
-    // Wider spread now that slots are 52px — notes are 26px apart
-    const cx1 = cx - 13; // down note (beat)
-    const cx2 = cx + 13; // up note (the "and")
-    const beamY = STEM_TOP + 3;
+    // Notes are 26px apart (13px each side of slot center)
+    const cx1 = cx - 13; // down note (beat position)
+    const cx2 = cx + 13; // up note ("and" position)
 
-    // DU arrows: slightly narrower half-width to fit side-by-side cleanly
+    // Stems attach to the RIGHT edge of each note head going UP to the shared beam.
+    // Using NOTE_HEAD_R (=9) as the actual ellipse rx so stems connect correctly.
+    const duNoteRx = NOTE_HEAD_R; // 9 — matches the ellipse rx used below
+    const stem1X = cx1 + duNoteRx - 1; // cx - 5
+    const stem2X = cx2 + duNoteRx - 1; // cx + 21
+
+    const beamY     = STEM_TOP;         // 6 — top of both stems
+    const beamH     = 3.5;
+    const stemY1    = beamY + beamH;    // 9.5 — stem starts just below beam
+    const stemY2    = NOTE_HEAD_Y - duNoteRx + 2; // 31 — stem ends near note head
+
+    // DU arrows: narrower half-width — sits cleanly under each note without overlap
     const duHalfW = 6;
     const duStroke = 2.2;
 
     return (
       <g key={slotIndex}>
-        {/* Beam connecting both stems at top */}
+        {/* Beam: horizontal crossbar connecting tops of both stems */}
         <rect
-          x={cx1 + STEM_X_OFFSET - 1} y={beamY}
-          width={cx2 - cx1 + 2} height={3.5}
+          x={stem1X - 1} y={beamY}
+          width={stem2X - stem1X + 2} height={beamH}
           fill={noteColor} rx={1}
         />
-        {/* Stem 1 (down note) */}
+        {/* Stem 1 — down note — points UP from right side of note head to beam */}
         <line
-          x1={cx1 + STEM_X_OFFSET} y1={beamY + 3}
-          x2={cx1 + STEM_X_OFFSET} y2={NOTE_HEAD_Y - NOTE_HEAD_R + 2}
-          stroke={noteColor} strokeWidth={2}
+          x1={stem1X} y1={stemY1}
+          x2={stem1X} y2={stemY2}
+          stroke={noteColor} strokeWidth={2} strokeLinecap="round"
         />
-        {/* Stem 2 (up note) */}
+        {/* Stem 2 — up note — ALSO points UP (same direction as stem 1) */}
         <line
-          x1={cx2 + STEM_X_OFFSET} y1={beamY + 3}
-          x2={cx2 + STEM_X_OFFSET} y2={NOTE_HEAD_Y - NOTE_HEAD_R + 2}
-          stroke={noteColor} strokeWidth={2}
+          x1={stem2X} y1={stemY1}
+          x2={stem2X} y2={stemY2}
+          stroke={noteColor} strokeWidth={2} strokeLinecap="round"
         />
-        {/* Note head 1 — down — 20° tilt */}
+        {/* Note head 1 — down note — filled, 20° tilt */}
         <ellipse
           cx={cx1} cy={NOTE_HEAD_Y}
-          rx={NOTE_HEAD_R} ry={NOTE_HEAD_R - 2.5}
+          rx={duNoteRx} ry={duNoteRx - 2.5}
           fill={noteColor}
           transform={`rotate(-20, ${cx1}, ${NOTE_HEAD_Y})`}
         />
-        {/* Note head 2 — up — 20° tilt */}
+        {/* Note head 2 — up note — filled, 20° tilt */}
         <ellipse
           cx={cx2} cy={NOTE_HEAD_Y}
-          rx={NOTE_HEAD_R} ry={NOTE_HEAD_R - 2.5}
+          rx={duNoteRx} ry={duNoteRx - 2.5}
           fill={noteColor}
           transform={`rotate(-20, ${cx2}, ${NOTE_HEAD_Y})`}
         />
-        {/* V under down note — narrow sharp */}
+        {/* V — downstroke arrow — centered under down note head */}
         <path
           d={`M ${cx1 - duHalfW} ${V_TOP_Y} L ${cx1} ${V_BOTTOM_Y} L ${cx1 + duHalfW} ${V_TOP_Y}`}
           stroke={noteColor} strokeWidth={duStroke} fill="none"
           strokeLinecap="round" strokeLinejoin="round"
         />
-        {/* Λ under up note — narrow sharp */}
+        {/* Λ — upstroke arrow — centered under up note head */}
         <path
           d={`M ${cx2 - duHalfW} ${V_BOTTOM_Y} L ${cx2} ${V_TOP_Y} L ${cx2 + duHalfW} ${V_BOTTOM_Y}`}
           stroke={noteColor} strokeWidth={duStroke} fill="none"
           strokeLinecap="round" strokeLinejoin="round"
         />
-        {/* Direction word — centered across both notes */}
-        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
-          down up
+        {/* Direction words — split: "down" under cx1, "up" under cx2 */}
+        <text x={cx1} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
+          down
         </text>
-        {/* Beat label — "{n} and" format */}
+        <text x={cx2} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
+          up
+        </text>
+        {/* Beat label — "{n} and" format — centered across the pair */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>
           {bl}
         </text>

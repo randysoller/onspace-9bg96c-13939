@@ -202,42 +202,47 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
     );
   }
 
-  // ── Eighth-note pair (DU): two beamed notes, V + Λ side by side ──────────
+  // ── Eighth-note pair (DU): two beamed notes close together, V + Λ tight ──
   if (slot === 'DU') {
-    // Notes are 26px apart (13px each side of slot center)
-    const cx1 = cx - 13; // down note (beat position)
-    const cx2 = cx + 13; // up note ("and" position)
+    // Notes 18px apart — nearly touching, matches music-standard beamed eighth pair.
+    // Reduced from ±13 to ±9 so note heads are close, beam is tight, arrows cluster.
+    const cx1 = cx - 9; // down note (beat position)
+    const cx2 = cx + 9; // up note ("and" position)
 
-    // Stems attach to the RIGHT edge of each note head going UP to the shared beam.
-    // Using NOTE_HEAD_R (=9) as the actual ellipse rx so stems connect correctly.
-    const duNoteRx = NOTE_HEAD_R; // 9 — matches the ellipse rx used below
-    const stem1X = cx1 + duNoteRx - 1; // cx - 5
-    const stem2X = cx2 + duNoteRx - 1; // cx + 21
+    // Note head rx slightly smaller than quarter notes to fit the tight pair.
+    const duNoteRx = 8;
+    const duNoteRy = duNoteRx - 2.5; // 5.5
 
-    const beamY     = STEM_TOP;         // 6 — top of both stems
-    const beamH     = 3.5;
-    const stemY1    = beamY + beamH;    // 9.5 — stem starts just below beam
-    const stemY2    = NOTE_HEAD_Y - duNoteRx + 2; // 31 — stem ends near note head
+    // Stems: centered on each note head (not right-offset) so beam sits symmetrically.
+    // Standard beamed notation centers the beam over the note pair.
+    const stem1X = cx1 + duNoteRx - 1; // right side of note head 1 → cx - 2
+    const stem2X = cx2 + duNoteRx - 1; // right side of note head 2 → cx + 16
 
-    // DU arrows: narrower half-width — sits cleanly under each note without overlap
-    const duHalfW = 6;
+    const beamY  = STEM_TOP;           // 6
+    const beamH  = 3.5;
+    const stemY1 = beamY + beamH;      // 9.5 — stem top (just below beam)
+    const stemY2 = NOTE_HEAD_Y - duNoteRx + 2; // 32 — stem bottom (just above note head)
+
+    // Arrows: tight half-width, centered on each note head.
+    // With cx1/cx2 only 18px apart, duHalfW=5 keeps inner gap = 8px — close but not overlapping.
+    const duHalfW = 5;
     const duStroke = 2.2;
 
     return (
       <g key={slotIndex}>
-        {/* Beam: horizontal crossbar connecting tops of both stems */}
+        {/* Beam: thick horizontal bar connecting top of both stems */}
         <rect
           x={stem1X - 1} y={beamY}
           width={stem2X - stem1X + 2} height={beamH}
           fill={noteColor} rx={1}
         />
-        {/* Stem 1 — down note — points UP from right side of note head to beam */}
+        {/* Stem 1 — points UP from right edge of note head 1 to beam */}
         <line
           x1={stem1X} y1={stemY1}
           x2={stem1X} y2={stemY2}
           stroke={noteColor} strokeWidth={2} strokeLinecap="round"
         />
-        {/* Stem 2 — up note — ALSO points UP (same direction as stem 1) */}
+        {/* Stem 2 — ALSO points UP from right edge of note head 2 to beam */}
         <line
           x1={stem2X} y1={stemY1}
           x2={stem2X} y2={stemY2}
@@ -246,35 +251,32 @@ function renderSlot({ slot, slotIndex, isActive, color }: SlotRenderProps): Reac
         {/* Note head 1 — down note — filled, 20° tilt */}
         <ellipse
           cx={cx1} cy={NOTE_HEAD_Y}
-          rx={duNoteRx} ry={duNoteRx - 2.5}
+          rx={duNoteRx} ry={duNoteRy}
           fill={noteColor}
           transform={`rotate(-20, ${cx1}, ${NOTE_HEAD_Y})`}
         />
         {/* Note head 2 — up note — filled, 20° tilt */}
         <ellipse
           cx={cx2} cy={NOTE_HEAD_Y}
-          rx={duNoteRx} ry={duNoteRx - 2.5}
+          rx={duNoteRx} ry={duNoteRy}
           fill={noteColor}
           transform={`rotate(-20, ${cx2}, ${NOTE_HEAD_Y})`}
         />
-        {/* V — downstroke arrow — centered under down note head */}
+        {/* V — downstroke arrow — tight under note head 1 */}
         <path
           d={`M ${cx1 - duHalfW} ${V_TOP_Y} L ${cx1} ${V_BOTTOM_Y} L ${cx1 + duHalfW} ${V_TOP_Y}`}
           stroke={noteColor} strokeWidth={duStroke} fill="none"
           strokeLinecap="round" strokeLinejoin="round"
         />
-        {/* Λ — upstroke arrow — centered under up note head */}
+        {/* Λ — upstroke arrow — tight under note head 2 */}
         <path
           d={`M ${cx2 - duHalfW} ${V_BOTTOM_Y} L ${cx2} ${V_TOP_Y} L ${cx2 + duHalfW} ${V_BOTTOM_Y}`}
           stroke={noteColor} strokeWidth={duStroke} fill="none"
           strokeLinecap="round" strokeLinejoin="round"
         />
-        {/* Direction words — split: "down" under cx1, "up" under cx2 */}
-        <text x={cx1} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
-          down
-        </text>
-        <text x={cx2} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
-          up
+        {/* Direction label — single centered "down up" (notes too close for split labels) */}
+        <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight="600" letterSpacing="0.2">
+          down up
         </text>
         {/* Beat label — "{n} and" format — centered across the pair */}
         <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor} fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>

@@ -54,7 +54,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
 
   // Chord picker state
   const [chordSearch, setChordSearch] = useState('');
-  const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
+  const [selectedChordName, setSelectedChordName] = useState<string | null>('E Minor');
   const [showChordPicker, setShowChordPicker] = useState(false);
 
   // Use a ref so handleLoopComplete can call playPatternFn without stale closure
@@ -195,14 +195,16 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
                   Playing at {bpm} BPM
                 </span>
               </div>
-              <Slider
-                min={40}
-                max={240}
-                step={1}
-                value={[bpm]}
-                onValueChange={([val]) => setBpm(val)}
-                className="w-full"
-              />
+              <div className="py-1 [&_[data-radix-slider-thumb]]:w-7 [&_[data-radix-slider-thumb]]:h-7 [&_[data-radix-slider-thumb]]:cursor-grab [&_[data-radix-slider-thumb]]:active:cursor-grabbing">
+                <Slider
+                  min={40}
+                  max={240}
+                  step={1}
+                  value={[bpm]}
+                  onValueChange={([val]) => setBpm(val)}
+                  className="w-full"
+                />
+              </div>
               <div className="flex justify-between mt-1">
                 <span className="text-[10px] text-zinc-600">40</span>
                 <span className="text-[10px] text-zinc-600">240</span>

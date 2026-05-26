@@ -297,14 +297,15 @@ export default function StrumVault() {
         style={{ borderTopWidth: '3px', borderTopColor: ACCENT }}
       >
         <div className="max-w-2xl mx-auto">
+          <div className="flex items-start gap-3 py-1">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-white text-sm mb-4 transition-colors"
+            className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 flex items-center justify-center hover:bg-zinc-600 transition-colors mt-0.5"
+            aria-label="Go back"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Back
+            <ChevronLeft className="w-5 h-5 text-white" />
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <div
               className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
               style={{ backgroundColor: ACCENT, boxShadow: `0 4px 16px ${ACCENT}44` }}
@@ -320,6 +321,7 @@ export default function StrumVault() {
                 {filteredPatterns.length}
               </span>
             )}
+          </div>
           </div>
         </div>
       </div>
@@ -650,10 +652,10 @@ export default function StrumVault() {
               {hasActiveFilters ? ' matching filters' : ' total'}
             </p>
             <span
-              className="text-base font-semibold"
+              className="text-lg font-semibold"
               style={{ color: ACCENT }}
             >
-              Tap card for details
+              Tap card for practice and playback
             </span>
           </div>
         )}

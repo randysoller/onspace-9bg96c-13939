@@ -59,7 +59,7 @@ const BEAT_NUMBERS = ['1', '1',   '2', '2',   '3', '3',   '4', '4'];
 // ── SVG layout constants ──────────────────────────────────────────────────────
 const SLOT_W = 52;
 const SVG_W  = SLOT_W * 8; // 416
-const SVG_H  = 142;
+const SVG_H  = 162;
 
 const STEM_TOP       = 6;
 const NOTE_HEAD_Y    = 38;
@@ -67,14 +67,14 @@ const NOTE_HEAD_R    = 9;
 const STEM_X_OFFSET  = NOTE_HEAD_R - 1; // stem attaches to right side of head
 
 // V / Λ symbol constants
-const V_TOP_Y    = NOTE_HEAD_Y + NOTE_HEAD_R + 16; // 63 — more gap between notation and arrows
-const V_BOTTOM_Y = V_TOP_Y + 20;                   // 83
+const V_TOP_Y    = NOTE_HEAD_Y + NOTE_HEAD_R + 22; // 69 — additional 6px gap vs previous
+const V_BOTTOM_Y = V_TOP_Y + 20;                   // 89
 const V_HALF_W   = 7;
 const V_STROKE   = 2.5;
 
-// Text rows — increased vertical gaps for readability
-const DIR_LABEL_Y  = V_BOTTOM_Y + 23; // 106 — more gap between arrows and direction words
-const BEAT_LABEL_Y = DIR_LABEL_Y + 22; // 128 — more gap between direction words and beat count
+// Text rows — further increased vertical gaps for readability
+const DIR_LABEL_Y  = V_BOTTOM_Y + 30; // 119 — 30px gap between arrows and direction words (was 23px)
+const BEAT_LABEL_Y = DIR_LABEL_Y + 27; // 146 — 27px gap between direction words and beat count (was 22px)
 
 // Colors
 const INACTIVE_NOTE_COLOR  = '#e4e4e7'; // zinc-200

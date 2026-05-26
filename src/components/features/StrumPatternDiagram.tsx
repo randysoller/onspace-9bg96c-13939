@@ -59,7 +59,7 @@ const BEAT_NUMBERS = ['1', '1',   '2', '2',   '3', '3',   '4', '4'];
 // ── SVG layout constants ──────────────────────────────────────────────────────
 const SLOT_W = 52;
 const SVG_W  = SLOT_W * 8; // 416
-const SVG_H  = 122;
+const SVG_H  = 142;
 
 const STEM_TOP       = 6;
 const NOTE_HEAD_Y    = 38;
@@ -67,14 +67,14 @@ const NOTE_HEAD_R    = 9;
 const STEM_X_OFFSET  = NOTE_HEAD_R - 1; // stem attaches to right side of head
 
 // V / Λ symbol constants
-const V_TOP_Y    = NOTE_HEAD_Y + NOTE_HEAD_R + 10; // 57
-const V_BOTTOM_Y = V_TOP_Y + 20;                   // 77
+const V_TOP_Y    = NOTE_HEAD_Y + NOTE_HEAD_R + 16; // 63 — more gap between notation and arrows
+const V_BOTTOM_Y = V_TOP_Y + 20;                   // 83
 const V_HALF_W   = 7;
 const V_STROKE   = 2.5;
 
-// Text rows
-const DIR_LABEL_Y  = V_BOTTOM_Y + 16; // 93
-const BEAT_LABEL_Y = DIR_LABEL_Y + 17; // 110
+// Text rows — increased vertical gaps for readability
+const DIR_LABEL_Y  = V_BOTTOM_Y + 23; // 106 — more gap between arrows and direction words
+const BEAT_LABEL_Y = DIR_LABEL_Y + 22; // 128 — more gap between direction words and beat count
 
 // Colors
 const INACTIVE_NOTE_COLOR  = '#e4e4e7'; // zinc-200
@@ -306,8 +306,9 @@ function renderDUSlot(cx: number, isActive: boolean, color: string, label: strin
 
 /**
  * Renders a tied quarter note at an even-slot rest that follows an eighth-note pair.
- * No stem, no direction arrow, no direction word.
- * A curved tie arc connects from the prior U note head (at slot i-1) to this head.
+ * Has an upward stem (music-standard). No direction arrow, no direction word.
+ * A floating tie arc curves below, from near the prior U note head to near this head
+ * — gap on both ends so the arc doesn't touch either note.
  * Beat label below.
  */
 function renderTiedQuarter(
@@ -315,24 +316,34 @@ function renderTiedQuarter(
   isActive: boolean,
   color: string
 ): React.ReactNode {
-  const cx        = slotCenterX(slotIndex);
-  const priorCx2  = slotCenterX(slotIndex - 1) + 9; // cx2 of the prior pair's U note
-  const noteColor  = isActive ? color : INACTIVE_NOTE_COLOR;
-  const labelColor = isActive ? color : INACTIVE_LABEL_COLOR;
-  const beatNum   = BEAT_NUMBERS[slotIndex];
+  const cx          = slotCenterX(slotIndex);
+  // Correct prior U note position: the pair lives at slotIndex-2 (even slot),
+  // and cx2 of the U note = slotCenterX(slotIndex-2) + 9
+  const priorEvenIdx = slotIndex - 2;
+  const priorCx2     = slotCenterX(priorEvenIdx) + 9;
+  const noteColor    = isActive ? color : INACTIVE_NOTE_COLOR;
+  const labelColor   = isActive ? color : INACTIVE_LABEL_COLOR;
+  const beatNum      = BEAT_NUMBERS[slotIndex];
 
-  // Tie arc: SVG cubic bezier curving below note heads
-  const tieY1 = NOTE_HEAD_Y + NOTE_HEAD_R + 1;
-  const tieY2 = NOTE_HEAD_Y + NOTE_HEAD_R + 1;
-  const tieMidY = tieY1 + 9; // arc depth
-  const tiePath = `M ${priorCx2} ${tieY1} Q ${(priorCx2 + cx) / 2} ${tieMidY} ${cx} ${tieY2}`;
+  // Tie arc: floats between the two note heads — 6px gap on each side, doesn't touch either
+  const tieBaseY  = NOTE_HEAD_Y + NOTE_HEAD_R + 3;
+  const tieX1     = priorCx2 + 6;               // right of U note, not touching
+  const tieX2     = cx - 6;                     // left of tied note, not touching
+  const tieControlY = tieBaseY + 10;            // arc depth below note heads
+  const tiePath   = `M ${tieX1} ${tieBaseY} Q ${(tieX1 + tieX2) / 2} ${tieControlY} ${tieX2} ${tieBaseY}`;
 
   return (
     <g>
-      {/* Tie arc — curved line below note heads */}
+      {/* Stem — points upward, same geometry as quarter-down stem */}
+      <line
+        x1={cx + STEM_X_OFFSET} y1={STEM_TOP}
+        x2={cx + STEM_X_OFFSET} y2={NOTE_HEAD_Y - NOTE_HEAD_R + 1}
+        stroke={noteColor} strokeWidth={2} strokeLinecap="round"
+      />
+      {/* Floating tie arc — doesn't touch either note head */}
       <path d={tiePath} stroke={noteColor} strokeWidth={1.5} fill="none"
         strokeLinecap="round" opacity={0.85} />
-      {/* Tied note head — filled oval, no stem */}
+      {/* Tied note head — filled oval */}
       <ellipse cx={cx} cy={NOTE_HEAD_Y} rx={NOTE_HEAD_R + 1} ry={NOTE_HEAD_R - 2.5}
         fill={noteColor} stroke={noteColor} strokeWidth={0.5}
         transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`} />

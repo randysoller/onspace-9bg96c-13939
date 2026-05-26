@@ -104,7 +104,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl pb-safe"
+          className="relative w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-t-2xl sm:rounded-2xl shadow-2xl pb-safe"
           style={{ borderTopWidth: '4px', borderTopColor: ACCENT, maxHeight: '92vh', overflowY: 'auto' }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -138,14 +138,16 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
               </div>
             </div>
 
-            {/* Notation diagram */}
-            <div className="bg-zinc-950/80 rounded-xl p-3 mb-4 overflow-hidden">
-              <StrumPatternDiagram
-                notation={pattern.notation}
-                activeSlot={currentSlotIdx}
-                accentColor={ACCENT}
-                compact={false}
-              />
+            {/* Notation diagram — full SVG_W (416px), scrollable if modal narrower */}
+            <div className="bg-zinc-950/80 rounded-xl p-3 mb-4 overflow-x-auto">
+              <div style={{ minWidth: 416 }}>
+                <StrumPatternDiagram
+                  notation={pattern.notation}
+                  activeSlot={currentSlotIdx}
+                  accentColor={ACCENT}
+                  compact={false}
+                />
+              </div>
             </div>
 
             {/* BPM indicator */}

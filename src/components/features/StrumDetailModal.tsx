@@ -9,13 +9,14 @@
  * - Beat count labels animate in accent color during playback
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Square, Music, ChevronDown, Search, Clock } from 'lucide-react';
+import { X, Play, Square, Music, ChevronDown, Search, Repeat } from 'lucide-react';
 import { StrumPatternDiagram } from './StrumPatternDiagram';
 import { useStrumPatternAudio } from '@/hooks/useStrumPatternAudio';
 import { CHORD_DATABASE } from '@/constants/chords-index';
 import { useMetronomeStore } from '@/stores/metronomeStore';
+import { Slider } from '@/components/ui/slider';
 import type { StrumPattern } from './StrumPatternCard';
 import type { ChordData } from '@/types/chord';
 
@@ -40,13 +41,45 @@ interface Props {
 
 export function StrumDetailModal({ pattern, onClose }: Props) {
   const bpm = useMetronomeStore(s => s.bpm);
+  const setBpm = useMetronomeStore(s => s.setBpm);
+
+  // Loop state — use ref to avoid stale closure in onComplete callback
+  const [isLooping, setIsLooping] = useState(false);
+  const isLoopingRef = useRef(false);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    isLoopingRef.current = isLooping;
+  }, [isLooping]);
 
   // Chord picker state
   const [chordSearch, setChordSearch] = useState('');
   const [selectedChordName, setSelectedChordName] = useState<string | null>(null);
   const [showChordPicker, setShowChordPicker] = useState(false);
 
-  const { isPlaying, currentSlotIdx, playPattern, stopPlayback, setSelectedChord } = useStrumPatternAudio();
+  // Use a ref so handleLoopComplete can call playPatternFn without stale closure
+  const playPatternRef = useRef<((notation: any) => void) | null>(null);
+
+  // onComplete: restart if looping
+  const patternRef = useRef<StrumPattern | null>(null);
+  useEffect(() => { patternRef.current = pattern; }, [pattern]);
+
+  const handleLoopComplete = useCallback(() => {
+    if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
+      // Small gap between repeats for clarity
+      setTimeout(() => {
+        if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
+          playPatternRef.current(patternRef.current.notation);
+        }
+      }, 120);
+    }
+  }, []);
+
+  const { isPlaying, currentSlotIdx, playPattern: playPatternFn, stopPlayback, setSelectedChord } =
+    useStrumPatternAudio({ onComplete: handleLoopComplete });
+
+  // Keep playPatternRef in sync
+  useEffect(() => { playPatternRef.current = playPatternFn; }, [playPatternFn]);
 
   // Resolve selected chord from CHORD_DATABASE
   const selectedChord: ChordData | null = useMemo(() => {
@@ -75,9 +108,13 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
     if (isPlaying) {
       stopPlayback();
     } else {
-      playPattern(pattern.notation);
+      playPatternFn(pattern.notation);
     }
-  }, [pattern, isPlaying, playPattern, stopPlayback]);
+  }, [pattern, isPlaying, playPatternFn, stopPlayback]);
+
+  const handleLoopToggle = useCallback(() => {
+    setIsLooping(prev => !prev);
+  }, []);
 
   const handleChordSelect = useCallback((name: string) => {
     setSelectedChordName(name);
@@ -150,13 +187,26 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
               </div>
             </div>
 
-            {/* BPM indicator */}
-            <div className="flex items-center gap-1.5 mb-4">
-              <Clock className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-[11px] text-zinc-400">
-                Playing at <span className="font-bold" style={{ color: ACCENT }}>{bpm} BPM</span>
-                {' '}— change BPM in Metronome settings
-              </span>
+            {/* BPM control */}
+            <div className="mb-4 bg-zinc-800/50 rounded-xl p-3 border border-zinc-700/50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Change BPM</span>
+                <span className="text-sm font-bold" style={{ color: ACCENT }}>
+                  Playing at {bpm} BPM
+                </span>
+              </div>
+              <Slider
+                min={40}
+                max={240}
+                step={1}
+                value={[bpm]}
+                onValueChange={([val]) => setBpm(val)}
+                className="w-full"
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-zinc-600">40</span>
+                <span className="text-[10px] text-zinc-600">240</span>
+              </div>
             </div>
 
             {/* Chord picker */}
@@ -231,30 +281,49 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
               </AnimatePresence>
             </div>
 
-            {/* Play / Stop button */}
-            <motion.button
-              onClick={handlePlayStop}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all"
-              style={{
-                backgroundColor: isPlaying ? '#27272a' : ACCENT,
-                color: isPlaying ? ACCENT : '#000000',
-                border: isPlaying ? `1.5px solid ${ACCENT}` : 'none',
-              }}
-            >
-              {isPlaying ? (
-                <>
-                  <Square className="w-4 h-4" fill="currentColor" />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" fill="currentColor" />
-                  Play Pattern
-                </>
-              )}
-            </motion.button>
+            {/* Play / Stop + Loop toggle */}
+            <div className="flex gap-2">
+              <motion.button
+                onClick={handlePlayStop}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm transition-all"
+                style={{
+                  backgroundColor: isPlaying ? '#27272a' : ACCENT,
+                  color: isPlaying ? ACCENT : '#000000',
+                  border: isPlaying ? `1.5px solid ${ACCENT}` : 'none',
+                }}
+              >
+                {isPlaying ? (
+                  <>
+                    <Square className="w-4 h-4" fill="currentColor" />
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4" fill="currentColor" />
+                    Play Pattern
+                  </>
+                )}
+              </motion.button>
+
+              {/* Loop toggle */}
+              <motion.button
+                onClick={handleLoopToggle}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold text-sm transition-all"
+                title={isLooping ? 'Loop on — click to disable' : 'Loop off — click to enable'}
+                style={{
+                  backgroundColor: isLooping ? `${ACCENT}22` : '#27272a',
+                  color: isLooping ? ACCENT : '#71717a',
+                  border: isLooping ? `1.5px solid ${ACCENT}88` : '1.5px solid #3f3f46',
+                }}
+              >
+                <Repeat className="w-4 h-4" />
+                <span className="text-xs">Loop</span>
+              </motion.button>
+            </div>
 
             {/* Optional instructor notes */}
             {pattern.notes && (

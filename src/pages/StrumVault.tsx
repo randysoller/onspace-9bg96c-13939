@@ -642,12 +642,20 @@ export default function StrumVault() {
           </div>
         </div>
 
-        {/* ── Results count ── */}
+        {/* ── Results count + tap hint ── */}
         {!isLoading && !error && (
-          <p className="text-[11px] text-zinc-500 mb-3">
-            {filteredPatterns.length} pattern{filteredPatterns.length !== 1 ? 's' : ''}
-            {hasActiveFilters ? ' matching filters' : ' total'}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[11px] text-zinc-500">
+              {filteredPatterns.length} pattern{filteredPatterns.length !== 1 ? 's' : ''}
+              {hasActiveFilters ? ' matching filters' : ' total'}
+            </p>
+            <span
+              className="text-base font-semibold"
+              style={{ color: ACCENT }}
+            >
+              Tap card for details
+            </span>
+          </div>
         )}
 
         {/* ── Loading / Error / Empty states ── */}

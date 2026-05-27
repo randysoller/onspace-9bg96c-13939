@@ -191,22 +191,42 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
             <div className="mb-4 bg-zinc-800/50 rounded-xl p-3 border border-zinc-700/50">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Change BPM</span>
-                <span className="text-sm font-bold" style={{ color: ACCENT }}>
+                <span className="text-lg font-bold" style={{ color: ACCENT }}>
                   Playing at {bpm} BPM
                 </span>
               </div>
-              <div className="py-1 [&_[data-radix-slider-thumb]]:w-7 [&_[data-radix-slider-thumb]]:h-7 [&_[data-radix-slider-thumb]]:cursor-grab [&_[data-radix-slider-thumb]]:active:cursor-grabbing">
-                <Slider
-                  min={40}
-                  max={240}
-                  step={1}
-                  value={[bpm]}
-                  onValueChange={([val]) => setBpm(val)}
-                  className="w-full"
-                />
+              {/* Slider row with flanking −/+ buttons */}
+              <div className="flex items-center gap-2">
+                {/* Minus button */}
+                <button
+                  onClick={() => setBpm(Math.max(20, bpm - 1))}
+                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-white font-bold text-lg transition-colors select-none"
+                  aria-label="Decrease BPM"
+                >
+                  −
+                </button>
+                {/* Slider */}
+                <div className="flex-1 py-1 [&_[data-radix-slider-thumb]]:w-7 [&_[data-radix-slider-thumb]]:h-7 [&_[data-radix-slider-thumb]]:cursor-grab [&_[data-radix-slider-thumb]]:active:cursor-grabbing">
+                  <Slider
+                    min={20}
+                    max={240}
+                    step={1}
+                    value={[bpm]}
+                    onValueChange={([val]) => setBpm(val)}
+                    className="w-full"
+                  />
+                </div>
+                {/* Plus button */}
+                <button
+                  onClick={() => setBpm(Math.min(240, bpm + 1))}
+                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-white font-bold text-lg transition-colors select-none"
+                  aria-label="Increase BPM"
+                >
+                  +
+                </button>
               </div>
-              <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-zinc-600">40</span>
+              <div className="flex justify-between mt-1 px-11">
+                <span className="text-[10px] text-zinc-600">20</span>
                 <span className="text-[10px] text-zinc-600">240</span>
               </div>
             </div>

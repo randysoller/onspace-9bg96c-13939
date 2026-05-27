@@ -59,7 +59,7 @@ const BEAT_NUMBERS = ['1', '1',   '2', '2',   '3', '3',   '4', '4'];
 // ── SVG layout constants ──────────────────────────────────────────────────────
 const SLOT_W = 52;
 const SVG_W  = SLOT_W * 8; // 416
-const SVG_H  = 162;
+const SVG_H  = 185;
 
 const STEM_TOP       = 6;
 const NOTE_HEAD_Y    = 38;
@@ -74,7 +74,7 @@ const V_STROKE   = 3.5;
 
 // Text rows — further increased vertical gaps for readability
 const DIR_LABEL_Y  = V_BOTTOM_Y + 30; // 119 — 30px gap between arrows and direction words (was 23px)
-const BEAT_LABEL_Y = DIR_LABEL_Y + 27; // 146 — 27px gap between direction words and beat count (was 22px)
+const BEAT_LABEL_Y = DIR_LABEL_Y + 48; // 167 — double line spacing (~48px) between direction words and beat count
 
 // Colors
 const INACTIVE_NOTE_COLOR  = '#ffffff'; // white — maximum brightness
@@ -136,7 +136,7 @@ function renderHalfNote(cx: number, isActive: boolean, color: string, label: str
         stroke={noteColor} strokeWidth={0.8} strokeDasharray="3 3" opacity={0.5} />
       <path d={downVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none"
         strokeLinecap="round" strokeLinejoin="round" />
-      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
+      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={16} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down</text>
       <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
@@ -156,7 +156,7 @@ function renderQuarterDown(cx: number, isActive: boolean, color: string, label: 
         transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`} />
       <path d={downVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none"
         strokeLinecap="round" strokeLinejoin="round" />
-      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
+      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={16} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down</text>
       <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
@@ -178,7 +178,7 @@ function renderQuarterUp(cx: number, isActive: boolean, color: string, label: st
         transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`} />
       <path d={upVPath(cx)} stroke={noteColor} strokeWidth={V_STROKE} fill="none"
         strokeLinecap="round" strokeLinejoin="round" />
-      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
+      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={16} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">up</text>
       <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
@@ -246,7 +246,7 @@ function renderImplicitPair(
         stroke={noteColor} strokeWidth={duStroke} fill="none"
         strokeLinecap="round" strokeLinejoin="round" />
       {/* Direction: "down-up" centered across pair */}
-      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
+      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={16} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down-up</text>
       {/* Beat label: "{n} and" centered */}
       <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
@@ -296,7 +296,7 @@ function renderDUSlot(cx: number, isActive: boolean, color: string, label: strin
       <path d={`M ${cx2 - duHalfW} ${V_BOTTOM_Y} L ${cx2} ${V_TOP_Y} L ${cx2 + duHalfW} ${V_BOTTOM_Y}`}
         stroke={noteColor} strokeWidth={duStroke} fill="none"
         strokeLinecap="round" strokeLinejoin="round" />
-      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
+      <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={16} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down-up</text>
       <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
@@ -445,10 +445,12 @@ export function StrumPatternDiagram({
           return null;
         })}
 
-        {/* Separator line above direction + beat labels */}
+        {/* Separator line — anchored between V/Λ arrows and direction labels.
+             Previously at DIR_LABEL_Y-7 (112), which cut through 16px ascenders.
+             Now at V_BOTTOM_Y+8 (97), safely above all direction text. */}
         <line
-          x1={0} y1={DIR_LABEL_Y - 7}
-          x2={SVG_W} y2={DIR_LABEL_Y - 7}
+          x1={0} y1={V_BOTTOM_Y + 8}
+          x2={SVG_W} y2={V_BOTTOM_Y + 8}
           stroke="#3f3f46" strokeWidth={0.5}
         />
       </svg>

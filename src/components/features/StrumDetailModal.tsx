@@ -11,7 +11,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Play, Square, Music, ChevronDown, Search, Repeat } from 'lucide-react';
+import { X, Play, Square, Music, ChevronDown, Search, Repeat, Timer } from 'lucide-react';
 import { StrumPatternDiagram } from './StrumPatternDiagram';
 import { useStrumPatternAudio } from '@/hooks/useStrumPatternAudio';
 import { CHORD_DATABASE } from '@/constants/chords-index';
@@ -47,8 +47,8 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
   const [isLooping, setIsLooping] = useState(false);
   const isLoopingRef = useRef(false);
 
-  // Metronome click toggle (default ON)
-  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+  // Count-in toggle (default OFF)
+  const [countInEnabled, setCountInEnabled] = useState(false);
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -61,7 +61,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
   const [showChordPicker, setShowChordPicker] = useState(false);
 
   // Use a ref so handleLoopComplete can call playPatternFn without stale closure
-  const playPatternRef = useRef<((notation: any) => void) | null>(null);
+  const playPatternRef = useRef<((notation: any, skipCountIn?: boolean) => void) | null>(null);
 
   // onComplete: restart if looping
   const patternRef = useRef<StrumPattern | null>(null);
@@ -69,17 +69,17 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
 
   const handleLoopComplete = useCallback(() => {
     if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
-      // Small gap between repeats for clarity
+      // Small gap between repeats; skip count-in on loop repeat
       setTimeout(() => {
         if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
-          playPatternRef.current(patternRef.current.notation);
+          playPatternRef.current(patternRef.current.notation, true);
         }
       }, 120);
     }
   }, []);
 
-  const { isPlaying, currentSlotIdx, playPattern: playPatternFn, stopPlayback, setSelectedChord } =
-    useStrumPatternAudio({ onComplete: handleLoopComplete, metronomeEnabled });
+  const { isPlaying, isCountingIn, currentSlotIdx, playPattern: playPatternFn, stopPlayback, setSelectedChord } =
+    useStrumPatternAudio({ onComplete: handleLoopComplete, countInEnabled });
 
   // Keep playPatternRef in sync
   useEffect(() => { playPatternRef.current = playPatternFn; }, [playPatternFn]);
@@ -199,22 +199,6 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
                 </span>
               </div>
 
-              {/* Metronome click toggle */}
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-semibold text-zinc-200">Metronome Click</span>
-                <button
-                  onClick={() => setMetronomeEnabled(prev => !prev)}
-                  aria-label={metronomeEnabled ? 'Turn metronome click off' : 'Turn metronome click on'}
-                  className="relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200"
-                  style={{ backgroundColor: metronomeEnabled ? ACCENT : '#3f3f46' }}
-                >
-                  <span
-                    className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-                    style={{ transform: metronomeEnabled ? 'translateX(26px)' : 'translateX(2px)' }}
-                  />
-                </button>
-              </div>
-
               {/* Slider row with flanking −/+ buttons */}
               <div className="flex items-center gap-2">
                 {/* Minus button */}
@@ -319,7 +303,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
               </AnimatePresence>
             </div>
 
-            {/* Play / Stop + Loop toggle */}
+            {/* Play / Stop + Count In + Loop toggle */}
             <div className="flex gap-2">
               <motion.button
                 onClick={handlePlayStop}
@@ -335,7 +319,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
                 {isPlaying ? (
                   <>
                     <Square className="w-4 h-4" fill="currentColor" />
-                    Stop
+                    {isCountingIn ? '1-2-3-4…' : 'Stop'}
                   </>
                 ) : (
                   <>
@@ -343,6 +327,23 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
                     Play Pattern
                   </>
                 )}
+              </motion.button>
+
+              {/* Count In toggle */}
+              <motion.button
+                onClick={() => setCountInEnabled(prev => !prev)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl font-bold text-sm transition-all"
+                title={countInEnabled ? 'Count-in on — click to disable' : 'Count-in off — click to enable'}
+                style={{
+                  backgroundColor: countInEnabled ? `${ACCENT}22` : '#27272a',
+                  color: countInEnabled ? ACCENT : '#71717a',
+                  border: countInEnabled ? `1.5px solid ${ACCENT}88` : '1.5px solid #3f3f46',
+                }}
+              >
+                <Timer className="w-4 h-4" />
+                <span className="text-xs">Count In</span>
               </motion.button>
 
               {/* Loop toggle */}

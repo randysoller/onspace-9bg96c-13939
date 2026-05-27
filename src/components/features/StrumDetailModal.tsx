@@ -68,13 +68,10 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
   useEffect(() => { patternRef.current = pattern; }, [pattern]);
 
   const handleLoopComplete = useCallback(() => {
+    // Call immediately — doneTimer already fires 20ms after last slot,
+    // so there is no need for an additional delay here.
     if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
-      // Small gap between repeats; skip count-in on loop repeat
-      setTimeout(() => {
-        if (isLoopingRef.current && patternRef.current && playPatternRef.current) {
-          playPatternRef.current(patternRef.current.notation, true);
-        }
-      }, 120);
+      playPatternRef.current(patternRef.current.notation, true);
     }
   }, []);
 

@@ -188,7 +188,7 @@ export function useStrumPatternAudio({ onComplete, countInEnabled = false }: Use
         setIsPlaying(false);
         setCurrentSlotIdx(-1);
         onComplete?.();
-      }, countInOffsetMs + totalMs + 100);
+      }, countInOffsetMs + totalMs + 20);
       timeoutsRef.current.push(doneTimer);
     };
 

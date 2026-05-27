@@ -16,7 +16,7 @@ import { StrumPatternDiagram } from './StrumPatternDiagram';
 import { useStrumPatternAudio } from '@/hooks/useStrumPatternAudio';
 import { CHORD_DATABASE } from '@/constants/chords-index';
 import { useMetronomeStore } from '@/stores/metronomeStore';
-import { Slider } from '@/components/ui/slider';
+// Slider import removed — using native <input type="range"> to match MetronomeModal styling
 import type { StrumPattern } from './StrumPatternCard';
 import type { ChordData } from '@/types/chord';
 
@@ -188,39 +188,42 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
             </div>
 
             {/* BPM control */}
-            <div className="mb-4 bg-zinc-800/50 rounded-xl p-3 border border-zinc-700/50">
-              <div className="flex items-center justify-between mb-3">
+            <div className="mb-4 bg-zinc-800/50 rounded-xl p-4 pb-5 border border-zinc-700/50">
+              <div className="flex items-center justify-between mb-4">
                 <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-200">Change BPM</span>
-                <span className="text-lg font-bold" style={{ color: ACCENT }}>
-                  Playing at {bpm} BPM
+                <span className="font-bold" style={{ color: ACCENT }}>
+                  <span className="text-lg">Playing at </span>
+                  <span className="text-xl">{bpm}</span>
+                  <span className="text-lg"> BPM</span>
                 </span>
               </div>
 
-              {/* Slider row with flanking −/+ buttons */}
-              <div className="flex items-center gap-2">
+              {/* Slider row — native range input styled to match MetronomeModal, banana yellow thumb */}
+              <div className="flex items-center gap-3">
                 {/* Minus button */}
                 <button
                   onClick={() => setBpm(Math.max(20, bpm - 1))}
-                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-white font-bold text-lg transition-colors select-none"
+                  className="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center font-bold text-xl transition-colors select-none"
+                  style={{ backgroundColor: `${ACCENT}22`, border: `1px solid ${ACCENT}55`, color: ACCENT }}
                   aria-label="Decrease BPM"
                 >
                   −
                 </button>
-                {/* Slider */}
-                <div className="flex-1 py-1 [&_[data-radix-slider-thumb]]:w-7 [&_[data-radix-slider-thumb]]:h-7 [&_[data-radix-slider-thumb]]:cursor-grab [&_[data-radix-slider-thumb]]:active:cursor-grabbing">
-                  <Slider
-                    min={20}
-                    max={240}
-                    step={1}
-                    value={[bpm]}
-                    onValueChange={([val]) => setBpm(val)}
-                    className="w-full"
-                  />
-                </div>
+                {/* Native range slider — matches MetronomeModal exactly, amber→banana yellow */}
+                <input
+                  type="range"
+                  min={20}
+                  max={240}
+                  step={1}
+                  value={bpm}
+                  onChange={(e) => setBpm(Number(e.target.value))}
+                  className="flex-1 h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-8 [&::-webkit-slider-thumb]:h-8 md:[&::-webkit-slider-thumb]:w-10 md:[&::-webkit-slider-thumb]:h-10 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#fde047] [&::-moz-range-thumb]:w-8 [&::-moz-range-thumb]:h-8 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#fde047] [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                />
                 {/* Plus button */}
                 <button
                   onClick={() => setBpm(Math.min(240, bpm + 1))}
-                  className="flex-shrink-0 w-9 h-9 rounded-lg bg-zinc-700 hover:bg-zinc-600 flex items-center justify-center text-white font-bold text-lg transition-colors select-none"
+                  className="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center font-bold text-xl transition-colors select-none"
+                  style={{ backgroundColor: `${ACCENT}22`, border: `1px solid ${ACCENT}55`, color: ACCENT }}
                   aria-label="Increase BPM"
                 >
                   +

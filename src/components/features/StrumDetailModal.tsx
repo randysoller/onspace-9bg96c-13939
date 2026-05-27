@@ -47,6 +47,9 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
   const [isLooping, setIsLooping] = useState(false);
   const isLoopingRef = useRef(false);
 
+  // Metronome click toggle (default ON)
+  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+
   // Keep ref in sync with state
   useEffect(() => {
     isLoopingRef.current = isLooping;
@@ -76,7 +79,7 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
   }, []);
 
   const { isPlaying, currentSlotIdx, playPattern: playPatternFn, stopPlayback, setSelectedChord } =
-    useStrumPatternAudio({ onComplete: handleLoopComplete });
+    useStrumPatternAudio({ onComplete: handleLoopComplete, metronomeEnabled });
 
   // Keep playPatternRef in sync
   useEffect(() => { playPatternRef.current = playPatternFn; }, [playPatternFn]);
@@ -189,12 +192,29 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
 
             {/* BPM control */}
             <div className="mb-4 bg-zinc-800/50 rounded-xl p-3 border border-zinc-700/50">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Change BPM</span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-200">Change BPM</span>
                 <span className="text-lg font-bold" style={{ color: ACCENT }}>
                   Playing at {bpm} BPM
                 </span>
               </div>
+
+              {/* Metronome click toggle */}
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-zinc-200">Metronome Click</span>
+                <button
+                  onClick={() => setMetronomeEnabled(prev => !prev)}
+                  aria-label={metronomeEnabled ? 'Turn metronome click off' : 'Turn metronome click on'}
+                  className="relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200"
+                  style={{ backgroundColor: metronomeEnabled ? ACCENT : '#3f3f46' }}
+                >
+                  <span
+                    className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+                    style={{ transform: metronomeEnabled ? 'translateX(26px)' : 'translateX(2px)' }}
+                  />
+                </button>
+              </div>
+
               {/* Slider row with flanking −/+ buttons */}
               <div className="flex items-center gap-2">
                 {/* Minus button */}
@@ -224,10 +244,6 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
                 >
                   +
                 </button>
-              </div>
-              <div className="flex justify-between mt-1 px-11">
-                <span className="text-[10px] text-zinc-600">20</span>
-                <span className="text-[10px] text-zinc-600">240</span>
               </div>
             </div>
 

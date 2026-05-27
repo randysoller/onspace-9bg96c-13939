@@ -148,10 +148,10 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors z-10"
+            className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full bg-zinc-700 hover:bg-zinc-600 text-zinc-200 hover:text-white transition-colors z-10"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
 
           <div className="p-5">
@@ -190,11 +190,10 @@ export function StrumDetailModal({ pattern, onClose }: Props) {
             {/* BPM control */}
             <div className="mb-4 bg-zinc-800/50 rounded-xl p-4 pb-5 border border-zinc-700/50">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-200">Change BPM</span>
+                <span className="text-[12px] font-bold uppercase tracking-widest text-zinc-200">Change Speed</span>
                 <span className="font-bold" style={{ color: ACCENT }}>
-                  <span className="text-lg">Playing at </span>
-                  <span className="text-xl">{bpm}</span>
-                  <span className="text-lg"> BPM</span>
+                  <span className="text-2xl">{bpm}</span>
+                  <span className="text-[22px]"> BPM</span>
                 </span>
               </div>
 

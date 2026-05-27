@@ -70,15 +70,15 @@ const STEM_X_OFFSET  = NOTE_HEAD_R - 1; // stem attaches to right side of head
 const V_TOP_Y    = NOTE_HEAD_Y + NOTE_HEAD_R + 22; // 69 — additional 6px gap vs previous
 const V_BOTTOM_Y = V_TOP_Y + 20;                   // 89
 const V_HALF_W   = 7;
-const V_STROKE   = 2.5;
+const V_STROKE   = 3.5;
 
 // Text rows — further increased vertical gaps for readability
 const DIR_LABEL_Y  = V_BOTTOM_Y + 30; // 119 — 30px gap between arrows and direction words (was 23px)
 const BEAT_LABEL_Y = DIR_LABEL_Y + 27; // 146 — 27px gap between direction words and beat count (was 22px)
 
 // Colors
-const INACTIVE_NOTE_COLOR  = '#e4e4e7'; // zinc-200
-const INACTIVE_LABEL_COLOR = '#d4d4d8'; // zinc-300
+const INACTIVE_NOTE_COLOR  = '#ffffff'; // white — maximum brightness
+const INACTIVE_LABEL_COLOR = '#f4f4f5'; // zinc-100 — near white
 
 function slotCenterX(i: number): number {
   return i * SLOT_W + SLOT_W / 2;
@@ -138,7 +138,7 @@ function renderHalfNote(cx: number, isActive: boolean, color: string, label: str
         strokeLinecap="round" strokeLinejoin="round" />
       <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down</text>
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
     </g>
   );
@@ -158,7 +158,7 @@ function renderQuarterDown(cx: number, isActive: boolean, color: string, label: 
         strokeLinecap="round" strokeLinejoin="round" />
       <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down</text>
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
     </g>
   );
@@ -180,7 +180,7 @@ function renderQuarterUp(cx: number, isActive: boolean, color: string, label: st
         strokeLinecap="round" strokeLinejoin="round" />
       <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">up</text>
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
     </g>
   );
@@ -217,7 +217,7 @@ function renderImplicitPair(
   const stemY2 = NOTE_HEAD_Y - duNoteRx + 2;
 
   const duHalfW = 5;
-  const duStroke = 2.2;
+  const duStroke = 3.2;
   const beatNum = BEAT_NUMBERS[evenIdx];
 
   return (
@@ -249,7 +249,7 @@ function renderImplicitPair(
       <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down-up</text>
       {/* Beat label: "{n} and" centered */}
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>
         {beatNum} and
       </text>
@@ -276,7 +276,7 @@ function renderDUSlot(cx: number, isActive: boolean, color: string, label: strin
   const stemY1 = beamY + beamH;
   const stemY2 = NOTE_HEAD_Y - duNoteRx + 2;
   const duHalfW = 5;
-  const duStroke = 2.2;
+  const duStroke = 3.2;
 
   return (
     <g>
@@ -298,7 +298,7 @@ function renderDUSlot(cx: number, isActive: boolean, color: string, label: strin
         strokeLinecap="round" strokeLinejoin="round" />
       <text x={cx} y={DIR_LABEL_Y} textAnchor="middle" fontSize={12} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight="600">down-up</text>
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{label}</text>
     </g>
   );
@@ -348,7 +348,7 @@ function renderTiedQuarter(
         fill={noteColor} stroke={noteColor} strokeWidth={0.5}
         transform={`rotate(-20, ${cx}, ${NOTE_HEAD_Y})`} />
       {/* Beat label only — no direction word, no V/Λ */}
-      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={14} fill={labelColor}
+      <text x={cx} y={BEAT_LABEL_Y} textAnchor="middle" fontSize={20} fill={labelColor}
         fontFamily="DM Sans, sans-serif" fontWeight={isActive ? '700' : '600'}>{beatNum}</text>
     </g>
   );

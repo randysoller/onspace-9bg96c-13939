@@ -104,7 +104,7 @@ export function useReferenceTone() {
 
     const oscs: OscillatorNode[] = [];
     const envelopes: GainNode[] = [];
-    const now = ctx.currentTime;
+    const audioNow = ctx.currentTime;
 
     // Collect active strings
     const activeStrings: { midi: number; stringIdx: number }[] = [];
@@ -124,7 +124,7 @@ export function useReferenceTone() {
 
       // Stagger: 15ms per active string (strum simulation)
       const strumDelay = idx * 0.015;
-      const startTime = now + strumDelay;
+      const startTime = audioNow + strumDelay;
 
       // Primary oscillator: triangle wave
       const osc = ctx.createOscillator();
